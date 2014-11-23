@@ -8,7 +8,14 @@ class Tapper[A](item: A)
     }
 }
 
-trait Globals {
+trait Util
+extends Control
+{
+}
+
+trait Globals
+extends Util
+{
   implicit def tapper[A](item: A) = new Tapper(item)
   val Env = tryp.droid.util.Env
 
