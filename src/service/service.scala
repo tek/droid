@@ -39,7 +39,6 @@ with tryp.droid.Broadcast
   }
 
   private def start {
-    p("start")
     if (!running) {
       running = true
       init
