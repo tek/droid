@@ -1,0 +1,83 @@
+package tryp.droid.view
+
+import android.content.Context
+import android.view.{ View, ViewGroup, LayoutInflater }
+import android.os.Bundle
+import android.app.{Activity ⇒ AActivity}
+
+import macroid.Contexts
+import macroid.FullDsl.getUi
+
+import tryp.droid.util.OS
+import tryp.droid.util.FragmentCallbackMixin
+import tryp.droid.res.Layouts
+
+trait FragmentBase
+extends tryp.droid.view.Basic
+with tryp.droid.Broadcast
+with FragmentCallbackMixin
+{
+  override implicit def activity = getActivity
+
+  override def view: View = getView
+
+  def getActivity: AActivity
+
+  def getView: View
+
+  abstract override def onViewStateRestored(state: Bundle) {
+    if (OS.hasFragmentOnViewStateRestored) {
+      super.onViewStateRestored(state)
+    }
+  }
+
+  abstract override def onActivityCreated(state: Bundle) {
+    super.onActivityCreated(state)
+    if (!OS.hasFragmentOnViewStateRestored) {
+      onViewStateRestored(state)
+    }
+  }
+}
+
+abstract class Fragment
+  extends android.app.Fragment
+  with FragmentBase
+  with Contexts[Fragment]
+{
+  val layoutId: Option[Int] = None
+  def layoutName: Option[String] = None
+
+  override def onCreate(state: Bundle) = super.onCreate(state)
+  override def onStart = super.onStart
+  override def onStop = super.onStop
+  override def onViewStateRestored(state: Bundle) = {
+    super.onViewStateRestored(state)
+  }
+  override def onActivityCreated(state: Bundle) {
+    super.onActivityCreated(state)
+  }
+
+  override def onCreateView(
+    inflater: LayoutInflater, container: ViewGroup, state: Bundle
+  ): View =
+  {
+    layoutId map { inflater.inflate(_, container, false) } getOrElse {
+      getUi(Layouts.get(layoutName))
+    }
+  }
+}
+
+class ListFragment
+  extends android.app.ListFragment
+  with FragmentBase
+{
+  override def onCreate(state: Bundle) = super.onCreate(state)
+  override def onStart = super.onStart
+  override def onStop = super.onStop
+  override def onViewStateRestored(state: Bundle) = {
+    super.onViewStateRestored(state)
+  }
+  override def onActivityCreated(state: Bundle) {
+    super.onActivityCreated(state)
+  }
+}
