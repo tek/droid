@@ -38,6 +38,14 @@ object Misc
     Tweak[TextView](_.setTextSize(Resources().integer(dimName)))
   }
 
+  def hint(name: String)(implicit c: Context) = {
+    Tweak[TextView](_.setHint(Resources().string(name)))
+  }
+
+  def minWidth(dimName: String)(implicit c: Context) = {
+    Tweak[TextView](_.setMinWidth(Resources().dimen(dimName).toInt))
+  }
+
   def slut[A <: View] = new Slot[A]()
 
   def whore[A <: View](pimp: Slot[A]) = Tweak[A](w ⇒ pimp.target = Some(w))

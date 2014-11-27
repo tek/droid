@@ -49,8 +49,6 @@ object Pfn {
     _.setBackgroundColor(Color.parseColor(color)))
 
   def inputType(types: Int) = Tweak[TextView](_.setInputType(types))
-  def hint(s: CharSequence) = Tweak[TextView](_.setHint(s))
-  def hint(resid: Int) = Tweak[TextView](_.setHint(resid))
 
   def hidden = Tweak[View](_.setVisibility(View.INVISIBLE))
 
