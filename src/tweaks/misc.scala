@@ -2,6 +2,7 @@ package tryp.droid.tweaks
 
 import android.app.Activity
 import android.widget._
+import android.view.View
 import android.content.res.ColorStateList
 import android.content.Context
 
@@ -11,6 +12,12 @@ import macroid.contrib.Layouts._
 
 import tryp.droid.res.Resources
 import tryp.droid.TrypTextView
+import tryp.droid.util.Id
+
+class Slot[A <: View](var target: Option[A] = None)
+{
+  def <~(t: Tweak[A]) = target <~ t
+}
 
 object Misc
 {
@@ -30,4 +37,8 @@ object Misc
   def textSize(dimName: String)(implicit c: Context) = {
     Tweak[TextView](_.setTextSize(Resources().integer(dimName)))
   }
+
+  def slut[A <: View] = new Slot[A]()
+
+  def whore[A <: View](pimp: Slot[A]) = Tweak[A](w ⇒ pimp.target = Some(w))
 }

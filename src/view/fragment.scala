@@ -1,5 +1,7 @@
 package tryp.droid.view
 
+import scala.reflect.ClassTag
+
 import android.content.Context
 import android.view.{ View, ViewGroup, LayoutInflater }
 import android.os.Bundle
@@ -10,7 +12,7 @@ import macroid.FullDsl.getUi
 
 import tryp.droid.util.OS
 import tryp.droid.util.FragmentCallbackMixin
-import tryp.droid.res.Layouts
+import tryp.droid.res.{Layouts,LayoutAdapter}
 
 trait FragmentBase
 extends tryp.droid.view.Basic
@@ -39,10 +41,10 @@ with FragmentCallbackMixin
   }
 }
 
-abstract class Fragment
+abstract class Fragment[A <: LayoutAdapter : ClassTag]
   extends android.app.Fragment
   with FragmentBase
-  with Contexts[Fragment]
+  with Contexts[android.app.Fragment]
 {
   val layoutId: Option[Int] = None
   def layoutName: Option[String] = None
@@ -50,6 +52,7 @@ abstract class Fragment
   override def onCreate(state: Bundle) = super.onCreate(state)
   override def onStart = super.onStart
   override def onStop = super.onStop
+
   override def onViewStateRestored(state: Bundle) = {
     super.onViewStateRestored(state)
   }
@@ -61,8 +64,23 @@ abstract class Fragment
     inflater: LayoutInflater, container: ViewGroup, state: Bundle
   ): View =
   {
-    layoutId map { inflater.inflate(_, container, false) } getOrElse {
-      getUi(Layouts.get(layoutName))
+    layoutId map { inflater.inflate(_, container, false) } orElse {
+      layoutAdapter map { getUi(_) }
+    } getOrElse { getUi(Layouts.dummy) }
+  }
+
+  lazy val layoutAdapter: Option[A] = {
+    Layouts.get(layoutName) match {
+      case l: Some[A] => l
+      case l => {
+        if (Env.debug) {
+          throw new ClassCastException(
+            s"Layout adapter type mismatch in ${getClass.getSimpleName}:" +
+            s" Got ${l}"
+          )
+        }
+        None
+      }
     }
   }
 }

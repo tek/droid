@@ -5,16 +5,39 @@ import scala.collection.mutable.{Map => MMap}
 import android.app.{Activity => AActivity}
 import android.view.View
 import android.widget.LinearLayout
-import scala.language.dynamics
 
 import macroid.FullDsl._
 import macroid.Ui
 
 import tryp.droid.view.{ActivityContexts,Activity}
+import tryp.droid.Broadcast
+
+class LayoutAdapter(val layout: Ui[View])
+{
+}
+
+object LayoutAdapter
+{
+  implicit def `Ui from LayoutAdapter option`(
+    adapter: Option[LayoutAdapter]
+  )(implicit a: AActivity): Ui[View] =
+  {
+    adapter map { _.layout } getOrElse Layouts.dummy.layout
+  }
+
+  implicit def `Ui from LayoutAdapter`(adapter: LayoutAdapter) = {
+    adapter.layout
+  }
+
+  implicit def `LayoutAdapter from Ui`(layout: Ui[View])(
+    implicit activity: AActivity
+  ) = {
+    new LayoutAdapter(layout)
+  }
+}
 
 object Layouts
-extends Dynamic
-with ActivityContexts
+extends ActivityContexts
 {
   abstract class Layout()
   extends Activity
@@ -25,7 +48,7 @@ with ActivityContexts
 
     private[Layouts] def create = createImpl
 
-    protected def createImpl: Ui[View]
+    protected def createImpl: LayoutAdapter
 
     protected def orientation = landscape ? horizontal | vertical
 
@@ -39,11 +62,16 @@ with ActivityContexts
 
   val layouts = MMap[String, Layout]()
 
-  def selectDynamic(name: String)(implicit a: AActivity): Ui[View] = {
+  def apply(name: String)(
+    implicit a: AActivity
+  ): Option[LayoutAdapter] = {
     get(Option(name))
   }
 
-  def get(name: Option[String])(implicit a: AActivity): Ui[View] = {
+  def get(name: Option[String])(
+    implicit a: AActivity
+  ): Option[LayoutAdapter] =
+  {
     Layout.impAct = a
     name flatMap { layouts.get(_) } map {
       try { _.create }
@@ -53,9 +81,9 @@ with ActivityContexts
         }
         null
       }
-      } getOrElse {
-      Log.e(s"Could not instantiate layout '${name}'")
-      dummy
+      } orElse {
+      Log.e(s"Could not instantiate layout '${name.mkString}'")
+      Some(dummy)
     }
   }
 
@@ -64,7 +92,7 @@ with ActivityContexts
     layouts(name) = factory
   }
 
-  def dummy(implicit a: AActivity) = {
+  def dummy(implicit a: AActivity): LayoutAdapter = {
     w[LinearLayout]
   }
 }
