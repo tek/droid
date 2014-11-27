@@ -63,8 +63,9 @@ object Layout
 
   def rlp(params: Any*) = relative(params: _*)
 
-  def llp(width: Width = WRAP_CONTENT, height: Height = WRAP_CONTENT) = {
-    lp[LinearLayout](width.value, height.value)
+  def llp(width: Width = WRAP_CONTENT, height: Height = WRAP_CONTENT, weight:
+    Int = 0) = {
+    lp[LinearLayout](width.value, height.value, weight)
   }
 
   def vlp(width: Width = WRAP_CONTENT, height: Height = WRAP_CONTENT) = {
