@@ -15,6 +15,7 @@ import macroid.{FragmentManagerContext,ActivityContext,AppContext}
 import macroid.support.FragmentApi
 
 import tryp.droid.util.Id
+import tryp.droid.{Basic ⇒ BBasic}
 
 trait ProxyBase {
   def extractView(args: Any*): View = {
@@ -43,20 +44,20 @@ extends Dynamic
 with ProxyBase
 {
   def applyDynamic[A <: View: ClassTag](name: String)(args: Any*): Option[A] = {
-    owner.findt[A](name, extractView(args))
+    owner.findt[String, A](name, extractView(args))
   }
 
   def selectDynamic[A <: View: ClassTag](name: String): Option[A] = {
-    owner.findt[A](name)
+    owner.findt[String, A](name)
   }
 }
 
 trait Searchable {
   def view: View
 
-  def id(input: Any, defType: String = "id"): Int
+  def id[A >: BBasic#IdTypes](input: A, defType: String = "id"): Int
 
-  def find(name: Any, root: View = null): Option[View] = {
+  def find[A >: BBasic#IdTypes](name: A, root: View = null): Option[View] = {
     val entry = if (root != null) root else view
     entry.findViewById(id(name)) match {
       case v: View => Option(v)
@@ -73,11 +74,11 @@ trait Searchable {
     }
   }
 
-  def findt[A <: View: ClassTag](
-    name: Any, root: View = null
-  ): Option[A] = {
+  def findt[A >: BBasic#IdTypes, B <: View: ClassTag](
+    name: A, root: View = null
+  ): Option[B] = {
     find(name, root) match {
-      case a: Option[A] => a
+      case a: Option[B] => a
       case a => {
         Log.e(s"Couldn't cast view ${a} to specified type!")
         None
@@ -85,8 +86,10 @@ trait Searchable {
     }
   }
 
-  def textView(name: Any, root: View = null): Option[TextView] = {
-    findt[TextView](name, root)
+  def textView[A >: BBasic#IdTypes](
+    name: A, root: View = null
+  ): Option[TextView] = {
+    findt[A, TextView](name, root)
   }
 
   lazy val tviews = TypedViewsProxy(this)
@@ -251,7 +254,17 @@ with tryp.droid.Preferences
 }
 
 trait Fragments
+extends Activity
 {
+  def replaceFragment[A >: BBasic#IdTypes](
+    name: A, fragment: android.app.Fragment, backStack: Boolean
+  ) {
+    val trans = activity.getFragmentManager.beginTransaction
+    trans.replace(id(name), fragment)
+    trans.commit
+  }
+
+
       //   class FragmentsProxy
 
       //     def initialize(owner)

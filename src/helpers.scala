@@ -5,15 +5,16 @@ import android.content.Context
 import tryp.droid.util.Id
 
 trait Basic {
+  type IdTypes = Int with String with Id
+
   implicit def context: Context
 
-  def id(input: Any, defType: String = "id"): Int = {
+  def id[A >: IdTypes](input: A, defType: String = "id"): Int = {
     input match {
       case i: Int => i
       case i: Id => i
       case name: String => resources
         .getIdentifier(name, defType, context.getPackageName)
-      case _ => throw new IllegalArgumentException
     }
   }
 
