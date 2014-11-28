@@ -19,7 +19,7 @@ class Slot[A <: View](var target: Option[A] = None)
   def <~(t: Tweak[A]) = target <~ t
 }
 
-object Misc
+trait Misc
 {
   def image(name: String)(implicit c: Context) = {
     Tweak[ImageView](_.setImageResource(Resources().drawableId(name)))
@@ -42,7 +42,7 @@ object Misc
     Tweak[TextView](_.setHint(Resources().string(name)))
   }
 
-  def minWidth(dimName: String)(implicit c: Context) = {
+  def minWidthDim(dimName: String)(implicit c: Context) = {
     Tweak[TextView](_.setMinWidth(Resources().dimen(dimName).toInt))
   }
 
@@ -50,3 +50,5 @@ object Misc
 
   def whore[A <: View](pimp: Slot[A]) = Tweak[A](w ⇒ pimp.target = Some(w))
 }
+
+object Misc extends Misc

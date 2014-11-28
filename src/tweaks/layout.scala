@@ -16,7 +16,7 @@ import RuleRelativeLayout.Rule
 
 import tryp.droid.view.ActivityContexts
 
-object Layout
+trait Layout
 {
   def above(d: Int) = Rule(ABOVE, d)
   def below(d: Int) = Rule(BELOW, d)
@@ -94,3 +94,5 @@ object Layout
     }
   }
 }
+
+object Layout extends Layout

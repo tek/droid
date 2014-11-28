@@ -20,7 +20,7 @@ import macroid.FullDsl._
 /**
  * @author pfnguyen
  */
-object Pfn {
+trait Pfn {
   import ViewGroup.LayoutParams._
 
   def margin(left: Int = 0, top: Int = 0, right: Int = 0, bottom: Int = 0, all: Int = -1) = Tweak[View] {
@@ -82,6 +82,8 @@ object Pfn {
       v.setLayoutParams(lp)
   }
 }
+
+object Pfn extends Pfn
 
 class SquareImageButton(c: Context) extends ImageButton(c) {
   override def onMeasure(mw: Int, mh: Int) = {
