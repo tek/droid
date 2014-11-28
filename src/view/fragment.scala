@@ -9,6 +9,7 @@ import android.app.{Activity ⇒ AActivity}
 
 import macroid.Contexts
 import macroid.FullDsl.getUi
+import macroid.Ui
 
 import tryp.droid.util.OS
 import tryp.droid.util.FragmentCallbackMixin
@@ -64,9 +65,13 @@ abstract class Fragment[A <: LayoutAdapter : ClassTag]
     inflater: LayoutInflater, container: ViewGroup, state: Bundle
   ): View =
   {
-    layoutId map { inflater.inflate(_, container, false) } orElse {
-      layoutAdapter map { getUi(_) }
-    } getOrElse { getUi(Layouts.dummy) }
+    layoutId map { inflater.inflate(_, container, false) } getOrElse {
+      getUi(macroidLayout(state))
+    }
+  }
+
+  def macroidLayout(state: Bundle): Ui[View] = {
+    layoutAdapter map { _.layout } getOrElse { Layouts.dummy }
   }
 
   lazy val layoutAdapter: Option[A] = {

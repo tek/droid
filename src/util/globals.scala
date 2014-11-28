@@ -32,4 +32,6 @@ extends Util
   val Debug = tryp.droid.util.Debug
 
   val layouts = tryp.droid.res.Layouts
+
+  val fragments = tryp.droid.res.Fragments
 }
