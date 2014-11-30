@@ -41,6 +41,16 @@ trait Layout
   implicit def float2width(value: Float): Width = Width(value.toInt)
   implicit def float2height(value: Float): Height = Height(value.toInt)
 
+  implicit def `Widget is tweakable with Height`[W <: View] =
+    new CanTweak[W, Height, W] {
+      def tweak(w: W, h: Height) = Ui { llp(height = h)(w); w }
+    }
+
+  implicit def `Widget is tweakable with Width`[W <: View] =
+    new CanTweak[W, Width, W] {
+      def tweak(w: W, h: Width) = Ui { llp(width = h)(w); w }
+    }
+
   def extractParams(params: Any*) = {
     val rules = ListBuffer[Rule]()
     var width = Width(WRAP_CONTENT)
@@ -64,7 +74,7 @@ trait Layout
   def rlp(params: Any*) = relative(params: _*)
 
   def llp(width: Width = WRAP_CONTENT, height: Height = WRAP_CONTENT, weight:
-    Int = 0) = {
+    Int = 0): Tweak[View] = {
     lp[LinearLayout](width.value, height.value, weight)
   }
 
