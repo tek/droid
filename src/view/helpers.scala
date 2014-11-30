@@ -112,7 +112,6 @@ trait ActivityContexts {
 
 trait Activity
 extends tryp.droid.Basic
-with ActivityContexts
 {
   implicit def activity: AActivity
 

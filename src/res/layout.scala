@@ -41,6 +41,7 @@ extends ActivityContexts
 {
   abstract class Layout()
   extends Activity
+  with ActivityContexts
   {
     Layouts.add(this)
 
