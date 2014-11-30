@@ -21,6 +21,7 @@ resolvers += "jcenter" at "http://jcenter.bintray.com"
 
 libraryDependencies ++= Seq(
   "com.android.support" % "support-v13" % "21.+",
+  "com.google.android.gms" % "play-services" % "6.+",
   aar("org.macroid" %% "macroid" % "2.0.0-M3")
 )
 
