@@ -7,3 +7,20 @@ extends tryp.droid.Basic
 with tryp.droid.Preferences
 {
 }
+
+trait ResourceNamespace
+{
+  def format(ident: String): String
+}
+
+case class PrefixResourceNamespace(prefix: String)
+extends ResourceNamespace
+{
+  def format(ident: String) = s"${prefix}_${ident}"
+}
+
+object GlobalResourceNamespace
+extends ResourceNamespace
+{
+  def format(ident: String) = ident
+}

@@ -10,7 +10,7 @@ import macroid._
 import macroid.FullDsl._
 import macroid.contrib.Layouts._
 
-import tryp.droid.res.Resources
+import tryp.droid.res.{Resources,_}
 import tryp.droid.TrypTextView
 import tryp.droid.util.Id
 
@@ -38,12 +38,18 @@ trait Misc
     Tweak[TextView](_.setTextSize(Resources().integer(dimName)))
   }
 
-  def hint(name: String)(implicit c: Context) = {
-    Tweak[TextView](_.setHint(Resources().string(name)))
+  def hint(name: String)(
+    implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
+  ) = {
+    val hint = Resources().string(ns.format(s"${name}_hint"))
+    Tweak[TextView](_.setHint(hint))
   }
 
-  def minWidthDim(dimName: String)(implicit c: Context) = {
-    Tweak[TextView](_.setMinWidth(Resources().dimen(dimName).toInt))
+  def minWidthDim(dimName: String)(
+    implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
+  ) = {
+    val minW = Resources().dimen(ns.format(s"${dimName}_min_width")).toInt
+    Tweak[TextView](_.setMinWidth(minW))
   }
 
   def slut[A <: View] = new Slot[A]()
