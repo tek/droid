@@ -260,53 +260,9 @@ extends Activity
   ) {
     val trans = activity.getFragmentManager.beginTransaction
     trans.replace(id(name), fragment)
+    if (backStack) {
+      trans.addToBackStack(null)
+    }
     trans.commit
   }
-
-
-      //   class FragmentsProxy
-
-      //     def initialize(owner)
-      //       @owner = owner
-      //     end
-
-      //     def method_missing(meth, *args, &block)
-      //       @owner.fragment_by_id meth, *args
-      //     end
-      //   end
-
-      //   def fragments
-      //     @fragments_proxy ||= FragmentsProxy.new activity
-      //   end
-
-      //   def fragment_by_id(id)
-      //     fragment_manager.findFragmentById(make_id(id))
-      //   end
-
-      //   def add_fragment(id, fragment)
-      //     id = make_id(id)
-      //     fragment_manager.begin_transaction
-      //       .add(id, fragment)
-      //       .commit
-      //   end
-
-      //   def replace_fragment(id, fragment, back_stack)
-      //     id = make_id(id)
-      //     transit = android.app.FragmentTransaction::TRANSIT_FRAGMENT_FADE
-      //     trans = fragment_manager.begin_transaction
-      //       .replace(id, fragment)
-      //       .set_transition(transit)
-      //     trans.add_to_back_stack(nil) if back_stack
-      //     trans.commit
-      //     fragment
-      //   end
-
-      //   def load_view(frag, replace: true, id: :content, back_stack: true)
-      //     send("#{replace ? 'replace' : 'add'}_fragment", id, frag, back_stack)
-      //   end
-
-      //   def broadcast_manager
-      //     LocalBroadcastManager.getInstance(activity)
-      //   end
-      // end
 }
