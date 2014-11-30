@@ -1,6 +1,7 @@
 package tryp.droid
 
 import android.content.Context
+import android.content.res.Resources
 
 import tryp.droid.util.Id
 
@@ -18,11 +19,11 @@ trait Basic {
     }
   }
 
-  def integer(_id: Any): Int = resources.getInteger(id(_id, "integer"))
+  def integer[A >: IdTypes](_id: A) = res(_id, "integer") { _.getInteger _ }
 
-  def string(_id: Any): String = resources.getString(id(_id, "string"))
+  def string[A >: IdTypes](_id: A) = res(_id, "string") { _.getString _ }
 
-  def dimen(_id: Any) = resources.getDimension(id(_id, "dimen"))
+  def dimen[A >: IdTypes](_id: A) = res(_id, "dimen") { _.getDimension _ }
 
   def xmlId(name: String): Int = id(name, "xml")
 
@@ -33,4 +34,18 @@ trait Basic {
   def drawableId(name: String): Int = id(name, "drawable")
 
   def resources = context.getResources
+
+  def res[A >: IdTypes, B](_id: A, defType: String)(
+    callback: Resources => (Int ⇒ B)
+  ): B = {
+    try {
+      callback(resources)(id(_id, defType))
+    }
+    catch {
+      case e: Resources.NotFoundException => {
+        val msg = s"No ${defType} with identifier '${_id}' found"
+        throw new Resources.NotFoundException(msg)
+      }
+    }
+  }
 }
