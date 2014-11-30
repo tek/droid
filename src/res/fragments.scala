@@ -12,7 +12,7 @@ import macroid.{Ui,ActivityContext,FragmentBuilder,FragmentManagerContext}
 
 import tryp.droid.view.ActivityContexts
 import tryp.droid.Broadcast
-import tryp.droid.util.{Id,Tag}
+import tryp.droid.macroid.All._
 
 abstract class FragmentFactory[A <: Fragment]
 extends ActivityContexts
@@ -32,7 +32,7 @@ extends ActivityContexts
 object Fragments
 extends ActivityContexts
 {
-  val factories = MMap[String, FragmentFactory[_]]()
+  val factories = MMap[String, FragmentFactory[_ <: Fragment]]()
 
   def apply(name: String)(implicit a: Activity): Ui[FrameLayout] = {
     factories.get(name) map {
@@ -49,7 +49,7 @@ extends ActivityContexts
     }
   }
 
-  def add(factory: FragmentFactory[_]) {
+  def add(factory: FragmentFactory[_ <: Fragment]) {
     factories(factory.name) = factory
   }
 }
