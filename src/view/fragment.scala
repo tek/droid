@@ -1,7 +1,5 @@
 package tryp.droid.view
 
-import scala.reflect.ClassTag
-
 import android.content.Context
 import android.view.{ View, ViewGroup, LayoutInflater }
 import android.os.Bundle
@@ -42,10 +40,10 @@ with FragmentCallbackMixin
   }
 }
 
-abstract class Fragment[A <: LayoutAdapter : ClassTag]
-  extends android.app.Fragment
-  with FragmentBase
-  with Contexts[android.app.Fragment]
+abstract class Fragment
+extends android.app.Fragment
+with FragmentBase
+with Contexts[android.app.Fragment]
 {
   val layoutId: Option[Int] = None
   def layoutName: Option[String] = None
@@ -57,6 +55,7 @@ abstract class Fragment[A <: LayoutAdapter : ClassTag]
   override def onViewStateRestored(state: Bundle) = {
     super.onViewStateRestored(state)
   }
+
   override def onActivityCreated(state: Bundle) {
     super.onActivityCreated(state)
   }
@@ -74,19 +73,8 @@ abstract class Fragment[A <: LayoutAdapter : ClassTag]
     layoutAdapter map { _.layout } getOrElse { Layouts.dummy }
   }
 
-  lazy val layoutAdapter: Option[A] = {
-    Layouts.get(layoutName) match {
-      case l: Some[A] => l
-      case l => {
-        if (Env.debug) {
-          throw new ClassCastException(
-            s"Layout adapter type mismatch in ${getClass.getSimpleName}:" +
-            s" Got ${l}"
-          )
-        }
-        None
-      }
-    }
+  lazy val layoutAdapter: Option[LayoutAdapter] = {
+    Layouts.get(layoutName)
   }
 }
 
