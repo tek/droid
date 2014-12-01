@@ -1,12 +1,34 @@
 package tryp.droid.service
 
 import scala.collection.mutable.{Map,ListBuffer}
+import scala.reflect.ClassTag
 
 import android.app.Service
 import android.content.{ServiceConnection,ComponentName,Context,Intent}
 import android.os.IBinder
 
 import tryp.droid.util.CallbackMixin
+
+case class ServiceProxy[A <: ServiceBase: ClassTag](
+  consumer: ServiceConsumer, name: String
+)
+{
+  def map[B](f: A ⇒ B) = {
+    (connected ? get) map(f)
+  }
+
+  def flatMap[B](f: A ⇒ Option[B]) = {
+    (connected ? get) flatMap(f)
+  }
+
+  def foreach(f: A ⇒ Unit) = {
+    (connected ? get) foreach(f)
+  }
+
+  def get = consumer.service[A](name)
+
+  def connected = consumer.connectedTo(name)
+}
 
 trait ServiceConsumer extends CallbackMixin {
   // abstract: called when the service has been successfully connected
@@ -51,7 +73,22 @@ trait ServiceConsumer extends CallbackMixin {
     registeredServices(name) = cls
   }
 
-  def service(name: String = "service"): ServiceBase = boundServices(name)
+  def service[A <: ServiceBase: ClassTag](name: String = "service"): A = {
+    boundServices(name) match {
+      case s: A ⇒ s
+      case s ⇒ {
+        throw new ClassCastException(
+          s"Wrong service class for ${name}: ${s.getClass.getSimpleName}!"
+        )
+      }
+    }
+  }
+
+  def serviceProxy[A <: ServiceBase: ClassTag](name: String = "service") = {
+    ServiceProxy[A](this, name)
+  }
+
+  def connectedTo(name: String) = boundServices contains name
 
   abstract override def onStart {
     super.onStart
