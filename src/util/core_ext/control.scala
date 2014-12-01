@@ -9,7 +9,7 @@ trait Control
   }
 
   implicit class `ternary operator condition`(cond: Boolean) {
-    def ?[A](v: A) = if (cond) Some(v) else None
+    def ?[A](v: ⇒ A) = if (cond) Some(v) else None
   }
 
   implicit class `ternary operator alternative`[A](o: Option[A]) {
