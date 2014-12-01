@@ -55,6 +55,10 @@ trait Misc
   def slut[A <: View] = new Slot[A]()
 
   def whore[A <: View](pimp: Slot[A]) = Tweak[A](w ⇒ pimp.target = Some(w))
+
+  def checked(state: Boolean) = {
+    Tweak[CheckBox](_.setChecked(state))
+  }
 }
 
 object Misc extends Misc
