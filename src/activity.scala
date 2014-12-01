@@ -23,7 +23,6 @@ trait Theme extends CallbackMixin {
     super.onCreate(state)
   }
 
-  // TODO implement
   def initTheme {
     changeTheme(pref("theme", defaultTheme), false)
   }
