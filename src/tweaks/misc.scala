@@ -62,3 +62,10 @@ trait Misc
 }
 
 object Misc extends Misc
+
+object Spinner
+{
+  def adapter(a: SpinnerAdapter) = {
+    Tweak[Spinner](_.setAdapter(a))
+  }
+}
