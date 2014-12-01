@@ -7,11 +7,13 @@ import android.view.{View,ViewGroup}
 import android.app.Activity
 import android.content.Context
 
+import tryp.droid.view.ActivityContexts
 import tryp.droid.util.view.AndroidExt._
 
 abstract class ListAdapter(implicit val activity: Activity)
 extends BaseAdapter
 with tryp.droid.view.Confirm
+with ActivityContexts
 {
   def items: ArrayBuffer[_ <: ListItemData]
 
