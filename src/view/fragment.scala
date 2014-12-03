@@ -16,6 +16,7 @@ import tryp.droid.res.{Layouts,LayoutAdapter}
 trait FragmentBase
 extends tryp.droid.view.Basic
 with tryp.droid.Broadcast
+with tryp.droid.view.Fragments
 with FragmentCallbackMixin
 {
   override implicit def activity = getActivity

@@ -161,6 +161,7 @@ extends tryp.droid.view.Basic
 with tryp.droid.activity.Theme
 with tryp.droid.activity.Preferences
 with tryp.droid.activity.MainView
+with tryp.droid.view.Fragments
 with Contexts[Activity]
 {
   self: Activity =>

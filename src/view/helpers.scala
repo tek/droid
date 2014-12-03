@@ -8,13 +8,14 @@ import android.widget.{AdapterView,TextView}
 import android.content.res.{Resources,Configuration}
 import android.content.{Context,DialogInterface}
 import android.view.inputmethod.InputMethodManager
-import android.app.{Activity => AActivity,AlertDialog,DialogFragment,Dialog}
+import android.app.{Activity ⇒ AActivity,AlertDialog,DialogFragment,Dialog}
+import android.app.{FragmentManager, Fragment ⇒ AFragment}
 import android.os.Bundle
 
 import macroid.{FragmentManagerContext,ActivityContext,AppContext}
 import macroid.support.FragmentApi
 
-import tryp.droid.util.Id
+import tryp.droid.util._
 import tryp.droid.{Basic ⇒ BBasic}
 
 trait ProxyBase {
@@ -255,8 +256,10 @@ with tryp.droid.Preferences
 trait Fragments
 extends Activity
 {
+  def getFragmentManager: FragmentManager
+
   def replaceFragment[A >: BBasic#IdTypes](
-    name: A, fragment: android.app.Fragment, backStack: Boolean
+    name: A, fragment: AFragment, backStack: Boolean, tag: String = null
   ) {
     val trans = activity.getFragmentManager.beginTransaction
     trans.replace(id(name), fragment)
@@ -264,5 +267,23 @@ extends Activity
       trans.addToBackStack(null)
     }
     trans.commit
+  }
+
+  def addFragment[A >: BBasic#IdTypes](
+    name: A, fragment: AFragment, tag: String = null
+  ) {
+    activity.getFragmentManager.beginTransaction
+      .add(id(name), fragment, tag)
+      .commit
+  }
+
+  def addFragmentIf[A <: AFragment: ClassTag] {
+    val cls = implicitly[ClassTag[A]].runtimeClass
+    val name = cls.getSimpleName
+    val tag = Tag(name)
+    val frag = Option(getFragmentManager.findFragmentByTag(tag)) getOrElse {
+      cls.newInstance.asInstanceOf[AFragment]
+    }
+    replaceFragment(Id(name), frag, false, tag = tag)
   }
 }
