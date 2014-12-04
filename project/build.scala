@@ -6,12 +6,11 @@ object DroidDeps
 extends tryp.Deps
 {
   override def deps = super.deps ++ Map(
-    "droid" → common,
-    "root" → common,
-    "macros" → common
+    "droid" → common
   )
 
   lazy val common = Seq(
+    resolvers += "jcenter" at "http://jcenter.bintray.com",
     libraryDependencies ++= Seq(
       "com.android.support" % "support-v13" % "21.+",
       "com.google.android.gms" % "play-services" % "6.+",
@@ -37,8 +36,7 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard) {
   )
 
   lazy val macros = p("macros")
-    .aar
-    .transitive()
+    .aar()
 
   lazy val droid = p("droid")
     .aar
@@ -49,7 +47,20 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard) {
     .path(".")
     .aar
     .transitive
-    .settings(android.Plugin.androidCommands)
+    .settings(android.Plugin.androidCommands ++ Seq(
+      name := "droid",
+      description := "Common tryp stuff",
+      organization := "tryp",
+      addCompilerPlugin("org.brianmckenna" %% "wartremover" % "0.10"),
+      scalacOptions in (Compile, compile) ++= (
+        (dependencyClasspath in Compile).value.files.map(
+          "-P:wartremover:cp:" + _.toURI.toURL
+        )
+      ),
+      scalacOptions in (Compile, compile) ++= Seq(
+        "-P:wartremover:traverser:macroid.warts.CheckUi"
+      )
+    ))
     .androidDeps(macros, droid)
     .aggregate(macros, droid)
 }
