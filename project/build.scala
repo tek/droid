@@ -6,7 +6,7 @@ object DroidDeps
 extends tryp.Deps
 {
   override def deps = super.deps ++ Map(
-    "droid" → common
+    "root" → common
   )
 
   lazy val common = Seq(
@@ -38,11 +38,6 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard) {
   lazy val macros = p("macros")
     .aar()
 
-  lazy val droid = p("droid")
-    .aar
-    .transitive
-    .dep(macros)
-
   lazy val root = p("root")
     .path(".")
     .aar
@@ -61,6 +56,5 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard) {
         "-P:wartremover:traverser:macroid.warts.CheckUi"
       )
     ))
-    .androidDeps(macros, droid)
-    .aggregate(macros, droid)
+    .dep(macros)
 }
