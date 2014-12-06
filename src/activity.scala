@@ -56,7 +56,7 @@ extends CallbackMixin
 with OnSharedPreferenceChangeListener
 with tryp.droid.view.Preferences
 {
-  self: Activity =>
+  self: Activity ⇒
 
   abstract override def onCreate(state: Bundle) {
     setupPreferences
@@ -68,11 +68,11 @@ with tryp.droid.view.Preferences
     val value = prfs.getAll.get(key)
     val validated = validatePreference(key, value)
     if (validated != value) {
-      editPrefs { editor =>
+      editPrefs { editor ⇒
         value match {
-          case s: String => editor.putString(key, s)
-          case b: Boolean => editor.putBoolean(key, b)
-          case _ =>
+          case s: String ⇒ editor.putString(key, s)
+          case b: Boolean ⇒ editor.putBoolean(key, b)
+          case _ ⇒
         }
       }
     }
@@ -112,11 +112,11 @@ with tryp.droid.view.Preferences
 
   def changePref(key: String, value: Any) {
     key match {
-      case "pref_theme" => value match {
-        case s: String => changeTheme(s)
-        case _ => prefError(key, value)
+      case "pref_theme" ⇒ value match {
+        case s: String ⇒ changeTheme(s)
+        case _ ⇒ prefError(key, value)
       }
-      case _ =>
+      case _ ⇒
     }
   }
 
@@ -164,7 +164,7 @@ with tryp.droid.activity.MainView
 with tryp.droid.view.Fragments
 with Contexts[Activity]
 {
-  self: Activity =>
+  self: Activity ⇒
 
   override implicit def activity = this
 

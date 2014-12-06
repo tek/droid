@@ -1,6 +1,6 @@
 package tryp.droid.res
 
-import scala.collection.mutable.{Map => MMap}
+import scala.collection.mutable.{Map ⇒ MMap}
 import scala.reflect.ClassTag
 
 import android.view.View
@@ -38,7 +38,7 @@ extends ActivityContexts
     factories.get(name) map {
       try { _.create }
       catch {
-        case e: Exception => if (Env.debug) {
+        case e: Exception ⇒ if (Env.debug) {
           throw e
         }
         null

@@ -1,6 +1,6 @@
 package tryp.droid.view
 
-import android.app.{Activity => AActivity}
+import android.app.{Activity ⇒ AActivity}
 import android.content.res.{TypedArray,ColorStateList}
 import android.graphics.drawable.Drawable
 
@@ -21,11 +21,11 @@ extends tryp.droid.view.Activity
     styledAttribute(name, _.getColorStateList(0))
   }
 
-  def styledAttribute[T](name: String, getter: TypedArray => T): T = {
+  def styledAttribute[T](name: String, getter: TypedArray ⇒ T): T = {
     styledAttributes(List(name), getter)
   }
 
-  def styledAttributes[T](names: List[String], getter: TypedArray => T): T = {
+  def styledAttributes[T](names: List[String], getter: TypedArray ⇒ T): T = {
     val arr = names.map(refAttr(_)).toArray
     val attrs = activity.obtainStyledAttributes(arr)
     try {

@@ -1,12 +1,12 @@
 package tryp.droid.util
 
 object Debug {
-  def rescued[A](callback: => A) = {
+  def rescued[A](callback: ⇒ A) = {
     try {
       callback
     }
     catch {
-      case e: Throwable =>
+      case e: Throwable ⇒
         var cause = e
         while (cause != null) {
           if (cause != e) {

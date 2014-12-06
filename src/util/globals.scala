@@ -2,7 +2,7 @@ package tryp.droid.util
 
 class Tapper[A](item: A)
 {
-    def tap(fun: A => Unit): A = {
+    def tap(fun: A ⇒ Unit): A = {
       fun(item)
       item
     }

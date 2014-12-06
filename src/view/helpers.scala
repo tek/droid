@@ -22,8 +22,8 @@ import tryp.droid.{Basic ⇒ BBasic}
 trait ProxyBase {
   def extractView(args: Any*): View = {
     if (args.isEmpty) null else args.head match {
-      case v: View => v
-      case _ => null
+      case v: View ⇒ v
+      case _ ⇒ null
     }
   }
 }
@@ -62,8 +62,8 @@ trait Searchable {
   def find[A >: BBasic#IdTypes](name: A, root: View = null): Option[View] = {
     val entry = if (root != null) root else view
     entry.findViewById(id(name)) match {
-      case v: View => Option(v)
-      case null => {
+      case v: View ⇒ Option(v)
+      case null ⇒ {
         if (Env.release) {
           None
         }
@@ -80,8 +80,8 @@ trait Searchable {
     name: A, root: View = null
   ): Option[B] = {
     find(name, root) match {
-      case a: Option[B] => a
-      case a => {
+      case a: Option[B] ⇒ a
+      case a ⇒ {
         Log.e(s"Couldn't cast view ${a} to specified type!")
         None
       }
@@ -119,7 +119,7 @@ extends tryp.droid.Basic
 
   implicit def context: Context = activity
 
-  def uiThread(callback: => Unit) {
+  def uiThread(callback: ⇒ Unit) {
     val runner = new Runnable {
       def run = callback
     }
@@ -134,7 +134,7 @@ with Searchable
 trait Click
 extends Basic
 {
-  def itemClickListen(view: AdapterView[_], callback: (View) => Unit) {
+  def itemClickListen(view: AdapterView[_], callback: (View) ⇒ Unit) {
     view.setOnItemClickListener(new AdapterView.OnItemClickListener {
       def onItemClick(parent: AdapterView[_], view: View, pos: Int, id: Long) {
         callback(view)
@@ -142,7 +142,7 @@ extends Basic
     })
   }
 
-  def clickListen(view: View, callback: (View) => Unit) {
+  def clickListen(view: View, callback: (View) ⇒ Unit) {
     view.setOnClickListener(new View.OnClickListener {
       def onClick(view: View) = callback(view)
     })
@@ -171,8 +171,8 @@ extends Basic
 {
   def inputMethodManager: InputMethodManager = {
     activity.getSystemService(Context.INPUT_METHOD_SERVICE) match {
-      case a: InputMethodManager => a
-      case _ => {
+      case a: InputMethodManager ⇒ a
+      case _ ⇒ {
         throw new ClassCastException(
           "Wrong class for InputMethodManager!"
         )
@@ -191,7 +191,7 @@ extends Activity
   lazy val theme = new tryp.droid.view.Theme
 }
 
-class DialogListener(callback: () => Unit = () => ())
+class DialogListener(callback: () ⇒ Unit = () ⇒ ())
 extends DialogInterface.OnClickListener
 {
   def onClick(dialog: DialogInterface, id: Int) {
@@ -199,7 +199,7 @@ extends DialogInterface.OnClickListener
   }
 }
 
-class ConfirmDialog(message: String, callback: () => Unit)
+class ConfirmDialog(message: String, callback: () ⇒ Unit)
 extends DialogFragment
 with FragmentBase
 {
@@ -225,7 +225,7 @@ with FragmentBase
 trait Confirm
 extends Activity
 {
-  def confirm(message: String, callback: () => Unit) {
+  def confirm(message: String, callback: () ⇒ Unit) {
     val dialog = new ConfirmDialog(message, callback)
     dialog.show(activity.getFragmentManager, "confirm")
   }

@@ -25,7 +25,7 @@ trait Pfn {
 
   def margin(left: Int = 0, top: Int = 0, right: Int = 0, bottom: Int = 0, all: Int = -1) = Tweak[View] {
     _.getLayoutParams match {
-      case m: ViewGroup.MarginLayoutParams =>
+      case m: ViewGroup.MarginLayoutParams ⇒
         if (all >= 0) {
           m.topMargin = all
           m.bottomMargin = all
@@ -37,7 +37,7 @@ trait Pfn {
           m.rightMargin = right
           m.leftMargin = left
         }
-      case _ =>
+      case _ ⇒
     }
   }
 
@@ -52,7 +52,7 @@ trait Pfn {
 
   def hidden = Tweak[View](_.setVisibility(View.INVISIBLE))
 
-  def tweak[A <: View,B](f: A => B) = Tweak[A](a => f(a))
+  def tweak[A <: View,B](f: A ⇒ B) = Tweak[A](a ⇒ f(a))
 
   private lazy val primitiveMap: Map[Class[_],Class[_]] = Map(
     classOf[java.lang.Integer]   -> java.lang.Integer.TYPE,
@@ -65,7 +65,7 @@ trait Pfn {
   abstract class LpRelation[V <: ViewGroup, LP <: ViewGroup.LayoutParams : ClassTag] {
     def lpType = implicitly[ClassTag[LP]].runtimeClass
     def lp(args: Any*) = lpType.getConstructor(
-      args map { a =>
+      args map { a ⇒
         val c = a.getClass
         primitiveMap.getOrElse(c, c)
       }:_*).newInstance(args map (_.asInstanceOf[AnyRef]): _*).asInstanceOf[LP]
@@ -74,9 +74,9 @@ trait Pfn {
   implicit object TRRelation extends LpRelation[TableRow, TableRow.LayoutParams]
 
   def lp2[V <: ViewGroup,LP <: ViewGroup.LayoutParams, C](args: Any*)
-  (callback: LP => C)
+  (callback: LP ⇒ C)
   (implicit r: LpRelation[V,LP]) = tweak {
-    v: View =>
+    v: View ⇒
       val lp = r.lp(args: _*)
       callback(lp)
       v.setLayoutParams(lp)

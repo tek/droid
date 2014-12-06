@@ -24,16 +24,16 @@ object AndroidExt {
   {
     def context = view.getContext
 
-    def clickListen(callback: (View) => Unit) {
+    def clickListen(callback: (View) ⇒ Unit) {
       view.setOnClickListener(new View.OnClickListener {
         def onClick(v: View) = callback(v)
       })
     }
 
     def params: Params = view.getTag match {
-      case p: Params => p
-      case m: Map[_, _] => Params.fromErasedMap(m)
-      case _ => Params()
+      case p: Params ⇒ p
+      case m: Map[_, _] ⇒ Params.fromErasedMap(m)
+      case _ ⇒ Params()
     }
 
     def setBackgroundCompat(drawable: Drawable) {
@@ -82,10 +82,10 @@ object AndroidExt {
     }
 
     def edit: Option[EditText] = {
-      picker.children.find(_.isInstanceOf[EditText]) map { v =>
+      picker.children.find(_.isInstanceOf[EditText]) map { v ⇒
         v match {
-          case edit: EditText => edit
-          case _ => null
+          case edit: EditText ⇒ edit
+          case _ ⇒ null
         }
       }
     }

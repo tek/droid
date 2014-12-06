@@ -4,7 +4,7 @@ import scala.language.dynamics
 
 import android.view.View
 
-import macroid.FullDsl.{id => twId,_}
+import macroid.FullDsl.{id ⇒ twId,_}
 import macroid.{Tweak,CanTweak,Ui}
 
 case class Id(value: Int)

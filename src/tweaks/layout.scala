@@ -55,12 +55,12 @@ trait Layout
     val rules = ListBuffer[Rule]()
     var width = Width(WRAP_CONTENT)
     var height = Height(WRAP_CONTENT)
-    params foreach { param =>
+    params foreach { param ⇒
       param match {
-        case r: Rule => rules += r
-        case w: Width => width = w
-        case h: Height => height = h
-        case _ =>
+        case r: Rule ⇒ rules += r
+        case w: Width ⇒ width = w
+        case h: Height ⇒ height = h
+        case _ ⇒
       }
     }
     (width, height, rules)
@@ -83,7 +83,7 @@ trait Layout
   }
 
   def tweakSum[A <: View](tweaks: Tweak[A]*): Tweak[A] = {
-    tweaks.foldLeft(Tweak[A](a => Unit))((a, b) => a + b)
+    tweaks.foldLeft(Tweak[A](a ⇒ Unit))((a, b) ⇒ a + b)
   }
 
   object LL

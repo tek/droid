@@ -45,11 +45,11 @@ trait ServiceConsumer extends CallbackMixin {
     override def onServiceConnected(className: ComponentName, binder:
       IBinder) {
         binder match {
-          case b: ServiceBase#TrypBinder => {
+          case b: ServiceBase#TrypBinder ⇒ {
             boundServices(name) = b.getService
             consumer.onConnectService(name)
           }
-          case _  => {
+          case _  ⇒ {
             Log.e("Received invalid binder in onServiceConnected!")
           }
         }

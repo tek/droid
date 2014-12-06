@@ -68,7 +68,7 @@ with CallbackMixin
         this.send(intent.getAction)
       }
     } catch {
-      case e: NoSuchMethodException => {
+      case e: NoSuchMethodException ⇒ {
         var msg = (s"Invalid broadcast received in ${getClass.getName}: " +
           s"'${intent.getAction}'")
         if (extras != null) {
@@ -76,7 +76,7 @@ with CallbackMixin
         }
         Log.e(msg)
       }
-      case e: Exception => {
+      case e: Exception ⇒ {
         if (!Env.release) {
           throw e
         }

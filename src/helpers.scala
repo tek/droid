@@ -12,9 +12,9 @@ trait Basic {
 
   def id[A >: IdTypes](input: A, defType: String = "id"): Int = {
     input match {
-      case i: Int => i
-      case i: Id => i
-      case name: String => resources
+      case i: Int ⇒ i
+      case i: Id ⇒ i
+      case name: String ⇒ resources
         .getIdentifier(name, defType, context.getPackageName)
     }
   }
@@ -36,16 +36,21 @@ trait Basic {
   def resources = context.getResources
 
   def res[A >: IdTypes, B](_id: A, defType: String)(
-    callback: Resources => (Int ⇒ B)
+    callback: Resources ⇒ (Int ⇒ B)
   ): B = {
     try {
       callback(resources)(id(_id, defType))
     }
     catch {
-      case e: Resources.NotFoundException => {
+      case e: Resources.NotFoundException ⇒ {
         val msg = s"No ${defType} with identifier '${_id}' found"
         throw new Resources.NotFoundException(msg)
       }
     }
   }
+}
+
+trait TrypActivityAccess {
+  self: TrypActivity ⇒
+
 }

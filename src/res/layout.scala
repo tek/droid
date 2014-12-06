@@ -1,8 +1,8 @@
 package tryp.droid.res
 
-import scala.collection.mutable.{Map => MMap}
+import scala.collection.mutable.{Map ⇒ MMap}
 
-import android.app.{Activity => AActivity}
+import android.app.{Activity ⇒ AActivity}
 import android.view.View
 import android.widget.LinearLayout
 
@@ -77,7 +77,7 @@ extends ActivityContexts
     name flatMap { layouts.get(_) } map {
       try { _.create }
       catch {
-        case e: Exception => if (Env.debug) {
+        case e: Exception ⇒ if (Env.debug) {
           throw e
         }
         null

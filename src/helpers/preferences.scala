@@ -21,7 +21,7 @@ extends Basic
 
   def prefs = PreferenceManager.getDefaultSharedPreferences(context)
 
-  def editPrefs(callback: (SharedPreferences.Editor) => Unit,
+  def editPrefs(callback: (SharedPreferences.Editor) ⇒ Unit,
     target: SharedPreferences = prefs
   )
   {

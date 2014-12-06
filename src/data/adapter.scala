@@ -40,7 +40,7 @@ with ActivityContexts
   }
 
   protected def setAttrs(view: View, item: Map[String, String]) {
-    attrs.foreach(attr => {
+    attrs.foreach(attr ⇒ {
       label(view, attr) foreach { _.setText(item(attr)) }
     })
   }

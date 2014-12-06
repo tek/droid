@@ -10,7 +10,7 @@ import tryp.droid.util.Params
 object AndroidExt {
   implicit class BundleExt(bundle: Bundle) {
     def toParams: Params = {
-      val params: Map[String, String] = bundle.keySet map { key =>
+      val params: Map[String, String] = bundle.keySet map { key ⇒
       key -> bundle.getString(key)
       } toMap
       val prm = new Params(params)
