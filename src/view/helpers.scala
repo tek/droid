@@ -2,6 +2,7 @@ package tryp.droid.view
 
 import scala.language.dynamics
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe._
 
 import android.view.View
 import android.widget.{AdapterView,TextView}
@@ -258,6 +259,8 @@ extends Activity
 {
   def getFragmentManager: FragmentManager
 
+  def fragmentManager = getFragmentManager
+
   def replaceFragment[A >: BBasic#IdTypes](
     name: A, fragment: AFragment, backStack: Boolean, tag: String = null
   ) {
@@ -285,5 +288,9 @@ extends Activity
       cls.newInstance.asInstanceOf[AFragment]
     }
     replaceFragment(Id(name), frag, false, tag = tag)
+  }
+
+  def popBackStackSync {
+    fragmentManager.popBackStackImmediate
   }
 }
