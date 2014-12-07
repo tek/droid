@@ -123,7 +123,7 @@ extends tryp.droid.Basic
     val runner = new Runnable {
       def run = callback
     }
-    activity.runOnUiThread(runner)
+    Option(activity) foreach { _.runOnUiThread(runner) }
   }
 }
 
