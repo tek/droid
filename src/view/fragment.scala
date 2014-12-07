@@ -1,4 +1,4 @@
-package tryp.droid.view
+package tryp.droid
 
 import android.content.Context
 import android.view.{ View, ViewGroup, LayoutInflater }

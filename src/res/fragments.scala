@@ -12,7 +12,7 @@ import macroid.{Ui,ActivityContext,FragmentBuilder,FragmentManagerContext}
 
 import tryp.droid.view.ActivityContexts
 import tryp.droid.Broadcast
-import tryp.droid.macroid.All._
+import tryp.droid.Macroid._
 
 abstract class FragmentFactory[A <: Fragment]
 extends ActivityContexts

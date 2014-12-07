@@ -1,6 +1,6 @@
-package tryp.droid.macroid
+package tryp.droid
 
-object All
+object Macroid
 extends tryp.droid.tweaks.All
 {
   lazy val Tag = tryp.droid.util.Tag

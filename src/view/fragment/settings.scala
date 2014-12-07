@@ -5,7 +5,7 @@ import android.os.Bundle
 
 class SettingsFragment
   extends PreferenceFragment
-  with tryp.droid.view.FragmentBase
+  with tryp.droid.FragmentBase
 {
   override def onStart = super.onStart
   override def onStop = super.onStop
