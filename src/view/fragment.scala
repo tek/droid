@@ -12,12 +12,14 @@ import macroid.Ui
 import tryp.droid.util.OS
 import tryp.droid.util.FragmentCallbackMixin
 import tryp.droid.res.{Layouts,LayoutAdapter}
+import tryp.droid.activity.TrypActivity
 
 trait FragmentBase
 extends tryp.droid.view.Basic
 with tryp.droid.Broadcast
 with tryp.droid.view.Fragments
 with FragmentCallbackMixin
+with tryp.droid.TrypActivityAccess
 {
   override implicit def activity = getActivity
 
@@ -26,6 +28,13 @@ with FragmentCallbackMixin
   def getActivity: AActivity
 
   def getView: View
+
+  def trypActivity = {
+    activity match {
+      case a: TrypActivity ⇒ Option[TrypActivity](a)
+      case _ ⇒ None
+    }
+  }
 
   abstract override def onViewStateRestored(state: Bundle) {
     if (OS.hasFragmentOnViewStateRestored) {

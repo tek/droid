@@ -14,7 +14,8 @@ extends tryp.Deps
     libraryDependencies ++= Seq(
       "com.android.support" % "support-v13" % "21.+",
       "com.google.android.gms" % "play-services" % "6.+",
-      aar("org.macroid" %% "macroid" % "2.0.0-M3")
+      aar("org.macroid" %% "macroid" % "2.0.0-M3"),
+      "com.typesafe.akka" %% "akka-actor" % "2.3.3"
     )
   )
 }
