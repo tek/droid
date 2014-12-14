@@ -9,6 +9,8 @@ class LogBase {
 
   def i(message: String) = 0
 
+  def w(message: String) = 0
+
   def e(message: String) = 0
 
   def e(message: String, t: Throwable) = 0
@@ -30,6 +32,8 @@ object Log extends LogBase
   }
 
   override def i(message: String) = android.util.Log.i(tag, message)
+
+  override def w(message: String) = android.util.Log.w(tag, message)
 
   override def e(message: String) = android.util.Log.e(tag, message)
 
