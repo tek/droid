@@ -3,11 +3,12 @@ package tryp.droid.tweaks
 import scala.collection.mutable.ListBuffer
 
 import android.widget._
-import android.widget.RelativeLayout._
-import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams._
-import android.view.View
+import android.support.v7.widget._
+import RelativeLayout._
+import android.view.{View,ViewGroup}
+import ViewGroup.LayoutParams._
 import android.app.Activity
+import android.graphics.drawable.Drawable
 
 import macroid._
 import macroid.FullDsl._
@@ -84,6 +85,30 @@ trait Layout
 
   def tweakSum[A <: View](tweaks: Tweak[A]*): Tweak[A] = {
     tweaks.foldLeft(Tweak[A](a ⇒ Unit))((a, b) ⇒ a + b)
+  }
+
+  def foreground(res: Drawable) = Tweak[FrameLayout](_.setForeground(res))
+
+  def elevation(dist: Float) = Tweak[CardView](_.setCardElevation(dist))
+
+  def cornerRadius(dist: Float) = Tweak[CardView](_.setRadius(dist))
+
+  def contentPadding(
+    left: Int = 0, top: Int = 0, right: Int = 0, bottom: Int = 0, all: Int = -1
+  ) = Tweak[CardView] { v ⇒
+    if (all == -1)
+      v.setContentPadding(left, top, right, bottom)
+    else
+      v.setContentPadding(all, all, all, all)
+  }
+
+  object CV
+  extends ActivityContexts
+  {
+    def apply(tweaks: Tweak[CardView]*)(children: Ui[View]*)(
+      implicit a: Activity) = {
+      l[CardView](children: _*) <~ tweakSum(tweaks: _*)
+    }
   }
 
   object LL
