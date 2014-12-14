@@ -60,6 +60,8 @@ trait Misc
   def checked(state: Boolean) = {
     Tweak[CheckBox](_.setChecked(state))
   }
+
+  def clickable = Tweak[View](_.setClickable(true))
 }
 
 object Misc extends Misc
