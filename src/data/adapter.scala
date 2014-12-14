@@ -15,14 +15,18 @@ extends BaseAdapter
 with tryp.droid.view.Confirm
 with ActivityContexts
 {
-  def items: ArrayBuffer[_ <: ListItemData]
+  def items: Seq[AnyRef]
 
   override def getCount: Int = items.size
 
   override def getItem(position: Int): Object = items(position)
 
   override def getItemId(position: Int): Long = position
+}
 
+abstract class XMLListAdapter(implicit activity: Activity)
+extends ListAdapter
+{
   override def getView(pos: Int, oldView: View, parent: ViewGroup): View = {
     val view = if (oldView != null) oldView else newView
     setupView(view, pos, parent)
@@ -30,10 +34,6 @@ with ActivityContexts
   }
 
   protected def setupView(view: View, position: Int, parent: ViewGroup)
-
-  protected def newView: View = {
-    activity.getLayoutInflater.inflate(layoutId(layoutName), null)
-  }
 
   protected def label(view: View, name: String) = {
     view.textView(s"${prefix}_${name}")
@@ -43,6 +43,10 @@ with ActivityContexts
     attrs.foreach(attr ⇒ {
       label(view, attr) foreach { _.setText(item(attr)) }
     })
+  }
+
+  protected def newView: View = {
+    activity.getLayoutInflater.inflate(layoutId(layoutName), null)
   }
 
   protected def layoutName: String
