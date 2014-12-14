@@ -48,6 +48,13 @@ trait Basic {
       }
     }
   }
+
+  def asyncTask[A, B](task: () ⇒ B)(callback: (B) ⇒ Unit) = {
+    new android.os.AsyncTask[A, Unit, B] {
+      override def doInBackground(args: A*) = task()
+      override def onPostExecute(result: B) { callback(result) }
+    }.execute()
+  }
 }
 
 trait TrypActivityAccess {
