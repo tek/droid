@@ -10,18 +10,19 @@ import macroid.Ui
 
 import tryp.droid.util.CallbackMixin
 import tryp.droid.activity.TrypActivity
+import tryp.droid.AkkaExt._
 
 trait AkkaComponent extends CallbackMixin {
   def actor: Option[ActorSelection]
 
   abstract override def onStart = {
     super.onStart
-    actor.foreach(_ ! TrypActor.AttachUi(this))
+    actor ! TrypActor.AttachUi(this)
   }
 
   abstract override def onStop = {
     super.onStop
-    actor.foreach(_ ! TrypActor.DetachUi(this))
+    actor ! TrypActor.DetachUi(this)
   }
 }
 
@@ -33,12 +34,12 @@ trait Akkativity extends AkkaComponent { self: android.app.Activity ⇒
     ConfigFactory.load(getApplication.getClassLoader),
     getApplication.getClassLoader)
 
-  abstract override def onStart = {
+  abstract override def onStart {
     coreActor
     super.onStart
   }
 
-  lazy val actor = Option(actorSystem.actorSelection("/user/core"))
+  def actor = Option(actorSystem.actorSelection("/user/core"))
 
   lazy val coreActor = actorSystem.actorOf(coreActorProps, "core")
 
@@ -55,7 +56,7 @@ trait AkkaFragment extends AkkaComponent { self: tryp.droid.FragmentBase ⇒
 
   def actorSystem = akkativity map { _.actorSystem }
 
-  lazy val core = actorSystem map { _.actorSelection("/user/core") }
+  def core = actorSystem map { _.actorSelection("/user/core") }
 }
 
 object TrypActor {
@@ -67,7 +68,9 @@ abstract class TrypActor[A <: AkkaComponent: ClassTag]
 extends Actor {
   import TrypActor._
 
-  private var attachedUi: Option[A] = None
+  var attachedUi: Option[A] = None
+
+  lazy val core = context.system.actorSelection("/user/core")
 
   def withUi(f: A ⇒ Ui[Any]) = attachedUi.fold(()) { comp ⇒
     f(comp).run
@@ -83,5 +86,9 @@ extends Actor {
       d
     }
     case x ⇒ x
+  }
+
+  override def unhandled(a: Any) {
+    Log.w(s"Unhandled message in ${this.className}: ${a}")
   }
 }
