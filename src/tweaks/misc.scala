@@ -15,13 +15,13 @@ import tryp.droid.res.{Resources,_}
 import tryp.droid.TrypTextView
 import tryp.droid.util.Id
 
-class Slot[A <: View](var target: Option[A] = None)
-{
-  def <~(t: Tweak[A]) = target <~ t
-}
-
 trait Misc
 {
+  class Slot[A <: View](var target: Option[A] = None)
+  {
+    def <~(t: Tweak[A]) = target <~ t
+  }
+
   def image(name: String)(implicit c: Context) = {
     Tweak[ImageView](_.setImageResource(Resources().drawableId(name)))
   }
