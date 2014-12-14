@@ -23,8 +23,9 @@ import macroid.FullDsl._
 trait Pfn {
   import ViewGroup.LayoutParams._
 
-  def margin(left: Int = 0, top: Int = 0, right: Int = 0, bottom: Int = 0, all: Int = -1) = Tweak[View] {
-    _.getLayoutParams match {
+  def margin(left: Int = 0, top: Int = 0, right: Int = 0, bottom: Int = 0,
+    all: Int = -1) = Tweak[View] { v ⇒
+    v.getLayoutParams match {
       case m: ViewGroup.MarginLayoutParams ⇒
         if (all >= 0) {
           m.topMargin = all
