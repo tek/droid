@@ -264,30 +264,33 @@ extends Activity
   def replaceFragment[A >: BBasic#IdTypes](
     name: A, fragment: AFragment, backStack: Boolean, tag: String = null
   ) {
-    val trans = activity.getFragmentManager.beginTransaction
+    val trans = fragmentManager.beginTransaction
     trans.replace(id(name), fragment)
     if (backStack) {
-      trans.addToBackStack(null)
+      trans.addToBackStack(tag)
     }
     trans.commit
   }
 
   def addFragment[A >: BBasic#IdTypes](
-    name: A, fragment: AFragment, tag: String = null
+    name: A, fragment: AFragment, backStack: Boolean = true, tag: String = null
   ) {
-    activity.getFragmentManager.beginTransaction
-      .add(id(name), fragment, tag)
-      .commit
+    val trans = fragmentManager.beginTransaction
+    trans.add(id(name), fragment, tag)
+    if (backStack) {
+      trans.addToBackStack(tag)
+    }
+    trans.commit
   }
 
   def addFragmentIf[A <: AFragment: ClassTag] {
     val cls = implicitly[ClassTag[A]].runtimeClass
     val name = cls.getSimpleName
     val tag = Tag(name)
-    val frag = Option(getFragmentManager.findFragmentByTag(tag)) getOrElse {
-      cls.newInstance.asInstanceOf[AFragment]
+    Option(fragmentManager.findFragmentByTag(tag)) getOrElse {
+      val frag = cls.newInstance.asInstanceOf[AFragment]
+      replaceFragment(Id(name), frag, false, tag = tag)
     }
-    replaceFragment(Id(name), frag, false, tag = tag)
   }
 
   def popBackStackSync {
