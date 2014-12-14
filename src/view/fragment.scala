@@ -62,6 +62,8 @@ with Contexts[android.app.Fragment]
   override def onStart = super.onStart
   override def onStop = super.onStop
 
+  override def fragmentManager = getChildFragmentManager
+
   override def onViewStateRestored(state: Bundle) = {
     super.onViewStateRestored(state)
   }
@@ -101,4 +103,6 @@ class ListFragment
   override def onActivityCreated(state: Bundle) {
     super.onActivityCreated(state)
   }
+
+  override def fragmentManager = getChildFragmentManager
 }
