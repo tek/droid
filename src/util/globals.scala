@@ -10,6 +10,7 @@ class Tapper[A](item: A)
 
 trait Util
 extends Control
+with MetadataExt
 {
 }
 
