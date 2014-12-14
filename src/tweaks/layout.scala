@@ -52,6 +52,10 @@ trait Layout
       def tweak(w: W, h: Width) = Ui { llp(width = h)(w); w }
     }
 
+  implicit def `Tweak from Height`[W <: View] (h: Height) = llp(height = h)
+
+  implicit def `Tweak from Width`[W <: View](w: Width) = llp(width = w)
+
   def extractParams(params: Any*) = {
     val rules = ListBuffer[Rule]()
     var width = Width(WRAP_CONTENT)
