@@ -4,17 +4,10 @@ import android.preference.PreferenceFragment
 import android.os.Bundle
 
 class SettingsFragment
-  extends PreferenceFragment
-  with tryp.droid.FragmentBase
+extends PreferenceFragment
+with tryp.droid.Basic
 {
-  override def onStart = super.onStart
-  override def onStop = super.onStop
-  override def onViewStateRestored(state: Bundle) = {
-    super.onViewStateRestored(state)
-  }
-  override def onActivityCreated(state: Bundle) {
-    super.onActivityCreated(state)
-  }
+  def context = getActivity
   
   override def onCreate(state: Bundle) {
     super.onCreate(state)
