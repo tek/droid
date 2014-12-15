@@ -21,6 +21,10 @@ trait Misc
   class Slot[A <: View](var target: Option[A] = None)
   {
     def <~(t: Tweak[A]) = target <~ t
+
+    def foreach(f: A ⇒ Unit) {
+      target foreach f
+    }
   }
 
   def image(name: String)(implicit c: Context) = {
