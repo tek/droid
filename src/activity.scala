@@ -14,6 +14,7 @@ import macroid.{Ui,Contexts}
 import macroid.FullDsl.getUi
 
 import tryp.droid.util.CallbackMixin
+import tryp.droid.Akkativity
 
 trait Theme extends CallbackMixin {
   def activity: Activity
@@ -171,4 +172,15 @@ with Contexts[Activity]
   override def view = getWindow.getDecorView.getRootView
 
   override def defaultTheme = string("pref_theme_default")
+}
+
+abstract class TrypDefaultActivity
+extends Activity
+with TrypActivity
+with tryp.droid.Broadcast
+with Akkativity
+{
+  override def onStart { super.onStart }
+  override def onStop { super.onStop }
+  override def onResume { super.onResume }
 }
