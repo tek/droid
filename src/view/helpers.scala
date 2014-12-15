@@ -201,20 +201,12 @@ extends DialogInterface.OnClickListener
 
 class ConfirmDialog(message: String, callback: () ⇒ Unit)
 extends DialogFragment
-with tryp.droid.FragmentBase
+with tryp.droid.Basic
 {
-  override def onCreate(state: Bundle) = super.onCreate(state)
-  override def onStart = super.onStart
-  override def onStop = super.onStop
-  override def onViewStateRestored(state: Bundle) = {
-    super.onViewStateRestored(state)
-  }
-  override def onActivityCreated(state: Bundle) {
-    super.onActivityCreated(state)
-  }
+  def context = getActivity
 
   override def onCreateDialog(state: Bundle): Dialog = {
-    val builder = new AlertDialog.Builder(activity)
+    val builder = new AlertDialog.Builder(context)
     builder.setMessage(message)
     builder.setPositiveButton(string("yes"), new DialogListener(callback))
     builder.setNegativeButton(string("no"), new DialogListener)
