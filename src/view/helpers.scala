@@ -251,13 +251,15 @@ extends Activity
 {
   def getFragmentManager: FragmentManager
 
-  def fragmentManager = getFragmentManager
+  def rootFragmentManager = getFragmentManager
+
+  def fragmentManager = rootFragmentManager
 
   def replaceFragment[A >: BBasic#IdTypes](
-    name: A, fragment: AFragment, backStack: Boolean, tag: String = null
+    name: A, fragment: AFragment, backStack: Boolean = true, tag: String = null
   ) {
     val trans = fragmentManager.beginTransaction
-    trans.replace(id(name), fragment)
+    trans.replace(id(name), fragment, tag)
     if (backStack) {
       trans.addToBackStack(tag)
     }
@@ -275,17 +277,22 @@ extends Activity
     trans.commit
   }
 
-  def addFragmentIf[A <: AFragment: ClassTag] {
-    val cls = implicitly[ClassTag[A]].runtimeClass
-    val name = cls.getSimpleName
+  def addFragmentIf[A <: AFragment: ClassTag](ctor: ⇒ A) {
+    val name = implicitly[ClassTag[A]].className
     val tag = Tag(name)
     Option(fragmentManager.findFragmentByTag(tag)) getOrElse {
-      val frag = cls.newInstance.asInstanceOf[AFragment]
-      replaceFragment(Id(name), frag, false, tag = tag)
+      replaceFragment(Id(name), ctor, false, tag = tag)
+    }
+  }
+
+  def addFragmentIfAuto[A <: AFragment: ClassTag] {
+    addFragmentIf {
+      val cls = implicitly[ClassTag[A]].runtimeClass
+      cls.newInstance.asInstanceOf[AFragment]
     }
   }
 
   def popBackStackSync {
-    fragmentManager.popBackStackImmediate
+    rootFragmentManager.popBackStackImmediate
   }
 }
