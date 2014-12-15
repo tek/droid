@@ -3,7 +3,7 @@ package tryp.droid
 import android.content.Context
 import android.view.{ View, ViewGroup, LayoutInflater }
 import android.os.Bundle
-import android.app.{Activity ⇒ AActivity}
+import android.app.{Activity ⇒ AActivity, Fragment ⇒ AFragment}
 
 import macroid.Contexts
 import macroid.FullDsl.getUi
@@ -15,11 +15,12 @@ import tryp.droid.res.{Layouts,LayoutAdapter}
 import tryp.droid.activity.TrypActivity
 
 trait FragmentBase
-extends tryp.droid.view.Basic
-with tryp.droid.Broadcast
-with tryp.droid.view.Fragments
+extends view.Basic
+with Broadcast
+with view.Fragments
 with FragmentCallbackMixin
-with tryp.droid.TrypActivityAccess
+with TrypActivityAccess
+with AkkaFragment
 {
   override implicit def activity = getActivity
 
@@ -53,7 +54,7 @@ with tryp.droid.TrypActivityAccess
 abstract class Fragment
 extends android.app.Fragment
 with FragmentBase
-with Contexts[android.app.Fragment]
+with Contexts[AFragment]
 {
   val layoutId: Option[Int] = None
   def layoutName: Option[String] = None
@@ -91,8 +92,9 @@ with Contexts[android.app.Fragment]
 }
 
 class ListFragment
-  extends android.app.ListFragment
-  with FragmentBase
+extends android.app.ListFragment
+with FragmentBase
+with Contexts[AFragment]
 {
   override def onCreate(state: Bundle) = super.onCreate(state)
   override def onStart = super.onStart
