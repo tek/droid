@@ -106,6 +106,9 @@ trait Layout
       v.setContentPadding(all, all, all, all)
   }
 
+  def cardBackgroundColor(color: Int) = 
+    Tweak[CardView](_.setCardBackgroundColor(color))
+
   object CV
   extends ActivityContexts
   {
