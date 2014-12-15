@@ -4,6 +4,8 @@ import scala.reflect.ClassTag
 
 import com.typesafe.config.ConfigFactory
 
+import android.os.Bundle
+
 import akka.actor.{ ActorSelection, ActorSystem, Actor, Props }
 
 import macroid.Ui
@@ -34,16 +36,32 @@ trait Akkativity extends AkkaComponent { self: android.app.Activity ⇒
     ConfigFactory.load(getApplication.getClassLoader),
     getApplication.getClassLoader)
 
+  abstract override def onCreate(state: Bundle) {
+    super.onCreate(state)
+    actors
+  }
+
   abstract override def onStart {
     coreActor
     super.onStart
   }
+
+  lazy val actors = Map(createActors: _*)
+
+  def createActors =
+    actorsProps map { props ⇒
+      val name = props.actorClass.className.stripSuffix("Actor")
+      val a = actorSystem.actorOf(props, name)
+      (name → a)
+    }
 
   def actor = Option(actorSystem.actorSelection("/user/core"))
 
   lazy val coreActor = actorSystem.actorOf(coreActorProps, "core")
 
   val coreActorProps: Props
+
+  def actorsProps: Seq[Props]
 }
 
 trait AkkaFragment extends AkkaComponent { self: tryp.droid.FragmentBase ⇒
@@ -56,7 +74,15 @@ trait AkkaFragment extends AkkaComponent { self: tryp.droid.FragmentBase ⇒
 
   def actorSystem = akkativity map { _.actorSystem }
 
-  def core = actorSystem map { _.actorSelection("/user/core") }
+  def selectActor(name: String) = {
+    actorSystem map { _.actorSelection(s"/user/${name}") }
+  }
+
+  def core = selectActor("core")
+
+  lazy val actor = selectActor(actorName)
+
+  val actorName = this.className.stripSuffix("Fragment")
 }
 
 object TrypActor {
