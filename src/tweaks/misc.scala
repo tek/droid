@@ -6,6 +6,7 @@ import android.view.View
 import android.content.res.ColorStateList
 import android.content.Context
 import android.support.v7.widget.{RecyclerView,LinearLayoutManager,CardView}
+import android.text.TextWatcher
 
 import macroid._
 import macroid.FullDsl._
@@ -62,6 +63,10 @@ trait Misc
   }
 
   def clickable = Tweak[View](_.setClickable(true))
+
+  def textWatcher(listener: TextWatcher) = {
+    Tweak[EditText](_.addTextChangedListener(listener))
+  }
 }
 
 object Misc extends Misc
