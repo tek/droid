@@ -25,6 +25,8 @@ trait Basic {
 
   def dimen[A >: IdTypes](_id: A) = res(_id, "dimen") { _.getDimension _ }
 
+  def color[A >: IdTypes](_id: A) = res(_id, "color") { _.getColor _ }
+
   def xmlId(name: String): Int = id(name, "xml")
 
   def layoutId(name: String): Int = id(name, "layout")
