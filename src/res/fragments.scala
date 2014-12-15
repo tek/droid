@@ -4,7 +4,7 @@ import scala.collection.mutable.{Map ⇒ MMap}
 import scala.reflect.ClassTag
 
 import android.view.View
-import android.app.{Fragment,Activity,FragmentManager}
+import android.app.{Fragment,Activity}
 import android.widget.FrameLayout
 
 import macroid.FullDsl._
@@ -14,7 +14,7 @@ import tryp.droid.view.ActivityContexts
 import tryp.droid.Broadcast
 import tryp.droid.Macroid._
 
-abstract class FragmentFactory[A <: Fragment]
+abstract class FragmentFactory[A <: Fragment: ClassTag]
 extends ActivityContexts
 {
   Fragments.add(this)
@@ -34,7 +34,7 @@ extends ActivityContexts
 {
   val factories = MMap[String, FragmentFactory[_ <: Fragment]]()
 
-  def apply(name: String)(implicit a: Activity): Ui[FrameLayout] = {
+  def apply(name: String)(implicit a: Activity) = {
     factories.get(name) map {
       try { _.create }
       catch {
