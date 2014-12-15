@@ -1,6 +1,9 @@
 package tryp.droid
 
-object Messages
+class Messages
 {
   case class Debug()
+  case class Filter(query: String)
 }
+
+object Messages extends Messages
