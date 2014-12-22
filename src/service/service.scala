@@ -30,10 +30,11 @@ with tryp.droid.Broadcast
   override def onStartCommand(intent: Intent, flags: Int, startId: Int): Int =
   {
     start
+    thread(handleIntent(intent))
     Service.START_STICKY
   }
 
-  def onBind(intent: Intent): IBinder = {
+  override def onBind(intent: Intent): IBinder = {
     start
     new TrypBinder
   }
@@ -58,6 +59,7 @@ with tryp.droid.Broadcast
 
   override implicit def context = this
   def init
+  def handleIntent(intent: Intent)
 }
 
 class ServiceFactory[A <: Service : ClassTag]
