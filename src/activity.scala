@@ -9,6 +9,7 @@ import android.view.View
 import android.preference.PreferenceManager
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.content.Context
+import android.support.v7.app.ActionBarActivity
 
 import macroid.{Ui,Contexts}
 import macroid.FullDsl.getUi
@@ -175,7 +176,7 @@ with Contexts[Activity]
 }
 
 abstract class TrypDefaultActivity
-extends Activity
+extends ActionBarActivity
 with TrypActivity
 with tryp.droid.Broadcast
 with Akkativity
