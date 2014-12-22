@@ -13,6 +13,8 @@ extends tryp.Deps
     resolvers += "jcenter" at "http://jcenter.bintray.com",
     libraryDependencies ++= Seq(
       "com.android.support" % "support-v13" % "21.+",
+      aar("com.android.support" % "appcompat-v7" % "21.+"),
+      aar("com.android.support" % "palette-v7" % "21.+"),
       aar("com.android.support" % "recyclerview-v7" % "21.+"),
       aar("com.android.support" % "cardview-v7" % "21.+"),
       "com.google.android.gms" % "play-services" % "6.+",
