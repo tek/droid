@@ -29,7 +29,11 @@ extends tryp.Proguard
   override lazy val options = Seq()
 }
 
-object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard) {
+object DroidPlaceholders
+extends tryp.Placeholders
+
+object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard,
+  DroidPlaceholders) {
   override lazy val platform = "android-21"
 
   override lazy val settings = super.settings ++ Seq(
