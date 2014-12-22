@@ -3,7 +3,7 @@ package tryp.droid
 import android.content.Context
 import android.content.res.Resources
 
-import tryp.droid.util.Id
+import tryp.droid.util.{Id,Threading}
 
 trait Basic {
   type IdTypes = Int with String with Id
@@ -56,6 +56,10 @@ trait Basic {
       override def doInBackground(args: A*) = task()
       override def onPostExecute(result: B) { callback(result) }
     }.execute()
+  }
+
+  def thread(callback: ⇒ Unit) {
+    Threading.thread(callback)
   }
 }
 
