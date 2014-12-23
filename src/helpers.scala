@@ -64,5 +64,5 @@ trait Basic {
 }
 
 trait TrypActivityAccess {
-  def trypActivity: Option[activity.TrypActivity]
+  def trypActivity: Option[TrypActivity]
 }

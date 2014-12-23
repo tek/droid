@@ -9,13 +9,12 @@ import android.view.View
 import android.preference.PreferenceManager
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.content.Context
-import android.support.v7.app.ActionBarActivity
 
-import macroid.{Ui,Contexts}
-import macroid.FullDsl.getUi
+import macroid.FullDsl._
+import macroid.Ui
 
 import tryp.droid.util.CallbackMixin
-import tryp.droid.Akkativity
+import tryp.droid.Macroid._
 
 trait Theme extends CallbackMixin {
   def activity: Activity
@@ -156,32 +155,4 @@ trait System {
     activity.getWindow.getDecorView.setSystemUiVisibility(
       View.SYSTEM_UI_FLAG_FULLSCREEN)
   }
-}
-
-abstract trait TrypActivity
-extends tryp.droid.view.Basic
-with tryp.droid.activity.Theme
-with tryp.droid.activity.Preferences
-with tryp.droid.activity.MainView
-with tryp.droid.view.Fragments
-with Contexts[Activity]
-{
-  self: Activity ⇒
-
-  override implicit def activity = this
-
-  override def view = getWindow.getDecorView.getRootView
-
-  override def defaultTheme = string("pref_theme_default")
-}
-
-abstract class TrypDefaultActivity
-extends ActionBarActivity
-with TrypActivity
-with tryp.droid.Broadcast
-with Akkativity
-{
-  override def onStart { super.onStart }
-  override def onStop { super.onStop }
-  override def onResume { super.onResume }
 }

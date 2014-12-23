@@ -12,7 +12,6 @@ import macroid.Ui
 import tryp.droid.util.OS
 import tryp.droid.util.FragmentCallbackMixin
 import tryp.droid.res.{Layouts,LayoutAdapter}
-import tryp.droid.activity.TrypActivity
 
 trait FragmentBase
 extends view.Basic
