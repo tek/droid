@@ -4,8 +4,9 @@ import android.app.{Activity ⇒ AActivity}
 import android.content.res.{TypedArray,ColorStateList}
 import android.graphics.drawable.Drawable
 
-class Theme(implicit impAct: AActivity)
+class Theme(implicit val impAct: AActivity)
 extends tryp.droid.view.Activity
+with ActivityContexts
 {
   override implicit def activity = impAct
 
@@ -15,6 +16,10 @@ extends tryp.droid.view.Activity
 
   def color(name: String): Int = {
     styledAttribute(name, _.getColor(0, 0))
+  }
+
+  def dimension(name: String, defValue: Float = 10) = {
+    styledAttribute(name, _.getDimension(0, defValue))
   }
 
   def colorStateList(name: String): ColorStateList = {
