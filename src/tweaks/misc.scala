@@ -7,6 +7,7 @@ import android.content.res.ColorStateList
 import android.content.Context
 import android.support.v7.widget.{RecyclerView,LinearLayoutManager,CardView}
 import android.text.TextWatcher
+import android.support.v7.widget.Toolbar
 
 import macroid._
 import macroid.FullDsl._
@@ -71,6 +72,10 @@ trait Misc
   def textWatcher(listener: TextWatcher) = {
     Tweak[EditText](_.addTextChangedListener(listener))
   }
+
+  def title(t: String) = Tweak[Toolbar](_.setTitle(t))
+
+  def logo(resid: Int) = Tweak[Toolbar](_.setLogo(resid))
 }
 
 object Misc extends Misc
