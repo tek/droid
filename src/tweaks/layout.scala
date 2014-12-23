@@ -5,10 +5,11 @@ import scala.collection.mutable.ListBuffer
 import android.widget._
 import android.support.v7.widget._
 import RelativeLayout._
-import android.view.{View,ViewGroup}
+import android.view.{View,ViewGroup,Gravity}
 import ViewGroup.LayoutParams._
 import android.app.Activity
 import android.graphics.drawable.Drawable
+import android.support.v4.widget.DrawerLayout
 
 import macroid._
 import macroid.FullDsl._
@@ -83,6 +84,11 @@ trait Layout
     lp[LinearLayout](width.value, height.value, weight)
   }
 
+  def dlp(width: Width = WRAP_CONTENT, height: Height = WRAP_CONTENT, gravity:
+    Int = Gravity.START): Tweak[View] = {
+    lp[DrawerLayout](width.value, height.value, gravity)
+  }
+
   def vlp(width: Width = WRAP_CONTENT, height: Height = WRAP_CONTENT) = {
     lp[ViewGroup](width.value, height.value)
   }
@@ -108,6 +114,8 @@ trait Layout
 
   def cardBackgroundColor(color: Int) = 
     Tweak[CardView](_.setCardBackgroundColor(color))
+
+  def fitsSystemWindows = Tweak[FrameLayout](_.setFitsSystemWindows(true))
 
   object CV
   extends ActivityContexts
