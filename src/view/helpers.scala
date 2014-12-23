@@ -278,7 +278,7 @@ extends Activity
   }
 
   def addFragmentIf[A <: AFragment: ClassTag](ctor: ⇒ A) {
-    val name = implicitly[ClassTag[A]].className
+    val name = implicitly[ClassTag[A]].className.stripSuffix("Fragment")
     val tag = Tag(name)
     Option(fragmentManager.findFragmentByTag(tag)) getOrElse {
       replaceFragment(Id(name), ctor, false, tag = tag)
