@@ -6,7 +6,8 @@ object DroidDeps
 extends tryp.Deps
 {
   override def deps = super.deps ++ Map(
-    "root" → common
+    "root" → common,
+    "slickmacros" → slickmacros
   )
 
   lazy val common = Seq(
@@ -20,6 +21,17 @@ extends tryp.Deps
       "com.google.android.gms" % "play-services" % "6.+",
       aar("org.macroid" %% "macroid" % "2.0.0-M3"),
       "com.typesafe.akka" %% "akka-actor" % "2.3.3"
+    )
+  )
+
+  lazy val slickmacros = Seq(
+    libraryDependencies ++= Seq(
+      "com.typesafe.slick" %% "slick" % "2.+",
+      "org.slf4j" % "slf4j-nop" % "1.+",
+      "joda-time" % "joda-time" % "2.+",
+      "org.joda" % "joda-convert" % "1.+",
+      "org.scala-lang" % "scala-reflect" % "2.11.4",
+      "org.scala-lang" % "scala-compiler" % "2.11.4"
     )
   )
 }
@@ -41,11 +53,24 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard,
   override lazy val settings = super.settings ++ Seq(
     scalacOptions ++= Seq("-feature", "-language:implicitConversions",
       "-deprecation"),
-    scalaVersion := "2.11.2"
+    scalaVersion := "2.11.4"
+  )
+
+  val paradiseVersion = "2.0.1"
+
+  lazy val paradise = Seq(
+    incOptions := incOptions.value.withNameHashing(false),
+    addCompilerPlugin(
+      "org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full
+    )
   )
 
   lazy val macros = p("macros")
     .aar()
+
+  lazy val slickmacros = p("slickmacros")
+    .export
+    .settings(paradise)()
 
   lazy val root = p("root")
     .path(".")
@@ -65,5 +90,5 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard,
         "-P:wartremover:traverser:macroid.warts.CheckUi"
       )
     ))
-    .dep(macros)
+    .dep(macros, slickmacros)
 }
