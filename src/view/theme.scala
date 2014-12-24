@@ -1,14 +1,13 @@
 package tryp.droid.view
 
 import android.app.{Activity ⇒ AActivity}
+import android.content.Context
 import android.content.res.{TypedArray,ColorStateList}
 import android.graphics.drawable.Drawable
 
-class Theme(implicit val impAct: AActivity)
-extends tryp.droid.view.Activity
-with ActivityContexts
+class Theme(implicit val context: Context)
+extends tryp.droid.Basic
 {
-  override implicit def activity = impAct
 
   def drawable(name: String): Drawable = {
     styledAttribute(name, _.getDrawable(0))
@@ -32,7 +31,7 @@ with ActivityContexts
 
   def styledAttributes[T](names: List[String], getter: TypedArray ⇒ T): T = {
     val arr = names.map(refAttr(_)).toArray
-    val attrs = activity.obtainStyledAttributes(arr)
+    val attrs = context.obtainStyledAttributes(arr)
     try {
       getter(attrs)
     } finally {

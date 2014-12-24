@@ -199,7 +199,7 @@ extends Basic
 }
 
 trait Themes
-extends Activity
+extends tryp.droid.Basic
 {
   lazy val theme = new tryp.droid.view.Theme
 }

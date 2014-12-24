@@ -50,6 +50,13 @@ trait Misc
     Tweak[TextView](_.setMinWidth(minW))
   }
 
+  def bgCol(colName: String)(
+    implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
+  ) = {
+    val col = Resources().theme.color(ns.format(colName)).toInt
+    Tweak[View](_.setBackgroundColor(col))
+  }
+
   def checked(state: Boolean) = {
     Tweak[CheckBox](_.setChecked(state))
   }
