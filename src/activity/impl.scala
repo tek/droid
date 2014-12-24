@@ -11,13 +11,15 @@ import android.support.v7.app.ActionBarActivity
 import macroid.FullDsl._
 import macroid.{Ui,Contexts}
 
+import tryp.droid.activity._
+
 import Macroid._
 
 abstract trait TrypActivity
 extends tryp.droid.view.Basic
-with tryp.droid.activity.Theme
+with Theme
 with tryp.droid.activity.Preferences
-with tryp.droid.activity.MainView
+with MainView
 with tryp.droid.view.Fragments
 with Contexts[Activity]
 {
@@ -43,20 +45,15 @@ with Akkativity
 
 abstract class TrypDrawerActivity
 extends TrypDefaultActivity
+with Drawer
+with Toolbar
 {
-  override def initView {
-    setContentView(getUi(drawerLayout))
-    addFragment(Id.Drawer, drawerFragment, false, Tag.Drawer)
-  }
-
   def drawerLayout = {
     l[FrameLayout](
       l[DrawerLayout](
         mainLayout,
-        l[FrameLayout]() <~ Id.Drawer <~ dlp(280 dp, ↕)
-      )
-    ) <~ fitsSystemWindows
+        l[FrameLayout]() <~ Id.Drawer <~ dlp(dimen("drawer_width"), ↕)
+      ) <~ whore(drawerSlot)
+    ) <~ fitsSystemWindows <~ Id.drawerLayout
   }
-
-  def drawerFragment: Fragment
 }

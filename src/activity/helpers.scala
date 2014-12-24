@@ -3,15 +3,18 @@ package tryp.droid.activity
 import scala.collection.JavaConversions._
 
 import android.os.Bundle
-import android.app.Activity
+import android.app.{Activity,Fragment}
 import android.content.SharedPreferences
 import android.view.View
 import android.preference.PreferenceManager
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.content.Context
+import android.support.v4.widget.DrawerLayout
+import android.support.v7.app.ActionBarDrawerToggle
+import android.support.v7.widget.{Toolbar ⇒ AToolbar}
 
 import macroid.FullDsl._
-import macroid.Ui
+import macroid.{Ui,Tweak}
 
 import tryp.droid.util.CallbackMixin
 import tryp.droid.Macroid._
@@ -159,4 +162,32 @@ extends ActivityBase
     activity.getWindow.getDecorView.setSystemUiVisibility(
       View.SYSTEM_UI_FLAG_FULLSCREEN)
   }
+}
+
+trait Toolbar
+{
+  val toolbar = slut[AToolbar]
+}
+
+trait Drawer
+extends ActivityBase
+{ self: MainView with tryp.droid.view.Fragments with Toolbar ⇒
+
+  override def initView {
+    setContentView(getUi(drawerLayout))
+    addFragment(Id.Drawer, drawerFragment, false, Tag.Drawer)
+    setupDrawerToggle
+  }
+
+  def setupDrawerToggle {
+    runUi {
+      drawerSlot <~ drawerToggle(toolbar)
+    }
+  }
+
+  def drawerLayout: Ui[View]
+
+  def drawerFragment: Fragment
+
+  val drawerSlot = slut[DrawerLayout]
 }
