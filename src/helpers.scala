@@ -35,6 +35,8 @@ trait Basic {
 
   def drawableId(name: String): Int = id(name, "drawable")
 
+  def stringId(name: String): Int = id(name, "string")
+
   def resources = context.getResources
 
   def res[A >: IdTypes, B](_id: A, defType: String)(
