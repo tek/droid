@@ -93,20 +93,6 @@ trait Layout
     lp[DrawerLayout](width.value, height.value, gravity)
   }
 
-  def drawerToggle(tb: Slot[AToolbar])(implicit activity: Activity) =
-    Tweak[DrawerLayout] { drawer ⇒
-      val res = Resources()
-      tb map { toolbar ⇒
-        new ActionBarDrawerToggle(
-          activity,
-          drawer,
-          toolbar,
-          res.stringId("drawer_open"),
-          res.stringId("drawer_close")
-        )
-      } foreach(drawer.setDrawerListener(_))
-  }
-
   def vlp(width: Width = WRAP_CONTENT, height: Height = WRAP_CONTENT) = {
     lp[ViewGroup](width.value, height.value)
   }
@@ -133,7 +119,7 @@ trait Layout
   def cardBackgroundColor(color: Int) = 
     Tweak[CardView](_.setCardBackgroundColor(color))
 
-  def fitsSystemWindows = Tweak[FrameLayout](_.setFitsSystemWindows(true))
+  def fitsSystemWindows = Tweak[View](_.setFitsSystemWindows(true))
 
   object CV
   extends ActivityContexts

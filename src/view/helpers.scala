@@ -13,7 +13,7 @@ import android.app.{Activity ⇒ AActivity,AlertDialog,DialogFragment,Dialog}
 import android.app.{FragmentManager, Fragment ⇒ AFragment}
 import android.os.Bundle
 
-import macroid.{FragmentManagerContext,ActivityContext,AppContext}
+import macroid.{FragmentManagerContext,ActivityContext,AppContext,Ui}
 import macroid.support.FragmentApi
 
 import tryp.droid.util._
@@ -124,6 +124,19 @@ extends tryp.droid.Basic
       def run = callback
     }
     Option(activity) foreach { _.runOnUiThread(runner) }
+  }
+
+  def inflateLayout[A <: View: ClassTag](name: String): Ui[A] = {
+    Ui {
+      activity.getLayoutInflater.inflate(layoutId(name), null) match {
+        case view: A ⇒ view
+        case view ⇒ {
+          throw new ClassCastException(
+            s"Inflated layout ${name} resulted in wrong type " +
+            s"'${view.className}'")
+        }
+      }
+    }
   }
 }
 

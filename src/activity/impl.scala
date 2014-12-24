@@ -2,6 +2,7 @@ package tryp.droid
 
 import scala.language.postfixOps
 
+import android.os.Bundle
 import android.app.Activity
 import android.view.{View,Gravity}
 import android.widget.FrameLayout
@@ -41,19 +42,13 @@ with Akkativity
   override def onStart { super.onStart }
   override def onStop { super.onStop }
   override def onResume { super.onResume }
+  override def onPostCreate(state: Bundle) { super.onPostCreate(state) }
 }
 
 abstract class TrypDrawerActivity
 extends TrypDefaultActivity
-with Drawer
 with Toolbar
+with Drawer
+with tryp.droid.view.Themes
 {
-  def drawerLayout = {
-    l[FrameLayout](
-      l[DrawerLayout](
-        mainLayout,
-        l[FrameLayout]() <~ Id.Drawer <~ dlp(dimen("drawer_width"), ↕)
-      ) <~ whore(drawerSlot)
-    ) <~ fitsSystemWindows <~ Id.drawerLayout
-  }
 }

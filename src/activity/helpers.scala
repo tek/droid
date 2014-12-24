@@ -5,23 +5,31 @@ import scala.collection.JavaConversions._
 import android.os.Bundle
 import android.app.{Activity,Fragment}
 import android.content.SharedPreferences
-import android.view.View
+import android.content.res.Configuration
+import android.view.{View,MenuItem}
+import android.widget.FrameLayout
 import android.preference.PreferenceManager
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.content.Context
 import android.support.v4.widget.DrawerLayout
-import android.support.v7.app.ActionBarDrawerToggle
+import android.support.v7.app.{ActionBarDrawerToggle,ActionBarActivity}
 import android.support.v7.widget.{Toolbar ⇒ AToolbar}
 
 import macroid.FullDsl._
-import macroid.{Ui,Tweak}
+import macroid.{Ui,Tweak,Contexts}
 
 import tryp.droid.util.CallbackMixin
 import tryp.droid.Macroid._
+import tryp.droid.tweaks.{Toolbar ⇒ ToolbarT}
 
 trait ActivityBase
 extends tryp.droid.view.Activity
 with CallbackMixin
+{
+  def onConfigurationChanged(newConf: Configuration)
+  def onOptionsItemSelected(item: MenuItem): Boolean
+  def onPostCreate(state: Bundle)
+}
 
 trait Theme extends ActivityBase {
   def activity: Activity
@@ -47,7 +55,7 @@ extends ActivityBase
 {
   def setContentView(v: View)
   def layoutId(name: String): Int
-  def mainLayout: Ui[View]
+  def contentLayout: Ui[View]
 
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
@@ -57,6 +65,8 @@ extends ActivityBase
   def initView = {
     setContentView(getUi(mainLayout))
   }
+
+  def mainLayout = contentLayout
 }
 
 abstract trait Preferences
@@ -165,29 +175,93 @@ extends ActivityBase
 }
 
 trait Toolbar
-{
+extends ActivityBase
+{ self: ActionBarActivity
+  with MainView
+  with tryp.droid.view.Themes
+  with Contexts[Activity] ⇒
+
+  abstract override def onCreate(state: Bundle) {
+    super.onCreate(state)
+    toolbar foreach setSupportActionBar
+  }
+
   val toolbar = slut[AToolbar]
+
+  override def mainLayout = {
+    l[FrameLayout](
+      LL(vertical, llp(↔, ↕))(
+        toolbarLayout,
+        belowToolbarLayout
+      )
+    ) <~ fitsSystemWindows
+  }
+
+  def toolbarLayout = {
+    inflateLayout[AToolbar]("toolbar") <~ ↔ <~ whore(toolbar)
+  }
+
+  def belowToolbarLayout = contentLayout
 }
 
 trait Drawer
-extends ActivityBase
-{ self: MainView with tryp.droid.view.Fragments with Toolbar ⇒
+extends MainView
+{ self: Activity
+  with tryp.droid.view.Fragments
+  with Toolbar
+  with Contexts[Activity] ⇒
 
   override def initView {
-    setContentView(getUi(drawerLayout))
-    addFragment(Id.Drawer, drawerFragment, false, Tag.Drawer)
-    setupDrawerToggle
+    super.initView
+    initDrawer
   }
 
-  def setupDrawerToggle {
-    runUi {
-      drawerSlot <~ drawerToggle(toolbar)
+  def initDrawer {
+    addFragment(Id.Drawer, drawerFragment, false, Tag.Drawer)
+    drawerToggle foreach { toggle ⇒
+      drawerSlot foreach {
+        _.setDrawerListener(toggle)
+      }
     }
   }
 
-  def drawerLayout: Ui[View]
+  val drawerSlot = slut[DrawerLayout]
+
+  lazy val drawerToggle = {
+    drawerSlot flatMap { drawer ⇒
+      toolbar map { tb ⇒
+        new ActionBarDrawerToggle(
+          activity,
+          drawer,
+          tb,
+          stringId("drawer_open"),
+          stringId("drawer_close")
+        )
+      }
+    }
+  }
+
+  override def belowToolbarLayout = {
+    l[DrawerLayout](
+      contentLayout,
+      l[FrameLayout]() <~ Id.Drawer <~ dlp(dimen("drawer_width"), ↕)
+    ) <~ whore(drawerSlot) <~ llp(↔, ↕)
+  }
+
+  abstract override def onPostCreate(state: Bundle) {
+    super.onPostCreate(state)
+    drawerToggle foreach(_.syncState)
+  }
+
+  abstract override def onConfigurationChanged(newConf: Configuration) {
+    super.onConfigurationChanged(newConf)
+    drawerToggle foreach { _.onConfigurationChanged(newConf) }
+  }
+
+  abstract override def onOptionsItemSelected(item: MenuItem) = {
+    drawerToggle.exists(_.onOptionsItemSelected(item)) ||
+      super.onOptionsItemSelected(item)
+  }
 
   def drawerFragment: Fragment
-
-  val drawerSlot = slut[DrawerLayout]
 }
