@@ -7,7 +7,7 @@ import android.content.res.ColorStateList
 import android.content.Context
 import android.support.v7.widget.{RecyclerView,LinearLayoutManager,CardView}
 import android.text.TextWatcher
-import android.support.v7.widget.Toolbar
+import android.support.v7.widget.{Toolbar ⇒ AToolbar}
 
 import macroid._
 import macroid.FullDsl._
@@ -60,9 +60,9 @@ trait Misc
     Tweak[EditText](_.addTextChangedListener(listener))
   }
 
-  def title(t: String) = Tweak[Toolbar](_.setTitle(t))
+  def title(t: String) = Tweak[AToolbar](_.setTitle(t))
 
-  def logo(resid: Int) = Tweak[Toolbar](_.setLogo(resid))
+  def logo(resid: Int) = Tweak[AToolbar](_.setLogo(resid))
 }
 
 object Misc extends Misc
@@ -82,5 +82,12 @@ object Recycler
 
   def linearLayoutManager(implicit c: Context) = {
     Tweak[RecyclerView](_.setLayoutManager(new LinearLayoutManager(c)))
+  }
+}
+
+object Toolbar
+{
+  def minHeight(height: Int)(implicit c: Context) = {
+    Tweak[AToolbar](_.setMinimumHeight(height))
   }
 }
