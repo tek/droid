@@ -10,6 +10,8 @@ import ViewGroup.LayoutParams._
 import android.app.Activity
 import android.graphics.drawable.Drawable
 import android.support.v4.widget.DrawerLayout
+import android.support.v7.app.ActionBarDrawerToggle
+import android.support.v7.widget.{Toolbar ⇒ AToolbar}
 
 import macroid._
 import macroid.FullDsl._
@@ -17,6 +19,8 @@ import macroid.contrib.Layouts._
 import RuleRelativeLayout.Rule
 
 import tryp.droid.view.ActivityContexts
+import tryp.droid.res.Resources
+import tryp.droid.Macroid._
 
 trait Layout
 {
@@ -87,6 +91,20 @@ trait Layout
   def dlp(width: Width = WRAP_CONTENT, height: Height = WRAP_CONTENT, gravity:
     Int = Gravity.START): Tweak[View] = {
     lp[DrawerLayout](width.value, height.value, gravity)
+  }
+
+  def drawerToggle(tb: Slot[AToolbar])(implicit activity: Activity) =
+    Tweak[DrawerLayout] { drawer ⇒
+      val res = Resources()
+      tb map { toolbar ⇒
+        new ActionBarDrawerToggle(
+          activity,
+          drawer,
+          toolbar,
+          res.stringId("drawer_open"),
+          res.stringId("drawer_close")
+        )
+      } foreach(drawer.setDrawerListener(_))
   }
 
   def vlp(width: Width = WRAP_CONTENT, height: Height = WRAP_CONTENT) = {
