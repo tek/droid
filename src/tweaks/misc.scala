@@ -19,15 +19,6 @@ import tryp.droid.util.Id
 
 trait Misc
 {
-  class Slot[A <: View](var target: Option[A] = None)
-  {
-    def <~(t: Tweak[A]) = target <~ t
-
-    def foreach(f: A ⇒ Unit) {
-      target foreach f
-    }
-  }
-
   def image(name: String)(implicit c: Context) = {
     Tweak[ImageView](_.setImageResource(Resources().drawableId(name)))
   }
@@ -58,10 +49,6 @@ trait Misc
     val minW = Resources().dimen(ns.format(s"${dimName}_min_width")).toInt
     Tweak[TextView](_.setMinWidth(minW))
   }
-
-  def slut[A <: View] = new Slot[A]()
-
-  def whore[A <: View](pimp: Slot[A]) = Tweak[A](w ⇒ pimp.target = Some(w))
 
   def checked(state: Boolean) = {
     Tweak[CheckBox](_.setChecked(state))
