@@ -16,7 +16,11 @@ import macroid.Ui
 import tryp.droid.util.CallbackMixin
 import tryp.droid.Macroid._
 
-trait Theme extends CallbackMixin {
+trait ActivityBase
+extends tryp.droid.view.Activity
+with CallbackMixin
+
+trait Theme extends ActivityBase {
   def activity: Activity
 
   abstract override def onCreate(state: Bundle) {
@@ -36,7 +40,7 @@ trait Theme extends CallbackMixin {
 }
 
 trait MainView
-extends CallbackMixin
+extends ActivityBase
 {
   def setContentView(v: View)
   def layoutId(name: String): Int
@@ -53,7 +57,7 @@ extends CallbackMixin
 }
 
 abstract trait Preferences
-extends CallbackMixin
+extends ActivityBase
 with OnSharedPreferenceChangeListener
 with tryp.droid.view.Preferences
 {
@@ -148,9 +152,9 @@ with tryp.droid.view.Preferences
   }
 }
 
-trait System {
-  def activity: Activity
-
+trait System
+extends ActivityBase
+{
   def hideStatusBar {
     activity.getWindow.getDecorView.setSystemUiVisibility(
       View.SYSTEM_UI_FLAG_FULLSCREEN)
