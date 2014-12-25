@@ -53,7 +53,7 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard,
 
   override lazy val settings = super.settings ++ Seq(
     scalacOptions ++= Seq("-feature", "-language:implicitConversions",
-      "-deprecation"),
+      "-deprecation", "-language:postfixOps"),
     scalaVersion := "2.11.4"
   )
 
