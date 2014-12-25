@@ -4,7 +4,10 @@ import scala.language.dynamics
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
-import android.view.View
+import scalaz._
+import Scalaz._
+
+import android.view.{View,ViewGroup}
 import android.widget.{AdapterView,TextView}
 import android.content.res.{Resources,Configuration}
 import android.content.{Context,DialogInterface}
@@ -18,6 +21,7 @@ import macroid.support.FragmentApi
 
 import tryp.droid.util._
 import tryp.droid.{Basic ⇒ BBasic}
+import tryp.droid.AndroidExt._
 
 trait ProxyBase {
   def extractView(args: Any*): View = {
@@ -86,6 +90,24 @@ trait Searchable {
         None
       }
     }
+  }
+
+  def viewsOfType[A <: View: ClassTag]: Seq[A] = {
+    view match {
+      case layout: ViewGroup ⇒ {
+        layout.children map {
+          case v: A ⇒ Seq(v)
+          case sub: ViewGroup ⇒ sub.viewsOfType[A]
+          case _ ⇒ Nil
+        } flatten
+      }
+      case v: A ⇒ Seq(v)
+      case _ ⇒ Nil
+    }
+  }
+
+  def viewOfType[A <: View: ClassTag] = {
+    viewsOfType[A].lift(0)
   }
 
   def textView[A >: BBasic#IdTypes](
@@ -268,6 +290,10 @@ extends Activity
 
   def fragmentManager = rootFragmentManager
 
+  def findFragment(tag: String) = {
+    Option[AFragment](getFragmentManager.findFragmentByTag(tag))
+  }
+
   def replaceFragment[A >: BBasic#IdTypes](
     name: A, fragment: AFragment, backStack: Boolean = true, tag: String = null
   ) {
@@ -307,5 +333,18 @@ extends Activity
 
   def popBackStackSync {
     rootFragmentManager.popBackStackImmediate
+  }
+
+  def findNestedFrag[A <: AFragment: ClassTag](
+    tags: String*
+  ): Option[AFragment] = {
+    tags lift(0) flatMap { findFragment } flatMap { frag ⇒
+      frag.findNestedFrag(tags.tail: _*) orElse {
+        frag match {
+          case f: A ⇒ f.some
+          case _ ⇒ None
+        }
+      }
+    }
   }
 }
