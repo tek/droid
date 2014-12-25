@@ -23,7 +23,7 @@ with AkkaFragment
 {
   override implicit def activity = getActivity
 
-  override def view: View = getView
+  override def view = getView
 
   def getActivity: AActivity
 
