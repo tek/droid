@@ -3,17 +3,17 @@ package tryp.droid
 import android.content.Context
 import android.content.res.Resources
 
-import tryp.droid.util.{Id,Threading}
+import tryp.droid.util.Threading
 
 trait Basic {
-  type IdTypes = Int with String with Id
+  type IdTypes = Int with String with util.Id
 
   implicit def context: Context
 
   def id[A >: IdTypes](input: A, defType: String = "id"): Int = {
     input match {
       case i: Int ⇒ i
-      case i: Id ⇒ i
+      case i: util.Id ⇒ i
       case name: String ⇒ resources
         .getIdentifier(name, defType, context.getPackageName)
     }
