@@ -35,4 +35,8 @@ extends Util
   val layouts = tryp.droid.res.Layouts
 
   val fragments = tryp.droid.res.Fragments
+
+  val Id = tryp.droid.util.Id
+
+  val Tag = tryp.droid.util.Tag
 }
