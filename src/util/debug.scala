@@ -1,7 +1,7 @@
 package tryp.droid.util
 
 object Debug {
-  def rescued[A](callback: ⇒ A) = {
+  def rescued[A](callback: ⇒ A): A = {
     try {
       callback
     }
@@ -16,6 +16,7 @@ object Debug {
           e.getStackTrace foreach { Log.p(_) }
           cause = cause.getCause
         }
+      null.asInstanceOf[A]
     }
   }
 }
