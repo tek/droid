@@ -308,18 +308,19 @@ extends Activity
   def replaceFragmentIf(name: Id, fragment: ⇒ AFragment, backStack: Boolean,
     tag: String) =
   {
-    findFragment(tag) getOrElse {
+    findFragment(tag) tapNone {
       replaceFragment(name, fragment, false, tag)
-    }
+    } isEmpty
   }
 
   def replaceFragmentCustom[A <: AFragment: ClassTag](id: Id, fragment: ⇒ A,
-    backStack: Boolean)
+    backStack: Boolean) =
   {
     replaceFragmentIf(id, fragment, backStack, fragmentName[A])
   }
 
-  def replaceFragmentAuto[A <: AFragment: ClassTag](id: Id, backStack: Boolean)
+  def replaceFragmentAuto[A <: AFragment: ClassTag](id: Id,
+    backStack: Boolean) =
   {
     val tag = Tag(fragmentName[A])
     replaceFragmentIf(id, makeFragment[A], backStack, tag)
