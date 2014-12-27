@@ -2,6 +2,7 @@ package tryp.droid.tweaks
 
 import scala.collection.mutable.ListBuffer
 
+import android.content.Context
 import android.widget._
 import android.support.v7.widget._
 import RelativeLayout._
@@ -103,6 +104,12 @@ trait Layout
 
   def foreground(res: Drawable) = Tweak[FrameLayout](_.setForeground(res))
 
+  def selectableFg(implicit c: Context) =
+    foreground(Resources().theme.drawable("selectableItemBackground"))
+
+  def selectable(implicit c: Context) =
+    bg(Resources().theme.drawable("selectableItemBackground"))
+
   def elevation(dist: Float) = Tweak[CardView](_.setCardElevation(dist))
 
   def cornerRadius(dist: Float) = Tweak[CardView](_.setRadius(dist))
@@ -120,6 +127,15 @@ trait Layout
     Tweak[CardView](_.setCardBackgroundColor(color))
 
   def fitsSystemWindows = Tweak[View](_.setFitsSystemWindows(true))
+
+  object FL
+  extends ActivityContexts
+  {
+    def apply(tweaks: Tweak[FrameLayout]*)(children: Ui[View]*)(
+      implicit a: Activity) = {
+      l[FrameLayout](children: _*) <~ tweakSum(tweaks: _*)
+    }
+  }
 
   object CV
   extends ActivityContexts
