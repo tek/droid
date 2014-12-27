@@ -11,6 +11,7 @@ class Tapper[A](item: A)
 trait Util
 extends Control
 with MetadataExt
+with OptionExt
 {
 }
 

@@ -17,3 +17,5 @@ trait Control
     def /[B >: A](default: ⇒ B) = o getOrElse default
   }
 }
+
+object Control extends Control
