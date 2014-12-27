@@ -16,6 +16,13 @@ trait Control
     def /[B >: A](alternative: ⇒ Option[B]) = o orElse alternative
     def /[B >: A](default: ⇒ B) = o getOrElse default
   }
+
+  implicit class `tryp Boolean extensions`(flag: Boolean) {
+    def tapIf(f: ⇒ Unit) = {
+      if (flag) f
+      flag
+    }
+  }
 }
 
 object Control extends Control
