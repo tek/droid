@@ -1,5 +1,7 @@
 package tryp.droid.activity
 
+import scala.reflect.ClassTag
+
 import scala.collection.JavaConversions._
 
 import android.os.Bundle
@@ -21,6 +23,7 @@ import macroid.{Ui,Tweak,Contexts}
 import tryp.droid.util.CallbackMixin
 import tryp.droid.Macroid._
 import tryp.droid.tweaks.{Toolbar ⇒ ToolbarT}
+import tryp.droid.view.Fragments
 
 trait ActivityBase
 extends tryp.droid.view.Activity
@@ -53,9 +56,11 @@ trait Theme extends ActivityBase {
 trait MainView
 extends ActivityBase
 {
+  self: Fragments
+  with Contexts[Activity] ⇒
+
   def setContentView(v: View)
   def layoutId(name: String): Int
-  def contentLayout: Ui[View]
 
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
@@ -67,6 +72,18 @@ extends ActivityBase
   }
 
   def mainLayout = contentLayout
+
+  def contentLayout = {
+    l[FrameLayout]() <~ Id.content <~ bgCol("bg")
+  }
+
+  def loadContent[A <: Fragment: ClassTag](backStack: Boolean = true) {
+    replaceFragmentAuto[A](Id.content, backStack)
+  }
+
+  def loadContentCustom(fragment: Fragment, backStack: Boolean = true) {
+    replaceFragmentCustom(Id.content, fragment, backStack)
+  }
 }
 
 abstract trait Preferences
