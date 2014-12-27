@@ -6,6 +6,7 @@ import android.view.View
 import android.content.res.ColorStateList
 import android.content.Context
 import android.support.v7.widget.{RecyclerView,LinearLayoutManager,CardView}
+import android.support.v7.widget.StaggeredGridLayoutManager
 import android.text.TextWatcher
 import android.support.v7.widget.{Toolbar ⇒ AToolbar}
 
@@ -15,7 +16,7 @@ import macroid.contrib.Layouts._
 
 import tryp.droid.res.{Resources,_}
 import tryp.droid.TrypTextView
-import tryp.droid.util.Id
+import tryp.droid.view.DividerItemDecoration
 
 trait Misc
 {
@@ -90,6 +91,17 @@ object Recycler
   def linearLayoutManager(implicit c: Context) = {
     Tweak[RecyclerView](_.setLayoutManager(new LinearLayoutManager(c)))
   }
+
+  def stagger(
+    count: Int, orientation: Int = StaggeredGridLayoutManager.VERTICAL
+  )(implicit c: Context) = {
+    Tweak[RecyclerView](_.setLayoutManager(
+      new StaggeredGridLayoutManager(count, orientation)))
+  }
+
+  def divider(implicit c: Context) = Tweak[RecyclerView](
+    _.addItemDecoration(new DividerItemDecoration(c, null))
+  )
 }
 
 object Toolbar
