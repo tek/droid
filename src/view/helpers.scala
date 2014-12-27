@@ -322,7 +322,7 @@ extends Activity
   def replaceFragmentAuto[A <: AFragment: ClassTag](id: Id, backStack: Boolean)
   {
     val tag = Tag(fragmentName[A])
-    replaceFragment(id, makeFragment[A], backStack, tag)
+    replaceFragmentIf(id, makeFragment[A], backStack, tag)
   }
 
   def addFragment[A >: BBasic#IdTypes](name: A, fragment: AFragment,
