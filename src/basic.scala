@@ -37,6 +37,8 @@ trait Basic {
 
   def stringId(name: String): Int = id(name, "string")
 
+  def resourceName(_id: Int) = resources.getResourceName(_id)
+
   def resources = context.getResources
 
   def res[A >: IdTypes, B](_id: A, defType: String)(
