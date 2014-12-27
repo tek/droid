@@ -13,7 +13,6 @@ object Threading
             Log.e(e.getStackTrace.mkString)
           }
         }
-        callback
       }
     }
     new Thread(runnable).start()
