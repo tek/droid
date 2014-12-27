@@ -1,16 +1,10 @@
 package tryp.droid
 
-import scala.language.postfixOps
-
 import android.os.Bundle
 import android.app.Activity
-import android.view.{View,Gravity}
-import android.widget.FrameLayout
-import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarActivity
 
-import macroid.FullDsl._
-import macroid.{Ui,Contexts}
+import macroid.Contexts
 
 import tryp.droid.activity._
 
