@@ -24,6 +24,7 @@ import tryp.droid.util.CallbackMixin
 import tryp.droid.Macroid._
 import tryp.droid.tweaks.{Toolbar ⇒ ToolbarT}
 import tryp.droid.view.Fragments
+import tryp.droid.SettingsFragment
 
 trait ActivityBase
 extends tryp.droid.view.Activity
@@ -32,6 +33,7 @@ with CallbackMixin
   def onConfigurationChanged(newConf: Configuration)
   def onOptionsItemSelected(item: MenuItem): Boolean
   def onPostCreate(state: Bundle)
+  def onBackPressed()
 }
 
 trait Theme extends ActivityBase {
@@ -91,7 +93,10 @@ extends ActivityBase
 with OnSharedPreferenceChangeListener
 with tryp.droid.view.Preferences
 {
-  self: Activity ⇒
+  self: Activity
+  with MainView
+  with Fragments
+  with Contexts[Activity] ⇒
 
   abstract override def onCreate(state: Bundle) {
     setupPreferences
@@ -128,15 +133,16 @@ with tryp.droid.view.Preferences
     prefs.unregisterOnSharedPreferenceChangeListener(this)
   }
 
-  // TODO
+  var inSettings = false
+
   def settings {
-    // inSettings = true
-    // loadView new SettingsFragment
+    inSettings = true
+    loadContent[SettingsFragment]()
   }
 
-  // override def onBackPressed {
-    // if (inSettings) popSettings else super.onBackPressed
-  // }
+  abstract override def onBackPressed() {
+    inSettings ? popSettings / super.onBackPressed()
+  }
 
   def xmlId(name: String): Int
 
@@ -175,10 +181,9 @@ with tryp.droid.view.Preferences
 
   def themeId(name: String): Int
 
-  // TODO
   def popSettings {
-    // inSettings = false
-    // fragmentManager.popBackStack
+    inSettings = false
+    popBackStackSync
   }
 }
 

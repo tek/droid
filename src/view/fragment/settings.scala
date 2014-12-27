@@ -1,4 +1,4 @@
-package tryp.droid.view
+package tryp.droid
 
 import android.preference.PreferenceFragment
 import android.os.Bundle
