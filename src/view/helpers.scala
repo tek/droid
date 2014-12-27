@@ -5,7 +5,7 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 import scalaz._
-import Scalaz._
+import Scalaz.{Id ⇒ sId,_}
 
 import android.view.{View,ViewGroup}
 import android.widget.{AdapterView,TextView}
@@ -295,8 +295,7 @@ extends Activity
   }
 
   def replaceFragment[A >: BBasic#IdTypes](
-    name: A, fragment: AFragment, backStack: Boolean = true, tag: String = null
-  ) {
+    name: A, fragment: AFragment, backStack: Boolean, tag: String) {
     val trans = fragmentManager.beginTransaction
     trans.replace(id(name), fragment, tag)
     if (backStack) {
@@ -305,9 +304,30 @@ extends Activity
     trans.commit
   }
 
-  def addFragment[A >: BBasic#IdTypes](
-    name: A, fragment: AFragment, backStack: Boolean = true, tag: String = null
-  ) {
+  // TODO allow overriding the check for existence for back stack fragments
+  def replaceFragmentIf(name: Id, fragment: AFragment, backStack: Boolean,
+    tag: String)
+  {
+    findFragment(tag) getOrElse {
+      replaceFragment(name, fragment, false, tag)
+    }
+  }
+
+  def replaceFragmentCustom[A <: AFragment: ClassTag](id: Id, fragment: A,
+    backStack: Boolean)
+  {
+    replaceFragmentIf(id, fragment, backStack, fragmentName[A])
+  }
+
+  def replaceFragmentAuto[A <: AFragment: ClassTag](id: Id, backStack: Boolean)
+  {
+    val tag = Tag(fragmentName[A])
+    replaceFragment(id, makeFragment[A], backStack, tag)
+  }
+
+  def addFragment[A >: BBasic#IdTypes](name: A, fragment: AFragment,
+    backStack: Boolean, tag: String)
+  {
     val trans = fragmentManager.beginTransaction
     trans.add(id(name), fragment, tag)
     if (backStack) {
@@ -319,8 +339,8 @@ extends Activity
   def addFragmentIf[A <: AFragment: ClassTag](ctor: ⇒ A) {
     val name = fragmentName[A]
     val tag = Tag(name)
-    Option(fragmentManager.findFragmentByTag(tag)) getOrElse {
-      replaceFragment(Id(name), ctor, false, tag = tag)
+    findFragment(tag) getOrElse {
+      replaceFragment(Id(name), ctor, false, tag)
     }
   }
 
@@ -328,22 +348,12 @@ extends Activity
     addFragmentIf { makeFragment[A] }
   }
 
-  def replaceFragmentCustom(id: tryp.droid.util.Id, fragment: AFragment,
-    backStack: Boolean = true)
-  {
-    val tag = Tag(fragment.getClass.className.stripSuffix("Fragment"))
-    replaceFragment(id, fragment, backStack, tag)
-  }
-
-  def replaceFragmentAuto[A <: AFragment: ClassTag](id: tryp.droid.util.Id,
-    backStack: Boolean = true)
-  {
-    val tag = Tag(fragmentName[A])
-    replaceFragment(id, makeFragment[A], backStack, tag)
+  def fragmentClassName(cls: Class[_]) = {
+    cls.className.stripSuffix("Fragment")
   }
 
   def fragmentName[A <: AFragment: ClassTag] = {
-    implicitly[ClassTag[A]].className.stripSuffix("Fragment")
+    fragmentClassName(implicitly[ClassTag[A]].runtimeClass)
   }
 
   def makeFragment[A <: AFragment: ClassTag] = {
