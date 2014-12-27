@@ -305,15 +305,15 @@ extends Activity
   }
 
   // TODO allow overriding the check for existence for back stack fragments
-  def replaceFragmentIf(name: Id, fragment: AFragment, backStack: Boolean,
-    tag: String)
+  def replaceFragmentIf(name: Id, fragment: ⇒ AFragment, backStack: Boolean,
+    tag: String) =
   {
     findFragment(tag) getOrElse {
       replaceFragment(name, fragment, false, tag)
     }
   }
 
-  def replaceFragmentCustom[A <: AFragment: ClassTag](id: Id, fragment: A,
+  def replaceFragmentCustom[A <: AFragment: ClassTag](id: Id, fragment: ⇒ A,
     backStack: Boolean)
   {
     replaceFragmentIf(id, fragment, backStack, fragmentName[A])
