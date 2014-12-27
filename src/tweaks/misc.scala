@@ -67,10 +67,6 @@ trait Misc
   def textWatcher(listener: TextWatcher) = {
     Tweak[EditText](_.addTextChangedListener(listener))
   }
-
-  def title(t: String) = Tweak[AToolbar](_.setTitle(t))
-
-  def logo(resid: Int) = Tweak[AToolbar](_.setLogo(resid))
 }
 
 object Misc extends Misc
@@ -109,4 +105,10 @@ object Toolbar
   def minHeight(height: Int)(implicit c: Context) = {
     Tweak[AToolbar](_.setMinimumHeight(height))
   }
+
+  def title(value: String) = {
+    Tweak[AToolbar](_.setTitle(value))
+  }
+
+  def logo(resid: Int) = Tweak[AToolbar](_.setLogo(resid))
 }

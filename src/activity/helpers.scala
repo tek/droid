@@ -79,11 +79,13 @@ extends ActivityBase
     l[FrameLayout]() <~ Id.content <~ bgCol("bg")
   }
 
-  def loadContent[A <: Fragment: ClassTag](backStack: Boolean = true) {
+  def loadContent[A <: Fragment: ClassTag](backStack: Boolean = true,
+    title: String = "") = {
     replaceFragmentAuto[A](Id.content, backStack)
   }
 
-  def loadContentCustom(fragment: Fragment, backStack: Boolean = true) {
+  def loadContentCustom(fragment: Fragment, backStack: Boolean = true,
+    title: String = "") = {
     replaceFragmentCustom(Id.content, fragment, backStack)
   }
 }
@@ -137,7 +139,7 @@ with tryp.droid.view.Preferences
 
   def settings {
     inSettings = true
-    loadContent[SettingsFragment]()
+    loadContent[SettingsFragment](title = string("menu_settings"))
   }
 
   abstract override def onBackPressed() {
@@ -197,10 +199,10 @@ extends ActivityBase
 }
 
 trait Toolbar
-extends ActivityBase
+extends MainView
 { self: ActionBarActivity
-  with MainView
   with tryp.droid.view.Themes
+  with Fragments
   with Contexts[Activity] ⇒
 
   abstract override def onCreate(state: Bundle) {
@@ -224,6 +226,28 @@ extends ActivityBase
   }
 
   def belowToolbarLayout: Ui[View] = contentLayout
+
+  override def loadContent[A <: Fragment: ClassTag](backStack: Boolean = true,
+    title: String = "")
+  = {
+    super.loadContent[A](backStack) tapIf {
+      setTitle(title)
+    }
+  }
+
+  override def loadContentCustom(fragment: Fragment, backStack: Boolean = true,
+    title: String = "")
+  = {
+    super.loadContentCustom(fragment, backStack) tapIf {
+      setTitle(title)
+    }
+  }
+
+  def setTitle(title: String) {
+    runUi {
+      toolbar <~ ToolbarT.title(title.isEmpty ? string("app_title") / title)
+    }
+  }
 }
 
 trait Drawer
