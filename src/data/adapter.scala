@@ -1,14 +1,16 @@
 package tryp.droid
 
 import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 
-import android.widget.{BaseAdapter,TextView}
+import android.widget.{BaseAdapter,TextView,Filterable,Filter}
 import android.view.{View,ViewGroup}
 import android.app.Activity
 import android.content.Context
+import android.support.v7.widget.RecyclerView
 
 import tryp.droid.view.ActivityContexts
-import tryp.droid.util.view.AndroidExt._
+import tryp.droid.AndroidExt._
 
 abstract class ListAdapter(implicit val activity: Activity)
 extends BaseAdapter
@@ -58,4 +60,66 @@ extends ListAdapter
   protected def visible(state: Boolean): Int = {
     if (state) View.VISIBLE else View.GONE
   }
+}
+
+abstract class RecyclerAdapter[A <: RecyclerView.ViewHolder, B: ClassTag](
+  implicit val activity: Activity
+)
+extends RecyclerView.Adapter[A]
+with ActivityContexts
+with tryp.droid.view.Activity
+with tryp.droid.view.Themes
+with Filterable
+{
+  var items: Seq[B] = Seq()
+
+  var visibleItems: Seq[B] = Seq()
+
+  def getItemCount = visibleItems.length
+
+  override def getItemId(position: Int) = position
+
+  def updateItems(newItems: Seq[B]) {
+    items = newItems
+    applyFilter()
+  }
+
+  var currentFilter = ""
+
+  def filter(constraint: String) {
+    currentFilter = constraint
+    applyFilter()
+  }
+
+  def applyFilter() {
+    getFilter.filter(currentFilter)
+  }
+
+  def updateVisibleData(newItems: Seq[B]) {
+    visibleItems = newItems
+    notifyDataSetChanged
+  }
+
+  lazy val getFilter = {
+    new Filter {
+      def publishResults(q: CharSequence, results: Filter.FilterResults) {
+        results.values match {
+          case v: Seq[B] ⇒ updateVisibleData(v)
+          case v ⇒ {
+            Log.e(s"Error casting filtering results in ${this.className}")
+          }
+        }
+      }
+
+      def performFiltering(constraint: CharSequence) = {
+        val values = items filter { filterItem(_, constraint) }
+        new Filter.FilterResults tap { result ⇒
+          result.count = values.length
+          result.values = values
+        }
+      }
+    }
+  }
+
+  def filterItem(item: B, constraint: CharSequence) = true
 }
