@@ -8,7 +8,7 @@ import android.os.Bundle
 import android.app.{Activity,Fragment}
 import android.content.SharedPreferences
 import android.content.res.Configuration
-import android.view.{View,MenuItem}
+import android.view.{View,MenuItem,Gravity}
 import android.widget.FrameLayout
 import android.preference.PreferenceManager
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
@@ -223,7 +223,7 @@ extends ActivityBase
     inflateLayout[AToolbar]("toolbar") <~ ↔ <~ whore(toolbar)
   }
 
-  def belowToolbarLayout = contentLayout
+  def belowToolbarLayout: Ui[View] = contentLayout
 }
 
 trait Drawer
@@ -283,6 +283,10 @@ extends MainView
   abstract override def onOptionsItemSelected(item: MenuItem) = {
     drawerToggle.exists(_.onOptionsItemSelected(item)) ||
       super.onOptionsItemSelected(item)
+  }
+
+  def closeDrawer() {
+    drawerSlot foreach { _.closeDrawer(Gravity.LEFT) }
   }
 
   def drawerFragment: Fragment
