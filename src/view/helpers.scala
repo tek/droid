@@ -317,7 +317,7 @@ extends Activity
   }
 
   def addFragmentIf[A <: AFragment: ClassTag](ctor: ⇒ A) {
-    val name = implicitly[ClassTag[A]].className.stripSuffix("Fragment")
+    val name = fragmentName[A]
     val tag = Tag(name)
     Option(fragmentManager.findFragmentByTag(tag)) getOrElse {
       replaceFragment(Id(name), ctor, false, tag = tag)
@@ -325,10 +325,30 @@ extends Activity
   }
 
   def addFragmentIfAuto[A <: AFragment: ClassTag] {
-    addFragmentIf {
-      val cls = implicitly[ClassTag[A]].runtimeClass
-      cls.newInstance.asInstanceOf[AFragment]
-    }
+    addFragmentIf { makeFragment[A] }
+  }
+
+  def replaceFragmentCustom(id: tryp.droid.util.Id, fragment: AFragment,
+    backStack: Boolean = true)
+  {
+    val tag = Tag(fragment.getClass.className.stripSuffix("Fragment"))
+    replaceFragment(id, fragment, backStack, tag)
+  }
+
+  def replaceFragmentAuto[A <: AFragment: ClassTag](id: tryp.droid.util.Id,
+    backStack: Boolean = true)
+  {
+    val tag = Tag(fragmentName[A])
+    replaceFragment(id, makeFragment[A], backStack, tag)
+  }
+
+  def fragmentName[A <: AFragment: ClassTag] = {
+    implicitly[ClassTag[A]].className.stripSuffix("Fragment")
+  }
+
+  def makeFragment[A <: AFragment: ClassTag] = {
+    val cls = implicitly[ClassTag[A]].runtimeClass
+    cls.newInstance.asInstanceOf[AFragment]
   }
 
   def popBackStackSync {
