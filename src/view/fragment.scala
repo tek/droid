@@ -94,6 +94,9 @@ with Contexts[AFragment]
     Layouts.get(layoutName)
   }
 
+  // Create a wrapper layout containing a floating action button, showing
+  // 'icon' and dispatching touch to 'onClick', and the View created by the
+  // second block arg.
   def fab(icon: String)(onClick: ⇒ Unit)(content: ⇒ Ui[View]) = 
   {
     RL()(
