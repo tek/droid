@@ -4,14 +4,19 @@ import android.content.Context
 import android.view.{ View, ViewGroup, LayoutInflater }
 import android.os.Bundle
 import android.app.{Activity ⇒ AActivity, Fragment ⇒ AFragment}
+import android.widget._
 
 import macroid.Contexts
-import macroid.FullDsl.getUi
+import macroid.FullDsl._
 import macroid.Ui
+
+import com.shamanland.fab.FloatingActionButton
 
 import tryp.droid.util.OS
 import tryp.droid.util.FragmentCallbackMixin
 import tryp.droid.res.{Layouts,LayoutAdapter}
+import tryp.droid.Macroid._
+import tryp.droid.{Macroid ⇒ T}
 
 trait FragmentBase
 extends view.Basic
@@ -87,6 +92,23 @@ with Contexts[AFragment]
 
   lazy val layoutAdapter: Option[LayoutAdapter] = {
     Layouts.get(layoutName)
+  }
+
+  def fab(icon: String)(onClick: ⇒ Unit)(content: ⇒ Ui[View]) = 
+  {
+    RL()(
+      content,
+      w[FloatingActionButton] <~
+        image("ic_cart") <~
+        rlp(↧, ↦) <~
+        imageScale(ImageView.ScaleType.CENTER) <~
+        margin(right = 16 dp, bottom = 48 dp) <~
+        T.Fab.color("colorAccent") <~
+        On.click {
+          onClick
+          Ui.nop
+        }
+    )
   }
 }
 

@@ -21,7 +21,8 @@ extends tryp.Deps
       "com.google.android.gms" % "play-services" % "6.+",
       aar("org.macroid" %% "macroid" % "2.0.0-SNAPSHOT"),
       "com.typesafe.akka" %% "akka-actor" % "2.3.3",
-      "org.scalaz" %% "scalaz-core" % "7.+"
+      "org.scalaz" %% "scalaz-core" % "7.+",
+      "com.shamanland" % "fab" % "0.+"
     )
   )
 
