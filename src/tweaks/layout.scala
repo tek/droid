@@ -96,6 +96,11 @@ trait Layout
     lp[DrawerLayout](width.value, height.value, gravity)
   }
 
+  def flp(width: Width = WRAP_CONTENT, height: Height = WRAP_CONTENT, gravity:
+    Int = Gravity.START): Tweak[View] = {
+    lp[FrameLayout](width.value, height.value, gravity)
+  }
+
   def vlp(width: Width = WRAP_CONTENT, height: Height = WRAP_CONTENT) = {
     lp[ViewGroup](width.value, height.value)
   }
