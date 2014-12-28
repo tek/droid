@@ -1,6 +1,5 @@
 package tryp.droid
 
-import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 import android.widget.{BaseAdapter,TextView,Filterable,Filter}
@@ -71,18 +70,13 @@ with tryp.droid.view.Activity
 with tryp.droid.view.Themes
 with Filterable
 {
-  var items: Seq[B] = Seq()
+  def items: Seq[B]
 
   var visibleItems: Seq[B] = Seq()
 
   def getItemCount = visibleItems.length
 
   override def getItemId(position: Int) = position
-
-  def updateItems(newItems: Seq[B]) {
-    items = newItems
-    applyFilter()
-  }
 
   var currentFilter = ""
 
@@ -122,4 +116,18 @@ with Filterable
   }
 
   def filterItem(item: B, constraint: CharSequence) = true
+}
+
+abstract class SimpleRecyclerAdapter[A <: RecyclerView.ViewHolder, B: ClassTag]
+(implicit activity: Activity)
+extends RecyclerAdapter[A, B]
+{
+  var simpleItems = Seq[B]()
+
+  def items = simpleItems
+
+  def updateItems(newItems: Seq[B]) {
+    simpleItems = newItems
+    applyFilter()
+  }
 }
