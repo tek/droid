@@ -55,7 +55,7 @@ extends android.app.Fragment
 with FragmentBase
 with Contexts[AFragment]
 {
-  val layoutId: Option[Int] = None
+  def layoutRes: Option[Int] = None
   def layoutName: Option[String] = None
 
   override def onCreate(state: Bundle) = super.onCreate(state)
@@ -76,7 +76,7 @@ with Contexts[AFragment]
     inflater: LayoutInflater, container: ViewGroup, state: Bundle
   ): View =
   {
-    layoutId map { inflater.inflate(_, container, false) } getOrElse {
+    layoutRes map { inflater.inflate(_, container, false) } getOrElse {
       getUi(macroidLayout(state))
     }
   }
