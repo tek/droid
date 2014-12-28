@@ -35,7 +35,9 @@ trait Layout
   val ↥ = Rule(ALIGN_PARENT_TOP)
   val ↧ = Rule(ALIGN_PARENT_BOTTOM)
 
-  val ⇹ = Rule(CENTER_HORIZONTAL)
+  val centerv = Rule(CENTER_VERTICAL)
+  val centerh = Rule(CENTER_HORIZONTAL)
+  val ⇹ = centerh
 
   val ↔ = Width(MATCH_PARENT)
   val ↕ = Height(MATCH_PARENT)
