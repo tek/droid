@@ -1,5 +1,7 @@
 package tryp.droid.tweaks
 
+import scala.language.reflectiveCalls
+
 import android.app.Activity
 import android.widget._
 import android.view.View
@@ -7,26 +9,46 @@ import android.content.res.ColorStateList
 import android.content.Context
 import android.support.v7.widget.{RecyclerView,LinearLayoutManager,CardView}
 import android.support.v7.widget.StaggeredGridLayoutManager
-import android.text.TextWatcher
+import android.text.{TextWatcher,TextUtils}
 import android.support.v7.widget.{Toolbar ⇒ AToolbar}
 
 import macroid._
 import macroid.FullDsl._
 import macroid.contrib.Layouts._
 
+import com.shamanland.fab.FloatingActionButton
+
 import tryp.droid.res.{Resources,_}
 import tryp.droid.TrypTextView
 import tryp.droid.view.DividerItemDecoration
 
+trait ResourcesAccess {
+  def res(implicit c: Context) = Resources()
+  def theme(implicit c: Context) = res.theme
+}
+
 trait Misc
+extends ResourcesAccess
 {
+  def imageRes(name: String)(implicit c: Context) = {
+    Tweak[ImageView](_.setImageResource(res.drawableId(name)))
+  }
+
+  def imageResC(name: String)(implicit c: Context) = {
+    imageFitCenter + image(name)
+  }
+
+  def imageFitCenter = imageScale(ImageView.ScaleType.FIT_CENTER)
+
+  def imageScale(sType: ImageView.ScaleType) =
+    Tweak[ImageView](_.setScaleType(sType))
+
   def image(name: String)(implicit c: Context) = {
-    Tweak[ImageView](_.setImageResource(Resources().drawableId(name)))
+    Tweak[ImageView](_.setImageDrawable(theme.drawable(name)))
   }
 
   def imageC(name: String)(implicit c: Context) = {
-    Tweak[ImageView](_.setScaleType(ImageView.ScaleType.FIT_CENTER)) +
-    image(name)
+    imageFitCenter + image(name)
   }
 
   def shadow(color: ColorStateList, radius: Double, x: Int = 0, y: Int = 0) = {
@@ -34,27 +56,27 @@ trait Misc
   }
 
   def textSize(dimName: String)(implicit c: Context) = {
-    Tweak[TextView](_.setTextSize(Resources().integer(dimName)))
+    Tweak[TextView](_.setTextSize(res.integer(dimName)))
   }
 
   def hint(name: String)(
     implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
   ) = {
-    val hint = Resources().string(ns.format(s"${name}_hint"))
+    val hint = res.string(ns.format(s"${name}_hint"))
     Tweak[TextView](_.setHint(hint))
   }
 
   def minWidthDim(dimName: String)(
     implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
   ) = {
-    val minW = Resources().dimen(ns.format(s"${dimName}_min_width")).toInt
+    val minW = res.dimen(ns.format(s"${dimName}_min_width")).toInt
     Tweak[TextView](_.setMinWidth(minW))
   }
 
   def bgCol(colName: String)(
     implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
   ) = {
-    val col = Resources().theme.color(ns.format(colName)).toInt
+    val col = theme.color(ns.format(colName)).toInt
     Tweak[View](_.setBackgroundColor(col))
   }
 
@@ -67,11 +89,32 @@ trait Misc
   def textWatcher(listener: TextWatcher) = {
     Tweak[EditText](_.addTextChangedListener(listener))
   }
+
+  def ellipsize(lines: Int = 1) = Tweak[TextView] { v ⇒
+    if (lines > 0) v.setMaxLines(lines)
+    v.setEllipsize(TextUtils.TruncateAt.END)
+  }
+
+  type canSetColor = View { def setColor(i: Int) }
+
+  def color(name: String)(implicit c: Context) = Tweak[canSetColor] {
+    _.setColor(theme.color(name))
+  }
+
+  object Fab
+  extends ResourcesAccess
+  {
+    def color(name: String)(implicit c: Context) =
+      Misc.color(name) + reinit
+
+    def reinit = Tweak[FloatingActionButton] { _.initBackground() }
+  }
 }
 
 object Misc extends Misc
 
 object Spinner
+extends ResourcesAccess
 {
   def adapter(a: SpinnerAdapter) = {
     Tweak[Spinner](_.setAdapter(a))
@@ -79,6 +122,7 @@ object Spinner
 }
 
 object Recycler
+extends ResourcesAccess
 {
   def recyclerAdapter(a: RecyclerView.Adapter[_]) = {
     Tweak[RecyclerView](_.setAdapter(a))
@@ -101,6 +145,7 @@ object Recycler
 }
 
 object Toolbar
+extends ResourcesAccess
 {
   def minHeight(height: Int)(implicit c: Context) = {
     Tweak[AToolbar](_.setMinimumHeight(height))
