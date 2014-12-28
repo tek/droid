@@ -75,7 +75,7 @@ extends ActivityBase
 
   def mainLayout = contentLayout
 
-  def contentLayout = {
+  def contentLayout: Ui[View] = {
     l[FrameLayout]() <~ Id.content <~ bgCol("bg")
   }
 
