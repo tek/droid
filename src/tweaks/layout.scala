@@ -66,7 +66,7 @@ trait Layout
 
   implicit def `Tweak from Width`[W <: View](w: Width) = llp(width = w)
 
-  def extractParams(params: Any*) = {
+  def extractRlParams(params: Any*) = {
     val rules = ListBuffer[Rule]()
     var width = Width(WRAP_CONTENT)
     var height = Height(WRAP_CONTENT)
@@ -75,14 +75,15 @@ trait Layout
         case r: Rule ⇒ rules += r
         case w: Width ⇒ width = w
         case h: Height ⇒ height = h
-        case _ ⇒
+        case p ⇒ throw new Exception(
+          s"Invalid parameter for relative layout: ${p}[${p.getClass}]")
       }
     }
     (width, height, rules)
   }
 
   def relative(params: Any*) = {
-    val (width, height, rules) = extractParams(params: _*)
+    val (width, height, rules) = extractRlParams(params: _*)
     lp[RuleRelativeLayout](width.value, height.value, rules: _*)
   }
 
