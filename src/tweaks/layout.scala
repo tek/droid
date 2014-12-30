@@ -35,6 +35,8 @@ trait Layout
   val ↥ = Rule(ALIGN_PARENT_TOP)
   val ↧ = Rule(ALIGN_PARENT_BOTTOM)
 
+  def alignBottom(d: Int) = Rule(ALIGN_BOTTOM, d)
+
   val centerv = Rule(CENTER_VERTICAL)
   val centerh = Rule(CENTER_HORIZONTAL)
   val ⇹ = centerh
