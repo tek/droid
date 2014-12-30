@@ -1,4 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
   <dimen name='drawer_width'>300dp</dimen>
+  <dimen name='fab_margin_normal'>30dp</dimen>
+  <dimen name='fab_margin_normal_minus'>-30dp</dimen>
+  <dimen name='fab_margin_mini'>22dp</dimen>
+  <dimen name='fab_margin_mini_minus'>-22dp</dimen>
 </resources>
