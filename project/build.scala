@@ -92,5 +92,13 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard,
         "-P:wartremover:traverser:macroid.warts.CheckUi"
       )
     ))
-    .dep(macros, slickmacros)
+    .dep(macros)
+
+  lazy val unit = p("unit")
+    .aar
+    .dep(root)
+
+  lazy val integration = p("integration")
+    .aar
+    .dep(root)
 }
