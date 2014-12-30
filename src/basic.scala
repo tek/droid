@@ -11,11 +11,14 @@ trait Basic {
   implicit def context: Context
 
   def id[A >: IdTypes](input: A, defType: String = "id"): Int = {
-    input match {
+    val res = input match {
       case i: Int ⇒ i
-      case i: util.Id ⇒ i
+      case i: util.Id ⇒ i.value
       case name: String ⇒ resources
         .getIdentifier(name, defType, context.getPackageName)
+    }
+    res.tapIfEquals(0) { i ⇒
+      Log.e(s"Resource ${defType} '${input}' resolved to zero!")
     }
   }
 
