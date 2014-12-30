@@ -1,13 +1,5 @@
 package tryp.droid.util
 
-class Tapper[A](item: A)
-{
-    def tap(fun: A ⇒ Unit): A = {
-      fun(item)
-      item
-    }
-}
-
 trait Util
 extends Control
 with MetadataExt
@@ -18,7 +10,6 @@ with OptionExt
 trait Globals
 extends Util
 {
-  implicit def tapper[A](item: A) = new Tapper(item)
   val Env = tryp.droid.util.Env
 
   def Log = {

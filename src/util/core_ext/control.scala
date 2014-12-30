@@ -23,6 +23,22 @@ trait Control
       flag
     }
   }
+
+  implicit class Tapper[A](item: A)
+  {
+    def tap(fun: A ⇒ Unit): A = {
+      fun(item)
+      item
+    }
+
+    def tapIfEquals(cond: A)(f: A ⇒ Unit) = {
+      tap { a ⇒
+        if(item == cond) {
+          f(item)
+        }
+      }
+    }
+  }
 }
 
 object Control extends Control
