@@ -76,7 +76,7 @@ extends ActivityBase
   def mainLayout = contentLayout
 
   def contentLayout: Ui[View] = {
-    l[FrameLayout]() <~ Id.content <~ bgCol("bg")
+    l[FrameLayout]() <~ Id.content <~ bgCol("main")
   }
 
   def loadContent[A <: Fragment: ClassTag](backStack: Boolean = true,
