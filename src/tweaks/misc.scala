@@ -27,28 +27,12 @@ trait ResourcesAccess {
   def theme(implicit c: Context) = res.theme
 }
 
-trait Misc
+trait Text
 extends ResourcesAccess
 {
-  def imageRes(name: String)(implicit c: Context) = {
-    Tweak[ImageView](_.setImageResource(res.drawableId(name)))
-  }
-
-  def imageResC(name: String)(implicit c: Context) = {
-    imageFitCenter + image(name)
-  }
-
-  def imageFitCenter = imageScale(ImageView.ScaleType.FIT_CENTER)
-
-  def imageScale(sType: ImageView.ScaleType) =
-    Tweak[ImageView](_.setScaleType(sType))
-
-  def image(name: String)(implicit c: Context) = {
-    Tweak[ImageView](_.setImageDrawable(theme.drawable(name)))
-  }
-
-  def imageC(name: String)(implicit c: Context) = {
-    imageFitCenter + image(name)
+  def ellipsize(lines: Int = 1) = Tweak[TextView] { v ⇒
+    if (lines > 0) v.setMaxLines(lines)
+    v.setEllipsize(TextUtils.TruncateAt.END)
   }
 
   def shadow(color: ColorStateList, radius: Double, x: Int = 0, y: Int = 0) = {
@@ -72,6 +56,31 @@ extends ResourcesAccess
     val minW = res.dimen(ns.format(s"${dimName}_min_width")).toInt
     Tweak[TextView](_.setMinWidth(minW))
   }
+}
+
+trait Misc
+extends Text
+{
+  def imageRes(name: String)(implicit c: Context) = {
+    Tweak[ImageView](_.setImageResource(res.drawableId(name)))
+  }
+
+  def imageResC(name: String)(implicit c: Context) = {
+    imageFitCenter + image(name)
+  }
+
+  def imageFitCenter = imageScale(ImageView.ScaleType.FIT_CENTER)
+
+  def imageScale(sType: ImageView.ScaleType) =
+    Tweak[ImageView](_.setScaleType(sType))
+
+  def image(name: String)(implicit c: Context) = {
+    Tweak[ImageView](_.setImageDrawable(theme.drawable(name)))
+  }
+
+  def imageC(name: String)(implicit c: Context) = {
+    imageFitCenter + image(name)
+  }
 
   def bgCol(colName: String)(
     implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
@@ -88,11 +97,6 @@ extends ResourcesAccess
 
   def textWatcher(listener: TextWatcher) = {
     Tweak[EditText](_.addTextChangedListener(listener))
-  }
-
-  def ellipsize(lines: Int = 1) = Tweak[TextView] { v ⇒
-    if (lines > 0) v.setMaxLines(lines)
-    v.setEllipsize(TextUtils.TruncateAt.END)
   }
 
   type canSetColor = View { def setColor(i: Int) }
