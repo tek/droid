@@ -23,8 +23,13 @@ import tryp.droid.TrypTextView
 import tryp.droid.view.DividerItemDecoration
 
 trait ResourcesAccess {
-  def res(implicit c: Context) = Resources()
-  def theme(implicit c: Context) = res.theme
+  def res(implicit c: Context,
+    ns: ResourceNamespace = GlobalResourceNamespace) = Resources()
+
+  def theme(implicit c: Context,
+    ns: ResourceNamespace = GlobalResourceNamespace) = {
+    res.theme
+  }
 }
 
 trait Text
@@ -39,23 +44,34 @@ extends ResourcesAccess
     Tweak[TrypTextView](_.setShadow(color, radius, x, y))
   }
 
-  def textSize(dimName: String)(implicit c: Context) = {
-    Tweak[TextView](_.setTextSize(res.integer(dimName)))
+  case class Text(
+    implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
+  )
+  {
+    def size(name: String) = {
+      Tweak[TextView](_.setTextSize(res.i(name)))
+    }
+
+    def content(name: String) = {
+      Tweak[TextView](_.setText(res.s(name)))
+    }
+
+    def large = macroid.contrib.TextTweaks.large
+
+    def hint(name: String) = {
+      val hint = res.s(name, Some("hint"))
+      Tweak[TextView](_.setHint(hint))
+    }
+
+    def minWidth(name: String) = {
+      val width = res.d(name, Some("min_width")).toInt
+      Tweak[TextView](_.setMinWidth(width))
+    }
   }
 
-  def hint(name: String)(
+  def txt(
     implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
-  ) = {
-    val hint = res.string(ns.format(s"${name}_hint"))
-    Tweak[TextView](_.setHint(hint))
-  }
-
-  def minWidthDim(dimName: String)(
-    implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
-  ) = {
-    val minW = res.dimen(ns.format(s"${dimName}_min_width")).toInt
-    Tweak[TextView](_.setMinWidth(minW))
-  }
+  ) = Text()
 }
 
 trait Misc
