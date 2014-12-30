@@ -47,7 +47,7 @@ extends ListAdapter
   }
 
   protected def newView: View = {
-    activity.getLayoutInflater.inflate(layoutId(layoutName), null)
+    activity.getLayoutInflater.inflate(res.layoutId(layoutName), null)
   }
 
   protected def layoutName: String
@@ -67,7 +67,6 @@ abstract class RecyclerAdapter[A <: RecyclerView.ViewHolder, B: ClassTag](
 extends RecyclerView.Adapter[A]
 with ActivityContexts
 with tryp.droid.view.Activity
-with tryp.droid.view.Themes
 with Filterable
 {
   def items: Seq[B]

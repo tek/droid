@@ -11,6 +11,6 @@ with tryp.droid.Basic
   
   override def onCreate(state: Bundle) {
     super.onCreate(state)
-    addPreferencesFromResource(xmlId("user_preferences"))
+    addPreferencesFromResource(res.xmlId("user_preferences"))
   }
 }

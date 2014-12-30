@@ -62,7 +62,6 @@ extends ActivityBase
   with Contexts[Activity] ⇒
 
   def setContentView(v: View)
-  def layoutId(name: String): Int
 
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
@@ -139,17 +138,15 @@ with tryp.droid.view.Preferences
 
   def settings {
     inSettings = true
-    loadContent[SettingsFragment](title = string("menu_settings"))
+    loadContent[SettingsFragment](title = res.string("menu_settings"))
   }
 
   abstract override def onBackPressed() {
     inSettings ? popSettings / super.onBackPressed()
   }
 
-  def xmlId(name: String): Int
-
   def setupPreferences {
-    PreferenceManager.setDefaultValues(activity, xmlId("user_preferences"),
+    PreferenceManager.setDefaultValues(activity, res.xmlId("user_preferences"),
       false)
   }
 
@@ -169,7 +166,7 @@ with tryp.droid.view.Preferences
 
   // FIXME cannot resolve theme id in robolectric test
   def changeTheme(theme: String, restart: Boolean = true) {
-    val id = themeId(theme)
+    val id = res.themeId(theme)
     if (id > 0) {
       applyTheme(id, restart)
     }
@@ -180,8 +177,6 @@ with tryp.droid.view.Preferences
     activity.setTheme(id)
     if (restart) activity.recreate
   }
-
-  def themeId(name: String): Int
 
   def popSettings {
     inSettings = false
@@ -201,7 +196,6 @@ extends ActivityBase
 trait Toolbar
 extends MainView
 { self: ActionBarActivity
-  with tryp.droid.view.Themes
   with Fragments
   with Contexts[Activity] ⇒
 
@@ -245,7 +239,8 @@ extends MainView
 
   def setTitle(title: String) {
     runUi {
-      toolbar <~ ToolbarT.title(title.isEmpty ? string("app_title") / title)
+      toolbar <~
+        ToolbarT.title(title.isEmpty ? res.string("app_title") / title)
     }
   }
 }
@@ -280,8 +275,8 @@ extends MainView
           activity,
           drawer,
           tb,
-          stringId("drawer_open"),
-          stringId("drawer_close")
+          res.stringId("drawer_open"),
+          res.stringId("drawer_close")
         )
       }
     }
@@ -290,7 +285,7 @@ extends MainView
   override def belowToolbarLayout = {
     l[DrawerLayout](
       contentLayout,
-      l[FrameLayout]() <~ Id.Drawer <~ dlp(dimen("drawer_width"), ↕)
+      l[FrameLayout]() <~ Id.Drawer <~ dlp(res.dimen("drawer_width"), ↕)
     ) <~ whore(drawerSlot) <~ llp(↔, ↕)
   }
 

@@ -31,7 +31,7 @@ trait Akkativity extends AkkaComponent
 { self: android.app.Activity
   with view.Activity ⇒
 
-  lazy val actorSystemName = string("app_handle")
+  lazy val actorSystemName = res.string("app_handle")
 
   lazy val actorSystem = ActorSystem(
     actorSystemName,

@@ -39,5 +39,5 @@ extends tryp.droid.Basic
     }
   }
 
-  def refAttr(name: String) = id(name, "attr")
+  def refAttr(name: String) = res.id(name, "attr")
 }

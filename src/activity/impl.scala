@@ -25,7 +25,7 @@ with Contexts[Activity]
 
   override def searcher = this
 
-  override def defaultTheme = string("pref_theme_default")
+  override def defaultTheme = res.string("pref_theme_default")
 }
 
 abstract class TrypDefaultActivity
@@ -44,6 +44,5 @@ abstract class TrypDrawerActivity
 extends TrypDefaultActivity
 with Toolbar
 with Drawer
-with tryp.droid.view.Themes
 {
 }

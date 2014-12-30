@@ -5,7 +5,7 @@ import android.preference.PreferenceManager
 import android.content.Context
 
 trait Preferences
-extends Basic
+extends HasContext
 {
   def pref(key: String, default: String = "") = {
     prefs.getString(s"pref_${key}", default)

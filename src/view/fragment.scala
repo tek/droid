@@ -121,8 +121,8 @@ with Contexts[AFragment]
       fabUi(icon)(onClick) <~
         rlp(↦, alignBottom(headerId)) <~
         margin(
-          right = dimen("fab_margin_normal").toInt,
-          bottom = dimen("fab_margin_normal_minus").toInt)
+          right = res.dimen("fab_margin_normal").toInt,
+          bottom = res.dimen("fab_margin_normal_minus").toInt)
     )
   }
 

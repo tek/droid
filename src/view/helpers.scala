@@ -10,7 +10,7 @@ import Scalaz.{Id ⇒ sId,_}
 
 import android.view.{View,ViewGroup}
 import android.widget.{AdapterView,TextView}
-import android.content.res.{Resources,Configuration}
+import android.content.res.{Resources ⇒ AResources,Configuration}
 import android.content.{Context,DialogInterface}
 import android.view.inputmethod.InputMethodManager
 import android.app.{Activity ⇒ AActivity,AlertDialog,DialogFragment,Dialog}
@@ -23,6 +23,7 @@ import macroid.support.FragmentApi
 import tryp.droid.util._
 import tryp.droid.{Basic ⇒ BBasic}
 import tryp.droid.AndroidExt._
+import tryp.droid.res._
 
 trait ProxyBase {
   def extractView(args: Any*): Option[View] = {
@@ -68,13 +69,13 @@ trait Searchable {
 
   def searcher: CanFindView = view
 
-  def id[A >: BBasic#IdTypes](input: A, defType: String = "id"): Int
+  def res(implicit ns: ResourceNamespace = GlobalResourceNamespace): Resources
 
   def find[A >: BBasic#IdTypes](
     name: A, root: Option[View] = None
   ): Option[View] = {
     val entry = root getOrElse view
-    entry.findViewById(id(name)) match {
+    entry.findViewById(res.id(name)) match {
       case v: View ⇒ Option(v)
       case null ⇒ {
         if (Env.release) {
@@ -163,7 +164,7 @@ extends tryp.droid.Basic
 
   def inflateLayout[A <: View: ClassTag](name: String): Ui[A] = {
     Ui {
-      activity.getLayoutInflater.inflate(layoutId(name), null) match {
+      activity.getLayoutInflater.inflate(res.layoutId(name), null) match {
         case view: A ⇒ view
         case view ⇒ {
           throw new ClassCastException(
@@ -200,7 +201,7 @@ extends Basic
 trait Geometry
 extends Basic
 {
-  def resources: Resources
+  def resources: AResources
 
   def viewPos(view: View): Array[Int] = {
     val data = Array[Int](0, 0)
@@ -233,12 +234,6 @@ extends Basic
   }
 }
 
-trait Themes
-extends tryp.droid.Basic
-{
-  lazy val theme = new tryp.droid.view.Theme
-}
-
 class DialogListener(callback: () ⇒ Unit = () ⇒ ())
 extends DialogInterface.OnClickListener
 {
@@ -256,8 +251,8 @@ with tryp.droid.Basic
   override def onCreateDialog(state: Bundle): Dialog = {
     val builder = new AlertDialog.Builder(context)
     builder.setMessage(message)
-    builder.setPositiveButton(string("yes"), new DialogListener(callback))
-    builder.setNegativeButton(string("no"), new DialogListener)
+    builder.setPositiveButton(res.string("yes"), new DialogListener(callback))
+    builder.setNegativeButton(res.string("no"), new DialogListener)
     builder.create
   }
 }
@@ -312,7 +307,7 @@ with Searchable
     backStack: Boolean, tag: String)
   {
     moveFragment(name, fragment, backStack, tag) {
-      _.replace(id(name), fragment, tag)
+      _.replace(res.id(name), fragment, tag)
     }
   }
 
@@ -344,7 +339,7 @@ with Searchable
     backStack: Boolean, tag: String)
   {
     moveFragment(name, fragment, backStack, tag) {
-      _.add(id(name), fragment, tag)
+      _.add(res.id(name), fragment, tag)
     }
   }
 
