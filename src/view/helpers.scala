@@ -3,6 +3,7 @@ package tryp.droid.view
 import scala.language.dynamics
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import scala.util.Try
 
 import scalaz._
 import Scalaz.{Id ⇒ sId,_}
@@ -24,10 +25,12 @@ import tryp.droid.{Basic ⇒ BBasic}
 import tryp.droid.AndroidExt._
 
 trait ProxyBase {
-  def extractView(args: Any*): View = {
-    if (args.isEmpty) null else args.head match {
-      case v: View ⇒ v
-      case _ ⇒ null
+  def extractView(args: Any*): Option[View] = {
+    args.lift(0) flatMap {
+      _ match {
+        case v: View ⇒ Some(v)
+        case _ ⇒ None
+      }
     }
   }
 }
@@ -59,12 +62,18 @@ with ProxyBase
 }
 
 trait Searchable {
+  type CanFindView = AnyRef { def findViewById(id: Int): View }
+
   def view: View
+
+  def searcher: CanFindView = view
 
   def id[A >: BBasic#IdTypes](input: A, defType: String = "id"): Int
 
-  def find[A >: BBasic#IdTypes](name: A, root: View = null): Option[View] = {
-    val entry = if (root != null) root else view
+  def find[A >: BBasic#IdTypes](
+    name: A, root: Option[View] = None
+  ): Option[View] = {
+    val entry = root getOrElse view
     entry.findViewById(id(name)) match {
       case v: View ⇒ Option(v)
       case null ⇒ {
@@ -81,7 +90,7 @@ trait Searchable {
   }
 
   def findt[A >: BBasic#IdTypes, B <: View: ClassTag](
-    name: A, root: View = null
+    name: A, root: Option[View] = None
   ): Option[B] = {
     find(name, root) match {
       case a: Option[B] ⇒ a
@@ -111,7 +120,7 @@ trait Searchable {
   }
 
   def textView[A >: BBasic#IdTypes](
-    name: A, root: View = null
+    name: A, root: Option[View] = None
   ): Option[TextView] = {
     findt[A, TextView](name, root)
   }
