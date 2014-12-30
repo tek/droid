@@ -35,26 +35,23 @@ trait ResourcesAccess {
 trait Text
 extends ResourcesAccess
 {
-  def ellipsize(lines: Int = 1) = Tweak[TextView] { v ⇒
-    if (lines > 0) v.setMaxLines(lines)
-    v.setEllipsize(TextUtils.TruncateAt.END)
-  }
-
-  def shadow(color: ColorStateList, radius: Double, x: Int = 0, y: Int = 0) = {
-    Tweak[TrypTextView](_.setShadow(color, radius, x, y))
-  }
-
   case class Text(
     implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
   )
   {
-    def size(name: String) = {
-      Tweak[TextView](_.setTextSize(res.i(name)))
+    def ellipsize(lines: Int = 1) = Tweak[TextView] { v ⇒
+      if (lines > 0) v.setMaxLines(lines)
+      v.setEllipsize(TextUtils.TruncateAt.END)
     }
 
-    def content(name: String) = {
+    def shadow(color: ColorStateList, radius: Double, x: Int = 0, y: Int = 0) =
+      Tweak[TrypTextView](_.setShadow(color, radius, x, y))
+
+    def size(name: String) =
+      Tweak[TextView](_.setTextSize(res.i(name)))
+
+    def content(name: String) =
       Tweak[TextView](_.setText(res.s(name)))
-    }
 
     def large = macroid.contrib.TextTweaks.large
 
@@ -98,10 +95,10 @@ extends Text
     imageFitCenter + image(name)
   }
 
-  def bgCol(colName: String)(
+  def bgCol(name: String)(
     implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
   ) = {
-    val col = theme.color(ns.format(colName)).toInt
+    val col = theme.color(ns.format(name, Some("bg"))).toInt
     Tweak[View](_.setBackgroundColor(col))
   }
 
