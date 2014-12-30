@@ -125,6 +125,10 @@ trait Searchable {
     findt[A, TextView](name, root)
   }
 
+  def viewExists[A >: BBasic#IdTypes](name: A) = {
+    Try(find(name)) isSuccess
+  }
+
   lazy val tviews = TypedViewsProxy(this)
 
   lazy val views = ViewsProxy(this)
