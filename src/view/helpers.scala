@@ -310,7 +310,7 @@ extends Activity
   def replaceFragmentIf(name: Id, fragment: ⇒ AFragment, backStack: Boolean,
     tag: String) =
   {
-    findFragment(tag) tapNone {
+    findFragment(tag) ifNone {
       replaceFragment(name, fragment, false, tag)
     } isEmpty
   }
