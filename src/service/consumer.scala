@@ -78,7 +78,8 @@ trait ServiceConsumer extends CallbackMixin {
       case s: A ⇒ s
       case s ⇒ {
         throw new ClassCastException(
-          s"Wrong service class for ${name}: ${s.getClass.getSimpleName}!"
+          s"Wrong service class for ${name}: ${s.getClass.getSimpleName}" +
+            s" (wanted ${implicitly[ClassTag[A]].className})"
         )
       }
     }
