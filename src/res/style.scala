@@ -1,10 +1,8 @@
-package tryp.tick.res
+package tryp.droid.res
 
 import scala.collection.mutable.{Map => MMap}
 
 import android.content.Context
-
-import tryp.droid.res.Resources
 
 abstract class Style
 {
