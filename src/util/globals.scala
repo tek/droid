@@ -32,4 +32,6 @@ extends Util
   val Id = tryp.droid.util.Id
 
   val Tag = tryp.droid.util.Tag
+
+  type Id = tryp.droid.util.Id
 }
