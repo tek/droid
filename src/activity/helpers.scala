@@ -32,7 +32,7 @@ with CallbackMixin
 {
   def onConfigurationChanged(newConf: Configuration)
   def onOptionsItemSelected(item: MenuItem): Boolean
-  def onPostCreate(state: Bundle)
+  protected def onPostCreate(state: Bundle)
   def onBackPressed()
 }
 
