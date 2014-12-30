@@ -17,14 +17,15 @@ with tryp.droid.activity.Preferences
 with MainView
 with tryp.droid.view.Fragments
 with Contexts[Activity]
-{
-  self: Activity ⇒
+{ self: Activity ⇒
 
-    override implicit def activity = this
+  override implicit def activity = this
 
-    override def view = getWindow.getDecorView.getRootView
+  override def view = getWindow.getDecorView.getRootView
 
-    override def defaultTheme = string("pref_theme_default")
+  override def searcher = this
+
+  override def defaultTheme = string("pref_theme_default")
 }
 
 abstract class TrypDefaultActivity
