@@ -108,6 +108,8 @@ extends Text
 
   def clickable = Tweak[View](_.setClickable(true))
 
+  def notClickable = Tweak[View](_.setClickable(false))
+
   def textWatcher(listener: TextWatcher) = {
     Tweak[EditText](_.addTextChangedListener(listener))
   }
