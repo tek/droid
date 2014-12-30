@@ -136,7 +136,7 @@ with tryp.droid.view.Preferences
 
   var inSettings = false
 
-  def settings {
+  def settings() {
     inSettings = true
     loadContent[SettingsFragment](title = res.string("menu_settings"))
   }
