@@ -14,7 +14,7 @@ import android.content.res.{Resources,Configuration}
 import android.content.{Context,DialogInterface}
 import android.view.inputmethod.InputMethodManager
 import android.app.{Activity ⇒ AActivity,AlertDialog,DialogFragment,Dialog}
-import android.app.{FragmentManager, Fragment ⇒ AFragment}
+import android.app.{FragmentManager, Fragment ⇒ AFragment,FragmentTransaction}
 import android.os.Bundle
 
 import macroid.{FragmentManagerContext,ActivityContext,AppContext,Ui}
@@ -296,6 +296,7 @@ with tryp.droid.Preferences
 
 trait Fragments
 extends Activity
+with Searchable
 {
   def getFragmentManager: FragmentManager
 
@@ -304,28 +305,26 @@ extends Activity
   def fragmentManager = rootFragmentManager
 
   def findFragment(tag: String) = {
-    Option[AFragment](getFragmentManager.findFragmentByTag(tag))
+    Option[AFragment](rootFragmentManager.findFragmentByTag(tag))
   }
 
-  def replaceFragment[A >: BBasic#IdTypes](
-    name: A, fragment: AFragment, backStack: Boolean, tag: String) {
-    val trans = fragmentManager.beginTransaction
-    trans.replace(id(name), fragment, tag)
-    if (backStack) {
-      trans.addToBackStack(tag)
+  def replaceFragment[A >: BBasic#IdTypes](name: A, fragment: AFragment,
+    backStack: Boolean, tag: String)
+  {
+    moveFragment(name, fragment, backStack, tag) {
+      _.replace(id(name), fragment, tag)
     }
-    trans.commit
   }
 
-  // TODO allow overriding the check for existence for back stack fragments
   // Check for existence of fragment by 'tag', insert the new one if not found
   // Return true if the fragment has been inserted
+  // TODO allow overriding the check for existence for back stack fragments
   def replaceFragmentIf(name: Id, fragment: ⇒ AFragment, backStack: Boolean,
     tag: String) =
   {
-    findFragment(tag) ifNone {
-      replaceFragment(name, fragment, false, tag)
-    } isEmpty
+    val frag = findFragment(tag)
+    frag ifNone { replaceFragment(name, fragment, backStack, tag) }
+    frag isEmpty
   }
 
   def replaceFragmentCustom[A <: AFragment: ClassTag](id: Id, fragment: ⇒ A,
@@ -344,13 +343,24 @@ extends Activity
   def addFragment[A >: BBasic#IdTypes](name: A, fragment: AFragment,
     backStack: Boolean, tag: String)
   {
-    val trans = fragmentManager.beginTransaction
-    trans.add(id(name), fragment, tag)
-    if (backStack) {
-      trans.addToBackStack(tag)
+    moveFragment(name, fragment, backStack, tag) {
+      _.add(id(name), fragment, tag)
     }
-    trans.commit
   }
+
+  def moveFragment[A >: BBasic#IdTypes](name: A, fragment: AFragment,
+    backStack: Boolean, tag: String)(move: (FragmentTransaction) ⇒ Unit)
+  {
+    checkFrame(name) {
+      val trans = fragmentManager.beginTransaction
+      move(trans)
+      if (backStack) {
+        trans.addToBackStack(tag)
+      }
+      trans.commit
+    }
+  }
+
 
   def addFragmentIf[A <: AFragment: ClassTag](ctor: ⇒ A) {
     val name = fragmentName[A]
@@ -392,5 +402,12 @@ extends Activity
         }
       }
     }
+  }
+
+  def checkFrame[A >: BBasic#IdTypes](name: A)(f: ⇒ Unit) {
+    if (viewExists(name))
+      f
+    else
+      Log.e(s"Tried to add fragment to nonexistent frame with id '${name}'")
   }
 }
