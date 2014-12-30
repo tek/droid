@@ -14,7 +14,7 @@ import com.shamanland.fab.FloatingActionButton
 
 import tryp.droid.util.OS
 import tryp.droid.util.FragmentCallbackMixin
-import tryp.droid.res.{Layouts,LayoutAdapter}
+import tryp.droid.res.{Layouts,LayoutAdapter,PrefixResourceNamespace}
 import tryp.droid.Macroid._
 import tryp.droid.{Macroid ⇒ T}
 
@@ -62,6 +62,10 @@ with Contexts[AFragment]
 {
   def layoutRes: Option[Int] = None
   def layoutName: Option[String] = None
+
+  val name = fragmentClassName(getClass)
+
+  implicit def resourceNamespace = PrefixResourceNamespace(name.snakeCase)
 
   override def onCreate(state: Bundle) = super.onCreate(state)
   override def onStart = super.onStart
