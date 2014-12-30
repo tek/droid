@@ -147,6 +147,13 @@ trait Layout
     }
   }
 
+  def clickFrame(dispatch: ⇒ Unit)(ui: Ui[View]*)(implicit a: Activity) = {
+    FL(selectableFg)(ui: _*) <~ On.click {
+      dispatch
+      Ui.nop
+    }
+  }
+
   object CV
   extends ActivityContexts
   {
