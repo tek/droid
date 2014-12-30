@@ -16,7 +16,7 @@ import macroid._
 import macroid.FullDsl._
 import macroid.contrib.Layouts._
 
-import com.shamanland.fab.FloatingActionButton
+import com.melnykov.fab.FloatingActionButton
 
 import tryp.droid.res.{Resources,_}
 import tryp.droid.TrypTextView
@@ -124,10 +124,11 @@ extends Text
   object Fab
   extends ResourcesAccess
   {
-    def color(name: String)(implicit c: Context) =
-      Misc.color(name) + reinit
-
-    def reinit = Tweak[FloatingActionButton] { _.initBackground() }
+    def colors(normal: String, pressed: String)(implicit c: Context) =
+      Tweak[FloatingActionButton] { fab ⇒
+        fab.setColorNormal(theme.color(normal))
+        fab.setColorPressed(theme.color(pressed))
+      }
   }
 }
 

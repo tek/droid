@@ -13,7 +13,6 @@ extends tryp.Deps
   lazy val common = Seq(
     resolvers += "jcenter" at "http://jcenter.bintray.com",
     libraryDependencies ++= Seq(
-      "com.android.support" % "support-v13" % "21.+",
       aar("com.android.support" % "appcompat-v7" % "21.+"),
       aar("com.android.support" % "palette-v7" % "21.+"),
       aar("com.android.support" % "recyclerview-v7" % "21.+"),
@@ -22,7 +21,8 @@ extends tryp.Deps
       aar("org.macroid" %% "macroid" % "2.0.0-SNAPSHOT"),
       "com.typesafe.akka" %% "akka-actor" % "2.3.3",
       "org.scalaz" %% "scalaz-core" % "7.+",
-      "com.shamanland" % "fab" % "0.+"
+      "com.melnykov" % "floatingactionbutton" % "1.+",
+      "com.android.support" % "support-v13" % "21.+"
     )
   )
 

@@ -10,7 +10,7 @@ import macroid.Contexts
 import macroid.FullDsl._
 import macroid.Ui
 
-import com.shamanland.fab.FloatingActionButton
+import com.melnykov.fab.FloatingActionButton
 
 import tryp.droid.util.OS
 import tryp.droid.util.FragmentCallbackMixin
@@ -98,24 +98,40 @@ with Contexts[AFragment]
     Layouts.get(layoutName)
   }
 
-  // Create a wrapper layout containing a floating action button, showing
-  // 'icon' and dispatching touch to 'onClick', and the View created by the
-  // second block arg.
-  def fab(icon: String)(onClick: ⇒ Unit)(content: ⇒ Ui[View]) = 
+  // Create a wrapper layout containing:
+  // * a floating action button, showing 'icon' and dispatching touch to
+  //   'onClick'
+  // * the View created by the second block arg.
+  def fabCorner(icon: String)(onClick: ⇒ Unit)(content: ⇒ Ui[View]) =
   {
     RL()(
       content,
-      w[FloatingActionButton] <~
-        image("ic_cart") <~
+      fabUi(icon)(onClick) <~
         rlp(↧, ↦) <~
-        imageScale(ImageView.ScaleType.CENTER) <~
-        margin(right = 16 dp, bottom = 48 dp) <~
-        T.Fab.color("colorAccent") <~
-        On.click {
-          onClick
-          Ui.nop
-        }
+        margin(right = 16 dp, bottom = 48 dp)
     )
+  }
+
+  def fabBetween(icon: String, headerId: Id)(onClick: ⇒ Unit)(header: Ui[View],
+    content: Ui[View]) =
+  {
+    RL()(
+      header <~ headerId,
+      content <~ rlp(below(headerId)),
+      fabUi(icon)(onClick) <~
+        rlp(↦, alignBottom(headerId)) <~
+        margin(
+          right = dimen("floating_action_button_margin_normal").toInt,
+          bottom = dimen("floating_action_button_margin_normal_minus").toInt)
+    )
+  }
+
+  def fabUi(icon: String)(onClick: ⇒ Unit) = {
+    w[FloatingActionButton] <~
+      image(icon) <~
+      imageScale(ImageView.ScaleType.CENTER) <~
+      T.Fab.colors("colorAccentStrong", "colorAccent") <~
+      On.click { Ui(onClick) }
   }
 }
 
