@@ -412,3 +412,27 @@ with Searchable
 
   def backStackEmpty = fragmentManager.getBackStackEntryCount == 0
 }
+
+trait Snackbars
+extends HasActivity
+{
+  import tryp.droid.Macroid._
+  import macroid.FullDsl.{toast ⇒ mToast,_}
+
+  private implicit val ns = PrefixResourceNamespace("snackbar")
+
+  def snackbar(resName: String) {
+    val v = LL()(
+      w[TextView] <~ txt.content(resName)
+    )
+    runUi {
+      mToast(v) <~ fry
+    }
+  }
+
+  def toast(resName: String) {
+    runUi {
+      mToast(res.s(resName)) <~ fry
+    }
+  }
+}
