@@ -23,10 +23,10 @@ import tryp.droid.TrypTextView
 import tryp.droid.view.DividerItemDecoration
 
 trait ResourcesAccess {
-  def res(implicit c: Context,
+  protected def res(implicit c: Context,
     ns: ResourceNamespace = GlobalResourceNamespace) = Resources()
 
-  def theme(implicit c: Context,
+  protected def theme(implicit c: Context,
     ns: ResourceNamespace = GlobalResourceNamespace) = {
     res.theme
   }
