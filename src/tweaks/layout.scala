@@ -2,7 +2,6 @@ package tryp.droid.tweaks
 
 import scala.collection.mutable.ListBuffer
 
-import android.content.Context
 import android.widget._
 import android.support.v7.widget._
 import RelativeLayout._

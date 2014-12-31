@@ -2,8 +2,6 @@ package tryp.droid.res
 
 import scala.collection.mutable.{Map => MMap}
 
-import android.content.Context
-
 abstract class Style
 {
   Themes.add(this)

@@ -11,11 +11,10 @@ import Scalaz.{Id ⇒ sId,_}
 import android.view.{View,ViewGroup}
 import android.widget.{AdapterView,TextView}
 import android.content.res.{Resources ⇒ AResources,Configuration}
-import android.content.{Context,DialogInterface}
+import android.content.DialogInterface
 import android.view.inputmethod.InputMethodManager
 import android.app.{Activity ⇒ AActivity,AlertDialog,DialogFragment,Dialog}
 import android.app.{FragmentManager, Fragment ⇒ AFragment,FragmentTransaction}
-import android.os.Bundle
 
 import macroid.{FragmentManagerContext,ActivityContext,AppContext}
 import macroid.support.FragmentApi
@@ -218,6 +217,8 @@ extends Basic
 trait Input
 extends Basic
 {
+  import android.content.Context
+
   def inputMethodManager: InputMethodManager = {
     activity.getSystemService(Context.INPUT_METHOD_SERVICE) match {
       case a: InputMethodManager ⇒ a
@@ -270,6 +271,8 @@ trait Preferences
 extends Activity
 with tryp.droid.Preferences
 {
+  import android.content.Context
+
   def appPrefs = activity.getPreferences(Context.MODE_PRIVATE)
 
   def appPref(name: String, default: String = "") = {

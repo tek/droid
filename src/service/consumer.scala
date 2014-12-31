@@ -4,7 +4,7 @@ import scala.collection.mutable.{Map,ListBuffer}
 import scala.reflect.ClassTag
 
 import android.app.Service
-import android.content.{ServiceConnection,ComponentName,Context,Intent}
+import android.content.{ServiceConnection,ComponentName,Intent}
 import android.os.IBinder
 
 import tryp.droid.util.CallbackMixin
@@ -62,7 +62,7 @@ trait ServiceConsumer extends CallbackMixin {
       context.bindService(
         new Intent(context, service),
         this,
-        Context.BIND_AUTO_CREATE
+        android.content.Context.BIND_AUTO_CREATE
       )
     }
 

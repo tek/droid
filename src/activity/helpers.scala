@@ -4,7 +4,6 @@ import scala.reflect.ClassTag
 
 import scala.collection.JavaConversions._
 
-import android.os.Bundle
 import android.app.{Activity,Fragment}
 import android.content.SharedPreferences
 import android.content.res.Configuration
@@ -12,7 +11,6 @@ import android.view.{View,MenuItem,Gravity}
 import android.widget.FrameLayout
 import android.preference.PreferenceManager
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
-import android.content.Context
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.{ActionBarDrawerToggle,ActionBarActivity}
 import android.support.v7.widget.{Toolbar ⇒ AToolbar}

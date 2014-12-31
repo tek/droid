@@ -3,7 +3,6 @@ package tryp.droid.tweaks
 import scala.reflect.ClassTag
 import scala.language.postfixOps
 
-import android.content.Context
 import android.graphics.{Point, Color}
 import android.graphics.drawable.Drawable
 import android.os.Build

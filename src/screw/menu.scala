@@ -1,6 +1,6 @@
 package tryp.droid
 
-import android.content.{Context,Intent}
+import android.content.Intent
 import android.view.MenuItem
 
 import tryp.droid.res._

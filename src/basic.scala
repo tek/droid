@@ -1,7 +1,5 @@
 package tryp.droid
 
-import android.content.Context
-
 import tryp.droid.util.Threading
 import tryp.droid.res._
 

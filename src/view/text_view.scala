@@ -2,7 +2,6 @@ package tryp.droid
 
 import android.util.AttributeSet
 import android.content.res.TypedArray
-import android.content.Context
 import android.content.res.ColorStateList
 
 class TrypTextView(context: Context, attrs: AttributeSet, defStyle: Int)

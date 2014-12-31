@@ -1,7 +1,6 @@
 package tryp.droid
 
 import android.app.PendingIntent
-import android.os.Bundle
 
 import com.google.android.gms.location.{LocationServices,_}
 import LocationServices.{FusedLocationApi ⇒ LocApi, GeofencingApi ⇒ GeoApi}

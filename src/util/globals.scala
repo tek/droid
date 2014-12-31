@@ -36,5 +36,10 @@ extends Util
 
   type Id = tryp.droid.util.Id
 
+  type Context = android.content.Context
+  type Bundle = android.os.Bundle
+
+  type Ui[+A] = macroid.Ui[A]
+
   val Ui = macroid.Ui
 }

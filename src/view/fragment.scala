@@ -1,8 +1,6 @@
 package tryp.droid
 
-import android.content.Context
 import android.view.{ View, ViewGroup, LayoutInflater }
-import android.os.Bundle
 import android.app.{Activity ⇒ AActivity, Fragment ⇒ AFragment}
 import android.widget._
 

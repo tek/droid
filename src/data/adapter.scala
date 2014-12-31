@@ -5,7 +5,6 @@ import scala.reflect.ClassTag
 import android.widget.{BaseAdapter,TextView,Filterable,Filter}
 import android.view.{View,ViewGroup}
 import android.app.Activity
-import android.content.Context
 import android.support.v7.widget.RecyclerView
 
 import tryp.droid.view.ActivityContexts

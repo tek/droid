@@ -4,7 +4,6 @@ import scala.reflect.ClassTag
 
 import com.typesafe.config.ConfigFactory
 
-import android.os.Bundle
 import android.app.{Activity ⇒ AActivity,Fragment ⇒ AFragment}
 
 import akka.actor.{ ActorSelection, ActorSystem, Actor, Props }

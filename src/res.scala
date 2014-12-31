@@ -1,6 +1,5 @@
 package tryp.droid.res
 
-import android.content.Context
 import android.content.res.{Resources ⇒ AResources}
 
 case class Resources(implicit val context: Context,

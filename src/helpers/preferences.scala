@@ -2,7 +2,6 @@ package tryp.droid
 
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
-import android.content.Context
 
 trait Preferences
 extends HasContext

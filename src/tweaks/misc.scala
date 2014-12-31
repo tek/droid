@@ -6,7 +6,6 @@ import android.app.Activity
 import android.widget._
 import android.view.View
 import android.content.res.ColorStateList
-import android.content.Context
 import android.support.v7.widget.{RecyclerView,LinearLayoutManager,CardView}
 import android.support.v7.widget.StaggeredGridLayoutManager
 import android.text.{TextWatcher,TextUtils}

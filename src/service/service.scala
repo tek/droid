@@ -1,8 +1,8 @@
 package tryp.droid.service
 
 import android.app.Service
-import android.os.{Binder,IBinder,Bundle}
-import android.content.{Intent,Context}
+import android.os.{Binder,IBinder}
+import android.content.Intent
 
 import scala.reflect.ClassTag
 import scala.reflect.classTag

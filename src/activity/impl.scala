@@ -1,6 +1,5 @@
 package tryp.droid
 
-import android.os.Bundle
 import android.app.Activity
 import android.support.v7.app.ActionBarActivity
 

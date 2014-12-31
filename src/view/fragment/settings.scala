@@ -1,7 +1,6 @@
 package tryp.droid
 
 import android.preference.PreferenceFragment
-import android.os.Bundle
 
 class SettingsFragment
 extends PreferenceFragment
