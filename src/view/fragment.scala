@@ -134,21 +134,3 @@ with Contexts[AFragment]
       On.click { Ui(onClick) }
   }
 }
-
-class ListFragment
-extends android.app.ListFragment
-with FragmentBase
-with Contexts[AFragment]
-{
-  override def onCreate(state: Bundle) = super.onCreate(state)
-  override def onStart = super.onStart
-  override def onStop = super.onStop
-  override def onViewStateRestored(state: Bundle) = {
-    super.onViewStateRestored(state)
-  }
-  override def onActivityCreated(state: Bundle) {
-    super.onActivityCreated(state)
-  }
-
-  override def fragmentManager = getChildFragmentManager
-}
