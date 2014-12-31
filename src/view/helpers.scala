@@ -311,7 +311,8 @@ with Searchable
     }
   }
 
-  // Check for existence of fragment by 'tag', insert the new one if not found
+  // Check for existence of 'fragment' by 'tag', insert the new one if not
+  // found
   // Return true if the fragment has been inserted
   // TODO allow overriding the check for existence for back stack fragments
   def replaceFragmentIf(name: Id, fragment: ⇒ AFragment, backStack: Boolean,
