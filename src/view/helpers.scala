@@ -12,8 +12,8 @@ import android.widget.{AdapterView,TextView}
 import android.content.res.{Resources ⇒ AResources,Configuration}
 import android.content.DialogInterface
 import android.view.inputmethod.InputMethodManager
-import android.app.{Activity ⇒ AActivity,AlertDialog,DialogFragment,Dialog}
-import android.app.{FragmentManager, Fragment ⇒ AFragment,FragmentTransaction}
+import android.app.{AlertDialog,DialogFragment,Dialog}
+import android.app.{FragmentManager,FragmentTransaction}
 
 import macroid.{FragmentManagerContext,ActivityContext,AppContext}
 import macroid.support.FragmentApi
@@ -135,21 +135,21 @@ trait Searchable {
 
 trait ActivityContexts {
 
-  implicit def activityAppContext(implicit activity: AActivity) =
+  implicit def activityAppContext(implicit activity: Activity) =
     AppContext(activity.getApplicationContext)
 
   implicit def activityManagerContext[M, F](implicit fragmentApi:
-    FragmentApi[F, M, AActivity], activity: AActivity) =
+    FragmentApi[F, M, Activity], activity: Activity) =
       FragmentManagerContext[F, M](fragmentApi.activityManager(activity))
 
-  implicit def activityActivityContext(implicit activity: AActivity) =
+  implicit def activityActivityContext(implicit activity: Activity) =
     ActivityContext(activity)
 }
 
 trait HasActivity
 extends tryp.droid.Basic
 {
-  implicit def activity: AActivity
+  implicit def activity: Activity
 
   implicit def context: Context = activity
 
@@ -302,10 +302,10 @@ with Searchable
   def fragmentManager = rootFragmentManager
 
   def findFragment(tag: String) = {
-    Option[AFragment](rootFragmentManager.findFragmentByTag(tag))
+    Option[Fragment](rootFragmentManager.findFragmentByTag(tag))
   }
 
-  def replaceFragment[A >: BBasic#IdTypes](name: A, fragment: AFragment,
+  def replaceFragment[A >: BBasic#IdTypes](name: A, fragment: Fragment,
     backStack: Boolean, tag: String)
   {
     moveFragment(name, fragment, backStack, tag) {
@@ -317,7 +317,7 @@ with Searchable
   // found
   // Return true if the fragment has been inserted
   // TODO allow overriding the check for existence for back stack fragments
-  def replaceFragmentIf(name: Id, fragment: ⇒ AFragment, backStack: Boolean,
+  def replaceFragmentIf(name: Id, fragment: ⇒ Fragment, backStack: Boolean,
     tag: String) =
   {
     val frag = findFragment(tag)
@@ -325,20 +325,20 @@ with Searchable
     frag isEmpty
   }
 
-  def replaceFragmentCustom[A <: AFragment: ClassTag](id: Id, fragment: ⇒ A,
+  def replaceFragmentCustom[A <: Fragment: ClassTag](id: Id, fragment: ⇒ A,
     backStack: Boolean) =
   {
     replaceFragmentIf(id, fragment, backStack, fragmentName[A])
   }
 
-  def replaceFragmentAuto[A <: AFragment: ClassTag](id: Id,
+  def replaceFragmentAuto[A <: Fragment: ClassTag](id: Id,
     backStack: Boolean) =
   {
     val tag = Tag(fragmentName[A])
     replaceFragmentIf(id, makeFragment[A], backStack, tag)
   }
 
-  def addFragment[A >: BBasic#IdTypes](name: A, fragment: AFragment,
+  def addFragment[A >: BBasic#IdTypes](name: A, fragment: Fragment,
     backStack: Boolean, tag: String)
   {
     moveFragment(name, fragment, backStack, tag) {
@@ -346,7 +346,7 @@ with Searchable
     }
   }
 
-  def moveFragment[A >: BBasic#IdTypes](name: A, fragment: AFragment,
+  def moveFragment[A >: BBasic#IdTypes](name: A, fragment: Fragment,
     backStack: Boolean, tag: String)(move: (FragmentTransaction) ⇒ Unit)
   {
     checkFrame(name) {
@@ -360,7 +360,7 @@ with Searchable
   }
 
 
-  def addFragmentIf[A <: AFragment: ClassTag](ctor: ⇒ A) {
+  def addFragmentIf[A <: Fragment: ClassTag](ctor: ⇒ A) {
     val name = fragmentName[A]
     val tag = Tag(name)
     findFragment(tag) getOrElse {
@@ -368,7 +368,7 @@ with Searchable
     }
   }
 
-  def addFragmentIfAuto[A <: AFragment: ClassTag] {
+  def addFragmentIfAuto[A <: Fragment: ClassTag] {
     addFragmentIf { makeFragment[A] }
   }
 
@@ -376,22 +376,22 @@ with Searchable
     cls.className.stripSuffix("Fragment")
   }
 
-  def fragmentName[A <: AFragment: ClassTag] = {
+  def fragmentName[A <: Fragment: ClassTag] = {
     fragmentClassName(implicitly[ClassTag[A]].runtimeClass)
   }
 
-  def makeFragment[A <: AFragment: ClassTag] = {
+  def makeFragment[A <: Fragment: ClassTag] = {
     val cls = implicitly[ClassTag[A]].runtimeClass
-    cls.newInstance.asInstanceOf[AFragment]
+    cls.newInstance.asInstanceOf[Fragment]
   }
 
   def popBackStackSync {
     rootFragmentManager.popBackStackImmediate
   }
 
-  def findNestedFrag[A <: AFragment: ClassTag](
+  def findNestedFrag[A <: Fragment: ClassTag](
     tags: String*
-  ): Option[AFragment] = {
+  ): Option[Fragment] = {
     tags lift(0) flatMap { findFragment } flatMap { frag ⇒
       frag.findNestedFrag(tags.tail: _*) orElse {
         frag match {

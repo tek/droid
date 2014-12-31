@@ -2,7 +2,6 @@ package tryp.droid.tweaks
 
 import scala.language.reflectiveCalls
 
-import android.app.Activity
 import android.widget._
 import android.content.res.ColorStateList
 import android.support.v7.widget.{RecyclerView,LinearLayoutManager,CardView}

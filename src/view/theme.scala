@@ -1,6 +1,5 @@
 package tryp.droid.view
 
-import android.app.{Activity ⇒ AActivity}
 import android.content.res.{TypedArray,ColorStateList}
 import android.graphics.drawable.Drawable
 

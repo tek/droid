@@ -3,7 +3,6 @@ package tryp.droid
 import scala.reflect.ClassTag
 
 import android.widget.{BaseAdapter,TextView,Filterable,Filter}
-import android.app.Activity
 import android.support.v7.widget.RecyclerView
 
 import tryp.droid.view.ActivityContexts

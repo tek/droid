@@ -4,7 +4,6 @@ import scala.reflect.ClassTag
 
 import scala.collection.JavaConversions._
 
-import android.app.{Activity,Fragment}
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.view.{MenuItem,Gravity}

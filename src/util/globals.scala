@@ -39,6 +39,8 @@ extends Util
   type Context = android.content.Context
   type Bundle = android.os.Bundle
   type Intent = android.content.Intent
+  type Activity = android.app.Activity
+  type Fragment = android.app.Fragment
 
   type View = android.view.View
   type ViewGroup = android.view.ViewGroup

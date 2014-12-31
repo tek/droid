@@ -1,6 +1,5 @@
 package tryp.droid
 
-import android.app.{Activity ⇒ AActivity, Fragment ⇒ AFragment}
 import android.widget._
 
 import macroid.Contexts
@@ -22,7 +21,7 @@ with FragmentCallbackMixin
 with TrypActivityAccess
 with AkkaFragment
 {
-  self: AFragment ⇒
+  self: Fragment ⇒
 
   override implicit def activity = getActivity
 
@@ -49,10 +48,10 @@ with AkkaFragment
   }
 }
 
-abstract class Fragment
+abstract class TrypFragment
 extends android.app.Fragment
 with FragmentBase
-with Contexts[AFragment]
+with Contexts[Fragment]
 {
   def layoutRes: Option[Int] = None
   def layoutName: Option[String] = None

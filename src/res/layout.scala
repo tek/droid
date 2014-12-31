@@ -2,7 +2,6 @@ package tryp.droid.res
 
 import scala.collection.mutable.{Map ⇒ MMap}
 
-import android.app.{Activity ⇒ AActivity}
 import android.widget.LinearLayout
 
 import macroid.FullDsl._
@@ -18,7 +17,7 @@ object LayoutAdapter
 {
   implicit def `Ui from LayoutAdapter option`(
     adapter: Option[LayoutAdapter]
-  )(implicit a: AActivity): Ui[View] =
+  )(implicit a: Activity): Ui[View] =
   {
     adapter map { _.layout } getOrElse Layouts.dummy.layout
   }
@@ -28,7 +27,7 @@ object LayoutAdapter
   }
 
   implicit def `LayoutAdapter from Ui`(layout: Ui[View])(
-    implicit activity: AActivity
+    implicit activity: Activity
   ) = {
     new LayoutAdapter(layout)
   }
@@ -43,7 +42,7 @@ extends ActivityContexts
   {
     Layouts.add(this)
 
-    override implicit def activity: AActivity = Layout.impAct
+    override implicit def activity: Activity = Layout.impAct
 
     private[Layouts] def create = createImpl
 
@@ -56,19 +55,19 @@ extends ActivityContexts
 
   object Layout
   {
-    implicit var impAct: AActivity = null
+    implicit var impAct: Activity = null
   }
 
   val layouts = MMap[String, Layout]()
 
   def apply(name: String)(
-    implicit a: AActivity
+    implicit a: Activity
   ): Option[LayoutAdapter] = {
     get(Option(name))
   }
 
   def get(name: Option[String])(
-    implicit a: AActivity
+    implicit a: Activity
   ): Option[LayoutAdapter] =
   {
     Layout.impAct = a
@@ -91,7 +90,7 @@ extends ActivityContexts
     layouts(name) = factory
   }
 
-  def dummy(implicit a: AActivity): LayoutAdapter = {
+  def dummy(implicit a: Activity): LayoutAdapter = {
     w[LinearLayout]
   }
 }

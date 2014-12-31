@@ -2,7 +2,6 @@ package tryp.droid
 
 import scala.math.min
 
-import android.app.{Fragment ⇒ AFragment,Activity ⇒ AActivity}
 import android.widget.{NumberPicker,EditText}
 import android.text.InputType
 import android.graphics.drawable.Drawable
@@ -109,7 +108,7 @@ object AndroidExt {
     }
   }
 
-  implicit class `Fragment extensions`(f: AFragment)
+  implicit class `Fragment extensions`(f: Fragment)
   extends tryp.droid.Basic
   with tryp.droid.view.Searchable
   with tryp.droid.view.Fragments
@@ -119,7 +118,7 @@ object AndroidExt {
     def getFragmentManager = f.getChildFragmentManager
   }
 
-  implicit class `Activity extensions`(a: AActivity)
+  implicit class `Activity extensions`(a: Activity)
   extends tryp.droid.Basic
   with tryp.droid.view.Searchable
   {

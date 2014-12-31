@@ -4,8 +4,6 @@ import scala.reflect.ClassTag
 
 import com.typesafe.config.ConfigFactory
 
-import android.app.{Activity ⇒ AActivity,Fragment ⇒ AFragment}
-
 import akka.actor.{ ActorSelection, ActorSystem, Actor, Props }
 
 import tryp.droid.util.CallbackMixin
@@ -23,7 +21,7 @@ trait AkkaComponent extends CallbackMixin {
 }
 
 trait Akkativity extends AkkaComponent
-{ self: AActivity
+{ self: Activity
   with view.HasActivity ⇒
 
   lazy val actorSystemName = res.string("app_handle")
@@ -68,7 +66,7 @@ trait Akkativity extends AkkaComponent
 }
 
 trait AkkaFragment extends AkkaComponent
-{ self: AFragment
+{ self: Fragment
   with tryp.droid.FragmentBase ⇒
 
   def akkativity = {

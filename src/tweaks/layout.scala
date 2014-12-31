@@ -7,7 +7,6 @@ import android.support.v7.widget._
 import RelativeLayout._
 import android.view.Gravity
 import android.view.ViewGroup.LayoutParams._
-import android.app.Activity
 import android.graphics.drawable.Drawable
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
