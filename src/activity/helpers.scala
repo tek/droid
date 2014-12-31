@@ -222,7 +222,7 @@ extends MainView
     title: String = "")
   = {
     super.loadContent[A](backStack) tapIf {
-      setTitle(title)
+      toolbarTitle(title)
     }
   }
 
@@ -230,11 +230,11 @@ extends MainView
     title: String = "")
   = {
     super.loadContentCustom(fragment, backStack) tapIf {
-      setTitle(title)
+      toolbarTitle(title)
     }
   }
 
-  def setTitle(title: String) {
+  def toolbarTitle(title: String) {
     runUi {
       toolbar <~
         ToolbarT.title(title.isEmpty ? res.string("app_title") / title)
