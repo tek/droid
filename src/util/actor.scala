@@ -11,7 +11,6 @@ import akka.actor.{ ActorSelection, ActorSystem, Actor, Props }
 import macroid.Ui
 
 import tryp.droid.util.CallbackMixin
-import tryp.droid.AkkaExt._
 
 trait AkkaComponent extends CallbackMixin {
   def actor: Option[ActorSelection]

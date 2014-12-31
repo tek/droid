@@ -2,7 +2,7 @@ package tryp.droid
 
 import akka.actor.ActorSelection
 
-object AkkaExt {
+trait AkkaExt {
   implicit class `Option of ActorSelection`[A <: ActorSelection](a: Option[A])
   {
     def !(msg: AnyRef) {
