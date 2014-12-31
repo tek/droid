@@ -9,8 +9,6 @@ import android.app.{Activity ⇒ AActivity,Fragment ⇒ AFragment}
 
 import akka.actor.{ ActorSelection, ActorSystem, Actor, Props }
 
-import macroid.Ui
-
 import tryp.droid.util.CallbackMixin
 
 trait AkkaComponent extends CallbackMixin {

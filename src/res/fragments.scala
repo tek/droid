@@ -8,7 +8,7 @@ import android.app.{Fragment,Activity}
 import android.widget.FrameLayout
 
 import macroid.FullDsl._
-import macroid.{Ui,ActivityContext,FragmentBuilder,FragmentManagerContext}
+import macroid.{ActivityContext,FragmentBuilder,FragmentManagerContext}
 
 import tryp.droid.view.ActivityContexts
 import tryp.droid.Broadcast

@@ -8,7 +8,6 @@ import android.widget._
 
 import macroid.Contexts
 import macroid.FullDsl._
-import macroid.Ui
 
 import com.melnykov.fab.FloatingActionButton
 

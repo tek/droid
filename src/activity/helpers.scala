@@ -18,7 +18,7 @@ import android.support.v7.app.{ActionBarDrawerToggle,ActionBarActivity}
 import android.support.v7.widget.{Toolbar ⇒ AToolbar}
 
 import macroid.FullDsl._
-import macroid.{Ui,Tweak,Contexts}
+import macroid.{Tweak,Contexts}
 
 import tryp.droid.util.CallbackMixin
 import tryp.droid.Macroid._

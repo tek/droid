@@ -17,7 +17,7 @@ import android.app.{Activity ⇒ AActivity,AlertDialog,DialogFragment,Dialog}
 import android.app.{FragmentManager, Fragment ⇒ AFragment,FragmentTransaction}
 import android.os.Bundle
 
-import macroid.{FragmentManagerContext,ActivityContext,AppContext,Ui}
+import macroid.{FragmentManagerContext,ActivityContext,AppContext}
 import macroid.support.FragmentApi
 
 import tryp.droid.util._

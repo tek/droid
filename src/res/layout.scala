@@ -7,7 +7,6 @@ import android.view.View
 import android.widget.LinearLayout
 
 import macroid.FullDsl._
-import macroid.Ui
 
 import tryp.droid.view.{ActivityContexts,Activity}
 import tryp.droid.Broadcast
