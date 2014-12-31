@@ -4,7 +4,7 @@ import scala.collection.mutable.{Map,ListBuffer}
 import scala.reflect.ClassTag
 
 import android.app.Service
-import android.content.{ServiceConnection,ComponentName,Intent}
+import android.content.{ServiceConnection,ComponentName}
 import android.os.IBinder
 
 import tryp.droid.util.CallbackMixin

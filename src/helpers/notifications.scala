@@ -3,7 +3,6 @@ package tryp.droid
 import android.support.v4.app.NotificationCompat
 import android.support.v4.app.NotificationManagerCompat
 import android.support.v4.app.TaskStackBuilder
-import android.content.Intent
 import android.app.PendingIntent
 
 class Notification(

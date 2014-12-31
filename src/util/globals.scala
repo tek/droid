@@ -38,6 +38,7 @@ extends Util
 
   type Context = android.content.Context
   type Bundle = android.os.Bundle
+  type Intent = android.content.Intent
 
   type Ui[+A] = macroid.Ui[A]
 

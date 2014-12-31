@@ -2,7 +2,6 @@ package tryp.droid
 
 import scala.collection.mutable.ListBuffer
 
-import android.content.Intent
 import android.content.IntentFilter
 import android.support.v4.content.LocalBroadcastManager
 
