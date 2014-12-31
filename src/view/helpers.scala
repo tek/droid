@@ -405,4 +405,6 @@ with Searchable
     else
       Log.e(s"Tried to add fragment to nonexistent frame with id '${name}'")
   }
+
+  def backStackEmpty = fragmentManager.getBackStackEntryCount == 0
 }

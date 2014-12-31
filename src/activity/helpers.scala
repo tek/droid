@@ -58,7 +58,8 @@ trait Theme extends ActivityBase {
 trait MainView
 extends ActivityBase
 {
-  self: Fragments
+  self: Activity
+  with Fragments
   with Contexts[Activity] ⇒
 
   def setContentView(v: View)
@@ -86,6 +87,10 @@ extends ActivityBase
   def loadContentCustom(fragment: Fragment, backStack: Boolean = true,
     title: String = "") = {
     replaceFragmentCustom(Id.content, fragment, backStack)
+  }
+
+  abstract override def onBackPressed() {
+    !backStackEmpty ? popBackStackSync / super.onBackPressed()
   }
 }
 
@@ -134,15 +139,8 @@ with tryp.droid.view.Preferences
     prefs.unregisterOnSharedPreferenceChangeListener(this)
   }
 
-  var inSettings = false
-
   def settings() {
-    inSettings = true
     loadContent[SettingsFragment](title = res.string("menu_settings"))
-  }
-
-  abstract override def onBackPressed() {
-    inSettings ? popSettings / super.onBackPressed()
   }
 
   def setupPreferences {
@@ -179,7 +177,6 @@ with tryp.droid.view.Preferences
   }
 
   def popSettings {
-    inSettings = false
     popBackStackSync
   }
 }
@@ -248,7 +245,7 @@ extends MainView
 trait Drawer
 extends MainView
 { self: Activity
-  with tryp.droid.view.Fragments
+  with Fragments
   with Toolbar
   with Contexts[Activity] ⇒
 
