@@ -14,7 +14,6 @@ with Theme
 with tryp.droid.activity.Preferences
 with MainView
 with tryp.droid.view.Fragments
-with Contexts[Activity]
 { self: Activity ⇒
 
   override implicit def activity = this

@@ -15,7 +15,6 @@ import android.support.v7.app.{ActionBarDrawerToggle,ActionBarActivity}
 import android.support.v7.widget.{Toolbar ⇒ AToolbar}
 
 import macroid.FullDsl._
-import macroid.{Tweak,Contexts}
 
 import tryp.droid.util.CallbackMixin
 import tryp.droid.Macroid._
@@ -55,8 +54,7 @@ trait MainView
 extends ActivityBase
 {
   self: Activity
-  with Fragments
-  with Contexts[Activity] ⇒
+  with Fragments ⇒
 
   def setContentView(v: View)
 
@@ -97,8 +95,7 @@ with tryp.droid.view.Preferences
 {
   self: Activity
   with MainView
-  with Fragments
-  with Contexts[Activity] ⇒
+  with Fragments ⇒
 
   abstract override def onCreate(state: Bundle) {
     setupPreferences
@@ -191,8 +188,7 @@ extends ActivityBase
 trait Toolbar
 extends MainView
 { self: ActionBarActivity
-  with Fragments
-  with Contexts[Activity] ⇒
+  with Fragments ⇒
 
     import tryp.droid.tweaks.{Toolbar ⇒ T}
 
@@ -251,8 +247,7 @@ trait Drawer
 extends MainView
 { self: Activity
   with Fragments
-  with Toolbar
-  with Contexts[Activity] ⇒
+  with Toolbar ⇒
 
   override def initView {
     super.initView

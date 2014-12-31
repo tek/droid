@@ -2,7 +2,6 @@ package tryp.droid
 
 import android.widget._
 
-import macroid.Contexts
 import macroid.FullDsl._
 
 import com.melnykov.fab.FloatingActionButton
@@ -51,7 +50,6 @@ with AkkaFragment
 abstract class TrypFragment
 extends android.app.Fragment
 with FragmentBase
-with Contexts[Fragment]
 {
   def layoutRes: Option[Int] = None
   def layoutName: Option[String] = None
