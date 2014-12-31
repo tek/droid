@@ -6,6 +6,7 @@ class Messages
   case class Filter(query: String)
   case class DrawerClick(position: Int)
   case class ToolbarTitle(title: String)
+  case class Add()
 }
 
 object Messages extends Messages
