@@ -116,6 +116,8 @@ extends Actor {
     f(comp).run
   }
 
+  def ui(f: A ⇒ Any) = withUi { u ⇒ Ui(f(u)) }
+
   def receiveUi: PartialFunction[Any, Any] = {
     case a @ AttachUi(f: A) ⇒ {
       attachedUi = Some(f)
