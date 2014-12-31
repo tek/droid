@@ -7,7 +7,7 @@ import android.widget.LinearLayout
 
 import macroid.FullDsl._
 
-import tryp.droid.view.{ActivityContexts,Activity}
+import tryp.droid.view.{ActivityContexts,HasActivity}
 import tryp.droid.Broadcast
 
 class LayoutAdapter(val layout: Ui[View])
@@ -38,7 +38,7 @@ object Layouts
 extends ActivityContexts
 {
   abstract class Layout()
-  extends Activity
+  extends HasActivity
   with ActivityContexts
   {
     Layouts.add(this)

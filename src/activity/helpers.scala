@@ -25,7 +25,7 @@ import tryp.droid.view.Fragments
 import tryp.droid.SettingsFragment
 
 trait ActivityBase
-extends tryp.droid.view.Activity
+extends tryp.droid.view.HasActivity
 with CallbackMixin
 {
   def onConfigurationChanged(newConf: Configuration)

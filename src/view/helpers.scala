@@ -146,7 +146,7 @@ trait ActivityContexts {
     ActivityContext(activity)
 }
 
-trait Activity
+trait HasActivity
 extends tryp.droid.Basic
 {
   implicit def activity: AActivity
@@ -175,7 +175,7 @@ extends tryp.droid.Basic
 }
 
 trait Basic
-extends Activity
+extends HasActivity
 with Searchable
 
 trait Click
@@ -258,7 +258,7 @@ with tryp.droid.Basic
 }
 
 trait Confirm
-extends Activity
+extends HasActivity
 {
   def confirm(message: String, callback: () ⇒ Unit) {
     val dialog = new ConfirmDialog(message, callback)
@@ -267,7 +267,7 @@ extends Activity
 }
 
 trait Preferences
-extends Activity
+extends HasActivity
 with tryp.droid.Preferences
 {
   import android.content.Context
@@ -292,7 +292,7 @@ with tryp.droid.Preferences
 }
 
 trait Fragments
-extends Activity
+extends HasActivity
 with Searchable
 {
   def getFragmentManager: FragmentManager

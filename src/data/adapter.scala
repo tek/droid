@@ -66,7 +66,7 @@ abstract class RecyclerAdapter[A <: RecyclerView.ViewHolder, B: ClassTag](
 )
 extends RecyclerView.Adapter[A]
 with ActivityContexts
-with tryp.droid.view.Activity
+with tryp.droid.view.HasActivity
 with Filterable
 {
   def items: Seq[B]

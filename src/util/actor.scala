@@ -24,7 +24,7 @@ trait AkkaComponent extends CallbackMixin {
 
 trait Akkativity extends AkkaComponent
 { self: AActivity
-  with view.Activity ⇒
+  with view.HasActivity ⇒
 
   lazy val actorSystemName = res.string("app_handle")
 
