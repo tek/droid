@@ -26,13 +26,11 @@ with FragmentCallbackMixin
 with TrypActivityAccess
 with AkkaFragment
 {
+  self: AFragment ⇒
+
   override implicit def activity = getActivity
 
   override def view = getView
-
-  def getActivity: AActivity
-
-  def getView: View
 
   def trypActivity = {
     activity match {
@@ -67,9 +65,6 @@ with Contexts[AFragment]
 
   implicit def resourceNamespace = PrefixResourceNamespace(name.snakeCase)
 
-  override def onCreate(state: Bundle) = super.onCreate(state)
-  override def onStart = super.onStart
-  override def onStop = super.onStop
 
   override def fragmentManager = getChildFragmentManager
 
