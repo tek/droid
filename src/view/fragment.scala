@@ -65,6 +65,10 @@ with Contexts[AFragment]
 
   implicit def resourceNamespace = PrefixResourceNamespace(name.snakeCase)
 
+  override def onCreate(state: Bundle) = {
+    super.onCreate(state)
+    setupToolbar()
+  }
 
   override def fragmentManager = getChildFragmentManager
 
@@ -128,4 +132,11 @@ with Contexts[AFragment]
       T.Fab.colors("colorAccentStrong", "colorAccent") <~
       On.click { Ui(onClick) }
   }
+
+  def setupToolbar() {
+    setHasOptionsMenu(true)
+    core ! Messages.ToolbarTitle(title)
+  }
+
+  def title = name
 }
