@@ -2,7 +2,7 @@ package tryp.droid.tweaks
 
 import android.view.View
 
-import macroid.Tweak
+import macroid.{Tweak,CanTweak}
 import macroid.FullDsl._
 
 trait Slots
@@ -22,6 +22,11 @@ trait Slots
 
   object Slot {
     implicit def `Option from Slot`[A <: View](s: Slot[A]) = s.target
+
+    implicit def `Widget is tweakable with Slot`[W <: View] =
+      new CanTweak[W, Slot[W], W] {
+        def tweak(w: W, s: Slot[W]) = w <~ whore(s)
+      }
   }
 
   def slut[A <: View] = new Slot[A]()
