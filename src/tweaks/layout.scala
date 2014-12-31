@@ -178,6 +178,27 @@ trait Layout
       l[RelativeLayout](children: _*) <~ tweakSum(tweaks: _*)
     }
   }
+
+  import android.view.ViewGroup.LayoutParams._
+
+  def margin(left: Int = 0, top: Int = 0, right: Int = 0, bottom: Int = 0,
+    all: Int = -1) = Tweak[View] { v ⇒
+    v.getLayoutParams match {
+      case m: android.view.ViewGroup.MarginLayoutParams ⇒
+        if (all >= 0) {
+          m.topMargin = all
+          m.bottomMargin = all
+          m.rightMargin = all
+          m.leftMargin = all
+        } else {
+          m.topMargin = top
+          m.bottomMargin = bottom
+          m.rightMargin = right
+          m.leftMargin = left
+        }
+      case a ⇒ Log.e(s"Could not apply margin to ${v} layout params (${a})")
+    }
+  }
 }
 
 object Layout extends Layout

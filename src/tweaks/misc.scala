@@ -6,8 +6,9 @@ import android.widget._
 import android.content.res.ColorStateList
 import android.support.v7.widget.{RecyclerView,LinearLayoutManager,CardView}
 import android.support.v7.widget.StaggeredGridLayoutManager
-import android.text.{TextWatcher,TextUtils}
 import android.support.v7.widget.{Toolbar ⇒ AToolbar}
+import android.text.{TextWatcher,TextUtils}
+import android.graphics.drawable.Drawable
 
 import macroid._
 import macroid.FullDsl._
@@ -126,6 +127,16 @@ extends Text
         fab.setColorPressed(theme.color(pressed))
       }
   }
+
+  def bgres(resid: Int) = Tweak[View](_.setBackgroundResource(resid))
+
+  def bg(drawable: Drawable) = Tweak[View](_.setBackgroundDrawable(drawable))
+
+  def bg(color: Int) = Tweak[View](_.setBackgroundColor(color))
+
+  def inputType(types: Int) = Tweak[TextView](_.setInputType(types))
+
+  def hidden = Tweak[View](_.setVisibility(android.view.View.INVISIBLE))
 }
 
 object Misc extends Misc

@@ -1,8 +1,7 @@
 package tryp.droid.tweaks
 
 class All
-extends Pfn
-with Layout
+extends Layout
 with Misc
 with Slots
 
