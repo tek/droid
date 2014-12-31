@@ -7,7 +7,6 @@ import android.graphics.drawable.Drawable
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
-import android.view.View
 //remove if not needed
 import scala.collection.JavaConversions._
 

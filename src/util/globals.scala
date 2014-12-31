@@ -40,6 +40,10 @@ extends Util
   type Bundle = android.os.Bundle
   type Intent = android.content.Intent
 
+  type View = android.view.View
+  type ViewGroup = android.view.ViewGroup
+  type LayoutInflater = android.view.LayoutInflater
+
   type Ui[+A] = macroid.Ui[A]
 
   val Ui = macroid.Ui

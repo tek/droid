@@ -3,7 +3,6 @@ package tryp.droid.res
 import scala.collection.mutable.{Map ⇒ MMap}
 
 import android.app.{Activity ⇒ AActivity}
-import android.view.View
 import android.widget.LinearLayout
 
 import macroid.FullDsl._

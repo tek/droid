@@ -1,7 +1,5 @@
 package tryp.droid.tweaks
 
-import android.view.View
-
 import macroid.{Tweak,CanTweak}
 import macroid.FullDsl._
 

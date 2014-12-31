@@ -10,7 +10,7 @@ import android.text.InputType
 import android.util.TypedValue
 import android.view.View.MeasureSpec
 import android.view.inputmethod.EditorInfo
-import android.view.{WindowManager, View, ViewGroup}
+import android.view.WindowManager
 import android.widget._
 
 import macroid._
@@ -20,12 +20,12 @@ import macroid.FullDsl._
  * @author pfnguyen
  */
 trait Pfn {
-  import ViewGroup.LayoutParams._
+  import android.view.ViewGroup.LayoutParams._
 
   def margin(left: Int = 0, top: Int = 0, right: Int = 0, bottom: Int = 0,
     all: Int = -1) = Tweak[View] { v ⇒
     v.getLayoutParams match {
-      case m: ViewGroup.MarginLayoutParams ⇒
+      case m: android.view.ViewGroup.MarginLayoutParams ⇒
         if (all >= 0) {
           m.topMargin = all
           m.bottomMargin = all
@@ -50,7 +50,7 @@ trait Pfn {
 
   def inputType(types: Int) = Tweak[TextView](_.setInputType(types))
 
-  def hidden = Tweak[View](_.setVisibility(View.INVISIBLE))
+  def hidden = Tweak[View](_.setVisibility(android.view.View.INVISIBLE))
 
   def tweak[A <: View,B](f: A ⇒ B) = Tweak[A](a ⇒ f(a))
 
@@ -62,7 +62,7 @@ trait Pfn {
     classOf[java.lang.Character] -> java.lang.Character.TYPE,
     classOf[java.lang.Byte]      -> java.lang.Byte.TYPE
   )
-  abstract class LpRelation[V <: ViewGroup, LP <: ViewGroup.LayoutParams : ClassTag] {
+  abstract class LpRelation[V <: ViewGroup, LP <: android.view.ViewGroup.LayoutParams : ClassTag] {
     def lpType = implicitly[ClassTag[LP]].runtimeClass
     def lp(args: Any*) = lpType.getConstructor(
       args map { a ⇒
@@ -73,7 +73,7 @@ trait Pfn {
   implicit object LLRelation extends LpRelation[LinearLayout, LinearLayout.LayoutParams]
   implicit object TRRelation extends LpRelation[TableRow, TableRow.LayoutParams]
 
-  def lp2[V <: ViewGroup,LP <: ViewGroup.LayoutParams, C](args: Any*)
+  def lp2[V <: ViewGroup,LP <: android.view.ViewGroup.LayoutParams, C](args: Any*)
   (callback: LP ⇒ C)
   (implicit r: LpRelation[V,LP]) = tweak {
     v: View ⇒

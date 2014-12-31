@@ -5,8 +5,8 @@ import scala.collection.mutable.ListBuffer
 import android.widget._
 import android.support.v7.widget._
 import RelativeLayout._
-import android.view.{View,ViewGroup,Gravity}
-import ViewGroup.LayoutParams._
+import android.view.Gravity
+import android.view.ViewGroup.LayoutParams._
 import android.app.Activity
 import android.graphics.drawable.Drawable
 import android.support.v4.widget.DrawerLayout

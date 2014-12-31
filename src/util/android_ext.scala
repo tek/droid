@@ -3,7 +3,6 @@ package tryp.droid
 import scala.math.min
 
 import android.app.{Fragment ⇒ AFragment,Activity ⇒ AActivity}
-import android.view.{View,ViewGroup}
 import android.widget.{NumberPicker,EditText}
 import android.text.InputType
 import android.graphics.drawable.Drawable
@@ -26,7 +25,7 @@ object AndroidExt {
     def context = view.getContext
 
     def clickListen(callback: (View) ⇒ Unit) {
-      view.setOnClickListener(new View.OnClickListener {
+      view.setOnClickListener(new android.view.View.OnClickListener {
         def onClick(v: View) = callback(v)
       })
     }
@@ -79,7 +78,7 @@ object AndroidExt {
     }
 
     def visibility(state: Boolean) = {
-      if (state) View.VISIBLE else View.INVISIBLE
+      if (state) android.view.View.VISIBLE else android.view.View.INVISIBLE
     }
 
     def edit: Option[EditText] = {

@@ -3,7 +3,6 @@ package tryp.droid
 import scala.reflect.ClassTag
 
 import android.widget.{BaseAdapter,TextView,Filterable,Filter}
-import android.view.{View,ViewGroup}
 import android.app.Activity
 import android.support.v7.widget.RecyclerView
 
@@ -54,6 +53,8 @@ extends ListAdapter
   protected def prefix: String
 
   protected def attrs: List[String]
+
+  import android.view.View
 
   protected def visible(state: Boolean): Int = {
     if (state) View.VISIBLE else View.GONE

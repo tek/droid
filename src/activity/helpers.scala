@@ -7,7 +7,7 @@ import scala.collection.JavaConversions._
 import android.app.{Activity,Fragment}
 import android.content.SharedPreferences
 import android.content.res.Configuration
-import android.view.{View,MenuItem,Gravity}
+import android.view.{MenuItem,Gravity}
 import android.widget.FrameLayout
 import android.preference.PreferenceManager
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
@@ -182,6 +182,8 @@ with tryp.droid.view.Preferences
 trait System
 extends ActivityBase
 {
+  import android.view.View
+
   def hideStatusBar {
     activity.getWindow.getDecorView.setSystemUiVisibility(
       View.SYSTEM_UI_FLAG_FULLSCREEN)

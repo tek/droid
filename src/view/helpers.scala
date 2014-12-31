@@ -8,7 +8,6 @@ import scala.util.Try
 import scalaz._
 import Scalaz.{Id ⇒ sId,_}
 
-import android.view.{View,ViewGroup}
 import android.widget.{AdapterView,TextView}
 import android.content.res.{Resources ⇒ AResources,Configuration}
 import android.content.DialogInterface
@@ -191,7 +190,7 @@ extends Basic
   }
 
   def clickListen(view: View, callback: (View) ⇒ Unit) {
-    view.setOnClickListener(new View.OnClickListener {
+    view.setOnClickListener(new android.view.View.OnClickListener {
       def onClick(view: View) = callback(view)
     })
   }

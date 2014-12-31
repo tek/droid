@@ -3,7 +3,6 @@ package tryp.droid.res
 import scala.collection.mutable.{Map ⇒ MMap}
 import scala.reflect.ClassTag
 
-import android.view.View
 import android.app.{Fragment,Activity}
 import android.widget.FrameLayout
 
