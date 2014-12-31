@@ -134,6 +134,27 @@ extends Actor {
   }
 
   override def unhandled(a: Any) {
-    Log.w(s"Unhandled message in ${this.className}: ${a}")
+    a match {
+      case AttachUi(_) ⇒
+      case DetachUi(_) ⇒
+      case a ⇒ Log.w(s"Unhandled message in ${this.className}: ${a}")
+    }
+  }
+}
+
+abstract class TrypDrawerActivityActor[A <: TrypDrawerActivity: ClassTag]
+extends TrypActor[A]
+{
+  import Messages._
+  import TrypActor._
+
+  def receiveBasic(m: Any) = {
+    m match {
+      case ToolbarTitle(title) ⇒
+        withUi { a ⇒
+          Ui(a.toolbarTitle(title))
+        }
+      case a ⇒ unhandled(a)
+    }
   }
 }
