@@ -19,7 +19,6 @@ import macroid.{Tweak,Contexts}
 
 import tryp.droid.util.CallbackMixin
 import tryp.droid.Macroid._
-import tryp.droid.tweaks.{Toolbar ⇒ ToolbarT}
 import tryp.droid.view.Fragments
 import tryp.droid.SettingsFragment
 
@@ -195,6 +194,8 @@ extends MainView
   with Fragments
   with Contexts[Activity] ⇒
 
+    import tryp.droid.tweaks.{Toolbar ⇒ T}
+
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
     toolbar foreach setSupportActionBar
@@ -212,7 +213,12 @@ extends MainView
   }
 
   def toolbarLayout = {
-    inflateLayout[AToolbar]("toolbar") <~ ↔ <~ whore(toolbar)
+    w[AToolbar] <~
+      ↔ <~
+      whore(toolbar) <~
+      bgCol("toolbar") <~
+      T.minHeight(theme.dimension("actionBarSize").toInt) <~
+      T.titleColor("toolbar_text")
   }
 
   def belowToolbarLayout: Ui[View] = contentLayout
@@ -236,7 +242,7 @@ extends MainView
   def toolbarTitle(title: String) {
     runUi {
       toolbar <~
-        ToolbarT.title(title.isEmpty ? res.string("app_title") / title)
+        T.title(title.isEmpty ? res.string("app_title") / title)
     }
   }
 }

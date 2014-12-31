@@ -173,4 +173,8 @@ extends ResourcesAccess
   }
 
   def logo(resid: Int) = Tweak[AToolbar](_.setLogo(resid))
+
+  def titleColor(name: String)(implicit c: Context) = Tweak[AToolbar] {
+    _.setTitleTextColor(theme.color(name))
+  }
 }

@@ -56,6 +56,8 @@ extends tryp.droid.Preferences
 
   def stringId(name: String): Int = id(name, "string")
 
+  def attrId(name: String) = id(name, "attr")
+
   def resourceName(_id: Int) = resources.getResourceName(_id)
 
   def resources = context.getResources
