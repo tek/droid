@@ -5,6 +5,7 @@ import scala.reflect.ClassTag
 import com.typesafe.config.ConfigFactory
 
 import android.os.Bundle
+import android.app.{Activity ⇒ AActivity,Fragment ⇒ AFragment}
 
 import akka.actor.{ ActorSelection, ActorSystem, Actor, Props }
 
@@ -15,19 +16,17 @@ import tryp.droid.util.CallbackMixin
 trait AkkaComponent extends CallbackMixin {
   def actor: Option[ActorSelection]
 
-  abstract override def onStart = {
-    super.onStart
+  def attach() {
     actor ! TrypActor.AttachUi(this)
   }
 
-  abstract override def onStop = {
-    super.onStop
+  def detach() {
     actor ! TrypActor.DetachUi(this)
   }
 }
 
 trait Akkativity extends AkkaComponent
-{ self: android.app.Activity
+{ self: AActivity
   with view.Activity ⇒
 
   lazy val actorSystemName = res.string("app_handle")
@@ -44,7 +43,13 @@ trait Akkativity extends AkkaComponent
 
   abstract override def onStart {
     coreActor
+    attach()
     super.onStart
+  }
+
+  abstract override def onStop {
+    detach()
+    super.onStop
   }
 
   lazy val actors = Map(createActors: _*)
@@ -65,12 +70,25 @@ trait Akkativity extends AkkaComponent
   def actorsProps: Seq[Props]
 }
 
-trait AkkaFragment extends AkkaComponent { self: tryp.droid.FragmentBase ⇒
+trait AkkaFragment extends AkkaComponent
+{ self: AFragment
+  with tryp.droid.FragmentBase ⇒
+
   def akkativity = {
     activity match {
       case a: Akkativity ⇒ Some(a)
       case _ ⇒ None
     }
+  }
+
+  abstract override def onStart {
+    attach()
+    super.onStart
+  }
+
+  abstract override def onStop {
+    detach()
+    super.onStop
   }
 
   def actorSystem = akkativity map { _.actorSystem }
