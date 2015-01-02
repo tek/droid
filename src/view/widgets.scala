@@ -54,14 +54,12 @@ trait Fab
         Width(res.dimen("fab_width").toInt) <~ whore(progress)
 
   def fabUi(icon: String)(onClick: ⇒ Unit) = {
-    RL()(
     w[FloatingActionButton] <~
       whore(faButton) <~
       image(icon) <~
       imageScale(ImageView.ScaleType.CENTER) <~
       T.Fab.colors("colorAccentStrong", "colorAccent") <~
       On.click { Ui(onClick) }
-    )
   }
 
   def fabAsync[A, B](snack: Option[String] = None)(task: ⇒ B)
