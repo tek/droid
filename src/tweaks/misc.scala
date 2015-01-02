@@ -137,6 +137,8 @@ extends Text
   def inputType(types: Int) = Tweak[TextView](_.setInputType(types))
 
   def hidden = Tweak[View](_.setVisibility(android.view.View.INVISIBLE))
+
+  def indeterminate = Tweak[ProgressBar](_.setIndeterminate(true))
 }
 
 object Misc extends Misc
