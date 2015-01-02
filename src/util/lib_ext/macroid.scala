@@ -1,10 +1,10 @@
-package tryp.droid.util
+package tryp.droid
 
 import scala.reflect.ClassTag
 
 import android.app.Activity
 
-import macroid.{FragmentManagerContext,ActivityContext,AppContext}
+import macroid.{FragmentManagerContext,ActivityContext,AppContext,Ui}
 
 import tryp.droid.view.ActivityContexts
 
@@ -19,4 +19,7 @@ object MacroidExt
       fb.framed(Id(name), Tag(name))
     }
   }
+
+  implicit def `Extract Ui from Option`[A](o: Option[Ui[A]]) =
+    o getOrElse Ui.nop
 }

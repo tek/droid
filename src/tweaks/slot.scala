@@ -1,6 +1,8 @@
 package tryp.droid.tweaks
 
-import macroid.{Tweak,CanTweak}
+import scala.concurrent.{ExecutionContext,Future}
+
+import macroid.{Tweak,CanTweak,Snail}
 import macroid.FullDsl._
 
 trait Slots
@@ -8,6 +10,8 @@ trait Slots
   case class Slot[A <: View](var target: Option[A] = None)
   {
     def <~(t: Tweak[A]) = target <~ t
+
+    def <~~(s: Snail[A])(implicit ec: ExecutionContext) = target <~~ s
 
     def foreach(f: A ⇒ Unit) {
       target foreach f

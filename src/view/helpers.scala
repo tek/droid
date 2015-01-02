@@ -431,8 +431,8 @@ extends HasActivity
   }
 
   def toast(resName: String) {
-    runUi {
-      mToast(res.s(resName)) <~ fry
-    }
+    mkToast(resName).run
   }
+
+  def mkToast(resName: String) = mToast(res.s(resName)) <~ fry
 }
