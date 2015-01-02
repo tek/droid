@@ -168,20 +168,20 @@ object ModelMacro {
     val paramDefault = scala.reflect.internal.Flags.DEFAULTPARAM.asInstanceOf[Long].asInstanceOf[FlagSet]
     val param = scala.reflect.internal.Flags.PARAM.asInstanceOf[Long].asInstanceOf[FlagSet]
     val mutable = scala.reflect.internal.Flags.MUTABLE.asInstanceOf[Long].asInstanceOf[FlagSet]
-    val optionalDate = Select(Select(Select(Ident(newTermName("org")), newTermName("joda")), newTermName("time")), newTypeName("DateTime"))
+    val optionalDate = Select(Select(Select(Ident(TermName("org")), TermName("joda")), TermName("time")), newTypeName("DateTime"))
     val caseparam = Modifiers(caseAccessor | paramAccessor)
     val paramparam = Modifiers(param | paramAccessor)
     def idVal(tpeName: TypeName) = q"$caseparam val id:Option[$tpeName]"
     def idValInCtor(tpeName: TypeName) = q"$paramparam val id:Option[$tpeName]"
 
-    //    def dateVal(name: String) = ValDef(Modifiers(mutable | caseAccessor | paramAccessor), newTermName(name), optionalDate, EmptyTree)
-    def dateVal(name: String) = ValDef(Modifiers(mutable | caseAccessor | paramAccessor | paramDefault), newTermName(name), optionalDate, Literal(Constant(null)))
-    //def dateVal(name: String) = q"var ${newTermName(name)} : org.joda.time.DateTime = null"
-    //    def dateValInCtor(name: String) = ValDef(Modifiers(param | paramAccessor | paramDefault), newTermName(name), optionalDate, Literal(Constant(null))) // Ident(newTermName("None")))
+    //    def dateVal(name: String) = ValDef(Modifiers(mutable | caseAccessor | paramAccessor), TermName(name), optionalDate, EmptyTree)
+    def dateVal(name: String) = ValDef(Modifiers(mutable | caseAccessor | paramAccessor | paramDefault), TermName(name), optionalDate, Literal(Constant(null)))
+    //def dateVal(name: String) = q"var ${TermName(name)} : org.joda.time.DateTime = null"
+    //    def dateValInCtor(name: String) = ValDef(Modifiers(param | paramAccessor | paramDefault), TermName(name), optionalDate, Literal(Constant(null))) // Ident(TermName("None")))
 
     class ClsDesc(val name: String, val flags: Set[ClassFlag], val fields: ListBuffer[FldDesc], val tree: Tree, var plural: String) {
       def parseBody(allClasses: List[ClsDesc]) {
-        val constraintsTerm = newTermName("constraints")
+        val constraintsTerm = TermName("constraints")
         val ClassDef(mod, name, Nil, Template(parents, self, body)) = tree
         body.foreach {
           it =>
@@ -498,7 +498,7 @@ object ModelMacro {
                 tq"${typeId(it.typeName)}"
               }
               val ValDef(mod, nme, _, _) = it.tree
-              val termName = newTermName(nme.decoded + "Id")
+              val termName = TermName(nme.decoded + "Id")
               q"val $termName:$tpt"
             } else
               it.tree.asInstanceOf[ValDef]
@@ -510,24 +510,42 @@ object ModelMacro {
         val defdefs = desc.foreignKeys.map {
           it =>
             if (it.option)
-              q"""def ${newTermName("load" + it.name.capitalize)}(implicit session : JdbcBackend#SessionDef) = ${newTermName(objectName(it.typeName))}.filter(_.id === ${newTermName(colIdName(it.name))}).firstOption"""
+              q"""def ${TermName("load" + it.name.capitalize)}(implicit session : JdbcBackend#SessionDef) = ${TermName(objectName(it.typeName))}.filter(_.id === ${TermName(colIdName(it.name))}).firstOption"""
             else
-              q"""def ${newTermName("load" + it.name.capitalize)}(implicit session : JdbcBackend#SessionDef) = ${newTermName(objectName(it.typeName))}.filter(_.id === ${newTermName(colIdName(it.name))}).first"""
+              q"""def ${TermName("load" + it.name.capitalize)}(implicit session : JdbcBackend#SessionDef) = ${TermName(objectName(it.typeName))}.filter(_.id === ${TermName(colIdName(it.name))}).first"""
         }
         val one2manyDefs = desc.assocs.map {
           it =>
             q"""
-            def ${newTermName("load" + it.name.capitalize)} = for {
-        	  	x <- self.${newTermName(objectName(assocTableName(desc.name, it.typeName)))} if x.${newTermName(colIdName(desc.name))} === id
-        		y <- self.${newTermName(objectName(it.typeName))} if x.${newTermName(colIdName(it.typeName))} === y.id
+            def ${TermName("load" + it.name.capitalize)} = for {
+        	  	x <- self.${TermName(objectName(assocTableName(desc.name, it.typeName)))} if x.${TermName(colIdName(desc.name))} === id
+              y <- self.${TermName(objectName(it.typeName))} if x.${TermName(colIdName(it.typeName))} === y.id
         	} yield(y)
             """
         }
 
-        val one2manyDefAdds = desc.assocs.map {
-          it =>
-            q"""def ${newTermName("add" + it.typeName)}(${newTermName(colIdName(it.typeName))} : ${newTypeName("Long")})(implicit session : JdbcBackend#SessionDef) = ${newTermName(objectName(assocTableName(desc.name, it.typeName)))}.insert(${newTermName(assocTableName(desc.name, it.typeName))}(xid, ${newTermName(colIdName(it.typeName))}))"""
-        }
+        val one2manyDefAdds = desc.assocs.map { it =>
+          val sing = it.typeName
+          val singL = decapitalize(sing)
+          Seq(
+            q"""
+            def ${TermName("add" + sing)}(${TermName(colIdName(sing))} :
+              ${newTypeName("Long")})(implicit session : JdbcBackend#SessionDef) =
+                ${TermName(objectName(assocTableName(desc.name, sing)))}.insert(${TermName(assocTableName(desc.name, it.typeName))}(xid, ${TermName(colIdName(it.typeName))}))
+            """,
+            q"""
+            def ${TermName("remove" + it.name.capitalize)}(ids: Traversable[Long])(implicit session : JdbcBackend#SessionDef) = {
+              val assoc = for {
+                x <- self.${
+                  TermName(objectName(assocTableName(desc.name, it.typeName)))
+                } if x.${TermName(colIdName(desc.name))} === id &&
+                x.${TermName(colIdName(singL))}.inSet(ids)
+              } yield x
+              assoc.delete
+            }
+            """
+          )
+        } flatten
         val lst = if (augment) List(xid) ++ defdefs ++ one2manyDefs ++ one2manyDefAdds else defdefs ++ one2manyDefs ++ one2manyDefAdds
         q"case class ${newTypeName(desc.name)}(..$newAttrs) { ..$lst }"
       }
@@ -549,9 +567,9 @@ object ModelMacro {
       val q"$mods val $nme:$tpt = $initial" = desc.tree
       if (desc.cse) {
         if (desc.option) {
-          q"""def ${newTermName(colIdName(desc.name))} = column[Option[${typeId(desc.typeName)}]](${asColName(colIdName(desc.name))})"""
+          q"""def ${TermName(colIdName(desc.name))} = column[Option[${typeId(desc.typeName)}]](${asColName(colIdName(desc.name))})"""
         } else {
-          q"""def ${newTermName(colIdName(desc.name))} = column[${typeId(desc.typeName)}](${asColName(colIdName(desc.name))})"""
+          q"""def ${TermName(colIdName(desc.name))} = column[${typeId(desc.typeName)}](${asColName(colIdName(desc.name))})"""
         }
       } else {
         val tpe = desc.typeName
@@ -745,7 +763,7 @@ object ModelMacro {
 
     def mkTypeId(tpeName: String): List[Tree] = {
       val tp = typeId(tpeName)
-      val obj = newTermName(s"${tpeName}Id")
+      val obj = TermName(s"${tpeName}Id")
       val cc = q"""case class $tp(val rowId: Long)"""
       val imp = q"""implicit object $obj extends (Long => $tp)"""
       List(cc, imp)
@@ -827,16 +845,16 @@ object ModelMacro {
 
         val indexdefs: List[c.universe.Tree] = indexes.map {
           it =>
-            q"""def ${newTermName(it.name + "Index")} = index(${"idx_" + desc.name.toLowerCase + "_" + it.name.toLowerCase}, ${newTermName(it.name)}, ${it.unique})"""
+            q"""def ${TermName(it.name + "Index")} = index(${"idx_" + desc.name.toLowerCase + "_" + it.name.toLowerCase}, ${TermName(it.name)}, ${it.unique})"""
         }
         val times = mkTimes(desc, augment)
         val forInsert = mkForInsert(desc)
-        val tagDef = ValDef(Modifiers(prvate | local | paramAccessor), newTermName("tag"), Ident(newTypeName("Tag")), EmptyTree)
+        val tagDef = ValDef(Modifiers(prvate | local | paramAccessor), TermName("tag"), Ident(newTypeName("Tag")), EmptyTree)
 
-        val vparams = q"""${newTermName("tag")}:${newTypeName("Tag")}""" :: Nil
+        val vparams = q"""${TermName("tag")}:${newTypeName("Tag")}""" :: Nil
         val body = if (augment) idCol :: times :: desc.dateDefs ++ defdefs ++ indexdefs ++ foreignKeys else times :: indexdefs ++ defdefs ++ foreignKeys
         val plur = plural(decapitalize(desc.name)).toLowerCase()
-        val tableDef = q"""class ${newTypeName(tableName(desc.name))}(${newTermName("tag")}:${newTypeName("Tag")}) extends Table[${newTypeName(desc.name)}](${newTermName("tag")}, ${Constant(plur)}){ ..$body }"""
+        val tableDef = q"""class ${newTypeName(tableName(desc.name))}(${TermName("tag")}:${newTypeName("Tag")}) extends Table[${newTypeName(desc.name)}](${TermName("tag")}, ${Constant(plur)}){ ..$body }"""
         val tableDef2 =
           ClassDef(Modifiers(),
             newTypeName(tableName(desc.name)), Nil,
@@ -852,7 +870,7 @@ object ModelMacro {
       val ex = if (desc.timestamps) "Ex" else ""
       val crud = if (!desc.assoc) s"with Crud$ex[${desc.name}, ${tableName(desc.name)}]" else ""
 
-      val query = c.parse(s"val ${newTermName(objectName(desc.name))} = new TableQuery(tag => new ${newTypeName(tableName(desc.name))}(tag)) $crud")
+      val query = c.parse(s"val ${TermName(objectName(desc.name))} = new TableQuery(tag => new ${newTypeName(tableName(desc.name))}(tag)) $crud")
       query :: Nil
     }
     def defMap(body: List[c.universe.Tree]): Map[DefType, List[(DefType, c.universe.Tree)]] = {
@@ -888,13 +906,13 @@ object ModelMacro {
           }) getOrElse (Nil))
           val embedDefList = allDefs.getOrElse(EMBEDDEF, Nil).map(_._2)
           val extraImports = List(
-            Import(Select(Select(Select(Ident(newTermName("scala")), newTermName("slick")), newTermName("util")), newTermName("TupleMethods")), List(ImportSelector(nme.WILDCARD, -1, null, -1))),
-            Import(Select(Select(Ident(newTermName("scala")), newTermName("slick")), newTermName("jdbc")), List(ImportSelector(newTermName("JdbcBackend"), -1, newTermName("JdbcBackend"), -1))),
-            Import(Select(Select(Select(Select(Ident(newTermName("scala")), newTermName("slick")), newTermName("driver")), newTermName(driverName)), newTermName("simple")), List(ImportSelector(nme.WILDCARD, 245, null, -1))),
-            Import(Select(Select(Ident(newTermName("slickmacros")), newTermName("dao")), newTermName("Crud")), List(ImportSelector(nme.WILDCARD, 90, null, -1))),
-            Import(Select(Ident(newTermName("slickmacros")), newTermName("Implicits")), List(ImportSelector(nme.WILDCARD, 121, null, -1))))
+            Import(Select(Select(Select(Ident(TermName("scala")), TermName("slick")), TermName("util")), TermName("TupleMethods")), List(ImportSelector(nme.WILDCARD, -1, null, -1))),
+            Import(Select(Select(Ident(TermName("scala")), TermName("slick")), TermName("jdbc")), List(ImportSelector(TermName("JdbcBackend"), -1, TermName("JdbcBackend"), -1))),
+            Import(Select(Select(Select(Select(Ident(TermName("scala")), TermName("slick")), TermName("driver")), TermName(driverName)), TermName("simple")), List(ImportSelector(nme.WILDCARD, 245, null, -1))),
+            Import(Select(Select(Ident(TermName("slickmacros")), TermName("dao")), TermName("Crud")), List(ImportSelector(nme.WILDCARD, 90, null, -1))),
+            Import(Select(Ident(TermName("slickmacros")), TermName("Implicits")), List(ImportSelector(nme.WILDCARD, 121, null, -1))))
           val objectDefs = extraImports ++ List(mapDateTime) ++ enumDefList ++ importdefList ++ enumMapperList ++ embedDefList ++ tableDefList /* ++ defdefList*/
-          ModuleDef(mod, moduleName, Template(parents, ValDef(Modifiers(PRIVATE), newTermName("self"), TypeTree(), EmptyTree), objectDefs))
+          ModuleDef(mod, moduleName, Template(parents, ValDef(Modifiers(PRIVATE), TermName("self"), TypeTree(), EmptyTree), objectDefs))
           q"""object $moduleName extends ..$parents { self =>
             val dbLock = new Object
             ..$objectDefs

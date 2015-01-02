@@ -58,7 +58,6 @@ object TransactionMacro {
     impl(c, "withDynSession")(annottees: _*)
   }
 
-
   def impl(c: Context, sessionType: String)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
     val param = scala.reflect.internal.Flags.PARAM.asInstanceOf[Long].asInstanceOf[FlagSet]
@@ -84,10 +83,10 @@ object TransactionMacro {
           } getOrElse {
             ("_dbOptions", Some(List(q"implicit val _dbOptions:slickmacros.annotations.DBConnectionInfo") :: Nil))
           }
-          val implicitValName = newTermName(implictParam._1)
+          val implicitValName = TermName(implictParam._1)
 
           val newvparams = implictParam._2 map (vparamss ++ _) getOrElse (vparamss)
-          val def_def = q"""$mods def ${newTermName("_" + name.decoded)}[..$tparams](...$newvparams): $tpt = {
+          val def_def = q"""$mods def ${TermName("_" + name.decoded)}[..$tparams](...$newvparams): $tpt = {
 		    val _db =
 		      if ($implicitValName.jndiName ne null)
 		        Database.forName($implicitValName.jndiName)
@@ -100,7 +99,7 @@ object TransactionMacro {
 		        else
 		          throw new SlickException("One of jndiName / dataSource / driver / driverClassName must be set")
                 dbLock synchronized {
-                  _db ${newTermName(sessionType)} { implicit session =>
+                  _db ${TermName(sessionType)} { implicit session =>
                     $body 
                   }
                 }
@@ -109,7 +108,7 @@ object TransactionMacro {
 
           val defdef = q"""$mods def $name[..$tparams](...$vparamss): $tpt = {
             $def_def
-            ${newTermName("_" + name.decoded)}(..$callparams)
+            ${TermName("_" + name.decoded)}(..$callparams)
           }
           """
 

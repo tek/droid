@@ -27,15 +27,15 @@ object DynamicAccessors {
     val param = scala.reflect.internal.Flags.PARAM.asInstanceOf[Long].asInstanceOf[FlagSet]
     val Select(Apply(implct, query :: Nil), methodName) = c.typeCheck(c.prefix.tree)
     val paramnames = args.map(_.tree).map {
-      case Apply(_, List(Literal(Constant(paramname: String)), _)) => Select(Ident(newTermName("row")), newTermName(paramname))
+      case Apply(_, List(Literal(Constant(paramname: String)), _)) => Select(Ident(TermName("row")), TermName(paramname))
     } toList
     // do we handle parts correctly here ? I doubt it.
-    val tupleNames = Apply(Select(Ident(newTermName("scala")), newTermName("Tuple" + paramnames.length)), paramnames)
+    val tupleNames = Apply(Select(Ident(TermName("scala")), TermName("Tuple" + paramnames.length)), paramnames)
 
     val paramvals = args.map(_.tree).map {
       case Apply(_, List(_, paramval)) => paramval
     } toList
-    val tupeVals = Apply(Select(Ident(newTermName("scala")), newTermName("Tuple" + paramvals.length)), paramvals)
+    val tupeVals = Apply(Select(Ident(TermName("scala")), TermName("Tuple" + paramvals.length)), paramvals)
 
     val update =
       if (paramnames.length == 1)
@@ -53,7 +53,7 @@ object DynamicAccessors {
     val field = prefix.tpe.members filter (member => member.name.decoded == "myType") head
     val traitType = field.typeSignatureIn(prefix.tpe)
     if (traitType.typeSymbol == args.tpe.typeSymbol) {
-      val result = Apply(Select(prefix, newTermName("doInsert")), List(args))
+      val result = Apply(Select(prefix, TermName("doInsert")), List(args))
       c.Expr[Int](result)
     } else
       c.abort(c.enclosingPosition, s"${args.tpe} does not conform to $traitType")

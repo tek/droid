@@ -58,21 +58,13 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard,
     scalaVersion := "2.11.4"
   )
 
-  val paradiseVersion = "2.0.1"
-
-  lazy val paradise = Seq(
-    incOptions := incOptions.value.withNameHashing(false),
-    addCompilerPlugin(
-      "org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full
-    )
-  )
-
   lazy val macros = p("macros")
     .aar()
 
   lazy val slickmacros = p("slickmacros")
-    .export
-    .settings(paradise)()
+    .paradise()
+    .antSrc
+    .export()
 
   lazy val root = p("root")
     .path(".")
