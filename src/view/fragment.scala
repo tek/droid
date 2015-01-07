@@ -90,8 +90,16 @@ with FragmentBase
 
   def setupToolbar() {
     setHasOptionsMenu(true)
-    core ! Messages.ToolbarTitle(title)
   }
 
   def title = name
+}
+
+abstract class MainFragment
+extends TrypFragment
+{
+  override def setupToolbar() {
+    super.setupToolbar()
+    core ! Messages.ToolbarTitle(title)
+  }
 }
