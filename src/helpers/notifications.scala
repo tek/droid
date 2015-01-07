@@ -14,12 +14,14 @@ class Notification(
   lazy val builder = new NotificationCompat.Builder(context) tap { bldr ⇒
     val sb = TaskStackBuilder.create(context)
     sb.addParentStack(target)
-    sb.addNextIntent(new Intent(context, target))
-    val intent = sb.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
-    bldr.setContentIntent(intent)
+    sb.addNextIntent(intent)
+    val pIntent = sb.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
+    bldr.setContentIntent(pIntent)
     bldr.setContentTitle(title)
     bldr.setSmallIcon(icon)
   }
+
+  lazy val intent = new Intent(context, target)
 
   def setTitle(newTitle: String) = builder.setContentTitle(newTitle)
 
