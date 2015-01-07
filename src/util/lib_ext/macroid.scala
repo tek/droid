@@ -22,4 +22,12 @@ object MacroidExt
 
   implicit def `Extract Ui from Option`[A](o: Option[Ui[A]]) =
     o getOrElse Ui.nop
+
+  implicit def `Widget is tweakable with Option`[W <: View, T <: Tweak[W]] =
+    new CanTweak[W, Option[T], W] {
+      def tweak(w: W, o: Option[T]) = Ui {
+        o foreach { _(w) }
+        w
+      }
+    }
 }
