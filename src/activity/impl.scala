@@ -39,7 +39,6 @@ with Akkativity
 
 abstract class TrypDrawerActivity
 extends TrypDefaultActivity
-with Toolbar
 with Drawer
 {
 }

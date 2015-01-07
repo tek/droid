@@ -18,6 +18,7 @@ import macroid.FullDsl._
 
 import tryp.droid.util.CallbackMixin
 import tryp.droid.Macroid._
+import tryp.droid.Screws._
 import tryp.droid.view.Fragments
 import tryp.droid.SettingsFragment
 
@@ -75,16 +76,29 @@ extends ActivityBase
 
   def loadContent[A <: Fragment: ClassTag](backStack: Boolean = true,
     title: String = "") = {
-    replaceFragmentAuto[A](Id.content, backStack)
+    loadContentWrapper(backStack, title) {
+      replaceFragmentAuto[A](Id.content, backStack)
+    }
   }
 
   def loadContentCustom(fragment: Fragment, backStack: Boolean = true,
     title: String = "") = {
-    replaceFragmentCustom(Id.content, fragment, backStack)
+    loadContentWrapper(backStack, title) {
+      replaceFragmentCustom(Id.content, fragment, backStack)
+    }
   }
 
+  def loadContentWrapper(backStack: Boolean, title: String)
+  (callback: ⇒ Boolean) = {
+    callback tapIf {
+      contentLoaded(backStack, title)
+    }
+  }
+
+  def contentLoaded(backStack: Boolean, title: String)
+
   abstract override def onBackPressed() {
-    !backStackEmpty ? popBackStackSync / super.onBackPressed()
+    backStackNonEmpty ? popBackStackSync / super.onBackPressed()
   }
 }
 
@@ -219,20 +233,8 @@ extends MainView
 
   def belowToolbarLayout: Ui[View] = contentLayout
 
-  override def loadContent[A <: Fragment: ClassTag](backStack: Boolean = true,
-    title: String = "")
-  = {
-    super.loadContent[A](backStack) tapIf {
-      toolbarTitle(title)
-    }
-  }
-
-  override def loadContentCustom(fragment: Fragment, backStack: Boolean = true,
-    title: String = "")
-  = {
-    super.loadContentCustom(fragment, backStack) tapIf {
-      toolbarTitle(title)
-    }
+  def contentLoaded(backStack: Boolean, title: String) {
+    toolbarTitle(title)
   }
 
   def toolbarTitle(title: String) {
@@ -248,10 +250,11 @@ extends MainView
 }
 
 trait Drawer
-extends MainView
-{ self: Activity
-  with Fragments
-  with Toolbar ⇒
+extends Toolbar
+{ self: ActionBarActivity
+  with Fragments ⇒
+
+  import tryp.droid.tweaks.{Toolbar ⇒ T, Drawer ⇒ D}
 
   override def initView {
     super.initView
@@ -261,16 +264,14 @@ extends MainView
   def initDrawer {
     addFragment(Id.Drawer, drawerFragment, false, Tag.Drawer)
     drawerToggle foreach { toggle ⇒
-      drawerSlot foreach {
-        _.setDrawerListener(toggle)
-      }
+      runUi(drawer <~ D.listener(toggle))
     }
   }
 
-  val drawerSlot = slut[DrawerLayout]
+  val drawer = slut[DrawerLayout]
 
   lazy val drawerToggle = {
-    drawerSlot flatMap { drawer ⇒
+    drawer flatMap { drawer ⇒
       toolbar map { tb ⇒
         new ActionBarDrawerToggle(
           activity,
@@ -287,12 +288,16 @@ extends MainView
     l[DrawerLayout](
       contentLayout,
       l[FrameLayout]() <~ Id.Drawer <~ dlp(res.dimen("drawer_width"), ↕)
-    ) <~ whore(drawerSlot) <~ llp(↔, ↕)
+    ) <~ whore(drawer) <~ llp(↔, ↕)
   }
 
   abstract override def onPostCreate(state: Bundle) {
     super.onPostCreate(state)
-    drawerToggle foreach(_.syncState)
+    syncToggle()
+  }
+
+  def syncToggle() {
+    drawerToggle <<~ D.sync
   }
 
   abstract override def onConfigurationChanged(newConf: Configuration) {
@@ -300,13 +305,40 @@ extends MainView
     drawerToggle foreach { _.onConfigurationChanged(newConf) }
   }
 
-  abstract override def onOptionsItemSelected(item: MenuItem) = {
-    drawerToggle.exists(_.onOptionsItemSelected(item)) ||
-      super.onOptionsItemSelected(item)
+  abstract override def onBackPressed() {
+    super.onBackPressed()
+    if (backStackEmpty) {
+      syncToggle()
+    }
   }
 
+  abstract override def onOptionsItemSelected(item: MenuItem) = {
+    val navPressed = item.getItemId == android.R.id.home
+    val drawerWasOpen = drawerOpen
+    if (navPressed && !drawerWasOpen && backStackNonEmpty) {
+      onBackPressed()
+      true
+    }
+    else {
+      drawerToggle.exists(_.onOptionsItemSelected(item))
+    }
+  }
+
+  def drawerOpen = drawer exists { _.isDrawerOpen(Gravity.LEFT) }
+
   def closeDrawer() {
-    drawerSlot foreach { _.closeDrawer(Gravity.LEFT) }
+    drawer <~ D.close()
+  }
+
+  override def contentLoaded(backStack: Boolean, title: String) {
+    super.contentLoaded(backStack, title)
+    if (backStack) {
+      enableBackButton()
+    }
+  }
+
+  def enableBackButton() {
+    drawerToggle foreach { _.onDrawerOpened(null) }
   }
 
   def drawerFragment: Fragment
