@@ -1,5 +1,11 @@
 package tryp.droid.util
 
+import scala.math.min
+
+import java.util.{Timer, TimerTask}
+
+import Control._
+
 object Time {
   def now = System.currentTimeMillis / 1000
 
@@ -21,5 +27,34 @@ object Time {
     val minutes = rest / 60
     val seconds = rest % 60
     Map("hour" -> hours, "minute" -> minutes, "second" -> seconds)
+  }
+}
+
+class Ticker(period: Double)(callback: => Unit)
+{
+  val timer = new Timer
+  var running = false
+  var task: Option[TimerTask] = None
+
+  def start {
+    try {
+      val t = new TimerTask { def run { callback } }
+      val p = (period <= 0) ? 1.0 / period
+      timer.scheduleAtFixedRate(t, 0, (p * 1000).toInt)
+      running = true
+      task = Some(t)
+    }
+    catch {
+      case ex: IllegalStateException =>
+        Log.e(s"Couldn't start Ticker: ${ex}")
+    }
+  }
+
+  def stop {
+    task foreach { t ⇒
+      t.cancel
+      task = None
+    }
+    running = false
   }
 }
