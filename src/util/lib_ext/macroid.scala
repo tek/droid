@@ -2,13 +2,13 @@ package tryp.droid
 
 import scala.reflect.ClassTag
 
-import android.app.Activity
-
-import macroid.{FragmentManagerContext,ActivityContext,AppContext,Ui}
+import macroid.{FragmentManagerContext,ActivityContext,AppContext}
+import macroid.{Tweak,CanTweak}
+import macroid.FullDsl._
 
 import tryp.droid.view.ActivityContexts
 
-object MacroidExt
+trait MacroidExt
 {
   implicit class FragmentBuilderExt[A](fb: macroid.FragmentBuilder[A])(
     implicit ct: ClassTag[A]

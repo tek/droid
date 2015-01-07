@@ -12,7 +12,6 @@ import macroid.Snails
 
 import tryp.droid.Macroid._
 import tryp.droid.{Macroid ⇒ T}
-import tryp.droid.MacroidExt._
 
 trait Fab
 { self: view.HasActivity
@@ -40,7 +39,7 @@ trait Fab
     content: Ui[View]) =
   {
     val geom = rlp(↦, alignBottom(headerId)) +
-      margin(right = res.dimen("fab_margin_normal").toInt,
+      margin(right = 16 dp,
         bottom = res.dimen("fab_margin_normal_minus").toInt)
     RL()(
       header <~ headerId,
