@@ -338,6 +338,13 @@ with Searchable
     replaceFragmentIf(id, makeFragment[A], backStack, tag)
   }
 
+  def clearBackStack() = {
+    backStackNonEmpty tapIf { 
+        fragmentManager.popBackStack(null,
+          FragmentManager.POP_BACK_STACK_INCLUSIVE)
+    }
+  }
+
   def addFragment[A >: BBasic#IdTypes](name: A, fragment: Fragment,
     backStack: Boolean, tag: String)
   {
@@ -410,6 +417,8 @@ with Searchable
   }
 
   def backStackEmpty = fragmentManager.getBackStackEntryCount == 0
+
+  def backStackNonEmpty = !backStackEmpty
 }
 
 trait Snackbars
