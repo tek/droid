@@ -3,10 +3,13 @@ package tryp.droid.tweaks
 import scala.language.reflectiveCalls
 
 import android.widget._
+import android.view.Gravity
 import android.content.res.ColorStateList
+import android.support.v4.widget.DrawerLayout
 import android.support.v7.widget.{RecyclerView,LinearLayoutManager,CardView}
 import android.support.v7.widget.StaggeredGridLayoutManager
 import android.support.v7.widget.{Toolbar ⇒ AToolbar}
+import android.support.v7.app.ActionBarDrawerToggle
 import android.text.{TextWatcher,TextUtils}
 import android.graphics.drawable.Drawable
 
@@ -192,4 +195,25 @@ extends ResourcesAccess
   def titleColor(name: String)(implicit c: Context) = Tweak[AToolbar] {
     _.setTitleTextColor(theme.color(name))
   }
+
+  def navButtonListener(listener: android.view.View.OnClickListener) =
+    Tweak[AToolbar] { _.setNavigationOnClickListener(listener) }
+}
+
+object Drawer
+extends ResourcesAccess
+{
+  type Toggle = ActionBarDrawerToggle
+
+  private def t(f: (DrawerLayout) ⇒ Unit) = Tweak[DrawerLayout](f)
+
+  def listener(toggle: Toggle) = t { _.setDrawerListener(toggle) }
+
+  def close(edge: Int = Gravity.LEFT) = t { _.closeDrawer(edge) }
+
+  import tryp.droid.{Screw,CanScrew}
+
+  def sync = Screw[Toggle] { _.syncState }
+
+  def upEnabled = Screw[Toggle] { _.setHomeAsUpIndicator(0) }
 }
