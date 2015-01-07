@@ -15,7 +15,9 @@ extends HasContext
   }
 
   def prefInt(key: String, default: Int = 0) = {
-    prefs.getInt(s"pref_${key}", default)
+    Try {
+      prefs.getString(s"pref_${key}", "").toInt
+    } getOrElse default
   }
 
   def prefs = PreferenceManager.getDefaultSharedPreferences(context)
