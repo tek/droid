@@ -3,7 +3,6 @@ package tryp.droid.view
 import scala.language.dynamics
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.util.Try
 
 import scalaz._
 import Scalaz.{Id ⇒ sId,_}

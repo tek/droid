@@ -49,4 +49,6 @@ extends Util
   type Ui[+A] = macroid.Ui[A]
 
   val Ui = macroid.Ui
+
+  val Try = scala.util.Try
 }
