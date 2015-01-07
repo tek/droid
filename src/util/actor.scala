@@ -148,9 +148,9 @@ extends TrypActor[A]
   def receiveBasic(m: Any) = {
     m match {
       case ToolbarTitle(title) ⇒
-        withUi { a ⇒
-          Ui(a.toolbarTitle(title))
-        }
+        ui { _.toolbarTitle(title) }
+      case ToolbarView(view) ⇒
+        ui { _.toolbarView(view) }
       case a ⇒ unhandled(a)
     }
   }

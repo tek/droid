@@ -209,7 +209,7 @@ extends MainView
   }
 
   def toolbarLayout = {
-    w[AToolbar] <~
+    l[AToolbar](l[FrameLayout]() <~ Id.toolbar) <~
       ↔ <~
       whore(toolbar) <~
       bgCol("toolbar") <~
@@ -240,6 +240,10 @@ extends MainView
       toolbar <~
         T.title(title.isEmpty ? res.string("app_title") / title)
     }
+  }
+
+  def toolbarView(view: Fragment) {
+    replaceFragmentCustom(Id.toolbar, view, false)
   }
 }
 
