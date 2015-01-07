@@ -9,7 +9,7 @@ with tryp.droid.AkkaExt
 {
 }
 
-trait Globals
+trait GlobalsBase
 extends Util
 {
   val Env = tryp.droid.util.Env
@@ -39,16 +39,20 @@ extends Util
   type Context = android.content.Context
   type Bundle = android.os.Bundle
   type Intent = android.content.Intent
-  type Activity = android.app.Activity
   type Fragment = android.app.Fragment
-
-  type View = android.view.View
-  type ViewGroup = android.view.ViewGroup
-  type LayoutInflater = android.view.LayoutInflater
 
   type Ui[+A] = macroid.Ui[A]
 
   val Ui = macroid.Ui
 
   val Try = scala.util.Try
+}
+
+trait Globals
+extends GlobalsBase
+{
+  type Activity = android.app.Activity
+  type View = android.view.View
+  type ViewGroup = android.view.ViewGroup
+  type LayoutInflater = android.view.LayoutInflater
 }
