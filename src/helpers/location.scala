@@ -1,6 +1,7 @@
 package tryp.droid
 
 import android.app.PendingIntent
+import android.location.Location
 
 import com.google.android.gms.location.{LocationServices,_}
 import LocationServices.{FusedLocationApi ⇒ LocApi, GeofencingApi ⇒ GeoApi}
@@ -10,12 +11,11 @@ import com.google.android.gms.common.api._
 
 case class GeofenceData(id: String, lat: Double, long: Double)
 
-trait Locations
+trait LocationsConcern
 extends tryp.droid.Basic
-with tryp.droid.util.CallbackMixin
 with LocationListener
 {
-  class LocationCallbacks(owner: Locations)
+  class LocationCallbacks(owner: LocationsConcern)
   extends GoogleApiClient.OnConnectionFailedListener
   with GoogleApiClient.ConnectionCallbacks
   {
@@ -44,14 +44,11 @@ with LocationListener
     .addOnConnectionFailedListener(locationCallbacks)
     .build
 
-
-  abstract override def onStart {
-    super.onStart
+  def connect {
     apiClient.connect
   }
 
-  abstract override def onStop {
-    super.onStop
+  def disconnect {
     apiClient.disconnect
   }
 
@@ -84,12 +81,67 @@ with LocationListener
       .build
   }
 
-  def requestLocationUpdates {
+  def requestLocationUpdates(intent: PendingIntent) {
     val request = LocationRequest.create
-      .setInterval(5)
+      .setInterval(5 * 60 * 1000)
+      .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+    LocApi.requestLocationUpdates(apiClient, request, intent)
+  }
+
+  def locationConnected(data: Bundle)
+}
+
+trait Locations
+extends LocationsConcern
+with tryp.droid.util.CallbackMixin
+{
+  abstract override def onStart {
+    super.onStart
+    connect
+  }
+
+  abstract override def onStop {
+    super.onStop
+    disconnect
+  }
+}
+
+case class LocationTask(callback: (Location) ⇒ Unit)
+(implicit val context: Context)
+extends LocationsConcern
+{
+  def run {
+    connect
+  }
+
+  def locationConnected(data: Bundle) {
+    val request = LocationRequest.create
+      .setNumUpdates(1)
+      .setExpirationDuration(10000)
       .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
     LocApi.requestLocationUpdates(apiClient, request, this)
   }
 
-  def locationConnected(data: Bundle)
+  def onLocationChanged(location: Location) {
+    callback(location)
+    LocApi.removeLocationUpdates(apiClient, this)
+    disconnect
+  }
+}
+
+case class GeofenceTask(intent: PendingIntent, fences: Seq[GeofenceData])
+(implicit val context: Context)
+extends LocationsConcern
+{
+  def run {
+    connect
+  }
+
+  def locationConnected(data: Bundle) {
+    requestGeofences(intent, fences)
+    disconnect
+  }
+
+  def onLocationChanged(location: Location) {
+  }
 }
