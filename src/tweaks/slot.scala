@@ -11,6 +11,8 @@ trait Slots
   {
     def <~(t: Tweak[A]) = target <~ t
 
+    def <~(t: Option[Tweak[A]]) = target <~ t
+
     def <~~(s: Snail[A])(implicit ec: ExecutionContext) = target <~~ s
 
     def foreach(f: A ⇒ Unit) {
