@@ -3,6 +3,9 @@ package tryp.droid
 import android.view.MenuItem
 
 import scala.annotation.implicitNotFound
+import scala.language.higherKinds
+
+import macroid.util.Effector
 
 case class Screw[-A](f: A ⇒ Unit) {
   def apply(w: A) = f(w)
@@ -20,10 +23,19 @@ trait CanScrew[A, B, C] {
 }
 
 object CanScrew {
-  implicit def `screw MenuItem with Screw`[A <: MenuItem, B <: Screw[A]] =
+  implicit def `screw Any with Screw`[A, B <: Screw[A]] =
     new CanScrew[A, B, A] {
       def screw(item: A, scrw: B) = {
         item tap { scrw(_) }
+      }
+    }
+
+  implicit def `Effector is screwable`[W, F[+_], T, R]
+  (implicit effector: Effector[F], canScrew: CanScrew[W, T, R]) =
+    new CanScrew[F[W], T, F[W]] {
+      def screw(f: F[W], t: T) = {
+        effector.foreach(f)(w ⇒ canScrew.screw(w, t))
+        f
       }
     }
 }
