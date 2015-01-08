@@ -2,7 +2,7 @@ package tryp.droid
 
 import android.preference.PreferenceFragment
 
-class SettingsFragment
+case class SettingsFragment()
 extends PreferenceFragment
 with tryp.droid.Basic
 {

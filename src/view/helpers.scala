@@ -325,10 +325,11 @@ with Searchable
     frag isEmpty
   }
 
-  def replaceFragmentCustom[A <: Fragment: ClassTag](id: Id, fragment: ⇒ A,
-    backStack: Boolean) =
+  def replaceFragmentCustom
+  (id: Id, fragment: Fragment, backStack: Boolean) =
   {
-    replaceFragmentIf(id, fragment, backStack, fragmentName[A])
+    replaceFragmentIf(id, fragment, backStack,
+      fragmentClassName(fragment.getClass))
   }
 
   def replaceFragmentAuto[A <: Fragment: ClassTag](id: Id,

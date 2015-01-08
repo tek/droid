@@ -30,6 +30,7 @@ extends ActionBarActivity
 with TrypActivity
 with tryp.droid.Broadcast
 with Akkativity
+with HasNavigation
 {
   override def onStart { super.onStart }
   override def onStop { super.onStop }

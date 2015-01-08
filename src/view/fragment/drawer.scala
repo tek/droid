@@ -9,19 +9,24 @@ import tryp.droid.tweaks.Recycler._
 import tryp.droid.res._
 import tryp.droid.Macroid._
 
-class DrawerFragment
+class DrawerFragment(navigation: Navigation)
 extends TrypFragment
 {
-  override def onCreate(state: Bundle) {
-    super.onCreate(state)
-  }
+  override implicit def resourceNamespace = PrefixResourceNamespace("drawer")
 
-  lazy val drawerAdapter = new DrawerAdapter(actor)
+  lazy val adapter = new DrawerAdapter(core, navigation)
 
   override def macroidLayout(state: Bundle) = {
     LL(vertical, bgCol("main"))(
-      w[RecyclerView] <~ recyclerAdapter(drawerAdapter) <~
+      w[RecyclerView] <~ recyclerAdapter(adapter) <~
         linearLayoutManager <~ divider
     )
   }
+
+  def navigated() {
+    adapter.notifyDataSetChanged
+  }
 }
+
+case class DefaultDrawerFragment(navigation: Navigation)
+extends DrawerFragment(navigation)

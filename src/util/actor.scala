@@ -157,6 +157,8 @@ extends TrypActor[A]
         ui { _.toolbarTitle(title) }
       case ToolbarView(view) ⇒
         ui { _.toolbarView(view) }
+      case Navigation(target) ⇒
+        ui { _.navigate(target) }
       case a ⇒ unhandled(a)
     }
   }

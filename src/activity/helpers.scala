@@ -12,7 +12,7 @@ import android.preference.PreferenceManager
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.{ActionBarDrawerToggle,ActionBarActivity}
-import android.support.v7.widget.{Toolbar ⇒ AToolbar}
+import android.support.v7.widget.Toolbar
 
 import macroid.FullDsl._
 
@@ -20,7 +20,7 @@ import tryp.droid.util.CallbackMixin
 import tryp.droid.Macroid._
 import tryp.droid.Screws._
 import tryp.droid.view.Fragments
-import tryp.droid.SettingsFragment
+import tryp.droid._
 
 trait ActivityBase
 extends tryp.droid.view.HasActivity
@@ -74,28 +74,26 @@ extends ActivityBase
     l[FrameLayout]() <~ Id.content <~ bgCol("main")
   }
 
-  def loadContent[A <: Fragment: ClassTag](backStack: Boolean = true,
-    title: String = "") = {
-    loadContentWrapper(backStack, title) {
+  def loadContent[A <: Fragment: ClassTag](backStack: Boolean = true) = {
+    loadContentWrapper(backStack) {
       replaceFragmentAuto[A](Id.content, backStack)
     }
   }
 
-  def loadContentCustom(fragment: Fragment, backStack: Boolean = true,
-    title: String = "") = {
-    loadContentWrapper(backStack, title) {
+  def loadContentCustom(fragment: Fragment, backStack: Boolean = true) = {
+    loadContentWrapper(backStack) {
       replaceFragmentCustom(Id.content, fragment, backStack)
     }
   }
 
-  def loadContentWrapper(backStack: Boolean, title: String)
+  def loadContentWrapper(backStack: Boolean)
   (callback: ⇒ Boolean) = {
     callback tapIf {
-      contentLoaded(backStack, title)
+      contentLoaded(backStack)
     }
   }
 
-  def contentLoaded(backStack: Boolean, title: String)
+  def contentLoaded(backStack: Boolean) {  }
 
   abstract override def onBackPressed() {
     backStackNonEmpty ? popBackStackSync / super.onBackPressed()
@@ -147,7 +145,7 @@ with tryp.droid.view.Preferences
   }
 
   def settings() {
-    loadContent[SettingsFragment](title = res.string("menu_settings"))
+    loadContent[SettingsFragment]()
   }
 
   def setupPreferences {
@@ -199,7 +197,7 @@ extends ActivityBase
   }
 }
 
-trait Toolbar
+trait HasToolbar
 extends MainView
 { self: ActionBarActivity
   with Fragments ⇒
@@ -212,7 +210,7 @@ extends MainView
     runUi(toolbar <~ T.navButtonListener(navButtonClick()))
   }
 
-  val toolbar = slut[AToolbar]
+  val toolbar = slut[Toolbar]
 
   override def mainLayout = {
     l[FrameLayout](
@@ -224,7 +222,7 @@ extends MainView
   }
 
   def toolbarLayout = {
-    l[AToolbar](l[FrameLayout]() <~ Id.toolbar) <~
+    l[Toolbar](l[FrameLayout]() <~ Id.toolbar) <~
       ↔ <~
       whore(toolbar) <~
       bgCol("toolbar") <~
@@ -233,10 +231,6 @@ extends MainView
   }
 
   def belowToolbarLayout: Ui[View] = contentLayout
-
-  def contentLoaded(backStack: Boolean, title: String) {
-    toolbarTitle(title)
-  }
 
   def toolbarTitle(title: String) {
     runUi {
@@ -254,11 +248,38 @@ extends MainView
   }
 }
 
+trait HasNavigation
+extends MainView
+{ self: Activity
+  with Fragments ⇒
+
+  def navigation: Navigation
+
+  def navigateIndex(index: Int) {
+    navigation.targets.lift(index) foreach(navigate)
+  }
+
+  def navigate(target: NavigationTarget) {
+    if(!canPopHome(target)) loadNavTarget(target)
+    navigation.current = Option(target)
+  }
+
+  def loadNavTarget(target: NavigationTarget) {
+    loadContentCustom(target.fragment(), !target.home)
+  }
+
+  def canPopHome(target: NavigationTarget) = {
+    target.home && clearBackStack()
+  }
+}
+
 trait Drawer
-extends Toolbar
+extends HasToolbar
+with HasNavigation
 with DrawerLayout.DrawerListener
 { self: ActionBarActivity
-  with Fragments ⇒
+  with Fragments
+  with Akkativity ⇒
 
   import tryp.droid.tweaks.{Toolbar ⇒ T, Drawer ⇒ D}
 
@@ -325,11 +346,8 @@ with DrawerLayout.DrawerListener
 
   def openDrawer = drawer <~ D.open()
 
-  override def contentLoaded(backStack: Boolean, title: String) {
-    super.contentLoaded(backStack, title)
-    if (backStack) {
-      enableBackButton()
-    }
+  override def contentLoaded(backStack: Boolean) {
+    if (backStack) enableBackButton()
   }
 
   def enableBackButton() {
@@ -365,5 +383,11 @@ with DrawerLayout.DrawerListener
     true
   }
 
-  def drawerFragment: Fragment
+  override def navigate(target: NavigationTarget) {
+    super.navigate(target)
+    closeDrawer.run
+    selectActor("drawer") ! Messages.Navigation(target)
+  }
+
+  def drawerFragment: DrawerFragment = DefaultDrawerFragment(navigation)
 }

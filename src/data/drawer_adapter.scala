@@ -9,16 +9,19 @@ import macroid.contrib.TextTweaks._
 import akka.actor.ActorSelection
 
 import tryp.droid.Macroid._
+import tryp.droid.res.PrefixResourceNamespace
 
 case class DrawerViewHolder(view: View, text: Slot[TextView])
 extends RecyclerView.ViewHolder(view)
 
-class DrawerAdapter(actor: Option[ActorSelection])
+class DrawerAdapter(actor: Option[ActorSelection], navigation: Navigation)
 (implicit activity: Activity)
-extends SimpleRecyclerAdapter[DrawerViewHolder, String]
+extends SimpleRecyclerAdapter[DrawerViewHolder, NavigationTarget]
 {
   setHasStableIds(true)
-  updateItems(Seq("Plan", "Shop", "Settings", "Help"))
+  updateItems(navigation.drawerItems)
+
+  implicit val ns = PrefixResourceNamespace("drawer")
 
   def onCreateViewHolder(parent: ViewGroup, viewType: Int) = {
     val text = slut[TextView]
@@ -29,9 +32,10 @@ extends SimpleRecyclerAdapter[DrawerViewHolder, String]
 
   def onBindViewHolder(holder: DrawerViewHolder, position: Int) {
     val item = items(position)
+    val color = bgCol(navigation.isCurrent(item) ? "item_selected" / "item")
     runUi {
-      holder.text <~ txt.literal(item) <~ On.click {
-        Ui(actor ! Messages.DrawerClick(position))
+      holder.text <~ txt.literal(item.title) <~ On.click {
+        Ui(actor ! Messages.Navigation(item))
       }
     }
   }
