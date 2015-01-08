@@ -54,6 +54,8 @@ extends ResourcesAccess
     def literal(value: String) =
       Tweak[TextView](_.setText(value))
 
+    def clear = literal("")
+
     def content(name: String) = literal(res.s(name))
 
     def large = macroid.contrib.TextTweaks.large
