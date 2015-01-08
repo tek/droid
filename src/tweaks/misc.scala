@@ -196,8 +196,11 @@ extends ResourcesAccess
     _.setTitleTextColor(theme.color(name))
   }
 
-  def navButtonListener(listener: android.view.View.OnClickListener) =
-    Tweak[AToolbar] { _.setNavigationOnClickListener(listener) }
+  def navButtonListener(callback: ⇒ Unit) = Tweak[AToolbar] {
+    _.setNavigationOnClickListener(new android.view.View.OnClickListener {
+      def onClick(v: View) = callback
+    })
+  }
 }
 
 object Drawer
@@ -207,7 +210,9 @@ extends ResourcesAccess
 
   private def t(f: (DrawerLayout) ⇒ Unit) = Tweak[DrawerLayout](f)
 
-  def listener(toggle: Toggle) = t { _.setDrawerListener(toggle) }
+  def listener(l: DrawerLayout.DrawerListener) = t { _.setDrawerListener(l) }
+
+  def open(edge: Int = Gravity.LEFT) = t { _.openDrawer(edge) }
 
   def close(edge: Int = Gravity.LEFT) = t { _.closeDrawer(edge) }
 

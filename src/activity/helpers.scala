@@ -209,6 +209,7 @@ extends MainView
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
     toolbar foreach setSupportActionBar
+    runUi(toolbar <~ T.navButtonListener(navButtonClick()))
   }
 
   val toolbar = slut[AToolbar]
@@ -247,10 +248,15 @@ extends MainView
   def toolbarView(view: Fragment) {
     replaceFragmentCustom(Id.toolbar, view, false)
   }
+
+  def navButtonClick() = {
+    backStackNonEmpty tapIf { onBackPressed() }
+  }
 }
 
 trait Drawer
 extends Toolbar
+with DrawerLayout.DrawerListener
 { self: ActionBarActivity
   with Fragments ⇒
 
@@ -263,9 +269,7 @@ extends Toolbar
 
   def initDrawer {
     addFragment(Id.Drawer, drawerFragment, false, Tag.Drawer)
-    drawerToggle foreach { toggle ⇒
-      runUi(drawer <~ D.listener(toggle))
-    }
+    drawerToggle
   }
 
   val drawer = slut[DrawerLayout]
@@ -288,7 +292,7 @@ extends Toolbar
     l[DrawerLayout](
       contentLayout,
       l[FrameLayout]() <~ Id.Drawer <~ dlp(res.dimen("drawer_width"), ↕)
-    ) <~ whore(drawer) <~ llp(↔, ↕)
+    ) <~ whore(drawer) <~ llp(↔, ↕) <~ D.listener(this)
   }
 
   abstract override def onPostCreate(state: Bundle) {
@@ -310,25 +314,16 @@ extends Toolbar
     if (backStackEmpty) {
       syncToggle()
     }
-  }
-
-  abstract override def onOptionsItemSelected(item: MenuItem) = {
-    val navPressed = item.getItemId == android.R.id.home
-    val drawerWasOpen = drawerOpen
-    if (navPressed && !drawerWasOpen && backStackNonEmpty) {
-      onBackPressed()
-      true
-    }
     else {
-      drawerToggle.exists(_.onOptionsItemSelected(item))
+      enableBackButton()
     }
   }
 
   def drawerOpen = drawer exists { _.isDrawerOpen(Gravity.LEFT) }
 
-  def closeDrawer() {
-    drawer <~ D.close()
-  }
+  def closeDrawer = drawer <~ D.close()
+
+  def openDrawer = drawer <~ D.open()
 
   override def contentLoaded(backStack: Boolean, title: String) {
     super.contentLoaded(backStack, title)
@@ -339,6 +334,35 @@ extends Toolbar
 
   def enableBackButton() {
     drawerToggle foreach { _.onDrawerOpened(null) }
+  }
+
+  def onDrawerOpened(drawerView: View) {
+    drawerToggle foreach { _.onDrawerOpened(drawerView) }
+  }
+
+  def onDrawerClosed(drawerView: View) {
+    drawerToggle foreach { _.onDrawerClosed(drawerView) }
+    if (backStackNonEmpty) {
+      enableBackButton()
+    }
+  }
+
+  def onDrawerSlide(drawerView: View, slideOffset: Float) {
+    drawerToggle foreach { _.onDrawerSlide(drawerView, slideOffset) }
+  }
+
+  def onDrawerStateChanged(newState: Int) {
+    drawerToggle foreach { _.onDrawerStateChanged(newState) }
+  }
+
+  override def navButtonClick() = {
+    if (drawerOpen) {
+      closeDrawer.run
+    }
+    else if (!super.navButtonClick()) {
+      openDrawer.run
+    }
+    true
   }
 
   def drawerFragment: Fragment
