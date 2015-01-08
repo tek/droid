@@ -18,6 +18,12 @@ trait AkkaComponent extends CallbackMixin {
   def detach() {
     actor ! TrypActor.DetachUi(this)
   }
+
+  def selectActor(name: String) = {
+    actorSystem map { _.actorSelection(s"/user/${name}") }
+  }
+
+  def actorSystem: Option[ActorSystem]
 }
 
 trait Akkativity extends AkkaComponent
@@ -26,10 +32,12 @@ trait Akkativity extends AkkaComponent
 
   lazy val actorSystemName = res.string("app_handle").trim
 
-  lazy val actorSystem = ActorSystem(
+  lazy val actorSystemInst = ActorSystem(
     actorSystemName,
     ConfigFactory.load(getApplication.getClassLoader),
     getApplication.getClassLoader)
+
+  def actorSystem = Option(actorSystemInst)
 
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
@@ -50,15 +58,17 @@ trait Akkativity extends AkkaComponent
   lazy val actors = Map(createActors: _*)
 
   def createActors =
-    actorsProps map { props ⇒
-      val name = props.actorClass.className.stripSuffix("Actor")
-      val a = actorSystem.actorOf(props, name)
-      (name → a)
-    }
+    actorsProps map(createActor)
 
-  def actor = Option(actorSystem.actorSelection("/user/core"))
+  def createActor(props: Props) = {
+    val name = props.actorClass.className.stripSuffix("Actor")
+    val a = actorSystemInst.actorOf(props, name)
+    (name → a)
+  }
 
-  lazy val coreActor = actorSystem.actorOf(coreActorProps, "core")
+  def actor = actorSystem map { _.actorSelection("/user/core") }
+
+  lazy val coreActor = actorSystemInst.actorOf(coreActorProps, "core")
 
   val coreActorProps: Props
 
@@ -86,11 +96,7 @@ trait AkkaFragment extends AkkaComponent
     super.onStop
   }
 
-  def actorSystem = akkativity map { _.actorSystem }
-
-  def selectActor(name: String) = {
-    actorSystem map { _.actorSelection(s"/user/${name}") }
-  }
+  def actorSystem = akkativity flatMap { _.actorSystem }
 
   def core = selectActor("core")
 
