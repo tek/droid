@@ -98,8 +98,8 @@ with FragmentBase
 abstract class MainFragment
 extends TrypFragment
 {
-  override def setupToolbar() {
-    super.setupToolbar()
+  override def onResume {
+    super.onResume
     core ! Messages.ToolbarTitle(title)
   }
 }
