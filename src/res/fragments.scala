@@ -51,3 +51,8 @@ extends ActivityContexts
     factories(factory.name) = factory
   }
 }
+
+class Fragments
+{
+  var settings = tryp.droid.SettingsFragment
+}
