@@ -16,6 +16,9 @@ import android.support.v7.widget.Toolbar
 
 import macroid.FullDsl._
 
+import rx._
+import rx.ops._
+
 import tryp.droid.util.CallbackMixin
 import tryp.droid.Macroid._
 import tryp.droid.Screws._
@@ -35,20 +38,23 @@ with CallbackMixin
 trait Theme extends ActivityBase {
   def activity: Activity
 
+  private var themeInitialized = false
+
   abstract override def onCreate(state: Bundle) {
-    initTheme
+    themeObserver
+    themeInitialized = true
     super.onCreate(state)
   }
 
-  def initTheme {
-    changeTheme(pref("theme", defaultTheme), false)
+  lazy val themeObserver = pref("theme", defaultTheme).foreach { theme ⇒
+    changeTheme(theme, themeInitialized)
   }
 
   def changeTheme(name: String, restart: Boolean)
 
   def defaultTheme: String
 
-  def pref(name: String, default: String = null): String
+  def pref(name: String, default: String = null): Var[String]
 }
 
 trait MainView
@@ -153,7 +159,8 @@ with tryp.droid.view.Preferences
       false)
   }
 
-  def changePref(key: String, value: Any) {
+  override def changePref(key: String, value: Any) {
+    super.changePref(key, value)
     key match {
       case "pref_theme" ⇒ value match {
         case s: String ⇒ changeTheme(s)

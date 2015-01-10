@@ -21,7 +21,7 @@ object Style
   }
 
   def apply(implicit c: Context) = {
-    Themes.get(resources.pref("theme"))
+    // Themes.get(resources.pref("theme"))
   }
 }
 

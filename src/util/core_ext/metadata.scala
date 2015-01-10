@@ -4,7 +4,7 @@ import scala.reflect.ClassTag
 
 trait MetadataExt
 {
-  implicit class `class name shortcut`(a: AnyRef) {
+  implicit class `class name shortcut`(a: Any) {
     def className = a.getClass.getSimpleName
   }
 

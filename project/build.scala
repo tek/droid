@@ -19,8 +19,9 @@ extends tryp.Deps
       aar("com.android.support" % "cardview-v7" % "21.+"),
       "com.google.android.gms" % "play-services" % "6.+",
       aar("org.macroid" %% "macroid" % "2.0.0-SNAPSHOT"),
-      "com.typesafe.akka" %% "akka-actor" % "2.3.3",
+      "com.typesafe.akka" %% "akka-actor" % "2.+",
       "org.scalaz" %% "scalaz-core" % "7.+",
+      "com.scalarx" %% "scalarx" % "0.+",
       "com.melnykov" % "floatingactionbutton" % "1.+",
       "com.android.support" % "support-v13" % "21.+"
     )

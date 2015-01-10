@@ -46,6 +46,8 @@ extends Util
   val Ui = macroid.Ui
 
   val Try = scala.util.Try
+  val Success = scala.util.Success
+  val Failure = scala.util.Failure
 }
 
 trait Globals

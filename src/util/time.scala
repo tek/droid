@@ -2,6 +2,9 @@ package tryp.droid.util
 
 import scala.math.min
 
+import rx._
+import rx.ops._
+
 import java.util.{Timer, TimerTask}
 
 import Control._
@@ -30,8 +33,9 @@ object Time {
   }
 }
 
-class Ticker(period: Double)(callback: => Unit)
+class Ticker(seconds: Double)(callback: => Unit)
 {
+  val millis = (((seconds <= 0) ? 1.0 / seconds) * 1000).toInt
   val timer = new Timer
   var running = false
   var task: Option[TimerTask] = None
@@ -39,8 +43,7 @@ class Ticker(period: Double)(callback: => Unit)
   def start {
     try {
       val t = new TimerTask { def run { callback } }
-      val p = (period <= 0) ? 1.0 / period
-      timer.scheduleAtFixedRate(t, 0, (p * 1000).toInt)
+      timer.scheduleAtFixedRate(t, 0, millis)
       running = true
       task = Some(t)
     }
