@@ -2,12 +2,10 @@ package tryp.droid
 
 import android.preference.PreferenceFragment
 
-case class SettingsFragment()
+class SettingsFragment
 extends PreferenceFragment
-with tryp.droid.Basic
+with FragmentBase
 {
-  def context = getActivity
-  
   override def onCreate(state: Bundle) {
     super.onCreate(state)
     addPreferencesFromResource(res.xmlId("user_preferences"))

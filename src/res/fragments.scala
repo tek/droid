@@ -1,4 +1,4 @@
-package tryp.droid.res
+package tryp.droid
 
 import scala.collection.mutable.{Map ⇒ MMap}
 
@@ -8,7 +8,6 @@ import macroid.FullDsl._
 import macroid.{ActivityContext,FragmentBuilder,FragmentManagerContext}
 
 import tryp.droid.view.ActivityContexts
-import tryp.droid.Broadcast
 import tryp.droid.Macroid._
 
 abstract class FragmentFactory[A <: Fragment: ClassTag]
@@ -53,5 +52,5 @@ extends ActivityContexts
 
 class Fragments
 {
-  var settings = tryp.droid.SettingsFragment
+  var settings: () ⇒ SettingsFragment = () ⇒ new SettingsFragment
 }

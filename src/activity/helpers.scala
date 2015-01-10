@@ -149,7 +149,7 @@ with tryp.droid.view.Preferences
   }
 
   def settings() {
-    loadContent[SettingsFragment]()
+    loadContentCustom(Classes.fragments.settings())
   }
 
   def setupPreferences {

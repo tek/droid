@@ -28,7 +28,7 @@ extends Util
 
   val layouts = tryp.droid.res.Layouts
 
-  val fragments = tryp.droid.res.Fragments
+  val fragments = tryp.droid.Fragments
 
   val Id = tryp.droid.util.Id
 
