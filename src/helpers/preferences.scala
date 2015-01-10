@@ -1,6 +1,7 @@
 package tryp.droid
 
-import scala.collection.mutable.{Map ⇒ MMap}
+import scala.collection.mutable.{Map ⇒ MMap, Set ⇒ MSet}
+import scala.collection.convert.wrapAll._
 
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
@@ -9,39 +10,84 @@ import rx._
 
 object PrefCaches
 {
-  implicit val cacheString: MMap[String, Var[String]] = MMap()
+  type Cache[A] = MMap[String, Var[A]]
 
-  implicit val cacheBoolean: MMap[String, Var[Boolean]] = MMap()
+  implicit val cacheString: Cache[String] = MMap()
 
-  implicit val cacheInt: MMap[String, Var[Int]] = MMap()
+  implicit val cacheStrings: Cache[Set[String]] = MMap()
+
+  implicit val cacheBoolean: Cache[Boolean] = MMap()
+
+  implicit val cacheInt: Cache[Int] = MMap()
+}
+
+abstract class PrefReader[A]
+{
+  def apply(key: String, default: A = zero)
+  (implicit prefs: SharedPreferences) = {
+    getter(prefs)(key, default)
+  }
+
+  def zero: A
+
+  def getter(prefs: SharedPreferences): (String, A) ⇒ A
+}
+
+object PrefReaders
+{
+  implicit object `String PR` extends PrefReader[String] {
+    def zero = ""
+    def getter(prefs: SharedPreferences) = prefs.getString _
+  }
+
+  implicit object `Boolean PR` extends PrefReader[Boolean] {
+    def zero = false
+    def getter(prefs: SharedPreferences) = prefs.getBoolean _
+  }
+
+  implicit object `Int PR` extends PrefReader[Int] {
+    def zero = 0
+
+    def getter(prefs: SharedPreferences) = (key: String, default: Int) ⇒ {
+      val s = prefs.getString(key, default.toString)
+      Try { s.toInt } getOrElse {
+        Log.e(s"Failed to convert pref '${key}' to Int: ${s}")
+        default
+      }
+    }
+  }
+
+  implicit object `Strings PR` extends PrefReader[Set[String]] {
+    def zero = Set()
+
+    def getter(prefs: SharedPreferences) =
+      (key: String, default: Set[String]) ⇒ {
+      prefs.getStringSet(key, default).toSet
+    }
+  }
 }
 
 object PrefCache
 {
-  import PrefCaches._
+  import PrefCaches.Cache
 
-  type Cache[A] = MMap[String, Var[A]]
-
-  def get[A](key: String)(alt: ⇒ A)(implicit cache: Cache[A]) = {
-    cache.get(key) getOrElse { set(key, alt) }
+  def get[A](name: String, default: A)
+  (implicit cache: Cache[A], reader: PrefReader[A], prefs: SharedPreferences) =
+  {
+    val key = mkKey(name)
+    cache.getOrElseUpdate(key, Var(reader(key, default)))
   }
 
-  def set[A](key: String, value: A)(implicit cache: Cache[A]): Var[A] = {
-    cache.get(key) tap { _() = value } getOrElse {
-      Var(value) tap { v ⇒ cache(key) = v }
-    }
+  def invalidate[A](name: String)
+  (implicit cache: Cache[A], reader: PrefReader[A], prefs: SharedPreferences) {
+    val key = mkKey(name)
+    cache.get(key) foreach { v ⇒ v() = reader(key) }
   }
 
-  def string(key: String)(alt: ⇒ String) = {
-    get(key)(alt)
-  }
+  val prefix = "pref_"
 
-  def boolean(key: String)(alt: ⇒ Boolean) = {
-    get(key)(alt)
-  }
-
-  def int(key: String)(alt: ⇒ Int) = {
-    get(key)(alt)
+  def mkKey(name: String) = {
+    s"${prefix}${name.stripPrefix(prefix)}"
   }
 }
 
@@ -49,29 +95,25 @@ trait Preferences
 extends HasContext
 {
   import PrefCaches._
+  import PrefReaders._
+
+  implicit def prefs = PreferenceManager.getDefaultSharedPreferences(context)
 
   def pref(key: String, default: String = "") = {
-    PrefCache.string(key) { prefs.getString(s"pref_${key}", default) }
+    PrefCache.get(key, default)
   }
 
   def prefBool(key: String, default: Boolean = true) = {
-    PrefCache.boolean(key) { prefs.getBoolean(s"pref_${key}", default) }
-    
+    PrefCache.get(key, default)
   }
 
   def prefInt(key: String, default: Int = 0) = {
-    PrefCache.int(key) {
-      Try { prefs.getString(s"pref_${key}", "€").toInt } match {
-        case Success(value) ⇒ value
-        case Failure(e) ⇒ {
-          Log.e(s"Failed to convert pref '${key}' to Int: ${e}")
-          default
-        }
-      }
-    }
+    PrefCache.get(key, default)
   }
 
-  def prefs = PreferenceManager.getDefaultSharedPreferences(context)
+  def prefStrings(key: String, default: Set[String] = Set()) = {
+    PrefCache.get(key, default)
+  }
 
   def editPrefs(callback: (SharedPreferences.Editor) ⇒ Unit,
     target: SharedPreferences = prefs
@@ -87,26 +129,24 @@ extends HasContext
       case b: Boolean ⇒ editPrefs(_.putBoolean(name, b))
       case s: String ⇒ editPrefs(_.putString(name, s))
       case _ ⇒
-        Log.e(s"Incompatible pref type ${value.className} for key '${name}'")
+        Log.e(s"Incompatible pref type ${value.getClass} for key '${name}'")
     }
   }
 
   def changePref(name: String, value: Any) {
     value match {
-      case b: Boolean ⇒ updateBoolean(name, b)
+      case b: Boolean ⇒ PrefCache.invalidate[Boolean](name)
       case s: String ⇒ updateString(name, s)
+      case h: java.util.HashSet[_] ⇒ PrefCache.invalidate[Set[String]](name)
       case _ ⇒
-        Log.e(s"Incompatible pref type ${value.className} for key '${name}'")
+        Log.e(s"Incompatible pref type ${value.getClass} for key '${name}'")
     }
-  }
-
-  def updateBoolean(name: String, value: Boolean) {
   }
 
   def updateString(name: String, value: String) {
     Try(value.toInt) match {
-      case Success(int) ⇒ PrefCache.set(name, int)
-      case Failure(_) ⇒ PrefCache.set(name, value)
+      case Success(int) ⇒ PrefCache.invalidate[Int](name)
+      case Failure(_) ⇒ PrefCache.invalidate[String](name)
     }
   }
 }
