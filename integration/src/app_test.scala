@@ -20,7 +20,6 @@ with tryp.droid.BroadcastSend
 
   override def setUp {
     super.setUp
-    tryp.droid.util.Log.tag = "loki"
     setActivityInitialTouchMode(false)
     solo
   }
@@ -51,7 +50,11 @@ with tryp.droid.BroadcastSend
   }
 
   def assertW(predicate: ⇒ Boolean) {
-    wait(predicate)
+    assertWFor(5000)(predicate)
+  }
+
+  def assertWFor(timeout: Int)(predicate: ⇒ Boolean) {
+    waitFor(timeout)(predicate)
     assert(predicate)
   }
 
