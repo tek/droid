@@ -1,7 +1,6 @@
 package tryp.droid.service
 
 import scala.collection.mutable.{Map,ListBuffer}
-import scala.reflect.ClassTag
 
 import android.app.Service
 import android.content.{ServiceConnection,ComponentName}

@@ -1,7 +1,5 @@
 package tryp.droid
 
-import scala.reflect.ClassTag
-
 import android.widget.{BaseAdapter,TextView,Filterable,Filter}
 import android.support.v7.widget.RecyclerView
 

@@ -48,6 +48,8 @@ extends Util
   val Try = scala.util.Try
   val Success = scala.util.Success
   val Failure = scala.util.Failure
+
+  type ClassTag[A] = scala.reflect.ClassTag[A]
 }
 
 trait Globals

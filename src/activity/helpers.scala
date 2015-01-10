@@ -1,7 +1,5 @@
 package tryp.droid.activity
 
-import scala.reflect.ClassTag
-
 import scala.collection.JavaConversions._
 
 import android.content.SharedPreferences

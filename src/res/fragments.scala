@@ -1,7 +1,6 @@
 package tryp.droid.res
 
 import scala.collection.mutable.{Map ⇒ MMap}
-import scala.reflect.ClassTag
 
 import android.widget.FrameLayout
 

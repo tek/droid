@@ -1,7 +1,5 @@
 package tryp.droid
 
-import scala.reflect.ClassTag
-
 import macroid.{FragmentManagerContext,ActivityContext,AppContext}
 import macroid.{Tweak,CanTweak}
 import macroid.FullDsl._

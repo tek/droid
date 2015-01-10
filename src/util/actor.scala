@@ -1,7 +1,5 @@
 package tryp.droid
 
-import scala.reflect.ClassTag
-
 import com.typesafe.config.ConfigFactory
 
 import akka.actor.{ ActorSelection, ActorSystem, Actor, Props }

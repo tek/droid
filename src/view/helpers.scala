@@ -1,7 +1,6 @@
 package tryp.droid.view
 
 import scala.language.dynamics
-import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 import scalaz._
@@ -384,12 +383,14 @@ with Searchable
     cls.className.stripSuffix("Fragment")
   }
 
+  import scala.reflect.classTag
+
   def fragmentName[A <: Fragment: ClassTag] = {
-    fragmentClassName(implicitly[ClassTag[A]].runtimeClass)
+    fragmentClassName(classTag[A].runtimeClass)
   }
 
   def makeFragment[A <: Fragment: ClassTag] = {
-    val cls = implicitly[ClassTag[A]].runtimeClass
+    val cls = classTag[A].runtimeClass
     cls.newInstance.asInstanceOf[Fragment]
   }
 
