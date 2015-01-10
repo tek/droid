@@ -63,7 +63,12 @@ with LocationListener
   ) {
     val builder = new GeofencingRequest.Builder
     locations foreach { loc ⇒ builder.addGeofence(geofence(loc)) }
-    GeoApi.addGeofences(apiClient, builder.build, intent)
+    Try {
+      GeoApi.addGeofences(apiClient, builder.build, intent)
+    } match {
+      case Failure(e) ⇒ Log.e(s"Adding geofences failed (${e})")
+      case _ ⇒
+    }
   }
 
   val expirationDuration = 24 * 3600 * 1000
