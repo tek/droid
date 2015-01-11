@@ -10,9 +10,8 @@ import android.app.{Fragment,Activity}
 
 trait AndroidExt {
   implicit class ViewGroupExt(vg: ViewGroup) {
-    def children: List[View] = {
-      val ret = for (i <- 0 until vg.getChildCount) yield { vg.getChildAt(i) }
-      ret.toList
+    def children: Seq[View] = {
+      (0 until vg.getChildCount) map { i ⇒ vg.getChildAt(i) }
     }
   }
 
