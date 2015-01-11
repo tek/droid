@@ -2,9 +2,9 @@ package tryp.droid.util
 
 import scala.collection.mutable.Buffer
 
-object SeqExt
+trait SeqExt
 {
-  implicit class SeqExt[A](seq: Buffer[A])
+  implicit class `Buffer extensions`[A](seq: Buffer[A])
   {
     def insertBy[B](item: A)(predicate: (B, B) ⇒ Boolean)(getter: (A) ⇒ B) {
       seq.indexWhere(it ⇒ predicate(getter(it), getter(item))) match {
@@ -12,5 +12,10 @@ object SeqExt
         case index ⇒ seq.insert(index, item)
       }
     }
+  }
+
+  implicit class `Seq extensions`[A](seq: Seq[A])
+  {
+    def nonEmpty = !seq.isEmpty
   }
 }

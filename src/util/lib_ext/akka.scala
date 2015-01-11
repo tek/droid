@@ -1,4 +1,4 @@
-package tryp.droid
+package tryp.droid.util
 
 import akka.actor.ActorSelection
 

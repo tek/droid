@@ -5,7 +5,8 @@ extends Control
 with MetadataExt
 with OptionExt
 with StringOpsExt
-with tryp.droid.AkkaExt
+with SeqExt
+with AkkaExt
 {
 }
 
