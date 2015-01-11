@@ -38,7 +38,7 @@ class Ticker(seconds: Double)(callback: => Unit)
   var running = false
   var task: Option[TimerTask] = None
 
-  def start {
+  def start() {
     try {
       val t = new TimerTask { def run { callback } }
       timer.scheduleAtFixedRate(t, 0, millis)
@@ -51,11 +51,16 @@ class Ticker(seconds: Double)(callback: => Unit)
     }
   }
 
-  def stop {
+  def stop() {
     task foreach { t ⇒
       t.cancel
       task = None
     }
     running = false
+  }
+
+  def restart() {
+    stop()
+    start()
   }
 }
