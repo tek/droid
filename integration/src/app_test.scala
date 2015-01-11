@@ -1,12 +1,10 @@
 package tryp.droid.test
 
-import android.app.{Activity,Instrumentation}
+import android.app.Instrumentation
 import android.test.ActivityInstrumentationTestCase2
 import android.widget._
 
 import com.robotium.solo._
-
-import tryp.droid.AndroidExt._
 
 class TrypTest[A <: Activity](cls: Class[A])
 extends ActivityInstrumentationTestCase2[A](cls)

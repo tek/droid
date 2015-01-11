@@ -1,14 +1,14 @@
-package tryp.droid
+package tryp.droid.util
 
 import scala.math.min
 
 import android.widget.{NumberPicker,EditText}
 import android.text.InputType
 import android.graphics.drawable.Drawable
+import android.view.{View,ViewGroup}
+import android.app.{Fragment,Activity}
 
-import tryp.droid.util.{Params,OS}
-
-object AndroidExt {
+trait AndroidExt {
   implicit class ViewGroupExt(vg: ViewGroup) {
     def children: List[View] = {
       val ret = for (i <- 0 until vg.getChildCount) yield { vg.getChildAt(i) }

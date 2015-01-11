@@ -7,6 +7,7 @@ with OptionExt
 with StringOpsExt
 with SeqExt
 with AkkaExt
+with AndroidExt
 {
 }
 

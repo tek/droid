@@ -19,7 +19,6 @@ import macroid.support.FragmentApi
 
 import tryp.droid.util._
 import tryp.droid.{Basic ⇒ BBasic}
-import tryp.droid.AndroidExt._
 import tryp.droid.res._
 
 trait Searchable {

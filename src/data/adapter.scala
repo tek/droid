@@ -4,7 +4,6 @@ import android.widget.{BaseAdapter,TextView,Filterable,Filter}
 import android.support.v7.widget.RecyclerView
 
 import tryp.droid.view.ActivityContexts
-import tryp.droid.AndroidExt._
 
 abstract class ListAdapter(implicit val activity: Activity)
 extends BaseAdapter
