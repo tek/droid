@@ -1,5 +1,7 @@
 package tryp.droid.util
 
+import tryp.droid.Log
+
 object Threading
 {
   def thread(callback: ⇒ Unit) {

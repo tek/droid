@@ -1,4 +1,4 @@
-package tryp.droid.util
+package tryp.droid.meta
 
 object Debug {
   def rescued[A](callback: ⇒ A): A = {

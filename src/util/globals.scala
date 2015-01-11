@@ -14,19 +14,20 @@ with AndroidExt
 trait GlobalsBase
 extends Util
 {
-  val Env = tryp.droid.util.Env
+  val Env = tryp.droid.meta.Env
 
   def Log = {
-    if (Env.release) tryp.droid.util.NullLog else tryp.droid.util.Log
+    if (Env.release) tryp.droid.meta.NullLog else tryp.droid.meta.Log
   }
 
   def log(message: String) = Log.d(message)
+
   def p[A](item: A): A = {
     (Log.p(item))
     item
   }
 
-  val Debug = tryp.droid.util.Debug
+  val Debug = tryp.droid.meta.Debug
 
   val layouts = tryp.droid.res.Layouts
 

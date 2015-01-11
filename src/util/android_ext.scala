@@ -8,6 +8,8 @@ import android.graphics.drawable.Drawable
 import android.view.{View,ViewGroup}
 import android.app.{Fragment,Activity}
 
+import tryp.droid.meta.Env
+
 trait AndroidExt {
   implicit class ViewGroupExt(vg: ViewGroup) {
     def children: Seq[View] = {

@@ -40,5 +40,3 @@ trait Control
     }
   }
 }
-
-object Control extends Control
