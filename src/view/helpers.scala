@@ -168,6 +168,10 @@ with ActivityContexts
     Option(activity) foreach { _.runOnUiThread(runner) }
   }
 
+  def ui(callback: ⇒ Unit) {
+    Ui(callback).run
+  }
+
   def inflateLayout[A <: View: ClassTag](name: String): Ui[A] = {
     Ui {
       activity.getLayoutInflater.inflate(res.layoutId(name), null) match {
