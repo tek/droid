@@ -36,9 +36,13 @@ class Notification(
     builder.setProgress(values._2, values._1, false)
   }
 
-  def update = manager.notify(id, builder.build)
+  def update() = manager.notify(id, builder.build)
 
-  def cancel = manager.cancel(id)
+  def cancel() = manager.cancel(id)
+
+  def resetTime() {
+    builder.setWhen(System.currentTimeMillis)
+  }
 
   private def manager: NotificationManagerCompat = {
     NotificationManagerCompat.from(context)
