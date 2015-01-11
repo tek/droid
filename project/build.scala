@@ -87,11 +87,15 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard,
     ))
     .dep(macros)
 
-  lazy val unit = p("unit")
+  lazy val test = p("test")
     .aar
     .dep(root)
 
+  lazy val unit = p("unit")
+    .aar
+    .dep(test)
+
   lazy val integration = p("integration")
     .aar
-    .dep(root)
+    .dep(test)
 }
