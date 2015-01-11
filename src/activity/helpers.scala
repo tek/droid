@@ -105,10 +105,10 @@ extends ActivityBase
   }
 }
 
-abstract trait Preferences
+abstract trait ManagePreferences
 extends ActivityBase
 with OnSharedPreferenceChangeListener
-with AppPreferences
+with Preferences
 {
   self: Activity
   with MainView

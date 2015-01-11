@@ -11,7 +11,7 @@ import Macroid._
 abstract trait TrypActivity
 extends tryp.droid.view.Basic
 with Theme
-with tryp.droid.activity.Preferences
+with ManagePreferences
 with MainView
 with tryp.droid.view.Fragments
 { self: Activity ⇒
