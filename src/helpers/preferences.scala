@@ -8,95 +8,92 @@ import android.preference.PreferenceManager
 
 import rx._
 
-object PrefCaches
+class PreferencesFacade(prefs: SharedPreferences)
 {
-  type Cache[A] = MMap[String, Var[A]]
 
-  implicit val cacheString: Cache[String] = MMap()
+  object PrefCaches
+  {
+    type Cache[A] = MMap[String, Var[A]]
 
-  implicit val cacheStrings: Cache[Set[String]] = MMap()
+    implicit val cacheString: Cache[String] = MMap()
 
-  implicit val cacheBoolean: Cache[Boolean] = MMap()
+    implicit val cacheStrings: Cache[Set[String]] = MMap()
 
-  implicit val cacheInt: Cache[Int] = MMap()
-}
+    implicit val cacheBoolean: Cache[Boolean] = MMap()
 
-abstract class PrefReader[A]
-{
-  def apply(key: String, default: A = zero)
-  (implicit prefs: SharedPreferences) = {
-    getter(prefs)(key, default)
+    implicit val cacheInt: Cache[Int] = MMap()
   }
 
-  def zero: A
+  abstract class PrefReader[A]
+  {
+    def apply(key: String, default: A = zero) = {
+      getter(key, default)
+    }
 
-  def getter(prefs: SharedPreferences): (String, A) ⇒ A
-}
+    def zero: A
 
-object PrefReaders
-{
-  implicit object `String PR` extends PrefReader[String] {
-    def zero = ""
-    def getter(prefs: SharedPreferences) = prefs.getString _
+    def getter: (String, A) ⇒ A
   }
 
-  implicit object `Boolean PR` extends PrefReader[Boolean] {
-    def zero = false
-    def getter(prefs: SharedPreferences) = prefs.getBoolean _
-  }
+  object PrefReaders
+  {
+    implicit object `String PR` extends PrefReader[String] {
+      def zero = ""
+      def getter = prefs.getString _
+    }
 
-  implicit object `Int PR` extends PrefReader[Int] {
-    def zero = 0
+    implicit object `Boolean PR` extends PrefReader[Boolean] {
+      def zero = false
+      def getter = prefs.getBoolean _
+    }
 
-    def getter(prefs: SharedPreferences) = (key: String, default: Int) ⇒ {
-      val s = prefs.getString(key, default.toString)
-      Try { s.toInt } getOrElse {
-        Log.e(s"Failed to convert pref '${key}' to Int: ${s}")
-        default
+    implicit object `Int PR` extends PrefReader[Int] {
+      def zero = 0
+
+      def getter = (key: String, default: Int) ⇒ {
+        val s = prefs.getString(key, default.toString)
+        Try { s.toInt } getOrElse {
+          Log.e(s"Failed to convert pref '${key}' to Int: ${s}")
+          default
+        }
+      }
+    }
+
+    implicit object `Strings PR` extends PrefReader[Set[String]] {
+      def zero = Set()
+
+      def getter = (key: String, default: Set[String]) ⇒ {
+        prefs.getStringSet(key, default).toSet
       }
     }
   }
 
-  implicit object `Strings PR` extends PrefReader[Set[String]] {
-    def zero = Set()
+  import PrefReaders._
+  import PrefCaches._
 
-    def getter(prefs: SharedPreferences) =
-      (key: String, default: Set[String]) ⇒ {
-      prefs.getStringSet(key, default).toSet
+  object PrefCache
+  {
+    import PrefCaches.Cache
+
+    def get[A](name: String, default: A)(implicit cache: Cache[A],
+      reader: PrefReader[A]) =
+    {
+      val key = mkKey(name)
+      cache.getOrElseUpdate(key, Var(reader(key, default)))
+    }
+
+    def invalidate[A](name: String)(implicit cache: Cache[A],
+      reader: PrefReader[A]) {
+      val key = mkKey(name)
+      cache.get(key) foreach { v ⇒ v() = reader(key) }
+    }
+
+    val prefix = "pref_"
+
+    def mkKey(name: String) = {
+      s"${prefix}${name.stripPrefix(prefix)}"
     }
   }
-}
-
-object PrefCache
-{
-  import PrefCaches.Cache
-
-  def get[A](name: String, default: A)
-  (implicit cache: Cache[A], reader: PrefReader[A], prefs: SharedPreferences) =
-  {
-    val key = mkKey(name)
-    cache.getOrElseUpdate(key, Var(reader(key, default)))
-  }
-
-  def invalidate[A](name: String)
-  (implicit cache: Cache[A], reader: PrefReader[A], prefs: SharedPreferences) {
-    val key = mkKey(name)
-    cache.get(key) foreach { v ⇒ v() = reader(key) }
-  }
-
-  val prefix = "pref_"
-
-  def mkKey(name: String) = {
-    s"${prefix}${name.stripPrefix(prefix)}"
-  }
-}
-
-class PreferencesFacade(implicit context: Context)
-{
-  import PrefCaches._
-  import PrefReaders._
-
-  implicit def prefs = PreferenceManager.getDefaultSharedPreferences(context)
 
   def string(key: String, default: String = "") = {
     PrefCache.get(key, default)
@@ -160,8 +157,29 @@ class PreferencesFacade(implicit context: Context)
   }
 }
 
+object PrefFacades
+{
+  val data: MMap[String, PreferencesFacade] = MMap()
+
+  def apply(name: String, prefs: SharedPreferences) = {
+    data.getOrElseUpdate(name, new PreferencesFacade(prefs))
+  }
+}
+
 trait Preferences
 extends HasContext
 {
-  def prefs = new PreferencesFacade()
+  private def userPrefs =
+    PreferenceManager.getDefaultSharedPreferences(context)
+
+  def prefs = PrefFacades("user", userPrefs)
+}
+
+trait AppPreferences
+extends view.HasActivity
+{
+  private def appPrefs =
+    activity.getPreferences(android.content.Context.MODE_PRIVATE)
+
+  def prefs = PrefFacades("app", appPrefs)
 }

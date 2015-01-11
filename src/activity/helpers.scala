@@ -108,7 +108,7 @@ extends ActivityBase
 abstract trait Preferences
 extends ActivityBase
 with OnSharedPreferenceChangeListener
-with tryp.droid.view.Preferences
+with AppPreferences
 {
   self: Activity
   with MainView

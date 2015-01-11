@@ -10,7 +10,7 @@ import tryp.droid.AndroidExt._
 
 class TrypTest[A <: Activity](cls: Class[A])
 extends ActivityInstrumentationTestCase2[A](cls)
-with tryp.droid.view.Preferences
+with tryp.droid.AppPreferences
 with tryp.droid.BroadcastSend
 {
   def view = null

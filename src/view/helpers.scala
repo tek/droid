@@ -268,35 +268,6 @@ extends HasActivity
   }
 }
 
-trait Preferences
-extends HasActivity
-with tryp.droid.Preferences
-{
-  import android.content.Context
-
-  def appPrefs = activity.getPreferences(Context.MODE_PRIVATE)
-
-  def appPref(name: String, default: String = "") = {
-    appPrefs.getString(name, default)
-  }
-
-  def appPrefBool(name: String, default: Boolean = true) = {
-    appPrefs.getBoolean(name, default)
-  }
-
-  def appPrefStrings(name: String, default: Set[String] = Set()) = {
-    appPrefs.getStringSet(name, default)
-  }
-
-  def setAppPref(name: String, value: String) {
-    prefs.edit(_.putString(name, value), appPrefs)
-  }
-
-  def setAppPrefBool(name: String, value: Boolean) {
-    prefs.edit(_.putBoolean(name, value), appPrefs)
-  }
-}
-
 trait Fragments
 extends HasActivity
 with Searchable
