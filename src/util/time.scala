@@ -1,4 +1,4 @@
-package tryp.droid.util
+package tryp.droid
 
 import scala.math.min
 
@@ -6,8 +6,6 @@ import rx._
 import rx.ops._
 
 import java.util.{Timer, TimerTask}
-
-import Control._
 
 object Time {
   def now = System.currentTimeMillis / 1000

@@ -42,7 +42,7 @@ object Log extends LogBase
   }
 
   override def t(message: String) = {
-    val output = "----- " + message + ": " + Time.nowHms
+    val output = "----- " + message + ": " + tryp.droid.Time.nowHms
     d(output)
   }
 }
