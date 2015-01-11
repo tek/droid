@@ -8,8 +8,13 @@ import android.preference.PreferenceManager
 
 import rx._
 
-class PreferencesFacade(prefs: SharedPreferences)
+class PreferencesFacade(val prefs: SharedPreferences)
 {
+  val prefix = "pref_"
+
+  def mkKey(name: String) = {
+    s"${prefix}${name.stripPrefix(prefix)}"
+  }
 
   object PrefCaches
   {
@@ -87,12 +92,6 @@ class PreferencesFacade(prefs: SharedPreferences)
       val key = mkKey(name)
       cache.get(key) foreach { v ⇒ v() = reader(key) }
     }
-
-    val prefix = "pref_"
-
-    def mkKey(name: String) = {
-      s"${prefix}${name.stripPrefix(prefix)}"
-    }
   }
 
   def string(key: String, default: String = "") = {
@@ -121,12 +120,21 @@ class PreferencesFacade(prefs: SharedPreferences)
   }
 
   def set(name: String, value: Any) {
+    val key = mkKey(name)
     value match {
-      case b: Boolean ⇒ edit(_.putBoolean(name, b))
-      case s: String ⇒ edit(_.putString(name, s))
-      case _ ⇒
-        Log.e(s"Incompatible pref type ${value.getClass} for key '${name}'")
+      case b: Boolean ⇒ edit(_.putBoolean(key, b))
+      case s: String ⇒ edit(_.putString(key, s))
+      case i: Int ⇒ edit(_.putString(key, i.toString))
+      case h: java.util.HashSet[_] ⇒ setSet(key, h.toSet)
+      case s: Set[_] ⇒ setSet(key, s)
+      case _ ⇒ error(key, value)
     }
+    change(name, value)
+  }
+
+  private def setSet(name: String, value: Set[_]) {
+    val strings = value map { _.toString }
+    edit(_.putStringSet(name, strings))
   }
 
   def change(name: String, value: Any) {
@@ -134,9 +142,13 @@ class PreferencesFacade(prefs: SharedPreferences)
       case b: Boolean ⇒ PrefCache.invalidate[Boolean](name)
       case s: String ⇒ updateString(name, s)
       case h: java.util.HashSet[_] ⇒ PrefCache.invalidate[Set[String]](name)
-      case _ ⇒
-        Log.e(s"Incompatible pref type ${value.getClass} for key '${name}'")
+      case s: Set[_] ⇒ PrefCache.invalidate[Set[String]](name)
+      case _ ⇒ error(name, value)
     }
+  }
+
+  def error(name: String, value: Any) {
+    Log.e(s"Incompatible pref type ${value.getClass} for key '${name}'")
   }
 
   import android.content.SharedPreferences.OnSharedPreferenceChangeListener
