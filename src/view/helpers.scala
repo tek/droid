@@ -128,6 +128,13 @@ trait Searchable {
     Try(find(name)) isSuccess
   }
 
+  def viewTree: Seq[Any] = {
+    view match {
+      case layout: ViewGroup ⇒ layout.children map { _.viewTree }
+      case v ⇒ Seq(v)
+    }
+  }
+
   lazy val tviews = TypedViewsProxy(this)
 
   lazy val views = ViewsProxy(this)
