@@ -22,44 +22,46 @@ import tryp.droid.{Basic ⇒ BBasic}
 import tryp.droid.AndroidExt._
 import tryp.droid.res._
 
-trait ProxyBase {
-  def extractView(args: Any*): Option[View] = {
-    args.lift(0) flatMap {
-      _ match {
-        case v: View ⇒ Some(v)
-        case _ ⇒ None
+trait Searchable {
+
+  trait ProxyBase {
+    def extractView(args: Any*): Option[View] = {
+      args.lift(0) flatMap {
+        _ match {
+          case v: View ⇒ Some(v)
+          case _ ⇒ None
+        }
       }
     }
   }
-}
 
-case class ViewsProxy(owner: Searchable)
-extends Dynamic
-with ProxyBase
-{
-  def applyDynamic(name: String)(args: Any*): Option[View] = {
-    owner.find(name, extractView(args))
+  case class ViewsProxy(owner: Searchable)
+  extends Dynamic
+  with ProxyBase
+  {
+    def applyDynamic(name: String)(args: Any*): Option[View] = {
+      owner.find(name, extractView(args))
+    }
+
+    def selectDynamic(name: String): Option[View] = {
+      owner.find(name)
+    }
   }
 
-  def selectDynamic(name: String): Option[View] = {
-    owner.find(name)
-  }
-}
+  case class TypedViewsProxy(owner: Searchable)
+  extends Dynamic
+  with ProxyBase
+  {
+    def applyDynamic[A <: View: ClassTag](name: String)
+    (args: Any*): Option[A] = {
+      owner.findt[String, A](name, extractView(args))
+    }
 
-case class TypedViewsProxy(owner: Searchable)
-extends Dynamic
-with ProxyBase
-{
-  def applyDynamic[A <: View: ClassTag](name: String)(args: Any*): Option[A] = {
-    owner.findt[String, A](name, extractView(args))
+    def selectDynamic[A <: View: ClassTag](name: String): Option[A] = {
+      owner.findt[String, A](name)
+    }
   }
 
-  def selectDynamic[A <: View: ClassTag](name: String): Option[A] = {
-    owner.findt[String, A](name)
-  }
-}
-
-trait Searchable {
   type CanFindView = AnyRef { def findViewById(id: Int): View }
 
   def view: View

@@ -7,7 +7,6 @@ import android.text.InputType
 import android.graphics.drawable.Drawable
 
 import tryp.droid.util.{Params,OS}
-import tryp.droid.view.{ViewsProxy,TypedViewsProxy}
 
 object AndroidExt {
   implicit class ViewGroupExt(vg: ViewGroup) {
