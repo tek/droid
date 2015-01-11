@@ -1,6 +1,6 @@
 package tryp.droid
 
-import scala.collection.mutable.{Map ⇒ MMap, Set ⇒ MSet}
+import scala.collection.mutable.{Map ⇒ MMap}
 import scala.collection.convert.wrapAll._
 
 import android.content.SharedPreferences
@@ -91,31 +91,30 @@ object PrefCache
   }
 }
 
-trait Preferences
-extends HasContext
+class PreferencesFacade(implicit context: Context)
 {
   import PrefCaches._
   import PrefReaders._
 
   implicit def prefs = PreferenceManager.getDefaultSharedPreferences(context)
 
-  def pref(key: String, default: String = "") = {
+  def string(key: String, default: String = "") = {
     PrefCache.get(key, default)
   }
 
-  def prefBool(key: String, default: Boolean = true) = {
+  def bool(key: String, default: Boolean = true) = {
     PrefCache.get(key, default)
   }
 
-  def prefInt(key: String, default: Int = 0) = {
+  def int(key: String, default: Int = 0) = {
     PrefCache.get(key, default)
   }
 
-  def prefStrings(key: String, default: Set[String] = Set()) = {
+  def strings(key: String, default: Set[String] = Set()) = {
     PrefCache.get(key, default)
   }
 
-  def editPrefs(callback: (SharedPreferences.Editor) ⇒ Unit,
+  def edit(callback: (SharedPreferences.Editor) ⇒ Unit,
     target: SharedPreferences = prefs
   )
   {
@@ -124,16 +123,16 @@ extends HasContext
     editor.commit
   }
 
-  def setPref(name: String, value: Any) {
+  def set(name: String, value: Any) {
     value match {
-      case b: Boolean ⇒ editPrefs(_.putBoolean(name, b))
-      case s: String ⇒ editPrefs(_.putString(name, s))
+      case b: Boolean ⇒ edit(_.putBoolean(name, b))
+      case s: String ⇒ edit(_.putString(name, s))
       case _ ⇒
         Log.e(s"Incompatible pref type ${value.getClass} for key '${name}'")
     }
   }
 
-  def changePref(name: String, value: Any) {
+  def change(name: String, value: Any) {
     value match {
       case b: Boolean ⇒ PrefCache.invalidate[Boolean](name)
       case s: String ⇒ updateString(name, s)
@@ -143,10 +142,26 @@ extends HasContext
     }
   }
 
-  def updateString(name: String, value: String) {
+  import android.content.SharedPreferences.OnSharedPreferenceChangeListener
+
+  def registerListener(listener: OnSharedPreferenceChangeListener) {
+    prefs.registerOnSharedPreferenceChangeListener(listener)
+  }
+
+  def unregisterListener(listener: OnSharedPreferenceChangeListener) {
+    prefs.unregisterOnSharedPreferenceChangeListener(listener)
+  }
+
+  private def updateString(name: String, value: String) {
     Try(value.toInt) match {
       case Success(int) ⇒ PrefCache.invalidate[Int](name)
       case Failure(_) ⇒ PrefCache.invalidate[String](name)
     }
   }
+}
+
+trait Preferences
+extends HasContext
+{
+  def prefs = new PreferencesFacade()
 }

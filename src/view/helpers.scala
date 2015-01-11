@@ -2,6 +2,7 @@ package tryp.droid.view
 
 import scala.language.dynamics
 import scala.reflect.runtime.universe._
+import scala.collection.convert.wrapAll._
 
 import scalaz._
 import Scalaz.{Id ⇒ sId,_}
@@ -281,12 +282,16 @@ with tryp.droid.Preferences
     appPrefs.getBoolean(name, default)
   }
 
+  def appPrefStrings(name: String, default: Set[String] = Set()) = {
+    appPrefs.getStringSet(name, default)
+  }
+
   def setAppPref(name: String, value: String) {
-    editPrefs(_.putString(name, value), appPrefs)
+    prefs.edit(_.putString(name, value), appPrefs)
   }
 
   def setAppPrefBool(name: String, value: Boolean) {
-    editPrefs(_.putBoolean(name, value), appPrefs)
+    prefs.edit(_.putBoolean(name, value), appPrefs)
   }
 }
 

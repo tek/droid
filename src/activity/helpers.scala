@@ -33,26 +33,27 @@ with CallbackMixin
   def onBackPressed()
 }
 
-trait Theme extends ActivityBase {
-  def activity: Activity
+trait Theme extends ActivityBase
+{ self: Activity
+  with Preferences ⇒
 
   private var themeInitialized = false
 
   abstract override def onCreate(state: Bundle) {
-    themeObserver
+    observeTheme
     themeInitialized = true
     super.onCreate(state)
   }
 
-  lazy val themeObserver = pref("theme", defaultTheme).foreach { theme ⇒
-    changeTheme(theme, themeInitialized)
+  lazy val currentTheme = prefs.string("theme", defaultTheme)
+
+  lazy val observeTheme = Obs(currentTheme) {
+    changeTheme(currentTheme(), themeInitialized)
   }
 
   def changeTheme(name: String, restart: Boolean)
 
   def defaultTheme: String
-
-  def pref(name: String, default: String = null): Var[String]
 }
 
 trait MainView
@@ -123,7 +124,7 @@ with tryp.droid.view.Preferences
     val value = prfs.getAll.get(key)
     val validated = validatePreference(key, value)
     if (validated != value) {
-      editPrefs { editor ⇒
+      prefs.edit { editor ⇒
         value match {
           case s: String ⇒ editor.putString(key, s)
           case b: Boolean ⇒ editor.putBoolean(key, b)
@@ -140,12 +141,12 @@ with tryp.droid.view.Preferences
 
   abstract override def onResume {
     super.onResume
-    prefs.registerOnSharedPreferenceChangeListener(this)
+    prefs.registerListener(this)
   }
 
   abstract override def onPause {
     super.onPause
-    prefs.unregisterOnSharedPreferenceChangeListener(this)
+    prefs.unregisterListener(this)
   }
 
   def settings() {
@@ -157,8 +158,8 @@ with tryp.droid.view.Preferences
       false)
   }
 
-  override def changePref(key: String, value: Any) {
-    super.changePref(key, value)
+  def changePref(key: String, value: Any) {
+    prefs.change(key, value)
     key match {
       case "pref_theme" ⇒ value match {
         case s: String ⇒ changeTheme(s)
