@@ -1,4 +1,4 @@
-package tryp.droid.service
+package tryp.droid
 
 import android.app.Service
 import android.os.{Binder,IBinder}

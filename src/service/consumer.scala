@@ -1,4 +1,4 @@
-package tryp.droid.service
+package tryp.droid
 
 import scala.collection.mutable.{Map,ListBuffer}
 
