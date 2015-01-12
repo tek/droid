@@ -388,11 +388,11 @@ with Searchable
 
   def findNestedFrag[A <: Fragment: ClassTag](
     tags: String*
-  ): Option[Fragment] = {
+  ): Option[A] = {
     tags lift(0) flatMap { findFragment } flatMap { frag ⇒
       frag.findNestedFrag(tags.tail: _*) orElse {
         frag match {
-          case f: A ⇒ f.some
+          case f: A ⇒ Some(f)
           case _ ⇒ None
         }
       }
