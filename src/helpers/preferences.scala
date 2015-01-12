@@ -148,7 +148,8 @@ class PreferencesFacade(val prefs: SharedPreferences)
   }
 
   def error(name: String, value: Any) {
-    Log.e(s"Incompatible pref type ${value.getClass} for key '${name}'")
+    val prefType = (value == null) ? "Null" / value.getClass
+    Log.e(s"Incompatible pref type ${prefType} for key '${name}'")
   }
 
   import android.content.SharedPreferences.OnSharedPreferenceChangeListener
