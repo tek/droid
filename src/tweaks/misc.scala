@@ -10,7 +10,7 @@ import android.support.v7.widget.{RecyclerView,LinearLayoutManager,CardView}
 import android.support.v7.widget.StaggeredGridLayoutManager
 import android.support.v7.widget.{Toolbar ⇒ AToolbar}
 import android.support.v7.app.ActionBarDrawerToggle
-import android.text.{TextWatcher,TextUtils}
+import android.text.{TextWatcher,TextUtils,Editable}
 import android.graphics.drawable.Drawable
 
 import macroid._
@@ -117,6 +117,20 @@ extends Text
 
   def textWatcher(listener: TextWatcher) = {
     Tweak[EditText](_.addTextChangedListener(listener))
+  }
+
+  def watchText(cb: ⇒ Unit) = {
+    val listener = new TextWatcher {
+      def onTextChanged(cs: CharSequence, start: Int, count: Int, after: Int) {
+        cb
+      }
+
+      def beforeTextChanged(cs: CharSequence, start: Int, count: Int, after:
+        Int) { }
+
+      def afterTextChanged(edit: Editable) { }
+    }
+    textWatcher(listener)
   }
 
   type canSetColor = View { def setColor(i: Int) }
