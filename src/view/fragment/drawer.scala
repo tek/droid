@@ -18,8 +18,7 @@ extends TrypFragment
 
   override def macroidLayout(state: Bundle) = {
     LL(vertical, bgCol("main"))(
-      w[RecyclerView] <~ recyclerAdapter(adapter) <~
-        linearLayoutManager <~ divider
+      w[RecyclerView] <~ recyclerAdapter(adapter) <~ linear <~ divider
     )
   }
 

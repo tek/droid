@@ -179,7 +179,7 @@ extends ResourcesAccess
     Tweak[RecyclerView](_.setAdapter(a))
   }
 
-  def linearLayoutManager(implicit c: Context) = {
+  def linear(implicit c: Context) = {
     Tweak[RecyclerView](_.setLayoutManager(new LinearLayoutManager(c)))
   }
 
