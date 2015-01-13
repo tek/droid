@@ -2,8 +2,6 @@ package tryp.droid
 
 import scala.collection.mutable.{Map ⇒ MMap}
 
-import android.widget.FrameLayout
-
 import macroid.FullDsl._
 import macroid.{ActivityContext,FragmentBuilder,FragmentManagerContext}
 

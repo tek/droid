@@ -1,7 +1,9 @@
 package tryp.droid
 
-object Macroid
+trait Macroid
 extends tryp.droid.tweaks.All
 with MacroidExt
 {
 }
+
+object Macroid extends Macroid

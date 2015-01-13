@@ -1,6 +1,6 @@
 package tryp.droid.tweaks
 
-class All
+trait All
 extends Layout
 with Misc
 with Slots

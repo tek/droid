@@ -5,7 +5,6 @@ import scala.collection.JavaConversions._
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.view.{MenuItem,Gravity}
-import android.widget.FrameLayout
 import android.preference.PreferenceManager
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.support.v4.widget.DrawerLayout

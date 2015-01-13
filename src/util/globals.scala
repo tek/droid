@@ -43,6 +43,7 @@ extends Util
   type Bundle = android.os.Bundle
   type Intent = android.content.Intent
   type Fragment = android.app.Fragment
+  type FrameLayout = android.widget.FrameLayout
 
   type Ui[+A] = macroid.Ui[A]
 
