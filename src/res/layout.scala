@@ -9,7 +9,7 @@ import macroid.FullDsl._
 import tryp.droid.view.{ActivityContexts,HasActivity}
 import tryp.droid.Broadcast
 
-class LayoutAdapter(val layout: Ui[View])
+class LayoutAdapter(val layout: Ui[ViewGroup])
 {
 }
 
@@ -17,7 +17,7 @@ object LayoutAdapter
 {
   implicit def `Ui from LayoutAdapter option`(
     adapter: Option[LayoutAdapter]
-  )(implicit a: Activity): Ui[View] =
+  )(implicit a: Activity): Ui[ViewGroup] =
   {
     adapter map { _.layout } getOrElse Layouts.dummy.layout
   }
@@ -26,7 +26,7 @@ object LayoutAdapter
     adapter.layout
   }
 
-  implicit def `LayoutAdapter from Ui`(layout: Ui[View])(
+  implicit def `LayoutAdapter from Ui`(layout: Ui[ViewGroup])(
     implicit activity: Activity
   ) = {
     new LayoutAdapter(layout)
