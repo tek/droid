@@ -30,3 +30,15 @@ extends ActivityContexts
   val ordering = TransitionSet.ORDERING_TOGETHER
   val duration = 400
 }
+
+object Transitions
+{
+  implicit class `Slot transition helper`[A <: ViewGroup](root: Slot[A])
+  {
+    def transitionTo(trans: TrypTransitions, view: Ui[View]) {
+      root foreach { r ⇒
+        trans.go(r, view.get)
+      }
+    }
+  }
+}
