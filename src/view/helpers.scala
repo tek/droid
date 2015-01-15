@@ -334,17 +334,18 @@ with Searchable
   }
 
   def addFragment[A >: BBasic#IdTypes](name: A, fragment: Fragment,
-    backStack: Boolean, tag: String)
+    backStack: Boolean, tag: String, check: Boolean = true)
   {
-    moveFragment(name, fragment, backStack, tag) {
+    moveFragment(name, fragment, backStack, tag, check) {
       _.add(res.id(name), fragment, tag)
     }
   }
 
   def moveFragment[A >: BBasic#IdTypes](name: A, fragment: Fragment,
-    backStack: Boolean, tag: String)(move: (FragmentTransaction) ⇒ Unit)
+    backStack: Boolean, tag: String, check: Boolean = true)
+  (move: (FragmentTransaction) ⇒ Unit)
   {
-    checkFrame(name) {
+    checkFrame(name, check) {
       val trans = fragmentManager.beginTransaction
       move(trans)
       if (backStack) {
@@ -354,13 +355,21 @@ with Searchable
     }
   }
 
+  def addFragmentUnchecked[A <: Fragment: ClassTag](ctor: ⇒ A) {
+    val name = fragmentName[A]
+    addFragment(Id(name), ctor, false, Tag(name), false)
+  }
 
   def addFragmentIf[A <: Fragment: ClassTag](ctor: ⇒ A) {
     val name = fragmentName[A]
+    if (!fragmentExists[A])
+      addFragment(Id(name), ctor, false, Tag(name))
+  }
+
+  def fragmentExists[A <: Fragment: ClassTag] = {
+    val name = fragmentName[A]
     val tag = Tag(name)
-    findFragment(tag) getOrElse {
-      replaceFragment(Id(name), ctor, false, tag)
-    }
+    findFragment(tag) isDefined
   }
 
   def addFragmentIfAuto[A <: Fragment: ClassTag] {
@@ -399,8 +408,9 @@ with Searchable
     }
   }
 
-  def checkFrame[A >: BBasic#IdTypes](name: A)(f: ⇒ Unit) {
-    if (viewExists(name))
+  def checkFrame[A >: BBasic#IdTypes](name: A, check: Boolean = true)
+  (f: ⇒ Unit) {
+    if (!check || viewExists(name))
       f
     else
       Log.e(s"Tried to add fragment to nonexistent frame with id '${name}'")

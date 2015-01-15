@@ -145,8 +145,12 @@ trait Layout
     }
   }
 
-  def clickFrame(dispatch: ⇒ Unit)(ui: Ui[View]*)(implicit a: Activity) = {
-    FL(selectableFg)(ui: _*) <~ On.click {
+  def clickFrame(ui: Ui[View]*)(implicit a: Activity) = {
+    FL(selectableFg)(ui: _*)
+  }
+
+  def dispatchFrame(dispatch: ⇒ Unit)(ui: Ui[View]*)(implicit a: Activity) = {
+    clickFrame(ui: _*) <~ On.click {
       dispatch
       Ui.nop
     }
@@ -177,6 +181,18 @@ trait Layout
       implicit a: Activity) = {
       l[RelativeLayout](children: _*) <~ tweakSum(tweaks: _*)
     }
+  }
+
+  def addFrag[A <: Fragment: ClassTag](ctor: () ⇒ A)(implicit a: Activity, f:
+    Fragment) =
+    Tweak[FrameLayout] { _ ⇒ f.addFragmentUnchecked(ctor()) }
+
+  def frag[A <: Fragment: ClassTag](ctor: () ⇒ A)(implicit a: Activity, f:
+    Fragment) = {
+    val id = Id(a.fragmentName[A])
+    new FrameLayout(a) {
+      setId(id.value)
+    } <~ addFrag(ctor)
   }
 
   import android.view.ViewGroup.LayoutParams._
