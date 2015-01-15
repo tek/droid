@@ -2,7 +2,7 @@ package tryp.droid.test
 
 import org.scalatest._
 
-class TrypTest
+abstract class TrypTest
 extends FeatureSpec
 with RobolectricSuite
 with Matchers
@@ -10,6 +10,7 @@ with BeforeAndAfterEach
 with BeforeAndAfterAll
 with LoneElement
 with TrypTestExt
+with tryp.droid.view.HasActivity
 {
   Env.unit = true
   Env.test = true
