@@ -9,4 +9,16 @@
     <attr name='android:shadowDy'/>
     <attr name='android:shadowRadius'/>
   </declare-styleable>
+  <attr name='colorPrimaryLight' format='color'/>
+  <attr name='colorAccentStrong' format='color'/>
+  <attr name='colorBg' format='color'/>
+  <attr name='colorBgLight' format='color'/>
+
+  <attr name='main_bg' format='color|reference'/>
+  <attr name='drawer_main_bg' format='color|reference'/>
+  <attr name='drawer_item_bg' format='color|reference'/>
+  <attr name='drawer_item_selected_bg' format='color|reference'/>
+  <attr name='toolbar_bg' format='color|reference'/>
+  <attr name='toolbar_text' format='color|reference'/>
+  <attr name='drawer_arrow_color' format='color|reference'/>
 </resources>

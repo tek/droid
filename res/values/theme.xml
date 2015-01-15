@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+  <style name='light' parent='Theme.AppCompat.Light.NoActionBar'>
+    <item name='colorPrimary'>@color/teal_500</item>
+    <item name='colorPrimaryDark'>@color/teal_800</item>
+    <item name='colorPrimaryLight'>@color/teal_100</item>
+    <item name='colorAccent'>@color/pink_200</item>
+    <item name='colorAccentStrong'>@color/pink_500</item>
+    <item name='colorBg'>@color/white</item>
+    <item name='colorBgLight'>@color/teal_50</item>
+
+    <item name='main_bg'>?colorBg</item>
+    <item name='toolbar_bg'>?colorPrimary</item>
+    <item name='toolbar_text'>?colorBg</item>
+
+    <item name='drawer_main_bg'>?colorBgLight</item>
+    <item name='drawer_item_bg'>@android:color/transparent</item>
+    <item name='drawer_item_selected_bg'>?colorPrimaryLight</item>
+    <item name='drawer_arrow_color'>?colorBg</item>
+    <item name='drawerArrowStyle'>@style/DrawerArrow</item>
+
+    <item name='android:windowDrawsSystemBarBackgrounds'>true</item>
+    <item name='android:windowTranslucentStatus'>true</item>
+    <item name='android:windowTranslucentNavigation'>true</item>
+    <item name='android:windowBackground'>?colorPrimaryDark</item>
+    <item name='android:imageButtonStyle'>@style/button</item>
+  </style>
+</resources>
