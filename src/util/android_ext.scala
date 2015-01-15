@@ -121,9 +121,11 @@ trait AndroidExt {
   implicit class `Activity extensions`(a: Activity)
   extends tryp.droid.Basic
   with tryp.droid.view.Searchable
+  with tryp.droid.view.Fragments
   {
-    def context = a
+    override def context = a
     def view = a.getWindow.getDecorView.getRootView
-    def activity = a
+    override def activity = a
+    def getFragmentManager = a.getFragmentManager
   }
 }
