@@ -14,6 +14,9 @@ with Theme
 with ManagePreferences
 with MainView
 with tryp.droid.view.Fragments
+with Akkativity
+with HasNavigation
+with tryp.droid.Broadcast
 { self: Activity ⇒
 
   override implicit def activity = this
@@ -28,9 +31,6 @@ with tryp.droid.view.Fragments
 abstract class TrypDefaultActivity
 extends ActionBarActivity
 with TrypActivity
-with tryp.droid.Broadcast
-with Akkativity
-with HasNavigation
 {
   override def onStart { super.onStart }
   override def onStop { super.onStop }
