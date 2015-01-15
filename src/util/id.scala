@@ -20,8 +20,9 @@ class IdGen(start: Int) extends Dynamic {
   def create(tag: String): Id = lock synchronized {
     ids.getOrElse(tag, {
       counter += 1
-      ids += tag → new Id(counter, tag)
-      counter
+      val id = new Id(counter, tag)
+      ids += tag → id
+      id
     })
   }
 }
