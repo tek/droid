@@ -3,19 +3,24 @@ package tryp.droid.meta
 class LogBase {
   var tag = "tryp"
 
-  def d(message: String) = 0
+  def d(message: String) { }
 
-  def p(message: Any) = 0
+  def p(message: Any) = {
+    if (message == null)
+      d("null")
+    else
+      d(message.toString)
+  }
 
-  def i(message: String) = 0
+  def i(message: String) { }
 
-  def w(message: String) = 0
+  def w(message: String) { }
 
-  def e(message: String) = 0
+  def e(message: String) { }
 
-  def e(message: String, t: Throwable) = 0
+  def e(message: String, t: Throwable) { }
 
-  def t(message: String) = 0
+  def t(message: String) { }
 }
 
 object NullLog extends LogBase
@@ -23,13 +28,6 @@ object NullLog extends LogBase
 object Log extends LogBase
 {
   override def d(message: String) = android.util.Log.d(tag, message)
-
-  override def p(message: Any) = {
-    if (message == null)
-      d("null")
-    else
-      d(message.toString)
-  }
 
   override def i(message: String) = android.util.Log.i(tag, message)
 
@@ -45,4 +43,18 @@ object Log extends LogBase
     val output = "----- " + message + ": " + tryp.droid.Time.nowHms
     d(output)
   }
+}
+
+object StdoutLog extends LogBase {
+  override def d(message: String) = println(message)
+
+  override def i(message: String) = println(message)
+
+  override def w(message: String) = println(message)
+
+  override def e(message: String) = println(message)
+
+  override def e(message: String, t: Throwable) = println(message)
+
+  override def t(message: String) = println(message)
 }

@@ -17,7 +17,15 @@ extends Util
   val Env = tryp.droid.meta.Env
 
   def Log = {
-    if (Env.release) tryp.droid.meta.NullLog else tryp.droid.meta.Log
+    if (Env.release) {
+      tryp.droid.meta.NullLog
+    }
+    else if (Env.unittest) {
+      tryp.droid.meta.StdoutLog
+    }
+    else {
+      tryp.droid.meta.Log
+    }
   }
 
   def log(message: String) = Log.d(message)

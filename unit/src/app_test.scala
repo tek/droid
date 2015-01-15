@@ -11,8 +11,10 @@ with BeforeAndAfterAll
 with LoneElement
 with TrypTestExt
 {
+  Env.unit = true
+  Env.test = true
+
   override protected def beforeAll() {
-    tryp.droid.Env.test = true
   }
 }
 
