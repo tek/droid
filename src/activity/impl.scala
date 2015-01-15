@@ -9,16 +9,14 @@ import tryp.droid.activity._
 import Macroid._
 
 abstract trait TrypActivity
-extends tryp.droid.view.Basic
-with Theme
+extends Theme
+with Broadcast
 with ManagePreferences
 with MainView
-with tryp.droid.view.Fragments
+with view.Fragments
 with Akkativity
 with HasNavigation
-with tryp.droid.Broadcast
-{ self: Activity ⇒
-
+{
   override implicit def activity = this
 
   override def view = getWindow.getDecorView.getRootView

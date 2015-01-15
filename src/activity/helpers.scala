@@ -23,18 +23,13 @@ import tryp.droid.view.Fragments
 import tryp.droid._
 
 trait ActivityBase
-extends tryp.droid.view.HasActivity
-with CallbackMixin
+extends Activity
+with view.HasActivity
 {
-  def onConfigurationChanged(newConf: Configuration)
-  def onOptionsItemSelected(item: MenuItem): Boolean
-  protected def onPostCreate(state: Bundle)
-  def onBackPressed()
 }
 
 trait Theme extends ActivityBase
-{ self: Activity
-  with Preferences ⇒
+{ self: Preferences ⇒
 
   private var themeInitialized = false
 
@@ -58,8 +53,7 @@ trait Theme extends ActivityBase
 trait MainView
 extends ActivityBase
 {
-  self: Activity
-  with Fragments ⇒
+  self: Fragments ⇒
 
   def setContentView(v: View)
 
@@ -109,8 +103,7 @@ extends ActivityBase
 with OnSharedPreferenceChangeListener
 with Preferences
 {
-  self: Activity
-  with MainView
+  self: MainView
   with Fragments ⇒
 
   abstract override def onCreate(state: Bundle) {
@@ -255,8 +248,7 @@ extends MainView
 
 trait HasNavigation
 extends MainView
-{ self: Activity
-  with Fragments ⇒
+{ self: Fragments ⇒
 
   def navigation: Navigation
 

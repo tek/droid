@@ -5,20 +5,55 @@ import android.widget._
 import macroid.FullDsl._
 
 import tryp.droid.util.OS
-import tryp.droid.util.FragmentCallbackMixin
 import tryp.droid.res.{Layouts,LayoutAdapter,PrefixResourceNamespace}
 import tryp.droid.Macroid._
 
 trait FragmentBase
-extends view.Basic
+extends Fragment
 with Broadcast
 with view.Fragments
-with FragmentCallbackMixin
 with TrypActivityAccess
 with AkkaFragment
 with view.Snackbars
 {
-  self: Fragment ⇒
+
+  val name = fragmentClassName(getClass)
+
+  def title = name
+
+  def layoutRes: Option[Int] = None
+
+  def layoutName: Option[String] = None
+
+  val uiRoot = slut[ViewGroup]
+
+  implicit def resourceNamespace = PrefixResourceNamespace(name.snakeCase)
+
+  override def onCreate(state: Bundle) = {
+    super.onCreate(state)
+    setupToolbar()
+  }
+
+  override def onCreateView(
+    inflater: LayoutInflater, container: ViewGroup, state: Bundle
+  ): View =
+  {
+    layoutRes map { inflater.inflate(_, container, false) } getOrElse {
+      getUi(macroidLayout(state) <~ uiRoot)
+    }
+  }
+
+  def macroidLayout(state: Bundle): Ui[ViewGroup] = {
+    layoutAdapter map { _.layout } getOrElse { Layouts.dummy }
+  }
+
+  lazy val layoutAdapter: Option[LayoutAdapter] = {
+    Layouts.get(layoutName)
+  }
+
+  def setupToolbar() {
+    setHasOptionsMenu(true)
+  }
 
   override implicit def activity = getActivity
 
@@ -30,6 +65,8 @@ with view.Snackbars
       case _ ⇒ None
     }
   }
+
+  override def fragmentManager = getChildFragmentManager
 
   abstract override def onViewStateRestored(state: Bundle) {
     if (OS.hasFragmentOnViewStateRestored) {
@@ -46,53 +83,9 @@ with view.Snackbars
 }
 
 abstract class TrypFragment
-extends android.app.Fragment
+extends Fragment
 with FragmentBase
 {
-  def layoutRes: Option[Int] = None
-  def layoutName: Option[String] = None
-
-  val name = fragmentClassName(getClass)
-
-  implicit def resourceNamespace = PrefixResourceNamespace(name.snakeCase)
-
-  override def onCreate(state: Bundle) = {
-    super.onCreate(state)
-    setupToolbar()
-  }
-
-  override def fragmentManager = getChildFragmentManager
-
-  override def onViewStateRestored(state: Bundle) = {
-    super.onViewStateRestored(state)
-  }
-
-  override def onActivityCreated(state: Bundle) {
-    super.onActivityCreated(state)
-  }
-
-  override def onCreateView(
-    inflater: LayoutInflater, container: ViewGroup, state: Bundle
-  ): View =
-  {
-    layoutRes map { inflater.inflate(_, container, false) } getOrElse {
-      getUi(macroidLayout(state))
-    }
-  }
-
-  def macroidLayout(state: Bundle): Ui[View] = {
-    layoutAdapter map { _.layout } getOrElse { Layouts.dummy }
-  }
-
-  lazy val layoutAdapter: Option[LayoutAdapter] = {
-    Layouts.get(layoutName)
-  }
-
-  def setupToolbar() {
-    setHasOptionsMenu(true)
-  }
-
-  def title = name
 }
 
 abstract class MainFragment
