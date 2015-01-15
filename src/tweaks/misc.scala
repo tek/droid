@@ -13,6 +13,8 @@ import android.support.v7.app.ActionBarDrawerToggle
 import android.text.{TextWatcher,TextUtils,Editable}
 import android.graphics.drawable.Drawable
 
+import android.transitions.everywhere.TransitionManager
+
 import macroid._
 import macroid.FullDsl._
 import macroid.contrib.Layouts._
@@ -160,6 +162,10 @@ extends Text
   def hidden = Tweak[View](_.setVisibility(android.view.View.INVISIBLE))
 
   def indeterminate = Tweak[ProgressBar](_.setIndeterminate(true))
+
+  def transitionName(name: String) = Tweak[View] { v ⇒
+    TransitionManager.setTransitionName(v, name)
+  }
 }
 
 object Misc extends Misc
