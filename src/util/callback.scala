@@ -11,10 +11,3 @@ abstract trait CallbackMixin {
   def onResume
   def onPause
 }
-
-abstract trait FragmentCallbackMixin
-extends CallbackMixin
-{
-  def onViewStateRestored(state: Bundle)
-  def onActivityCreated(state: Bundle)
-}
