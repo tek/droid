@@ -183,16 +183,14 @@ trait Layout
     }
   }
 
-  def addFrag[A <: Fragment: ClassTag](ctor: () ⇒ A)(implicit a: Activity, f:
-    Fragment) =
-    Tweak[FrameLayout] { _ ⇒ f.addFragmentUnchecked(ctor()) }
-
-  def frag[A <: Fragment: ClassTag](ctor: () ⇒ A)(implicit a: Activity, f:
-    Fragment) = {
-    val id = Id(a.fragmentName[A])
-    new FrameLayout(a) {
-      setId(id.value)
-    } <~ addFrag(ctor)
+  def frag(ctor: ⇒ Fragment)(implicit a: Activity) = {
+    val id = Id.next
+    Ui(
+      (new FrameLayout(a)) tap { fl ⇒
+        fl.setId(id.value)
+        a.addFragment(id, ctor, false, id.value.toString, false)
+      }
+    )
   }
 
   import android.view.ViewGroup.LayoutParams._

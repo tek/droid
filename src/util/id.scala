@@ -25,6 +25,8 @@ class IdGen(start: Int) extends Dynamic {
       id
     })
   }
+
+  def next = create((start + counter + 1).toString)
 }
 
 object Id extends IdGen(1000)
