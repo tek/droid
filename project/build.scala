@@ -23,6 +23,7 @@ extends tryp.Deps
       "com.typesafe.akka" %% "akka-actor" % "2.+",
       "org.scalaz" %% "scalaz-core" % "7.+",
       "com.scalarx" %% "scalarx" % "0.+",
+      "com.github.andkulikov" % "transitions-everywhere" % "1.+",
       "com.melnykov" % "floatingactionbutton" % "1.+",
       "com.android.support" % "support-v13" % "21.+"
     )
