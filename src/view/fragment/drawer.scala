@@ -9,6 +9,7 @@ import tryp.droid.tweaks.Recycler._
 import tryp.droid.res._
 import tryp.droid.Macroid._
 
+// TODO either supply a default ctor or make android retainInstance
 class DrawerFragment(navigation: Navigation)
 extends TrypFragment
 {
