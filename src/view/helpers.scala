@@ -1,4 +1,4 @@
-package tryp.droid.view
+package tryp.droid
 
 import scala.language.dynamics
 import scala.reflect.runtime.universe._
@@ -18,7 +18,6 @@ import macroid.{FragmentManagerContext,ActivityContext,AppContext}
 import macroid.support.FragmentApi
 
 import tryp.droid.util._
-import tryp.droid.{Basic ⇒ BBasic}
 import tryp.droid.res._
 
 trait Searchable {
@@ -69,7 +68,7 @@ trait Searchable {
 
   def res(implicit ns: ResourceNamespace = GlobalResourceNamespace): Resources
 
-  def find[A >: BBasic#IdTypes](
+  def find[A >: Basic#IdTypes](
     name: A, root: Option[View] = None
   ): Option[View] = {
     val entry = root getOrElse view
@@ -88,7 +87,7 @@ trait Searchable {
     }
   }
 
-  def findt[A >: BBasic#IdTypes, B <: View: ClassTag](
+  def findt[A >: Basic#IdTypes, B <: View: ClassTag](
     name: A, root: Option[View] = None
   ): Option[B] = {
     find(name, root) match {
@@ -118,13 +117,13 @@ trait Searchable {
     viewsOfType[A].lift(0)
   }
 
-  def textView[A >: BBasic#IdTypes](
+  def textView[A >: Basic#IdTypes](
     name: A, root: Option[View] = None
   ): Option[TextView] = {
     findt[A, TextView](name, root)
   }
 
-  def viewExists[A >: BBasic#IdTypes](name: A) = {
+  def viewExists[A >: Basic#IdTypes](name: A) = {
     Try(find(name)) isSuccess
   }
 
@@ -154,7 +153,7 @@ trait ActivityContexts {
 }
 
 trait HasActivity
-extends tryp.droid.Basic
+extends Basic
 with ActivityContexts
 {
   implicit def activity: Activity
@@ -186,12 +185,12 @@ with ActivityContexts
   }
 }
 
-trait Basic
+trait ViewBasic
 extends HasActivity
 with Searchable
 
 trait Click
-extends Basic
+extends ViewBasic
 {
   def itemClickListen(view: AdapterView[_], callback: (View) ⇒ Unit) {
     view.setOnItemClickListener(new AdapterView.OnItemClickListener {
@@ -209,7 +208,7 @@ extends Basic
 }
 
 trait Geometry
-extends Basic
+extends ViewBasic
 {
   def resources: AResources
 
@@ -226,7 +225,7 @@ extends Basic
 }
 
 trait Input
-extends Basic
+extends ViewBasic
 {
   import android.content.Context
 
@@ -278,7 +277,7 @@ extends HasActivity
   }
 }
 
-trait Fragments
+trait FragmentManagement
 extends HasActivity
 with Searchable
 {
@@ -292,7 +291,7 @@ with Searchable
     Option[Fragment](rootFragmentManager.findFragmentByTag(tag))
   }
 
-  def replaceFragment[A >: BBasic#IdTypes](name: A, fragment: Fragment,
+  def replaceFragment[A >: Basic#IdTypes](name: A, fragment: Fragment,
     backStack: Boolean, tag: String)
   {
     moveFragment(name, fragment, backStack, tag) {
@@ -333,7 +332,7 @@ with Searchable
     }
   }
 
-  def addFragment[A >: BBasic#IdTypes](name: A, fragment: Fragment,
+  def addFragment[A >: Basic#IdTypes](name: A, fragment: Fragment,
     backStack: Boolean, tag: String, check: Boolean = true)
   {
     moveFragment(name, fragment, backStack, tag, check) {
@@ -341,7 +340,7 @@ with Searchable
     }
   }
 
-  def moveFragment[A >: BBasic#IdTypes](name: A, fragment: Fragment,
+  def moveFragment[A >: Basic#IdTypes](name: A, fragment: Fragment,
     backStack: Boolean, tag: String, check: Boolean = true)
   (move: (FragmentTransaction) ⇒ Unit)
   {
@@ -408,7 +407,7 @@ with Searchable
     }
   }
 
-  def checkFrame[A >: BBasic#IdTypes](name: A, check: Boolean = true)
+  def checkFrame[A >: Basic#IdTypes](name: A, check: Boolean = true)
   (f: ⇒ Unit) {
     if (!check || viewExists(name))
       f

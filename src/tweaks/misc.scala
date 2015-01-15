@@ -22,8 +22,7 @@ import macroid.contrib.Layouts._
 import com.melnykov.fab.FloatingActionButton
 
 import tryp.droid.res.{Resources,_}
-import tryp.droid.TrypTextView
-import tryp.droid.view.DividerItemDecoration
+import tryp.droid.view.{TrypTextView,DividerItemDecoration}
 
 trait ResourcesAccess {
   protected def res(implicit c: Context,

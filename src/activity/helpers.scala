@@ -16,15 +16,14 @@ import macroid.FullDsl._
 import rx._
 import rx.ops._
 
-import tryp.droid.util.CallbackMixin
-import tryp.droid.Macroid._
-import tryp.droid.Screws._
-import tryp.droid.view.Fragments
 import tryp.droid._
+import tryp.droid.util.CallbackMixin
+import Macroid._
+import Screws._
 
 trait ActivityBase
 extends Activity
-with view.HasActivity
+with HasActivity
 {
 }
 
@@ -53,7 +52,7 @@ trait Theme extends ActivityBase
 trait MainView
 extends ActivityBase
 {
-  self: Fragments ⇒
+  self: FragmentManagement ⇒
 
   def setContentView(v: View)
 
@@ -104,7 +103,7 @@ with OnSharedPreferenceChangeListener
 with Preferences
 {
   self: MainView
-  with Fragments ⇒
+  with FragmentManagement ⇒
 
   abstract override def onCreate(state: Bundle) {
     setupPreferences
@@ -198,7 +197,7 @@ extends ActivityBase
 trait HasToolbar
 extends MainView
 { self: ActionBarActivity
-  with Fragments ⇒
+  with FragmentManagement ⇒
 
     import tryp.droid.tweaks.{Toolbar ⇒ T}
 
@@ -248,7 +247,7 @@ extends MainView
 
 trait HasNavigation
 extends MainView
-{ self: Fragments ⇒
+{ self: FragmentManagement ⇒
 
   def navigation: Navigation
 
@@ -275,7 +274,7 @@ extends HasToolbar
 with HasNavigation
 with DrawerLayout.DrawerListener
 { self: ActionBarActivity
-  with Fragments
+  with FragmentManagement
   with Akkativity ⇒
 
   import tryp.droid.tweaks.{Toolbar ⇒ T, Drawer ⇒ D}

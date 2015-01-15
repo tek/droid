@@ -19,7 +19,7 @@ trait AndroidExt {
 
   implicit class ViewExt(val view: View)
   extends tryp.droid.Basic
-  with tryp.droid.view.Searchable
+  with tryp.droid.Searchable
   {
     def context = view.getContext
 
@@ -110,8 +110,8 @@ trait AndroidExt {
 
   implicit class `Fragment extensions`(f: Fragment)
   extends tryp.droid.Basic
-  with tryp.droid.view.Searchable
-  with tryp.droid.view.Fragments
+  with tryp.droid.Searchable
+  with tryp.droid.FragmentManagement
   {
     def view = f.getView
     def activity = f.getActivity
@@ -120,8 +120,8 @@ trait AndroidExt {
 
   implicit class `Activity extensions`(a: Activity)
   extends tryp.droid.Basic
-  with tryp.droid.view.Searchable
-  with tryp.droid.view.Fragments
+  with tryp.droid.Searchable
+  with tryp.droid.FragmentManagement
   {
     override def context = a
     def view = a.getWindow.getDecorView.getRootView

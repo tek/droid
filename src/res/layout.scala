@@ -6,7 +6,7 @@ import android.widget.LinearLayout
 
 import macroid.FullDsl._
 
-import tryp.droid.view.{ActivityContexts,HasActivity}
+import tryp.droid.{ActivityContexts,HasActivity}
 import tryp.droid.Broadcast
 
 class LayoutAdapter(val layout: Ui[ViewGroup])

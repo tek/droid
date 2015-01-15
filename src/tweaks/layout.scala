@@ -17,7 +17,7 @@ import macroid.FullDsl._
 import macroid.contrib.Layouts._
 import RuleRelativeLayout.Rule
 
-import tryp.droid.view.ActivityContexts
+import tryp.droid.ActivityContexts
 import tryp.droid.res.Resources
 import tryp.droid.Macroid._
 

@@ -13,7 +13,7 @@ extends Theme
 with Broadcast
 with ManagePreferences
 with MainView
-with view.Fragments
+with FragmentManagement
 with Akkativity
 with HasNavigation
 {

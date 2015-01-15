@@ -4,8 +4,6 @@ import macroid.{FragmentManagerContext,ActivityContext,AppContext}
 import macroid.{Tweak,CanTweak}
 import macroid.FullDsl._
 
-import tryp.droid.view.ActivityContexts
-
 trait MacroidExt
 {
   implicit class FragmentBuilderExt[A](fb: macroid.FragmentBuilder[A])(

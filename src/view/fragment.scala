@@ -11,10 +11,10 @@ import tryp.droid.Macroid._
 trait FragmentBase
 extends Fragment
 with Broadcast
-with view.Fragments
+with FragmentManagement
 with TrypActivityAccess
 with AkkaFragment
-with view.Snackbars
+with Snackbars
 {
 
   val name = fragmentClassName(getClass)

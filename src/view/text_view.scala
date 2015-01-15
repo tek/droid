@@ -1,4 +1,4 @@
-package tryp.droid
+package tryp.droid.view
 
 import android.util.AttributeSet
 import android.content.res.TypedArray

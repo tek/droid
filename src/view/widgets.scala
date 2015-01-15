@@ -14,8 +14,8 @@ import tryp.droid.Macroid._
 import tryp.droid.{Macroid ⇒ T}
 
 trait Fab
-{ self: view.HasActivity
-  with view.Snackbars ⇒
+{ self: HasActivity
+  with Snackbars ⇒
 
   val faButton = slut[FloatingActionButton]
 

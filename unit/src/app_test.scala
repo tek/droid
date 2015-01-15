@@ -10,7 +10,7 @@ with BeforeAndAfterEach
 with BeforeAndAfterAll
 with LoneElement
 with TrypTestExt
-with tryp.droid.view.HasActivity
+with tryp.droid.HasActivity
 {
   Env.unit = true
   Env.test = true

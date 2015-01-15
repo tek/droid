@@ -5,7 +5,6 @@ import scala.collection.mutable.{Map ⇒ MMap}
 import macroid.FullDsl._
 import macroid.{ActivityContext,FragmentBuilder,FragmentManagerContext}
 
-import tryp.droid.view.ActivityContexts
 import tryp.droid.Macroid._
 
 abstract class FragmentFactory[A <: Fragment: ClassTag]

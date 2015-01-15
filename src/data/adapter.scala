@@ -3,11 +3,9 @@ package tryp.droid
 import android.widget.{BaseAdapter,TextView,Filterable,Filter}
 import android.support.v7.widget.RecyclerView
 
-import tryp.droid.view.ActivityContexts
-
 abstract class ListAdapter(implicit val activity: Activity)
 extends BaseAdapter
-with tryp.droid.view.Confirm
+with tryp.droid.Confirm
 with ActivityContexts
 {
   def items: Seq[AnyRef]
@@ -62,7 +60,7 @@ abstract class RecyclerAdapter[A <: RecyclerView.ViewHolder, B: ClassTag](
 )
 extends RecyclerView.Adapter[A]
 with ActivityContexts
-with tryp.droid.view.HasActivity
+with tryp.droid.HasActivity
 with Filterable
 {
   def items: Seq[B]
