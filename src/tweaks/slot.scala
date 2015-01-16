@@ -1,6 +1,6 @@
 package tryp.droid.tweaks
 
-import scala.concurrent.{ExecutionContext,Future}
+import scala.concurrent.ExecutionContext
 
 import macroid.{Tweak,CanTweak,Snail}
 import macroid.FullDsl._

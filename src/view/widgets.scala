@@ -1,6 +1,5 @@
 package tryp.droid
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import android.widget._

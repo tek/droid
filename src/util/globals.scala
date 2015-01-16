@@ -45,6 +45,8 @@ extends Util
 
   val Tag = tryp.droid.util.Tag
 
+  val TrypKeys = tryp.droid.Keys
+
   type Id = tryp.droid.util.Id
 
   type Context = android.content.Context
@@ -60,6 +62,7 @@ extends Util
   val Try = scala.util.Try
   val Success = scala.util.Success
   val Failure = scala.util.Failure
+  val Future = scala.concurrent.Future
 
   type ClassTag[A] = scala.reflect.ClassTag[A]
 }
