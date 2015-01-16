@@ -193,6 +193,12 @@ trait Layout
     )
   }
 
+  import tryp.droid.ShowFragment
+
+  def showFrag(id: Long)(ctor: () ⇒ ShowFragment[_])(implicit a: Activity) = {
+    frag(ShowFragment(id)(ctor()))
+  }
+
   import android.view.ViewGroup.LayoutParams._
 
   def margin(left: Int = 0, top: Int = 0, right: Int = 0, bottom: Int = 0,
