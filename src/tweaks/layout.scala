@@ -45,10 +45,20 @@ trait Layout
   case class Width(value: Int)
   case class Height(value: Int)
 
-  implicit def int2width(value: Int): Width = Width(value)
-  implicit def int2height(value: Int): Height = Height(value)
-  implicit def float2width(value: Float): Width = Width(value.toInt)
-  implicit def float2height(value: Float): Height = Height(value.toInt)
+  object Width
+  {
+    def apply[A: Numeric](value: A) =
+      new Width(implicitly[Numeric[A]].toInt(value))
+  }
+
+  object Height
+  {
+    def apply[A: Numeric](value: A) =
+      new Height(implicitly[Numeric[A]].toInt(value))
+  }
+
+  implicit def num2width[A: Numeric](value: A): Width = Width(value)
+  implicit def num2height[A: Numeric](value: A): Height = Height(value)
 
   implicit def `Widget is tweakable with Height`[W <: View] =
     new CanTweak[W, Height, W] {
