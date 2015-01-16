@@ -34,15 +34,16 @@ trait Fab
     )
   }
 
-  def fabBetween(icon: String, headerId: Id)(onClick: ⇒ Unit)(header: Ui[View],
-    content: Ui[View]) =
+  def fabBetween(icon: String)(onClick: ⇒ Unit)
+  (header: Ui[View], content: Ui[View]) =
   {
-    val geom = rlp(↦, alignBottom(headerId)) +
+    val geom = rlp(↦, alignBottom(Id.header)) +
       margin(right = 16 dp,
         bottom = res.dimen("fab_margin_normal_minus").toInt)
-    RL()(
-      header <~ headerId,
-      content <~ rlp(below(headerId)),
+    RL(↔, ↕)(
+      RL(bgCol("header"))(header) <~ Id.header <~
+        rlp(↥, ↔, Height(res.dimen("header_height"))),
+      RL()(content) <~ rlp(below(Id.header)),
       progressUi <~ geom,
       fabUi(icon)(onClick) <~ geom
     )
@@ -60,6 +61,8 @@ trait Fab
       On.click { Ui(onClick) }
   }
 
+  // Runs 'task' in a future while changing the fab to a circular progress
+  // indicator. After completion, 'snack' is shown as a toast, if nonempty.
   def fabAsync[A, B](snack: Option[String] = None)(task: ⇒ B)
   (callback: (B) ⇒ Unit) = {
     val f = Future { task } mapUi { callback }

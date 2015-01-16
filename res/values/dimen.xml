@@ -7,4 +7,5 @@
   <dimen name='fab_margin_normal_minus'>-30dp</dimen>
   <dimen name='fab_margin_mini'>22dp</dimen>
   <dimen name='fab_margin_mini_minus'>-22dp</dimen>
+  <dimen name='header_height'>140dp</dimen>
 </resources>

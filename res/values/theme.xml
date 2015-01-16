@@ -10,6 +10,7 @@
     <item name='colorBgLight'>@color/teal_50</item>
 
     <item name='main_bg'>?colorBg</item>
+    <item name='header_bg'>?colorBgLight</item>
     <item name='toolbar_bg'>?colorPrimary</item>
     <item name='toolbar_text'>?colorBg</item>
 
