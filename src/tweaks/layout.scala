@@ -200,10 +200,12 @@ trait Layout
     )
   }
 
-  import tryp.droid.ShowFragment
+  import tryp.droid.{ShowFragment,TrypModel}
 
-  def showFrag(id: Long)(ctor: () ⇒ ShowFragment[_])(implicit a: Activity) = {
-    frag(ShowFragment(id)(ctor()))
+  def showFrag[A <: TrypModel](model: A)(ctor: () ⇒ ShowFragment[A])
+  (implicit a: Activity) =
+  {
+    frag(ShowFragment(model)(ctor()))
   }
 
   import android.view.ViewGroup.LayoutParams._

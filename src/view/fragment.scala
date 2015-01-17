@@ -139,7 +139,11 @@ extends TrypFragment
 object ShowFragment
 extends ActivityContexts
 {
-  def apply(id: Long)(ctor: ⇒ ShowFragment[_])(implicit a: Activity) = {
-    FragmentBuilder(Ui(ctor), new Bundle).pass(Keys.dataId → id).factory.get
+  def apply[A <: TrypModel](model: A)(ctor: ⇒ ShowFragment[A])
+  (implicit a: Activity) = {
+    val inst = ctor
+    inst.model = Some(model)
+    FragmentBuilder(Ui(inst), new Bundle)
+      .pass(Keys.dataId → model.id).factory.get
   }
 }
