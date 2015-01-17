@@ -2,11 +2,16 @@ package tryp.droid.res
 
 import android.content.res.{Resources ⇒ AResources}
 
+case class InvalidResource(msg: String)
+extends java.lang.RuntimeException(msg)
+
 case class Resources(implicit val context: Context,
   ns: ResourceNamespace = GlobalResourceNamespace)
 extends tryp.droid.Preferences
 {
   type IdTypes = Int with String with Id
+
+  private val global = GlobalResourceNamespace
 
   lazy val theme = new tryp.droid.view.Theme
 
@@ -18,7 +23,8 @@ extends tryp.droid.Preferences
         .getIdentifier(name, defType, context.getPackageName)
     }
     res.tapIfEquals(0) { i ⇒
-      Log.e(s"Resource ${defType} '${input}' resolved to zero!")
+      throw InvalidResource(
+        s"Resource ${defType} '${input}' resolved to zero!")
     }
   }
 
@@ -31,19 +37,36 @@ extends tryp.droid.Preferences
   def color[A >: IdTypes](_id: A) = res(_id, "color") { _.getColor _ }
 
   def i(name: String, suffix: Option[String] = None) = {
-    integer(ns.format(name, suffix))
+    namespaced(name, suffix, integer)
   }
 
   def s(name: String, suffix: Option[String] = None) = {
-    string(ns.format(name, suffix))
+    namespaced(name, suffix, string)
   }
 
   def d(name: String, suffix: Option[String] = None) = {
-    dimen(ns.format(name, suffix))
+    namespaced(name, suffix, dimen)
   }
 
   def c(name: String, suffix: Option[String] = None) = {
-    color(ns.format(name, suffix))
+    namespaced(name, suffix, theme.color)
+  }
+
+  def namespaced[A](
+    name: String, suffix: Option[String], getter: (String) ⇒ A) =
+  {
+    Try(getter(ns.format(name, suffix))) recoverWith {
+      case e: InvalidResource if (ns != global) ⇒
+        Try(getter(global.format(name, suffix)))
+      case e ⇒ Failure(e)
+    } recoverWith {
+      case e: InvalidResource ⇒
+        Failure(InvalidResource(
+          s"Couldn't resolve attr '${name}' with suffix '${suffix}' in " +
+          s"namespace ${ns}")
+        )
+      case e ⇒ Failure(e)
+    } get
   }
 
   def xmlId(name: String): Int = id(name, "xml")
@@ -92,6 +115,8 @@ extends ResourceNamespace
   def format(ident: String, suf: Option[String] = None) = {
     addSuffix(s"${prefix}_${ident}", suf)
   }
+
+  override def toString = s"[${prefix}]"
 }
 
 object GlobalResourceNamespace
@@ -100,4 +125,6 @@ extends ResourceNamespace
   def format(ident: String, suf: Option[String] = None) = {
     addSuffix(ident, suf)
   }
+
+  override def toString = "global"
 }

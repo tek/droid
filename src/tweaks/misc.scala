@@ -104,7 +104,7 @@ extends Text
   def bgCol(name: String)(
     implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
   ) = {
-    val col = theme.color(ns.format(name, Some("bg"))).toInt
+    val col = res.c(name, Some("bg")).toInt
     Tweak[View](_.setBackgroundColor(col))
   }
 
@@ -137,7 +137,7 @@ extends Text
   type canSetColor = View { def setColor(i: Int) }
 
   def color(name: String)(implicit c: Context) = Tweak[canSetColor] {
-    _.setColor(theme.color(name))
+    _.setColor(res.c(name))
   }
 
   object Fab
@@ -145,8 +145,8 @@ extends Text
   {
     def colors(normal: String, pressed: String)(implicit c: Context) =
       Tweak[FloatingActionButton] { fab ⇒
-        fab.setColorNormal(theme.color(normal))
-        fab.setColorPressed(theme.color(pressed))
+        fab.setColorNormal(res.c(normal))
+        fab.setColorPressed(res.c(pressed))
       }
   }
 
@@ -214,7 +214,7 @@ extends ResourcesAccess
   def logo(resid: Int) = Tweak[AToolbar](_.setLogo(resid))
 
   def titleColor(name: String)(implicit c: Context) = Tweak[AToolbar] {
-    _.setTitleTextColor(theme.color(name))
+    _.setTitleTextColor(res.c(name))
   }
 
   def navButtonListener(callback: ⇒ Unit) = Tweak[AToolbar] {
