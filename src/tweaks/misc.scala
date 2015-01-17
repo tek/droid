@@ -3,6 +3,7 @@ package tryp.droid.tweaks
 import scala.language.reflectiveCalls
 
 import android.widget._
+import android.support.v7.widget._
 import android.view.Gravity
 import android.content.res.ColorStateList
 import android.support.v4.widget.DrawerLayout
@@ -107,6 +108,9 @@ extends Text
     val col = res.c(name, Some("bg")).toInt
     Tweak[View](_.setBackgroundColor(col))
   }
+
+  def cardBackgroundColor(color: String)(implicit c: Context) = 
+    Tweak[CardView](_.setCardBackgroundColor(res.c(color, Some("bg"))))
 
   def checked(state: Boolean) = {
     Tweak[CheckBox](_.setChecked(state))

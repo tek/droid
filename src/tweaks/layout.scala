@@ -141,9 +141,6 @@ trait Layout
       v.setContentPadding(all, all, all, all)
   }
 
-  def cardBackgroundColor(color: Int) = 
-    Tweak[CardView](_.setCardBackgroundColor(color))
-
   def fitsSystemWindows = Tweak[View](_.setFitsSystemWindows(true))
 
   object FL

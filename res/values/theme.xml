@@ -8,9 +8,11 @@
     <item name='colorAccentStrong'>@color/pink_500</item>
     <item name='colorBg'>@color/white</item>
     <item name='colorBgLight'>@color/teal_50</item>
+    <item name='android:textColor'>@color/grey_500</item>
 
     <item name='main_bg'>?colorBg</item>
-    <item name='header_bg'>?colorBgLight</item>
+    <item name='light_bg'>?colorBgLight</item>
+    <item name='header_bg'>?light_bg</item>
     <item name='toolbar_bg'>?colorPrimary</item>
     <item name='toolbar_text'>?colorBg</item>
 

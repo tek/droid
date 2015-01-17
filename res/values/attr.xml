@@ -15,6 +15,7 @@
   <attr name='colorBgLight' format='color'/>
 
   <attr name='main_bg' format='color|reference'/>
+  <attr name='light_bg' format='color|reference'/>
   <attr name='header_bg' format='color|reference'/>
   <attr name='drawer_main_bg' format='color|reference'/>
   <attr name='drawer_item_bg' format='color|reference'/>
