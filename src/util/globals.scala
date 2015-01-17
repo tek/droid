@@ -63,8 +63,10 @@ extends Util
   val Success = scala.util.Success
   val Failure = scala.util.Failure
   val Future = scala.concurrent.Future
+  val Buffer = scala.collection.mutable.Buffer
 
   type ClassTag[A] = scala.reflect.ClassTag[A]
+  type Buffer[A] = scala.collection.mutable.Buffer[A]
 }
 
 trait Globals
