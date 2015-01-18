@@ -1,7 +1,5 @@
 package tryp.droid
 
-import scala.collection.mutable.{Map ⇒ MMap}
-
 import macroid.FullDsl._
 import macroid.{ActivityContext,FragmentBuilder,FragmentManagerContext}
 
@@ -45,9 +43,4 @@ extends ActivityContexts
   def add(factory: FragmentFactory[_ <: Fragment]) {
     factories(factory.name) = factory
   }
-}
-
-class Fragments
-{
-  var settings: () ⇒ SettingsFragment = () ⇒ new SettingsFragment
 }

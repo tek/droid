@@ -1,7 +1,5 @@
 package tryp.droid.res
 
-import scala.collection.mutable.{Map ⇒ MMap}
-
 import android.widget.LinearLayout
 
 import macroid.FullDsl._

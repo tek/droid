@@ -1,6 +1,5 @@
 package tryp.droid
 
-import scala.collection.mutable.{Map ⇒ MMap}
 import scala.collection.convert.wrapAll._
 
 import android.content.SharedPreferences

@@ -62,9 +62,11 @@ extends Util
   val Failure = scala.util.Failure
   val Future = scala.concurrent.Future
   val Buffer = scala.collection.mutable.Buffer
+  val MMap = scala.collection.mutable.Map
 
   type ClassTag[A] = scala.reflect.ClassTag[A]
   type Buffer[A] = scala.collection.mutable.Buffer[A]
+  type MMap[A, B] = scala.collection.mutable.Map[A, B]
 }
 
 trait Globals
