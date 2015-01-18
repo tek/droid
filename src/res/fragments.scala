@@ -10,7 +10,7 @@ import tryp.droid.Macroid._
 abstract class FragmentFactory[A <: Fragment: ClassTag]
 extends ActivityContexts
 {
-  Fragments.add(this)
+  FragmentFactories.add(this)
 
   def name = tryp.droid.util.Strings.objectName2mixed(this)
 
@@ -22,7 +22,7 @@ extends ActivityContexts
   def createImpl(implicit a: Activity): FragmentBuilder[A]
 }
 
-object Fragments
+object FragmentFactories
 extends ActivityContexts
 {
   val factories = MMap[String, FragmentFactory[_ <: Fragment]]()
