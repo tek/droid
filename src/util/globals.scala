@@ -75,3 +75,9 @@ extends GlobalsBase
   type ViewGroup = android.view.ViewGroup
   type LayoutInflater = android.view.LayoutInflater
 }
+
+trait TrypDroidGlobals
+extends Globals
+{
+  val Fragments = tryp.droid.Classes.fragments
+}
