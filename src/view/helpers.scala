@@ -361,8 +361,7 @@ with Searchable
 
   def addFragmentIf[A <: Fragment: ClassTag](ctor: ⇒ A) {
     val name = fragmentName[A]
-    if (!fragmentExists[A])
-      addFragment(Id(name), ctor, false, Tag(name))
+    if (!fragmentExists[A]) addFragment(Id(name), ctor, false, Tag(name))
   }
 
   def fragmentExists[A <: Fragment: ClassTag] = {
