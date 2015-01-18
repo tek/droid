@@ -100,7 +100,7 @@ extends TrypFragment
   }
 }
 
-abstract class ShowFragment[A]
+abstract class ShowFragment[A <: TrypModel]
 extends TrypFragment
 {
   override def onCreate(state: Bundle) {
@@ -110,10 +110,11 @@ extends TrypFragment
 
   private def setupData() {
     val id = getArguments.getLong(Keys.dataId, 0)
-    if (id > 0)
-      initData(id)
-    else
-      Log.e(s"No dataId in arguments to show fragment '${name}'")
+    if (model.isEmpty)
+      if (id <= 0)
+        Log.e(s"No dataId in arguments to show fragment '${name}'")
+      else
+        initData(id)
   }
 
   var model: Option[A] = None
