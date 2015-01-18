@@ -62,9 +62,13 @@ extends ResourcesAccess
 
     def large = macroid.contrib.TextTweaks.large
 
+    def hintLiteral(hint: String) = {
+      Tweak[TextView](_.setHint(hint))
+    }
+
     def hint(name: String) = {
       val hint = res.s(name, Some("hint"))
-      Tweak[TextView](_.setHint(hint))
+      hintLiteral(hint)
     }
 
     def minWidth(name: String) = {
