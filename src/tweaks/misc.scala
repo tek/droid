@@ -251,3 +251,13 @@ extends ResourcesAccess
 
   def upEnabled = Screw[Toggle] { _.setHomeAsUpIndicator(0) }
 }
+
+case class InvTransformer(f: PartialFunction[View, Ui[Any]]) {
+  def apply(w: View): Unit = {
+    f.lift.apply(w).foreach(_.get)
+    w.getParent match {
+      case v: View ⇒ apply(v)
+      case _ ⇒
+    }
+  }
+}
