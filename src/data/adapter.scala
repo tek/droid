@@ -115,12 +115,12 @@ abstract class SimpleRecyclerAdapter[A <: RecyclerView.ViewHolder, B: ClassTag]
 (implicit activity: Activity)
 extends RecyclerAdapter[A, B]
 {
-  var simpleItems = Seq[B]()
+  var simpleItems = Buffer[B]()
 
   def items = simpleItems
 
   def updateItems(newItems: Seq[B]) {
-    simpleItems = newItems
+    simpleItems = newItems.toBuffer
     applyFilter()
   }
 }
