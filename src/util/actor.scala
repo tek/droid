@@ -244,3 +244,21 @@ extends TrypActivityActor[A]
     }
   }
 }
+
+class AkkaAndroidLogger extends Actor {
+  import akka.event.Logging._
+
+  def receive = {
+    case Error(cause, logSource, logClass, message) ⇒
+      Log.e(s"$message [$logSource]: $cause")
+    case Warning(logSource, logClass, message) ⇒
+      Log.w(s"$message [$logSource]")
+    case Info(logSource, logClass, message) ⇒
+      Log.i(s"$message [$logSource]")
+    case Debug(logSource, logClass, message) ⇒
+      Log.d(s"$message [$logSource]")
+    case InitializeLogger(_) ⇒
+      Log.d("Logging started")
+      sender ! LoggerInitialized
+  }
+}
