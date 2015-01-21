@@ -148,6 +148,10 @@ extends Text
     _.setColor(res.c(name))
   }
 
+  def dataChanged(implicit c: Context) = Tweak[RecyclerView] {
+    _.getAdapter.notifyDataSetChanged
+  }
+
   object Fab
   extends ResourcesAccess
   {
