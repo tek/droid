@@ -195,22 +195,22 @@ trait Layout
     }
   }
 
-  def frag(ctor: ⇒ Fragment)(implicit a: Activity) = {
-    val id = Id.next
+  def frag(ctor: ⇒ Fragment, id: Id = Id.next)(implicit a: Activity) = {
     Ui(
       (new FrameLayout(a)) tap { fl ⇒
         fl.setId(id.value)
-        a.addFragment(id, ctor, false, id.value.toString, false)
+        a.replaceFragment(id, ctor, false, id.value.toString, false)
       }
     )
   }
 
   import tryp.droid.{ShowFragment,TrypModel}
 
-  def showFrag[A <: TrypModel](model: A)(ctor: () ⇒ ShowFragment[A])
+  def showFrag[A <: TrypModel](model: A, ctor: () ⇒ ShowFragment[A],
+    id: Id = Id.next)
   (implicit a: Activity) =
   {
-    frag(ShowFragment(model)(ctor()))
+    frag(ShowFragment(model)(ctor()), id)
   }
 
   import android.view.ViewGroup.LayoutParams._
