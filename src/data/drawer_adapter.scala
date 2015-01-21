@@ -14,7 +14,7 @@ import tryp.droid.res.PrefixResourceNamespace
 case class DrawerViewHolder(view: View, text: Slot[TextView])
 extends RecyclerView.ViewHolder(view)
 
-class DrawerAdapter(actor: Option[ActorSelection], navigation: Navigation)
+class DrawerAdapter(navigation: Navigation)
 (implicit activity: Activity)
 extends SimpleRecyclerAdapter[DrawerViewHolder, NavigationTarget]
 {
@@ -25,18 +25,21 @@ extends SimpleRecyclerAdapter[DrawerViewHolder, NavigationTarget]
 
   def onCreateViewHolder(parent: ViewGroup, viewType: Int) = {
     val text = slut[TextView]
-    val layout = w[TextView] <~ whore(text) <~ padding(all = 8 dp) <~ medium <~
-      selectable <~ ↔
+    val layout = clickFrame(
+      w[TextView] <~ whore(text) <~ padding(all = 16 dp) <~
+        medium <~ ↔
+    ) <~ ↔
     new DrawerViewHolder(getUi(layout), text)
   }
 
   def onBindViewHolder(holder: DrawerViewHolder, position: Int) {
     val item = items(position)
     val color = bgCol(navigation.isCurrent(item) ? "item_selected" / "item")
-    runUi {
-      holder.text <~ txt.literal(item.title) <~ On.click {
-        Ui(actor ! Messages.Navigation(item))
+    runUi (
+      holder.text <~ txt.literal(item.title),
+      holder.view <~ color <~ On.click {
+        Ui(core ! Messages.Navigation(item))
       }
-    }
+    )
   }
 }

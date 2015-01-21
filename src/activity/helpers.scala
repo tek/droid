@@ -287,6 +287,7 @@ with DrawerLayout.DrawerListener
   def initDrawer {
     addFragment(Id.Drawer, drawerFragment, false, Tag.Drawer)
     drawerToggle
+    drawerActor ! Messages.Inject("navigation", navigation)
   }
 
   val drawer = slut[DrawerLayout]

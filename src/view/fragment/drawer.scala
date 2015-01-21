@@ -9,24 +9,27 @@ import tryp.droid.tweaks.Recycler._
 import tryp.droid.res._
 import tryp.droid.Macroid._
 
-// TODO either supply a default ctor or make android retainInstance
-class DrawerFragment(navigation: Navigation)
+class DrawerFragment
 extends TrypFragment
 {
-  override implicit def resourceNamespace = PrefixResourceNamespace("drawer")
-
-  lazy val adapter = new DrawerAdapter(core, navigation)
+  val drawerView = slut[RecyclerView]
 
   override def macroidLayout(state: Bundle) = {
-    LL(vertical, bgCol("main"))(
-      w[RecyclerView] <~ recyclerAdapter(adapter) <~ linear <~ divider
+    FL(bgCol("main"))(
+      w[RecyclerView] <~ drawerView <~ linear <~ divider
     )
   }
 
-  def navigated() {
-    adapter.notifyDataSetChanged
+  def navigated() = {
+    drawerView <~ dataChanged
   }
+
+  def setNavigation(nav: Navigation) = {
+    drawerView <~ recyclerAdapter(new DrawerAdapter(nav))
+  }
+
+  override val name = "Drawer"
 }
 
-case class DefaultDrawerFragment(navigation: Navigation)
-extends DrawerFragment(navigation)
+case class DefaultDrawerFragment()
+extends DrawerFragment

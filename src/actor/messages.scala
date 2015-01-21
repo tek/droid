@@ -8,6 +8,7 @@ class Messages
   case class ToolbarView(view: Fragment)
   case class Add()
   case class Navigation(target: NavigationTarget)
+  case class Inject(name: String, value: Any)
 }
 
 object Messages extends Messages

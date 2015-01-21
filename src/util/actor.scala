@@ -109,15 +109,21 @@ object TrypActor {
 }
 
 abstract class TrypActor[A <: AkkaComponent: ClassTag]
-extends Actor {
+extends Actor
+{
   import TrypActor._
 
   var attachedUi: Option[A] = None
 
   lazy val core = context.system.actorSelection("/user/core")
 
-  def withUi(f: A ⇒ Ui[Any]) = attachedUi.fold(()) { comp ⇒
-    f(comp).run
+  lazy val noUiError =
+    new java.lang.RuntimeException("No Ui attached to actor")
+
+  def withUi(f: A ⇒ Ui[Any]) = {
+    attachedUi.fold(Future.failed[Any](noUiError)) { comp ⇒
+      f(comp).run
+    }
   }
 
   def ui(f: A ⇒ Any) = withUi { u ⇒ Ui(f(u)) }
@@ -125,6 +131,7 @@ extends Actor {
   def receiveUi: PartialFunction[Any, Any] = {
     case a @ AttachUi(f: A) ⇒ {
       attachedUi = Some(f)
+      inject()
       a
     }
     case d @ DetachUi(f: A) if Some(f) == attachedUi ⇒ {
@@ -136,9 +143,45 @@ extends Actor {
 
   override def unhandled(a: Any) {
     a match {
+      case Messages.Inject(attr, value) ⇒
+        updateParameter(attr, value)
       case AttachUi(_) ⇒
       case DetachUi(_) ⇒
       case a ⇒ Log.w(s"Unhandled message in ${this.className}: ${a}")
+    }
+  }
+
+  val parameters: MMap[String, Any] = MMap()
+  val parameterDispatch: MMap[String, (Any ⇒ Unit)] = MMap()
+
+  protected def addParameter[B: ClassTag](name: String,
+    dispatch: A ⇒ (B ⇒ Ui[Any]))
+    {
+    val setter: Any ⇒ Unit = { v ⇒
+      v match {
+        case b: B ⇒
+          withUi { a ⇒ meta.Debug.rescued(dispatch(a)(b)) }
+        case _ ⇒
+          Log.e(s"Wrong parameter type in ${this.className} for ${name}")
+      }
+    }
+    parameterDispatch(name) = setter
+  }
+
+  protected def updateParameter(name: String, value: Any) {
+    if (parameterDispatch contains name) {
+      parameters(name) = value
+    }
+    else {
+      val valStr = (value == null) ? "Null" / value.toString
+      Log.e(s"Tried to update unregistered parameter '${name}' with value " +
+        s"'${valStr}' in '${this.className}'")
+    }
+  }
+
+  protected def inject() {
+    parameterDispatch foreach {
+      case (name, setter) ⇒ parameters lift(name) foreach(setter)
     }
   }
 }
