@@ -292,9 +292,9 @@ with Searchable
   }
 
   def replaceFragment[A >: Basic#IdTypes](name: A, fragment: Fragment,
-    backStack: Boolean, tag: String)
+    backStack: Boolean, tag: String, check: Boolean = true)
   {
-    moveFragment(name, fragment, backStack, tag) {
+    moveFragment(name, fragment, backStack, tag, check) {
       _.replace(res.id(name), fragment, tag)
     }
   }
@@ -326,7 +326,7 @@ with Searchable
   }
 
   def clearBackStack() = {
-    backStackNonEmpty tapIf { 
+    backStackNonEmpty tapIf {
         fragmentManager.popBackStack(null,
           FragmentManager.POP_BACK_STACK_INCLUSIVE)
     }
@@ -361,7 +361,7 @@ with Searchable
 
   def addFragmentIf[A <: Fragment: ClassTag](ctor: ⇒ A) {
     val name = fragmentName[A]
-    if (!fragmentExists[A]) addFragment(Id(name), ctor, false, Tag(name))
+    if (!fragmentExists[A]) replaceFragment(Id(name), ctor, false, Tag(name))
   }
 
   def fragmentExists[A <: Fragment: ClassTag] = {
