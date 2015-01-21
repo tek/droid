@@ -188,10 +188,11 @@ extends HasContext
 }
 
 trait AppPreferences
-extends HasActivity
+extends HasContext
 {
   private def applicationPrefs =
-    activity.getPreferences(android.content.Context.MODE_PRIVATE)
+    context.getSharedPreferences("app_state",
+      android.content.Context.MODE_PRIVATE)
 
   def appPrefs = PrefFacades("app", applicationPrefs)
 }

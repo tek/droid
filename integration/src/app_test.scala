@@ -6,10 +6,13 @@ import android.widget._
 
 import com.robotium.solo._
 
+import tryp.droid._
+
 class TrypTest[A <: Activity](cls: Class[A])
 extends ActivityInstrumentationTestCase2[A](cls)
-with tryp.droid.AppPreferences
-with tryp.droid.BroadcastSend
+with AppPreferences
+with BroadcastSend
+with HasActivity
 {
   def view = null
   def activity: A = getActivity
