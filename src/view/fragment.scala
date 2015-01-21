@@ -36,23 +36,6 @@ with Snackbars
     setupToolbar()
   }
 
-  override def onCreateView(
-    inflater: LayoutInflater, container: ViewGroup, state: Bundle
-  ): View =
-  {
-    layoutRes map { inflater.inflate(_, container, false) } getOrElse {
-      getUi(macroidLayout(state) <~ uiRoot)
-    }
-  }
-
-  def macroidLayout(state: Bundle): Ui[ViewGroup] = {
-    layoutAdapter map { _.layout } getOrElse { Layouts.dummy }
-  }
-
-  lazy val layoutAdapter: Option[LayoutAdapter] = {
-    Layouts.get(layoutName)
-  }
-
   def setupToolbar() {
     setHasOptionsMenu(true)
   }
@@ -88,6 +71,22 @@ abstract class TrypFragment
 extends Fragment
 with FragmentBase
 {
+  override def onCreateView(
+    inflater: LayoutInflater, container: ViewGroup, state: Bundle
+  ): View =
+  {
+    layoutRes map { inflater.inflate(_, container, false) } getOrElse {
+      getUi(macroidLayout(state) <~ uiRoot)
+    }
+  }
+
+  def macroidLayout(state: Bundle): Ui[ViewGroup] = {
+    layoutAdapter map { _.layout } getOrElse { Layouts.dummy }
+  }
+
+  lazy val layoutAdapter: Option[LayoutAdapter] = {
+    Layouts.get(layoutName)
+  }
 }
 
 case class CannotGoBack()
