@@ -10,6 +10,7 @@ import macroid.FragmentBuilder
 import tryp.droid.util.OS
 import tryp.droid.res.{Layouts,LayoutAdapter,PrefixResourceNamespace}
 import tryp.droid.Macroid._
+import tryp.droid.Transitions._
 
 trait FragmentBase
 extends Fragment
@@ -65,6 +66,12 @@ with Snackbars
       onViewStateRestored(state)
     }
   }
+
+  val transition = FragmentTransition()
+
+  // transition += defaultTransitions
+
+  val defaultTransitions = CommonTransitions
 }
 
 abstract class TrypFragment

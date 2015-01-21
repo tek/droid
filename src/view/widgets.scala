@@ -11,10 +11,10 @@ import macroid.Snails
 
 import tryp.droid.Macroid._
 import tryp.droid.{Macroid ⇒ T}
+import tryp.droid.Transitions._
 
 trait Fab
-{ self: HasActivity
-  with Snackbars ⇒
+{ self: TrypFragment ⇒
 
   val faButton = slut[FloatingActionButton]
 
@@ -40,10 +40,12 @@ trait Fab
     val geom = rlp(↦, alignBottom(Id.header)) +
       margin(right = 16 dp,
         bottom = res.dimen("fab_margin_normal_minus").toInt)
-    RL(↔, ↕)(
-      RL(bgCol("header"))(header) <~ Id.header <~
-        rlp(↥, ↔, Height(res.dimen("header_height"))),
-      RL()(content) <~ rlp(below(Id.header)),
+    RL(noClip, ↔, ↕)(
+      RL(↕)(content) <~ rlp(below(Id.header)) <~
+        CommonTransitions.content.tweak,
+      RL(noClip, bgCol("header"))(header) <~ Id.header <~
+        rlp(↥, ↔, Height(res.dimen("header_height"))) <~
+        CommonTransitions.header.tweak,
       progressUi <~ geom,
       fabUi(icon)(onClick) <~ geom
     )
