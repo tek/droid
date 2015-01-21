@@ -35,8 +35,6 @@ extends Util
     item
   }
 
-  val Debug = tryp.droid.meta.Debug
-
   val layouts = tryp.droid.res.Layouts
 
   val Id = tryp.droid.util.Id
