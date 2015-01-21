@@ -14,6 +14,7 @@ case class GeofenceData(id: String, lat: Double, long: Double)
 trait LocationsConcern
 extends tryp.droid.Basic
 with LocationListener
+with tryp.droid.Preferences
 {
   class LocationCallbacks(owner: LocationsConcern)
   extends GoogleApiClient.OnConnectionFailedListener
@@ -73,18 +74,15 @@ with LocationListener
 
   val expirationDuration = 24 * 3600 * 1000
 
-  def geofence(fence: GeofenceData) = {
+  def alarmDistance = prefs.int("alarm_distance", 50)
+
+  def geofence(fence: GeofenceData) =
     new Geofence.Builder()
       .setRequestId(fence.id.toString)
-      .setTransitionTypes(
-        Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_DWELL
-        | Geofence.GEOFENCE_TRANSITION_EXIT
-      )
-      .setCircularRegion(fence.lat, fence.long, 50)
+      .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+      .setCircularRegion(fence.lat, fence.long, alarmDistance())
       .setExpirationDuration(expirationDuration)
-      .setLoiteringDelay(500)
       .build
-  }
 
   def requestLocationUpdates(intent: PendingIntent) {
     val request = LocationRequest.create
