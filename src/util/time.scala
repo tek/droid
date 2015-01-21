@@ -31,9 +31,9 @@ object Time {
   }
 }
 
-class Ticker(seconds: Double)(callback: => Unit)
+class Ticker(seconds: Rx[Double])(callback: => Unit)
 {
-  val millis = (((seconds <= 0) ? 1.0 / seconds) * 1000).toInt
+  val millis = Rx { (((seconds() <= 0) ? 1.0 / seconds()) * 1000).toInt }
   val timer = new Timer
   var running = false
   var task: Option[TimerTask] = None
@@ -41,7 +41,7 @@ class Ticker(seconds: Double)(callback: => Unit)
   def start() {
     try {
       val t = new TimerTask { def run { callback } }
-      timer.scheduleAtFixedRate(t, 0, millis)
+      timer.scheduleAtFixedRate(t, 0, millis())
       running = true
       task = Some(t)
     }
