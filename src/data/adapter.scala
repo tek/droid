@@ -62,6 +62,7 @@ extends RecyclerView.Adapter[A]
 with ActivityContexts
 with tryp.droid.HasActivity
 with Filterable
+with AkkaAdapter
 {
   def items: Seq[B]
 

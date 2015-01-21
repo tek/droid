@@ -52,12 +52,14 @@ trait Theme extends ActivityBase
 trait MainView
 extends ActivityBase
 {
-  self: FragmentManagement ⇒
+  self: FragmentManagement
+  with Akkativity ⇒
 
   def setContentView(v: View)
 
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
+    mainActor
     initView
   }
 
@@ -92,9 +94,15 @@ extends ActivityBase
 
   def contentLoaded(backStack: Boolean) {  }
 
-  abstract override def onBackPressed() {
+  override def onBackPressed() {
+    mainActor ! Messages.Back()
+  }
+
+  def back() {
     backStackNonEmpty ? popBackStackSync / super.onBackPressed()
   }
+
+  lazy val mainActor = createActor(MainActor.props)._2
 }
 
 abstract trait ManagePreferences
@@ -197,7 +205,8 @@ extends ActivityBase
 trait HasToolbar
 extends MainView
 { self: ActionBarActivity
-  with FragmentManagement ⇒
+  with FragmentManagement
+  with Akkativity ⇒
 
     import tryp.droid.tweaks.{Toolbar ⇒ T}
 
@@ -247,7 +256,8 @@ extends MainView
 
 trait HasNavigation
 extends MainView
-{ self: FragmentManagement ⇒
+{ self: FragmentManagement
+  with Akkativity ⇒
 
   def navigation: Navigation
 
@@ -267,6 +277,10 @@ extends MainView
   def canPopHome(target: NavigationTarget) = {
     target.home && clearBackStack()
   }
+
+  abstract override def back() {
+    super.back()
+  }
 }
 
 trait Drawer
@@ -285,7 +299,7 @@ with DrawerLayout.DrawerListener
   }
 
   def initDrawer {
-    addFragment(Id.Drawer, drawerFragment, false, Tag.Drawer)
+    replaceFragment(Id.Drawer, Fragments.drawer(), false, Tag.Drawer)
     drawerToggle
     drawerActor ! Messages.Inject("navigation", navigation)
   }
@@ -327,8 +341,8 @@ with DrawerLayout.DrawerListener
     drawerToggle foreach { _.onConfigurationChanged(newConf) }
   }
 
-  abstract override def onBackPressed() {
-    super.onBackPressed()
+  abstract override def back() {
+    super.back()
     if (backStackEmpty) {
       syncToggle()
     }
@@ -381,10 +395,12 @@ with DrawerLayout.DrawerListener
   }
 
   override def navigate(target: NavigationTarget) {
-    super.navigate(target)
-    closeDrawer.run
-    selectActor("drawer") ! Messages.Navigation(target)
+    import scala.concurrent.ExecutionContext.Implicits.global 
+    closeDrawer.run.onComplete { _ ⇒
+      super.navigate(target)
+      drawerActor ! Messages.Navigation(target)
+    }
   }
 
-  def drawerFragment: DrawerFragment = DefaultDrawerFragment(navigation)
+  lazy val drawerActor = createActor(DrawerActor.props)._2
 }

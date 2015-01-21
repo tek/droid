@@ -6,7 +6,7 @@ import akka.actor.{ ActorSelection, ActorSystem, Actor, Props }
 
 import tryp.droid.util.CallbackMixin
 
-trait AkkaComponent extends CallbackMixin {
+trait AkkaComponent {
   def actor: Option[ActorSelection]
 
   def attach() {
@@ -24,7 +24,27 @@ trait AkkaComponent extends CallbackMixin {
   def actorSystem: Option[ActorSystem]
 }
 
-trait Akkativity extends AkkaComponent
+trait AkkaClient extends AkkaComponent
+{
+  def activity: Activity
+
+  def akkativity = {
+    activity match {
+      case a: Akkativity ⇒ Some(a)
+      case _ ⇒ None
+    }
+  }
+
+  def actorSystem = akkativity flatMap { _.actorSystem }
+
+  def core = selectActor("core")
+
+  def mainActor = selectActor("Main")
+}
+
+trait Akkativity
+extends AkkaComponent
+with CallbackMixin
 { self: Activity
   with HasActivity ⇒
 
@@ -73,16 +93,11 @@ trait Akkativity extends AkkaComponent
   def actorsProps: Seq[Props]
 }
 
-trait AkkaFragment extends AkkaComponent
+trait AkkaFragment
+extends AkkaClient
+with CallbackMixin
 { self: Fragment
   with tryp.droid.FragmentBase ⇒
-
-  def akkativity = {
-    activity match {
-      case a: Akkativity ⇒ Some(a)
-      case _ ⇒ None
-    }
-  }
 
   abstract override def onStart {
     attach()
@@ -93,10 +108,6 @@ trait AkkaFragment extends AkkaComponent
     detach()
     super.onStop
   }
-
-  def actorSystem = akkativity flatMap { _.actorSystem }
-
-  def core = selectActor("core")
 
   lazy val actor = selectActor(actorName)
 
@@ -186,7 +197,13 @@ extends Actor
   }
 }
 
-abstract class TrypDrawerActivityActor[A <: TrypDrawerActivity: ClassTag]
+trait AkkaAdapter
+extends AkkaClient
+{
+  def actor = None
+}
+
+abstract class TrypActivityActor[A <: TrypActivity: ClassTag]
 extends TrypActor[A]
 {
   import Messages._
@@ -194,13 +211,28 @@ extends TrypActor[A]
 
   def receiveBasic(m: Any) = {
     m match {
+      case Back() ⇒
+        ui { _.back() }
+      case Navigation(target) ⇒
+        ui { _.navigate(target) }
+      case a ⇒ unhandled(a)
+    }
+  }
+}
+
+abstract class TrypDrawerActivityActor[A <: TrypDrawerActivity: ClassTag]
+extends TrypActivityActor[A]
+{
+  import Messages._
+  import TrypActor._
+
+  override def receiveBasic(m: Any) = {
+    m match {
       case ToolbarTitle(title) ⇒
         ui { _.toolbarTitle(title) }
       case ToolbarView(view) ⇒
         ui { _.toolbarView(view) }
-      case Navigation(target) ⇒
-        ui { _.navigate(target) }
-      case a ⇒ unhandled(a)
+      case a ⇒ super.receiveBasic(a)
     }
   }
 }

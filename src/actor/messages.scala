@@ -9,6 +9,8 @@ class Messages
   case class Add()
   case class Navigation(target: NavigationTarget)
   case class Inject(name: String, value: Any)
+  case class Back()
+  case class ShowDetails(data: Any)
 }
 
 object Messages extends Messages

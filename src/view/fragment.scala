@@ -19,7 +19,6 @@ with TrypActivityAccess
 with AkkaFragment
 with Snackbars
 {
-
   val name = fragmentClassName(getClass)
 
   def title = name
@@ -91,13 +90,32 @@ with FragmentBase
 {
 }
 
+case class CannotGoBack()
+extends java.lang.RuntimeException
+
 abstract class MainFragment
 extends TrypFragment
 {
+  override def onStart {
+    super.onStart
+    mainActor ! TrypActor.AttachUi(this)
+  }
+
+  override def onStop {
+    super.onStop
+    mainActor ! TrypActor.DetachUi(this)
+  }
+
   override def onResume {
     super.onResume
     core ! Messages.ToolbarTitle(title)
   }
+
+  def back(): Ui[Any] = {
+    Ui { throw CannotGoBack() }
+  }
+
+  def showDetails(data: Any) {  }
 }
 
 abstract class ShowFragment[A <: TrypModel]
