@@ -7,9 +7,9 @@ class LogBase {
 
   def p(message: Any) = {
     if (message == null)
-      d("null")
+      i("null")
     else
-      d(message.toString)
+      i(message.toString)
   }
 
   def i(message: String) { }
