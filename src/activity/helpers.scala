@@ -271,7 +271,9 @@ extends MainView
   }
 
   def loadNavTarget(target: NavigationTarget) {
-    loadContentCustom(target.fragment(), !target.home)
+    ui {
+      loadContentCustom(target.fragment(), !target.home)
+    }
   }
 
   def canPopHome(target: NavigationTarget) = {
