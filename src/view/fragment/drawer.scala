@@ -14,6 +14,8 @@ extends TrypFragment
 {
   val drawerView = slut[RecyclerView]
 
+  override val actors = Seq(DrawerActor.props)
+
   override def macroidLayout(state: Bundle) = {
     FL(bgCol("main"))(
       w[RecyclerView] <~ drawerView <~ linear <~ divider

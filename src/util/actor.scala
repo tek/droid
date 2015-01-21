@@ -7,14 +7,9 @@ import akka.actor.{ ActorSelection, ActorSystem, Actor, Props }
 import tryp.droid.util.CallbackMixin
 
 trait AkkaComponent {
-  def actor: Option[ActorSelection]
 
-  def attach() {
-    actor ! TrypActor.AttachUi(this)
-  }
-
-  def detach() {
-    actor ! TrypActor.DetachUi(this)
+  def selectActor(props: Props): Option[ActorSelection] = {
+    selectActor(props.actorName)
   }
 
   def selectActor(name: String) = {
@@ -40,6 +35,22 @@ trait AkkaClient extends AkkaComponent
   def core = selectActor("core")
 
   def mainActor = selectActor("Main")
+
+  def actors: Seq[Props] = Seq()
+
+  def attach() {
+    val msg = TrypActor.AttachUi(this)
+    actors foreach { p ⇒
+      selectActor(p.actorName) ! msg
+    }
+  }
+
+  def detach() {
+    val msg = TrypActor.DetachUi(this)
+    actors foreach { p ⇒
+      selectActor(p.actorName) ! msg
+    }
+  }
 }
 
 trait Akkativity
@@ -59,32 +70,30 @@ with CallbackMixin
 
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
-    actors
+    mainActors
   }
 
   abstract override def onStart {
     coreActor
-    attach()
+    coreActor ! TrypActor.AttachUi(this)
     super.onStart
   }
 
   abstract override def onStop {
-    detach()
+    coreActor ! TrypActor.DetachUi(this)
     super.onStop
   }
 
-  lazy val actors = Map(createActors: _*)
+  lazy val mainActors = Map(createActors: _*)
 
   def createActors =
     actorsProps map(createActor)
 
   def createActor(props: Props) = {
-    val name = props.actorClass.className.stripSuffix("Actor")
+    val name = props.actorName
     val a = actorSystemInst.actorOf(props, name)
     (name → a)
   }
-
-  def actor = actorSystem map { _.actorSelection("/user/core") }
 
   lazy val coreActor = actorSystemInst.actorOf(coreActorProps, "core")
 
@@ -200,7 +209,6 @@ extends Actor
 trait AkkaAdapter
 extends AkkaClient
 {
-  def actor = None
 }
 
 abstract class TrypActivityActor[A <: TrypActivity: ClassTag]
