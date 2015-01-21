@@ -80,7 +80,7 @@ with AkkaAdapter
   }
 
   def applyFilter() {
-    getFilter.filter(currentFilter)
+    Ui(getFilter.filter(currentFilter)).run
   }
 
   def updateVisibleData(newItems: Seq[B]) {
