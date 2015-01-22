@@ -25,7 +25,7 @@ class PreferencesFacade(val prefs: SharedPreferences)
 
     implicit val cacheBoolean: Cache[Boolean] = MMap()
 
-    implicit val cacheInt: Cache[Int] = MMap()
+    implicit val cacheInt: Cache[Long] = MMap()
   }
 
   abstract class PrefReader[A]
@@ -51,13 +51,13 @@ class PreferencesFacade(val prefs: SharedPreferences)
       def getter = prefs.getBoolean _
     }
 
-    implicit object `Int PR` extends PrefReader[Int] {
+    implicit object `Long PR` extends PrefReader[Long] {
       def zero = 0
 
-      def getter = (key: String, default: Int) ⇒ {
+      def getter = (key: String, default: Long) ⇒ {
         val s = prefs.getString(key, default.toString)
-        Try { s.toInt } getOrElse {
-          Log.e(s"Failed to convert pref '${key}' to Int: ${s}")
+        Try { s.toLong } getOrElse {
+          Log.e(s"Failed to convert pref '${key}' to Long: ${s}")
           default
         }
       }
@@ -101,7 +101,7 @@ class PreferencesFacade(val prefs: SharedPreferences)
     PrefCache.get(key, default)
   }
 
-  def int(key: String, default: Int = 0) = {
+  def int(key: String, default: Long = 0) = {
     PrefCache.get(key, default)
   }
 
@@ -124,6 +124,7 @@ class PreferencesFacade(val prefs: SharedPreferences)
       case b: Boolean ⇒ edit(_.putBoolean(key, b))
       case s: String ⇒ edit(_.putString(key, s))
       case i: Int ⇒ edit(_.putString(key, i.toString))
+      case l: Long ⇒ edit(_.putString(key, l.toString))
       case h: java.util.HashSet[_] ⇒ setSet(key, h.toSet)
       case s: Set[_] ⇒ setSet(key, s)
       case _ ⇒ error(key, value)
@@ -140,6 +141,8 @@ class PreferencesFacade(val prefs: SharedPreferences)
     value match {
       case b: Boolean ⇒ PrefCache.invalidate[Boolean](name)
       case s: String ⇒ updateString(name, s)
+      case i: Int ⇒ updateString(name, i.toString)
+      case l: Long ⇒ updateString(name, l.toString)
       case h: java.util.HashSet[_] ⇒ PrefCache.invalidate[Set[String]](name)
       case s: Set[_] ⇒ PrefCache.invalidate[Set[String]](name)
       case _ ⇒ error(name, value)
@@ -162,8 +165,8 @@ class PreferencesFacade(val prefs: SharedPreferences)
   }
 
   private def updateString(name: String, value: String) {
-    Try(value.toInt) match {
-      case Success(int) ⇒ PrefCache.invalidate[Int](name)
+    Try(value.toLong) match {
+      case Success(int) ⇒ PrefCache.invalidate[Long](name)
       case Failure(_) ⇒ PrefCache.invalidate[String](name)
     }
   }
