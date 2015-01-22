@@ -90,15 +90,15 @@ trait ServiceConsumer extends CallbackMixin {
 
   def connectedTo(name: String) = boundServices contains name
 
-  abstract override def onStart {
-    super.onStart
+  abstract override def onStart() {
+    super.onStart()
     for ((name, cls) <- registeredServices) {
       new BindConnection(this, context, name) +=: connections
       connections.head.bind(cls)
     }
   }
 
-  abstract override def onStop {
+  abstract override def onStop() {
     super.onStop
     connections foreach (_.unbind)
     connections.clear

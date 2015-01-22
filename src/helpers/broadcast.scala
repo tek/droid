@@ -34,12 +34,12 @@ with CallbackMixin
     broadcastEvents ++= names
   }
 
-  abstract override def onStart = {
-    super.onStart
+  abstract override def onStart() = {
+    super.onStart()
     listen(broadcastEvents:_*)
   }
 
-  abstract override def onStop = {
+  abstract override def onStop() = {
     super.onStop
     unregister
   }

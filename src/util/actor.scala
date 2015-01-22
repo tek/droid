@@ -73,13 +73,12 @@ with CallbackMixin
     mainActors
   }
 
-  abstract override def onStart {
-    coreActor
+  abstract override def onStart() {
     coreActor ! TrypActor.AttachUi(this)
-    super.onStart
+    super.onStart()
   }
 
-  abstract override def onStop {
+  abstract override def onStop() {
     coreActor ! TrypActor.DetachUi(this)
     super.onStop
   }
@@ -108,14 +107,14 @@ with CallbackMixin
 { self: Fragment
   with tryp.droid.FragmentBase ⇒
 
-  abstract override def onStart {
+  abstract override def onStart() {
     attach()
-    super.onStart
+    super.onStart()
   }
 
-  abstract override def onStop {
+  abstract override def onStop() {
     detach()
-    super.onStop
+    super.onStop()
   }
 
   lazy val actor = selectActor(actorName)

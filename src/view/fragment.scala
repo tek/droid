@@ -102,18 +102,18 @@ extends java.lang.RuntimeException
 abstract class MainFragment
 extends TrypFragment
 {
-  override def onStart {
-    super.onStart
+  override def onStart() {
+    super.onStart()
     mainActor ! TrypActor.AttachUi(this)
   }
 
-  override def onStop {
-    super.onStop
+  override def onStop() {
+    super.onStop()
     mainActor ! TrypActor.DetachUi(this)
   }
 
-  override def onResume {
-    super.onResume
+  override def onResume() {
+    super.onResume()
     core ! Messages.ToolbarTitle(title)
   }
 

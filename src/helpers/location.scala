@@ -98,12 +98,12 @@ trait Locations
 extends LocationsConcern
 with tryp.droid.util.CallbackMixin
 {
-  abstract override def onStart {
-    super.onStart
+  abstract override def onStart() {
+    super.onStart()
     connect
   }
 
-  abstract override def onStop {
+  abstract override def onStop() {
     super.onStop
     disconnect
   }

@@ -30,8 +30,8 @@ abstract class TrypDefaultActivity
 extends ActionBarActivity
 with TrypActivity
 {
-  override def onStart { super.onStart }
-  override def onStop { super.onStop }
+  override def onStart() { super.onStart() }
+  override def onStop() { super.onStop() }
   override def onResume { super.onResume }
   override def onPostCreate(state: Bundle) { super.onPostCreate(state) }
 }

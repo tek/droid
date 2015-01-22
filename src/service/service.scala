@@ -7,10 +7,10 @@ import scala.reflect.classTag
 
 trait ServiceStubs
 {
-  def onStart = ()
-  def onStop = ()
-  def onPause = ()
-  def onResume = ()
+  def onStart() = ()
+  def onStop() = ()
+  def onPause() = ()
+  def onResume() = ()
 }
 
 abstract class ServiceBase
@@ -51,7 +51,7 @@ with tryp.droid.Broadcast
 
   override def onCreate(state: Bundle) = ()
   override def onStart = super.onStart
-  override def onStop = super.onStop
+  override def onStop() = super.onStop()
   override def onResume = super.onResume
   override def onPause = super.onPause
 
