@@ -36,13 +36,14 @@ object Crud {
     def byId(objId: Long)(implicit session: JdbcBackend#SessionDef): Option[C] = self.filter(_.id === objId).firstOption
 
     def update(obj: C)(implicit session: JdbcBackend#SessionDef): Int = {
-      val res = (for {row <- self if row.id === obj.id.get} yield row) update (obj)
-      res
+      (for {row <- self if row.id === obj.id.get} yield row) update (obj)
     }
 
     def insert(obj: C)(implicit session: JdbcBackend#SessionDef) = {
-      val res = self returning (self.map(_.id)) insert (obj)
-      res
+      // val res = self returning (self.map(_.id)) insert (obj)
+      self += obj
+      val q = for { o ← self.sortBy(_.id.desc).take(1) } yield o
+      q.list.headOption
     }
   }
 
