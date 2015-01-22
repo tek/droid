@@ -10,9 +10,10 @@ import java.util.{Timer, TimerTask}
 object Time {
   def now = System.currentTimeMillis / 1000
 
-  def hms(seconds: Long): String = {
+  def hms(seconds: Long, daytime: Boolean = false): String = {
     val intervals = diffIntervalsHms(seconds)
-    val hour = intervals("hour")
+    val hours = intervals("hour")
+    val hour = daytime ? (hours % 24) / hours
     val minute = intervals("minute")
     val second = intervals("second")
     f"$hour%02d:$minute%02d:$second%02d"
@@ -20,7 +21,7 @@ object Time {
 
   def zeroHms = "00:00:00"
 
-  def nowHms = hms(now)
+  def nowHms = hms(now, true)
 
   def diffIntervalsHms(total: Long): Map[String, Long] = {
     val hours = total / 3600
