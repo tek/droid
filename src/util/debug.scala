@@ -1,5 +1,7 @@
 package tryp.droid.meta
 
+import tryp.droid.Log
+
 object Debug {
   def rescued[A](callback: ⇒ A): A = {
     try {
@@ -10,10 +12,10 @@ object Debug {
         var cause = e
         while (cause != null) {
           if (cause != e) {
-            (Log.p("Caused) by:"))
+            Log.e("Caused) by:")
           }
-          (Log.p(s"${cause.getClass.getSimpleName}: ${cause.getMessage}"))
-          e.getStackTrace foreach { Log.p(_) }
+          Log.e(s"${cause.getClass.getSimpleName}: ${cause.getMessage}")
+          e.getStackTrace foreach { f ⇒ Log.e(f.toString) }
           cause = cause.getCause
         }
       null.asInstanceOf[A]

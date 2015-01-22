@@ -1,5 +1,11 @@
 package tryp.droid.meta
 
+import scala.collection.mutable.Buffer
+
+import akka.actor.ActorSelection
+
+import tryp.droid.Messages
+
 class LogBase {
   var tag = "tryp"
 
@@ -25,7 +31,7 @@ class LogBase {
 
 object NullLog extends LogBase
 
-object Log extends LogBase
+class AndroidLog extends LogBase
 {
   override def d(message: String) = android.util.Log.d(tag, message)
 
@@ -45,6 +51,8 @@ object Log extends LogBase
   }
 }
 
+object AndroidLog extends AndroidLog
+
 object StdoutLog extends LogBase {
   override def d(message: String) = println(message)
 
@@ -57,4 +65,46 @@ object StdoutLog extends LogBase {
   override def e(message: String, t: Throwable) = println(message)
 
   override def t(message: String) = println(message)
+}
+
+object DebugLog extends AndroidLog
+{
+  var buffer = Buffer[String]()
+
+  var actor: Option[ActorSelection] = None
+
+  def log(message: String) {
+    buffer += tryp.droid.Time.nowHms + " -- " + message
+    actor foreach { _ ! Messages.Log(message) }
+  }
+
+  override def d(message: String) = {
+    log(message)
+    super.d(message)
+  }
+
+  override def i(message: String) = {
+    log(message)
+    super.i(message)
+  }
+
+  override def w(message: String) = {
+    log(message)
+    super.w(message)
+  }
+
+  override def e(message: String) = {
+    log(message)
+    super.e(message)
+  }
+
+  override def e(message: String, t: Throwable) = {
+    log(message)
+    super.e(message)
+  }
+
+  override def t(message: String) = {
+    log(message)
+    super.t(message)
+  }
 }

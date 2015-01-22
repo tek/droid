@@ -10,6 +10,7 @@ class Messages
   case class Inject(name: String, value: Any)
   case class Back()
   case class ShowDetails(data: Any)
+  case class Log(message: String)
 }
 
 object Messages extends Messages

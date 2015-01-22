@@ -24,7 +24,7 @@ extends Util
       tryp.droid.meta.StdoutLog
     }
     else {
-      tryp.droid.meta.Log
+      tryp.droid.meta.DebugLog
     }
   }
 
