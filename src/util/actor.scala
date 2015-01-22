@@ -40,8 +40,8 @@ trait AkkaClient extends AkkaComponent
 
   def attach() {
     val msg = TrypActor.AttachUi(this)
-    actors foreach { p ⇒
-      selectActor(p.actorName) ! msg
+    actors foreach { props ⇒
+      selectActor(props.actorName) ! msg
     }
   }
 
@@ -85,8 +85,7 @@ with CallbackMixin
 
   lazy val mainActors = Map(createActors: _*)
 
-  def createActors =
-    actorsProps map(createActor)
+  def createActors = actorsProps map(createActor)
 
   def createActor(props: Props) = {
     val name = props.actorName
@@ -179,7 +178,7 @@ extends Actor
     val setter: Any ⇒ Unit = { v ⇒
       v match {
         case b: B ⇒
-          withUi { a ⇒ meta.Debug.rescued(dispatch(a)(b)) }
+          withUi { a ⇒ dispatch(a)(b) }
         case _ ⇒
           Log.e(s"Wrong parameter type in ${this.className} for ${name}")
       }
