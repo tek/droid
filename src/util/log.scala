@@ -46,8 +46,7 @@ class AndroidLog extends LogBase
   }
 
   override def t(message: String) = {
-    val output = "----- " + message + ": " + tryp.droid.Time.nowHms
-    d(output)
+    i(s"[${tryp.droid.Time.nowHms}] ${message}")
   }
 }
 
