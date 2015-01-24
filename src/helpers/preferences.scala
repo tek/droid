@@ -109,11 +109,9 @@ class PreferencesFacade(val prefs: SharedPreferences)
     PrefCache.get(key, default)
   }
 
-  def edit(callback: (SharedPreferences.Editor) ⇒ Unit,
-    target: SharedPreferences = prefs
-  )
+  def edit(callback: (SharedPreferences.Editor) ⇒ Unit)
   {
-    val editor = target.edit
+    val editor = prefs.edit
     callback(editor)
     editor.commit
   }
@@ -152,6 +150,10 @@ class PreferencesFacade(val prefs: SharedPreferences)
   def error(name: String, value: Any) {
     val prefType = (value == null) ? "Null" / value.getClass
     Log.e(s"Incompatible pref type ${prefType} for key '${name}'")
+  }
+
+  def clear() {
+    edit { _.clear() }
   }
 
   import android.content.SharedPreferences.OnSharedPreferenceChangeListener

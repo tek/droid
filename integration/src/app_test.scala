@@ -10,6 +10,7 @@ import tryp.droid._
 
 class TrypTest[A <: Activity](cls: Class[A])
 extends ActivityInstrumentationTestCase2[A](cls)
+with Preferences
 with AppPreferences
 with BroadcastSend
 with HasActivity
@@ -21,6 +22,8 @@ with HasActivity
 
   override def setUp {
     super.setUp
+    prefs.clear()
+    appPrefs.clear()
     setActivityInitialTouchMode(false)
     solo
   }
