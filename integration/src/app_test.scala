@@ -69,7 +69,7 @@ with HasActivity
   }
 }
 
-object TrypTest
+trait TrypTestImplicits
 {
   implicit class `Option with assertion`[A](o: Option[A]) {
     assert(o.nonEmpty)
@@ -87,3 +87,5 @@ object TrypTest
     }
   }
 }
+
+object TrypTest extends TrypTestImplicits
