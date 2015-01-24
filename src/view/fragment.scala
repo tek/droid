@@ -150,10 +150,10 @@ extends TrypFragment
   def fetchData(id: Long): Option[A]
 
   def update() {
-    model foreach updateData
+    model foreach { updateData(_).run }
   }
 
-  def updateData(m: A)
+  def updateData(m: A): Ui[Any]
 
   override def onViewStateRestored(state: Bundle) {
     super.onViewStateRestored(state)
