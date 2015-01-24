@@ -8,7 +8,7 @@ import tryp.droid.util.CallbackMixin
 
 trait AkkaComponent {
 
-  def selectActor(props: Props): ActorSelection = {
+  def actor(props: Props): ActorSelection = {
     selectActor(props.actorName)
   }
 
@@ -35,7 +35,7 @@ trait AkkaClient extends AkkaComponent
 
   def core = selectActor("core")
 
-  def mainActor = selectActor("Main")
+  def mainActor = actor(MainActor.props)
 
   def actors: Seq[Props] = Seq()
 
