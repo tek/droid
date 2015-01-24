@@ -29,6 +29,17 @@ extends HasContext
   def thread(callback: ⇒ Unit) {
     Threading.thread(callback)
   }
+
+  def systemService[A: ClassTag](name: String) = {
+    context.getSystemService(name) match {
+      case a: A ⇒ a
+      case _ ⇒ {
+        throw new ClassCastException(
+          s"Wrong class for ${implicitly[ClassTag[A]].className}!"
+        )
+      }
+    }
+  }
 }
 
 trait TrypActivityAccess {
