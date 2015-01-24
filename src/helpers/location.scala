@@ -113,8 +113,13 @@ case class LocationTask(callback: (Location) ⇒ Unit)
 (implicit val context: Context)
 extends LocationsConcern
 {
+  var done = true
+
   def run {
-    connect
+    if (done) {
+      done = false
+      connect
+    }
   }
 
   def locationConnected(data: Bundle) {
@@ -129,6 +134,7 @@ extends LocationsConcern
     callback(location)
     LocApi.removeLocationUpdates(apiClient, this)
     disconnect
+    done = true
   }
 }
 
