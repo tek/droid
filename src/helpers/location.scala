@@ -74,7 +74,7 @@ with tryp.droid.Preferences
 
   val expirationDuration = 24 * 3600 * 1000
 
-  def alarmDistance = prefs.int("alarm_distance", 50)
+  def alarmDistance = prefs.int("alarm_distance", 100)
 
   def geofence(fence: GeofenceData) =
     new Geofence.Builder()
