@@ -11,8 +11,10 @@ import android.widget.{AdapterView,TextView}
 import android.content.res.{Resources ⇒ AResources,Configuration}
 import android.content.DialogInterface
 import android.view.inputmethod.InputMethodManager
-import android.app.{AlertDialog,DialogFragment,Dialog}
-import android.app.{FragmentManager,FragmentTransaction}
+import android.app.{AlertDialog,DialogFragment,Dialog,PendingIntent}
+import android.app.{FragmentManager,FragmentTransaction,AlarmManager}
+import android.support.v4.content.WakefulBroadcastReceiver
+import android.os.{Vibrator,SystemClock}
 
 import macroid.{FragmentManagerContext,ActivityContext,AppContext}
 import macroid.support.FragmentApi
@@ -229,16 +231,8 @@ extends ViewBasic
 {
   import android.content.Context
 
-  def inputMethodManager: InputMethodManager = {
-    activity.getSystemService(Context.INPUT_METHOD_SERVICE) match {
-      case a: InputMethodManager ⇒ a
-      case _ ⇒ {
-        throw new ClassCastException(
-          "Wrong class for InputMethodManager!"
-        )
-      }
-    }
-  }
+  def inputMethodManager =
+    systemService[InputMethodManager](Context.INPUT_METHOD_SERVICE)
 
   def hideKeyboard {
     inputMethodManager.hideSoftInputFromWindow(view.getWindowToken, 0)
@@ -441,4 +435,24 @@ extends HasActivity
   }
 
   def mkToast(resName: String) = mToast(res.s(resName)) <~ fry
+}
+
+trait Alarm
+extends Basic
+{
+  import android.content.Context
+
+  def alarmManager =
+    systemService[AlarmManager](Context.ALARM_SERVICE)
+
+  def scheduleRepeatingWakeAlarm[A <: WakefulBroadcastReceiver: ClassTag]
+  (interval: Long) =
+  {
+    val intent = new Intent(context, implicitly[ClassTag[A]].runtimeClass)
+    val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0)
+    alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+      SystemClock.elapsedRealtime() + 3000, interval * 1000, pendingIntent)
+  }
+
+  def vibrator = systemService[Vibrator](Context.VIBRATOR_SERVICE)
 }
