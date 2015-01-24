@@ -8,15 +8,15 @@ import tryp.droid.util.CallbackMixin
 
 trait AkkaComponent {
 
-  def selectActor(props: Props): Option[ActorSelection] = {
+  def selectActor(props: Props): ActorSelection = {
     selectActor(props.actorName)
   }
 
   def selectActor(name: String) = {
-    actorSystem map { _.actorSelection(s"/user/${name}") }
+    actorSystem.actorSelection(s"/user/${name}")
   }
 
-  def actorSystem: Option[ActorSystem]
+  def actorSystem: ActorSystem
 }
 
 trait AkkaClient extends AkkaComponent
@@ -25,12 +25,13 @@ trait AkkaClient extends AkkaComponent
 
   def akkativity = {
     activity match {
-      case a: Akkativity ⇒ Some(a)
-      case _ ⇒ None
+      case a: Akkativity ⇒ a
+      case _ ⇒
+        throw new java.lang.Exception(s"No Akkativity access in ${this}")
     }
   }
 
-  def actorSystem = akkativity flatMap { _.actorSystem }
+  def actorSystem = akkativity.actorSystem
 
   def core = selectActor("core")
 
@@ -61,12 +62,10 @@ with CallbackMixin
 
   lazy val actorSystemName = res.string("app_handle").trim
 
-  lazy val actorSystemInst = ActorSystem(
+  lazy val actorSystem = ActorSystem(
     actorSystemName,
     ConfigFactory.load(getApplication.getClassLoader),
     getApplication.getClassLoader)
-
-  def actorSystem = Option(actorSystemInst)
 
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
@@ -89,11 +88,11 @@ with CallbackMixin
 
   def createActor(props: Props) = {
     val name = props.actorName
-    val a = actorSystemInst.actorOf(props, name)
+    val a = actorSystem.actorOf(props, name)
     (name → a)
   }
 
-  lazy val coreActor = actorSystemInst.actorOf(coreActorProps, "core")
+  lazy val coreActor = actorSystem.actorOf(coreActorProps, "core")
 
   val coreActorProps: Props
 

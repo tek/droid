@@ -42,7 +42,7 @@ extends MainFragment
 
   override def onStart() {
     super.onStart
-    DebugLog.actor = selectActor("Log")
+    DebugLog.actor = Some(selectActor("Log"))
     update()
   }
 
