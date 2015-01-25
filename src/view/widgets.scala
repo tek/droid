@@ -11,7 +11,6 @@ import macroid.Snails
 
 import tryp.droid.Macroid._
 import tryp.droid.{Macroid ⇒ T}
-import tryp.droid.Transitions._
 
 trait Fab
 { self: TrypFragment ⇒
@@ -28,7 +27,7 @@ trait Fab
   {
     val geom = rlp(↧, ↦) + margin(right = 16 dp, bottom = 48 dp)
     RL()(
-      content,
+      content <~ CommonTransitions.content.tweak,
       progressUi <~ geom,
       fabUi(icon)(onClick) <~ geom
     )
@@ -55,7 +54,7 @@ trait Fab
         Width(res.dimen("fab_width").toInt) <~ whore(progress)
 
   def fabUi(icon: String)(onClick: ⇒ Unit) = {
-    w[FloatingActionButton] <~
+    CommonTransitions.fab <~
       whore(faButton) <~
       image(icon) <~
       imageScale(ImageView.ScaleType.CENTER) <~

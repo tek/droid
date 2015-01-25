@@ -10,7 +10,6 @@ import macroid.FragmentBuilder
 import tryp.droid.util.OS
 import tryp.droid.res.{Layouts,LayoutAdapter,PrefixResourceNamespace}
 import tryp.droid.Macroid._
-import tryp.droid.Transitions._
 
 trait FragmentBase
 extends Fragment
@@ -19,6 +18,7 @@ with FragmentManagement
 with TrypActivityAccess
 with AkkaFragment
 with Snackbars
+with Transitions
 {
   val name = fragmentClassName(getClass)
 
@@ -27,8 +27,6 @@ with Snackbars
   def layoutRes: Option[Int] = None
 
   def layoutName: Option[String] = None
-
-  val uiRoot = slut[ViewGroup]
 
   implicit def resourceNamespace = PrefixResourceNamespace(name.snakeCase)
 
@@ -66,12 +64,6 @@ with Snackbars
       onViewStateRestored(state)
     }
   }
-
-  val transition = FragmentTransition()
-
-  // transition += defaultTransitions
-
-  val defaultTransitions = CommonTransitions
 }
 
 abstract class TrypFragment
@@ -83,9 +75,11 @@ with FragmentBase
   ): View =
   {
     layoutRes map { inflater.inflate(_, container, false) } getOrElse {
-      getUi(macroidLayout(state) <~ uiRoot)
+      getUi(layout(state) <~ uiRoot)
     }
   }
+
+  def layout(state: Bundle) = macroidLayout(state)
 
   def macroidLayout(state: Bundle): Ui[ViewGroup] = {
     layoutAdapter map { _.layout } getOrElse { Layouts.dummy }

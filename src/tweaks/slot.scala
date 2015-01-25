@@ -37,3 +37,6 @@ trait Slots
 
   def whore[A <: View](pimp: Slot[A]) = Tweak[A](w ⇒ pimp.target = Some(w))
 }
+
+object Slots
+extends Slots

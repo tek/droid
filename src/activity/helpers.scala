@@ -51,6 +51,7 @@ trait Theme extends ActivityBase
 
 trait MainView
 extends ActivityBase
+with Transitions
 {
   self: FragmentManagement
   with Akkativity ⇒
@@ -69,27 +70,13 @@ extends ActivityBase
 
   def mainLayout = contentLayout
 
-  def contentLayout: Ui[View] = {
-    l[FrameLayout]() <~ Id.content <~ bgCol("main")
+  def contentLayout: Ui[ViewGroup] = {
+    attachRoot(FL(bgCol("main"))(l[FrameLayout]() <~ Id.content))
   }
 
-  def loadContent[A <: Fragment: ClassTag](backStack: Boolean = true) = {
-    loadContentWrapper(backStack) {
-      replaceFragmentAuto[A](Id.content, backStack)
-    }
-  }
-
-  def loadContentCustom(fragment: Fragment, backStack: Boolean = true) = {
-    loadContentWrapper(backStack) {
-      replaceFragmentCustom(Id.content, fragment, backStack)
-    }
-  }
-
-  def loadContentWrapper(backStack: Boolean)
-  (callback: ⇒ Boolean) = {
-    callback tapIf {
-      contentLoaded(backStack)
-    }
+  def loadContent(fragment: Fragment, backStack: Boolean = true) = {
+    transition(frag(fragment, Id.content))
+    contentLoaded(backStack)
   }
 
   def contentLoaded(backStack: Boolean) {  }
@@ -149,7 +136,7 @@ with Preferences
   }
 
   def settings() {
-    loadContentCustom(Classes.fragments.settings())
+    loadContent(Classes.fragments.settings())
   }
 
   def setupPreferences {
@@ -271,7 +258,7 @@ extends MainView
   }
 
   def loadNavTarget(target: NavigationTarget) {
-    ui { loadContentCustom(target.fragment(), !target.home) }
+    ui { loadContent(target.fragment(), !target.home) }
   }
 
   def canPopHome(target: NavigationTarget) = {
@@ -395,7 +382,7 @@ with DrawerLayout.DrawerListener
   }
 
   override def navigate(target: NavigationTarget) {
-    import scala.concurrent.ExecutionContext.Implicits.global 
+    import scala.concurrent.ExecutionContext.Implicits.global
     closeDrawer.run.onComplete { _ ⇒
       super.navigate(target)
       drawerActor ! Messages.Navigation(target)
