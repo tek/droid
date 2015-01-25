@@ -1,6 +1,7 @@
 package tryp.droid.util
 
 import scala.language.dynamics
+import scala.collection.mutable.{Map ⇒ MMap}
 
 import android.view.View
 
@@ -10,8 +11,9 @@ import macroid.{Tweak,CanTweak,Ui}
 case class Id(value: Int, tag: String)
 
 class IdGen(start: Int) extends Dynamic {
-  var ids = Map[String, Id]()
-  private var counter = start
+  val ids = MMap[String, Id]()
+
+  var counter = start
 
   private val lock = new Object
 
@@ -26,7 +28,7 @@ class IdGen(start: Int) extends Dynamic {
     })
   }
 
-  def next = create((start + counter + 1).toString)
+  def next = create((counter + 1).toString)
 }
 
 object Id extends IdGen(1000)
