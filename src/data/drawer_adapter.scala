@@ -26,8 +26,7 @@ extends SimpleRecyclerAdapter[DrawerViewHolder, NavigationTarget]
   def onCreateViewHolder(parent: ViewGroup, viewType: Int) = {
     val text = slut[TextView]
     val layout = clickFrame(
-      w[TextView] <~ whore(text) <~ padding(all = 16 dp) <~
-        medium <~ ↔
+      w[TextView] <~ whore(text) <~ padding(all = 16 dp) <~ medium <~ ↔
     ) <~ ↔
     new DrawerViewHolder(getUi(layout), text)
   }
@@ -35,7 +34,7 @@ extends SimpleRecyclerAdapter[DrawerViewHolder, NavigationTarget]
   def onBindViewHolder(holder: DrawerViewHolder, position: Int) {
     val item = items(position)
     val color = bgCol(navigation.isCurrent(item) ? "item_selected" / "item")
-    runUi (
+    runUi(
       holder.text <~ txt.literal(item.title),
       holder.view <~ color <~ On.click {
         Ui(core ! Messages.Navigation(item))

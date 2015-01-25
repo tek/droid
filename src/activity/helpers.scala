@@ -74,20 +74,26 @@ with Transitions
     attachRoot(FL(bgCol("main"))(l[FrameLayout]() <~ Id.content))
   }
 
-  def loadContent(fragment: Fragment, backStack: Boolean = true) = {
+  def loadContent(fragment: Fragment) = {
     transition(frag(fragment, Id.content))
-    contentLoaded(backStack)
+    contentLoaded()
   }
 
-  def contentLoaded(backStack: Boolean) {  }
+  def contentLoaded() {  }
 
   override def onBackPressed() {
     mainActor ! Messages.Back()
   }
 
   def back() {
-    backStackNonEmpty ? popBackStackSync / super.onBackPressed()
+    canGoBack ? goBack() / super.onBackPressed()
   }
+
+  def goBack() {
+    popBackStackSync
+  }
+
+  def canGoBack = backStackNonEmpty
 
   lazy val mainActor = createActor(MainActor.props)._2
 }
@@ -174,7 +180,7 @@ with Preferences
   }
 
   def popSettings {
-    popBackStackSync
+    goBack
   }
 }
 
@@ -237,7 +243,7 @@ extends MainView
   }
 
   def navButtonClick() = {
-    backStackNonEmpty tapIf { onBackPressed() }
+    canGoBack tapIf { onBackPressed() }
   }
 }
 
@@ -246,27 +252,56 @@ extends MainView
 { self: FragmentManagement
   with Akkativity ⇒
 
-  def navigation: Navigation
+  val navigation: Navigation
+
+  abstract override def onResume() {
+    super.onResume()
+    resumeNavigation()
+  }
+
+  def resumeNavigation() {
+    if (history.isEmpty) navigateIndex(0)
+    else history.lastOption foreach(loadNavTarget)
+  }
 
   def navigateIndex(index: Int) {
     navigation.targets.lift(index) foreach(navigate)
   }
 
   def navigate(target: NavigationTarget) {
-    if(!canPopHome(target)) loadNavTarget(target)
-    navigation.current = Option(target)
+    if (!navigation.current.contains(target)) {
+      if (!tryPopHome(target)) history = target :: history
+      loadNavTarget(target)
+    }
   }
 
   def loadNavTarget(target: NavigationTarget) {
-    ui { loadContent(target.fragment(), !target.home) }
+    ui { loadContent(target.fragment()) }
+    navigation.current = Some(target)
+    navigated(target)
   }
 
-  def canPopHome(target: NavigationTarget) = {
-    target.home && clearBackStack()
+  def tryPopHome(target: NavigationTarget) = {
+    target.home && {
+      clearHistory(target)
+      history.headOption contains target
+    }
   }
 
-  abstract override def back() {
-    super.back()
+  def clearHistory(target: NavigationTarget) = {
+    history = history drop(history indexOf target)
+  }
+
+  var history: List[NavigationTarget] = List()
+
+  override def goBack() {
+    history = history.tail
+    history.headOption foreach(loadNavTarget)
+  }
+
+  override def canGoBack = history.length > 1
+
+  def navigated(target: NavigationTarget) {
   }
 }
 
@@ -284,6 +319,8 @@ with DrawerLayout.DrawerListener
     super.initView
     initDrawer
   }
+
+  private lazy val state = actorSystem.actorOf(DrawerState.props)
 
   def initDrawer {
     replaceFragment(Id.Drawer, Fragments.drawer(), false, Tag.Drawer)
@@ -328,24 +365,19 @@ with DrawerLayout.DrawerListener
     drawerToggle foreach { _.onConfigurationChanged(newConf) }
   }
 
-  abstract override def back() {
-    super.back()
-    if (backStackEmpty) {
-      syncToggle()
-    }
-    else {
-      enableBackButton()
-    }
-  }
-
   def drawerOpen = drawer exists { _.isDrawerOpen(Gravity.LEFT) }
 
   def closeDrawer = drawer <~ D.close()
 
   def openDrawer = drawer <~ D.open()
 
-  override def contentLoaded(backStack: Boolean) {
-    if (backStack) enableBackButton()
+  override def contentLoaded() {
+    updateToggle()
+  }
+
+  def updateToggle() {
+    if (canGoBack) enableBackButton()
+    else syncToggle()
   }
 
   def enableBackButton() {
@@ -354,13 +386,12 @@ with DrawerLayout.DrawerListener
 
   def onDrawerOpened(drawerView: View) {
     drawerToggle foreach { _.onDrawerOpened(drawerView) }
+    state ! DrawerOpened
   }
 
   def onDrawerClosed(drawerView: View) {
     drawerToggle foreach { _.onDrawerClosed(drawerView) }
-    if (backStackNonEmpty) {
-      enableBackButton()
-    }
+    state ! DrawerClosed(updateToggle)
   }
 
   def onDrawerSlide(drawerView: View, slideOffset: Float) {
@@ -382,12 +413,16 @@ with DrawerLayout.DrawerListener
   }
 
   override def navigate(target: NavigationTarget) {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    closeDrawer.run.onComplete { _ ⇒
-      super.navigate(target)
-      drawerActor ! Messages.Navigation(target)
+    if (drawerOpen) {
+      state ! DrawerNavigated { () ⇒ super.navigate(target) }
+      closeDrawer.run
     }
+    else super.navigate(target)
   }
 
   lazy val drawerActor = createActor(DrawerActor.props)._2
+
+  override def navigated(target: NavigationTarget) {
+    drawerActor ! Messages.Navigation(target)
+  }
 }
