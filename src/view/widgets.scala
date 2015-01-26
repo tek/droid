@@ -13,6 +13,7 @@ import tryp.droid.Macroid._
 import tryp.droid.{Macroid ⇒ T}
 
 trait Fab
+extends Transitions
 { self: TrypFragment ⇒
 
   val faButton = slut[FloatingActionButton]
@@ -27,7 +28,7 @@ trait Fab
   {
     val geom = rlp(↧, ↦) + margin(right = 16 dp, bottom = 48 dp)
     RL()(
-      content <~ CommonTransitions.content.tweak,
+      content <~ CommonWidgets.content,
       progressUi <~ geom,
       fabUi(icon)(onClick) <~ geom
     )
@@ -41,10 +42,10 @@ trait Fab
         bottom = res.dimen("fab_margin_normal_minus").toInt)
     RL(noClip, ↔, ↕)(
       RL(↕)(content) <~ rlp(below(Id.header)) <~
-        CommonTransitions.content.tweak,
+        CommonWidgets.content,
       RL(noClip, bgCol("header"))(header) <~ Id.header <~
         rlp(↥, ↔, Height(res.dimen("header_height"))) <~
-        CommonTransitions.header.tweak,
+        CommonWidgets.header,
       progressUi <~ geom,
       fabUi(icon)(onClick) <~ geom
     )
@@ -54,7 +55,7 @@ trait Fab
         Width(res.dimen("fab_width").toInt) <~ whore(progress)
 
   def fabUi(icon: String)(onClick: ⇒ Unit) = {
-    CommonTransitions.fab <~
+    CommonWidgets.fab <~
       whore(faButton) <~
       image(icon) <~
       imageScale(ImageView.ScaleType.CENTER) <~

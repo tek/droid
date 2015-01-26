@@ -3,6 +3,7 @@ package tryp.droid
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import android.widget._
+import android.transitions.everywhere.TransitionSet
 
 import macroid.FullDsl._
 import macroid.FragmentBuilder
@@ -109,6 +110,13 @@ extends TrypFragment
   override def onResume() {
     super.onResume()
     core ! Messages.ToolbarTitle(title)
+  }
+
+  def allTransitions: List[TransitionSet] = List()
+
+  override def onViewStateRestored(state: Bundle) {
+    super.onViewStateRestored(state)
+    core ! Messages.Transitions(allTransitions)
   }
 
   def back(): Ui[Any] = {

@@ -220,6 +220,8 @@ extends TrypActor[A]
         ui { _.back() }
       case Navigation(target) ⇒
         ui { _.navigate(target) }
+      case Transitions(sets) ⇒
+        ui { _.addTransitions(sets) }
       case a ⇒ unhandled(a)
     }
   }

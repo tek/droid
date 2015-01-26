@@ -1,6 +1,8 @@
 package tryp.droid
 
-import android.widget.RelativeLayout
+import scala.collection.mutable.{Set ⇒ MSet}
+
+import android.widget._
 import android.view.Gravity
 
 import macroid.FullDsl._
@@ -12,34 +14,27 @@ import com.melnykov.fab.FloatingActionButton
 
 import tryp.droid.Macroid._
 
-case class TrypTransition[A <: View](name: String, trans: Transition,
-  view: Ui[A])
+class WidgetBase(transName: String)
 {
-  trans.addTarget(name)
+  def tweak = transitionName(transName)
+}
 
-  def get = view <~ tweak
+case class Widget[A <: View](view: Ui[A], transName: String,
+  transition: Transition, duration: Long = 300)
+(implicit a: Activity)
+extends WidgetBase(transName)
+{
+  def create = view
+
+  def get = create <~ tweak
 
   def <~[B <: Tweak[A]](t: B) = get <~ t
-
-  val tweak = transitionName(name)
 }
 
-class TrypTransitionSet
-extends ActivityContexts
-{
-  val set = new TransitionSet
-
-  def moveTransition = {
-    new TransitionSet {
-      val cb = new ChangeBounds
-      cb.setReparent(true)
-      addTransition(cb)
-      addTransition(new ChangeTransform)
-      addTransition(new ChangeClipBounds)
-      addTransition(new ChangeImageTransform)
-    }
-  }
-}
+case class Layout( transName: String, transition: Transition,
+  duration: Long = 300)
+(implicit a: Activity)
+extends WidgetBase(transName)
 
 case class FragmentTransition()
 {
@@ -47,43 +42,26 @@ case class FragmentTransition()
     val s = new Scene(root, view)
     val set = new TransitionSet
     // transitions.reverseIterator foreach(t ⇒ set.addTransition(t.set))
-    transitions foreach(t ⇒ set.addTransition(t.set))
+    transitions foreach(set.addTransition)
     set.setOrdering(TransitionSet.ORDERING_TOGETHER)
     TransitionManager.go(s, set)
   }
 
-  def +=(trans: TrypTransitionSet) {
+  def +=(trans: TransitionSet) {
     transitions += trans
   }
 
-  val transitions: Buffer[TrypTransitionSet] = Buffer()
-}
+  def ++=(trans: Seq[TransitionSet]) {
+    transitions ++= trans
+  }
 
-object CommonTransitions
-extends TrypTransitionSet
-{
-  val slideTop = new Slide(Gravity.TOP)
-  val fadeBottom = new Fade
-  val move = moveTransition
+  val transitions: Buffer[TransitionSet] = Buffer()
 
-  def header(implicit a: Activity) =
-    TrypTransition("header", slideTop, w[View])
-
-  def content(implicit a: Activity) =
-    TrypTransition("content", fadeBottom, w[View])
-
-  def fab(implicit a: Activity) =
-    TrypTransition("fab", move, w[FloatingActionButton])
-
-  set.addTransition(slideTop)
-  set.addTransition(fadeBottom)
-  set.addTransition(move)
-  slideTop.setDuration(300)
-  fadeBottom.setDuration(400)
-  move.setDuration(400)
+  def clear() { transitions.clear() }
 }
 
 trait Transitions
+extends HasActivity
 {
   val uiRoot = slut[ViewGroup]
 
@@ -97,10 +75,6 @@ trait Transitions
 
   val transitions = FragmentTransition()
 
-  val defaultTransitions = CommonTransitions
-
-  transitions += defaultTransitions
-
   implicit class `Slot transition helper`[A <: ViewGroup](root: Slot[A])
   {
     def transitionTo(trans: FragmentTransition, view: Ui[View]) {
@@ -108,5 +82,75 @@ trait Transitions
         trans.go(r, view.get)
       }
     }
+  }
+
+  import macroid.CanTweak
+
+  implicit def `View is tweakable with Widget`[A <: View, B <: WidgetBase] =
+    new CanTweak[A, B, A] {
+      def tweak(v: A, w: B) = v <~ w.tweak
+    }
+
+  def resetTransitions() {
+    transitions.clear()
+    transitions += CommonWidgets.transitions
+  }
+
+  object CommonWidgets
+  extends Widgets
+  {
+    val element1 = widget(w[TextView], "element1", move, duration = 2000)
+
+    val header = layout(FL(), "header", slideTop)
+
+    val content = layout(FL(), "content", fade, duration = 400)
+
+    val fab = widget(w[FloatingActionButton], "fab", move, duration = 400)
+  }
+}
+
+class Widgets(implicit a: Activity)
+{
+  val transitionSet = MSet[Transition]()
+
+  private def addTransitionSet(transName: String, transition: Transition,
+    duration: Long = 300)
+  {
+    transitionSet += transition
+    transition.setDuration(duration)
+    transition.addTarget(transName)
+  }
+
+  def widget[A <: View](view: Ui[A], transName: String, transition: Transition,
+    duration: Long = 300) =
+  {
+    addTransitionSet(transName, transition, duration)
+    Widget(view, transName, transition)
+  }
+
+  def layout[A <: ViewGroup](view: (Ui[View]*) ⇒ Ui[A], transName: String,
+    transition: Transition, duration: Long = 300) =
+  {
+    addTransitionSet(transName, transition, duration)
+    new Layout(transName, transition)
+  }
+
+  def slideTop = new Slide(Gravity.TOP)
+
+  def fade = new Fade
+
+  def move = {
+    new TransitionSet {
+      val cb = new ChangeBounds
+      cb.setReparent(true)
+      addTransition(cb)
+      addTransition(new ChangeTransform)
+      addTransition(new ChangeClipBounds)
+      addTransition(new ChangeImageTransform)
+    }
+  }
+
+  def transitions = new TransitionSet {
+    transitionSet foreach(addTransition)
   }
 }

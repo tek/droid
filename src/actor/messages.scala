@@ -1,5 +1,7 @@
 package tryp.droid
 
+import android.transitions.everywhere.TransitionSet
+
 class Messages
 {
   case class Filter(query: String)
@@ -11,6 +13,7 @@ class Messages
   case class Back()
   case class ShowDetails(data: Any)
   case class Log(message: String)
+  case class Transitions(transitions: Seq[TransitionSet])
 }
 
 object Messages extends Messages

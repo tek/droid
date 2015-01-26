@@ -11,6 +11,8 @@ import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.{ActionBarDrawerToggle,ActionBarActivity}
 import android.support.v7.widget.Toolbar
 
+import android.transitions.everywhere.TransitionSet
+
 import macroid.FullDsl._
 
 import rx._
@@ -79,8 +81,14 @@ with Transitions
     contentLoaded()
   }
 
-  def contentLoaded() {  }
+  def contentLoaded() {}
 
+  // This is the entry point for back actions, when the actual back key or
+  // the drawer toggle had been pressed. Any manual back initiation should also
+  // call this.
+  // The main actor can have its own back stack, so it is asked first. If it
+  // declines or the message cannot be dispatched, it is sent back here and
+  // dispatched to back() below.
   override def onBackPressed() {
     mainActor ! Messages.Back()
   }
@@ -96,6 +104,11 @@ with Transitions
   def canGoBack = backStackNonEmpty
 
   lazy val mainActor = createActor(MainActor.props)._2
+
+  def addTransitions(set: Seq[TransitionSet]) {
+    resetTransitions()
+    transitions ++= set
+  }
 }
 
 abstract trait ManagePreferences
