@@ -277,8 +277,8 @@ extends MainView
 
   val navigation: Navigation
 
-  abstract override def onResume() {
-    super.onResume()
+  abstract override def onCreate(state: Bundle) {
+    super.onCreate(state)
     resumeNavigation()
   }
 
