@@ -22,6 +22,8 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard,
     scalaVersion := "2.11.4"
   )
 
+  lazy val showcase = RootProject(file("../../scala/showcase_view"))
+
   lazy val macros = p("macros")
     .aar()
 
@@ -48,7 +50,7 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard,
         "-P:wartremover:traverser:macroid.warts.CheckUi"
       )
     ))
-    .dep(macros)
+    .dep(macros, showcase)
 
   lazy val test = p("test")
     .aar

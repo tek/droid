@@ -86,7 +86,10 @@ with AkkaAdapter
   def updateVisibleData(newItems: Seq[B]) {
     visibleItems = newItems
     notifyDataSetChanged
+    dataUpdated()
   }
+
+  def dataUpdated() {}
 
   lazy val getFilter = {
     new Filter {

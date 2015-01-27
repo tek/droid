@@ -16,6 +16,8 @@ extends TrypActor[MainFragment]
           core ! Messages.Back()
         case Success(_) ⇒
       }
+    case Messages.DataLoaded() ⇒
+      ui { _.dataLoaded() }
     case a ⇒
       unhandled(a)
   }

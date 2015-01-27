@@ -19,6 +19,9 @@ import android.os.{Vibrator,SystemClock}
 import macroid.{FragmentManagerContext,ActivityContext,AppContext}
 import macroid.support.FragmentApi
 
+import com.github.amlcurran.showcaseview.ShowcaseView
+import com.github.amlcurran.showcaseview.targets.ViewTarget
+
 import tryp.droid.util._
 import tryp.droid.res._
 
@@ -116,7 +119,7 @@ trait Searchable {
   }
 
   def viewOfType[A <: View: ClassTag] = {
-    viewsOfType[A].lift(0)
+    viewsOfType[A].headOption
   }
 
   def textView[A >: Basic#IdTypes](
@@ -455,4 +458,27 @@ extends Basic
   }
 
   def vibrator = systemService[Vibrator](Context.VIBRATOR_SERVICE)
+}
+
+trait Showcase
+extends HasActivity
+with AppPreferences
+{
+  def checkShowcase(name: String) {
+    if (!appPrefs.bool(name, false)()) {
+      appPrefs.set(name, showcase())
+    }
+  }
+
+  def showcase() = false
+
+  def loadShowcases(target: View)(implicit ns: ResourceNamespace) =
+  {
+    new ShowcaseView.Builder(activity, true)
+      .setTarget(new ViewTarget(target))
+      .setContentTitle(res.s("showcase_title"))
+      .setContentText(res.s("showcase_text"))
+      .setTextPositioning(ShowcaseView.TextPositioningMode.ABOVE_OR_BELOW)
+      .build()
+  }
 }

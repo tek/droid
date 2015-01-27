@@ -14,6 +14,8 @@ class Messages
   case class ShowDetails(data: Any)
   case class Log(message: String)
   case class Transitions(transitions: Seq[TransitionSet])
+  case class Showcase()
+  case class DataLoaded()
 }
 
 object Messages extends Messages

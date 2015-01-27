@@ -96,6 +96,7 @@ extends java.lang.RuntimeException
 
 abstract class MainFragment
 extends TrypFragment
+with AppPreferences
 {
   override def onStart() {
     super.onStart()
@@ -122,6 +123,8 @@ extends TrypFragment
   def back(): Ui[Any] = {
     Ui { throw CannotGoBack() }
   }
+
+  def dataLoaded() {}
 }
 
 abstract class ShowFragment[A <: TrypModel]
