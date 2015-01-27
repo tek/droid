@@ -195,11 +195,13 @@ trait Layout
     }
   }
 
-  def frag(ctor: ⇒ Fragment, id: Id = Id.next)(implicit a: Activity) = {
+  def frag(ctor: ⇒ Fragment, id: Id = Id.next, tag: String = "")
+  (implicit a: Activity) = {
+    val t = tag.isEmpty ? id.value.toString / tag
     Ui(
       (new FrameLayout(a)) tap { fl ⇒
         fl.setId(id.value)
-        a.replaceFragment(id, ctor, false, id.value.toString, false)
+        a.replaceFragment(id, ctor, false, t, false)
       }
     )
   }
