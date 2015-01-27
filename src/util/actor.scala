@@ -222,6 +222,8 @@ extends TrypActor[A]
         ui { _.navigate(target) }
       case Transitions(sets) ⇒
         ui { _.addTransitions(sets) }
+      case ShowDetails(data) ⇒
+        ui(_.showDetails(data))
       case a ⇒ unhandled(a)
     }
   }

@@ -36,13 +36,17 @@ case class Layout( transName: String, transition: Transition,
 (implicit a: Activity)
 extends WidgetBase(transName)
 
+object TransitionSets
+{
+  val cache: MMap[String, TransitionSet] = MMap()
+}
+
 case class FragmentTransition()
 {
   def go(root: ViewGroup, view: View) {
     val s = new Scene(root, view)
     val set = new TransitionSet
-    // transitions.reverseIterator foreach(t ⇒ set.addTransition(t.set))
-    transitions foreach(set.addTransition)
+    transitions foreach set.addTransition
     set.setOrdering(TransitionSet.ORDERING_TOGETHER)
     TransitionManager.go(s, set)
   }
@@ -99,8 +103,6 @@ extends HasActivity
   object CommonWidgets
   extends Widgets
   {
-    val element1 = widget(w[TextView], "element1", move, duration = 2000)
-
     val header = layout(FL(), "header", slideTop)
 
     val content = layout(FL(), "content", fade, duration = 400)

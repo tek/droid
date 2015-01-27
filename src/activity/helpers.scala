@@ -76,8 +76,16 @@ with Transitions
     attachRoot(FL(bgCol("main"))(l[FrameLayout]() <~ Id.content))
   }
 
-  def loadContent(fragment: Fragment) = {
-    transition(frag(fragment, Id.content))
+  def loadFragment(fragment: Fragment) = {
+    loadView(frag(fragment, Id.content))
+  }
+
+  def loadShowFragment[A <: TrypModel](model: A, ctor: () ⇒ ShowFragment[A]) {
+    loadView(showFrag(model, ctor, Id.content))
+  }
+
+  def loadView(view: Ui[View]) {
+    transition(view)
     contentLoaded()
   }
 
@@ -109,6 +117,8 @@ with Transitions
     resetTransitions()
     transitions ++= set
   }
+
+  def showDetails(data: Any) {  }
 }
 
 abstract trait ManagePreferences
@@ -155,7 +165,7 @@ with Preferences
   }
 
   def settings() {
-    loadContent(Classes.fragments.settings())
+    loadFragment(Classes.fragments.settings())
   }
 
   def setupPreferences {
@@ -289,7 +299,7 @@ extends MainView
   }
 
   def loadNavTarget(target: NavigationTarget) {
-    ui { loadContent(target.fragment()) }
+    ui { loadView(target.create(Id.content)) }
     navigation.current = Some(target)
     navigated(target)
   }
@@ -315,6 +325,17 @@ extends MainView
   override def canGoBack = history.length > 1
 
   def navigated(target: NavigationTarget) {
+  }
+
+  def loadFragment(name: String, ctor: () ⇒ Fragment) {
+    val target = new NavigationTarget(name, ctor)
+    loadNavTarget(target)
+  }
+
+  override def loadShowFragment[A <: TrypModel]
+  (model: A, ctor: () ⇒ ShowFragment[A]) {
+    val target = new ShowNavigationTarget("Details", ctor, model)
+    loadNavTarget(target)
   }
 }
 

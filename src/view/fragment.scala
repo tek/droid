@@ -122,12 +122,10 @@ extends TrypFragment
   def back(): Ui[Any] = {
     Ui { throw CannotGoBack() }
   }
-
-  def showDetails(data: Any) {  }
 }
 
 abstract class ShowFragment[A <: TrypModel]
-extends TrypFragment
+extends MainFragment
 {
   override def onCreate(state: Bundle) {
     super.onCreate(state)

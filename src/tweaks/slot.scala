@@ -5,11 +5,15 @@ import scala.concurrent.ExecutionContext
 import macroid.{Tweak,CanTweak,Snail}
 import macroid.FullDsl._
 
+import tryp.droid.WidgetBase
+
 trait Slots
 {
   case class Slot[A <: View](var target: Option[A] = None)
   {
     def <~(t: Tweak[A]) = target <~ t
+
+    def <~(w: WidgetBase) = target <~ w.tweak
 
     def <~(t: Option[Tweak[A]]) = target <~ t
 
