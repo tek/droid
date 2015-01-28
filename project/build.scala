@@ -60,6 +60,10 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard,
     .aar
     .dep(test)
 
+  lazy val debug = p("debug")
+    .aar
+    .dep(root)
+
   lazy val integration = p("integration")
     .aar
     .dep(test)
