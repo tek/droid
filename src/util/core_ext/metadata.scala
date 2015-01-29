@@ -4,15 +4,17 @@ import scala.reflect.ClassTag
 
 trait MetadataExt
 {
+  private def removeDollar(s: String) = s.stripSuffix("$")
+
   implicit class `class name shortcut`(a: Any) {
-    def className = a.getClass.getSimpleName
+    def className = removeDollar(a.getClass.getSimpleName)
   }
 
   implicit class `class name shortcut for ClassTag`(a: ClassTag[_]) {
-    def className = a.runtimeClass.getSimpleName
+    def className = removeDollar(a.runtimeClass.getSimpleName)
   }
 
   implicit class `class name shortcut for Class`(a: Class[_]) {
-    def className = a.getSimpleName
+    def className = removeDollar(a.getSimpleName)
   }
 }
