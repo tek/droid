@@ -25,7 +25,8 @@ extends tryp.Deps
       "com.scalarx" %% "scalarx" % "0.+",
       "com.github.andkulikov" % "transitions-everywhere" % "1.+",
       "com.melnykov" % "floatingactionbutton" % "1.+",
-      "com.android.support" % "support-v13" % "21.+"
+      "com.android.support" % "support-v13" % "21.+",
+      "com.github.nscala-time" %% "nscala-time" % "1.+"
     )
   )
 

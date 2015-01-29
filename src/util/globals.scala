@@ -8,6 +8,7 @@ with StringOpsExt
 with SeqExt
 with AkkaExt
 with AndroidExt
+with JodaExt
 {
 }
 
