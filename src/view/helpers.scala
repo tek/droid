@@ -96,7 +96,7 @@ trait Searchable {
     name: A, root: Option[View] = None
   ): Option[B] = {
     find(name, root) match {
-      case a: Option[B] ⇒ a
+      case Some(view: B) ⇒ Some(view)
       case a ⇒ {
         Log.e(s"Couldn't cast view ${a} to specified type!")
         None
