@@ -35,8 +35,8 @@ extends tryp.Deps
       "org.slf4j" % "slf4j-nop" % "1.+",
       "joda-time" % "joda-time" % "2.+",
       "org.joda" % "joda-convert" % "1.+",
-      "org.scala-lang" % "scala-reflect" % "2.11.4",
-      "org.scala-lang" % "scala-compiler" % "2.11.4"
+      "org.scala-lang" % "scala-reflect" % "2.11.5",
+      "org.scala-lang" % "scala-compiler" % "2.11.5"
     )
   )
 }
