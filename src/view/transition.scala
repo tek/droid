@@ -1,6 +1,7 @@
 package tryp.droid
 
 import scala.collection.mutable.{Set ⇒ MSet}
+import scala.concurrent.ExecutionContext
 
 import android.widget._
 import android.view.Gravity
@@ -23,11 +24,15 @@ case class Widget[A <: View](view: Ui[A], transName: String,
 (implicit a: Activity)
 extends WidgetBase(transName)
 {
-  def create = view
+  lazy val create = view <~ ui
 
-  def get = create <~ tweak
+  val ui = slut[A]
+
+  lazy val get = create <~ tweak
 
   def <~[B <: Tweak[A]](t: B) = get <~ t
+
+  def <~~[B <: Snail[A]](t: B)(implicit ec: ExecutionContext) = ui <~~ t
 }
 
 case class Layout( transName: String, transition: Transition,

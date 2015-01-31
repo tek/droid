@@ -16,6 +16,7 @@ class Messages
   case class Transitions(transitions: Seq[TransitionSet])
   case class Showcase()
   case class DataLoaded()
+  case class Scrolled(view: ViewGroup, dy: Int)
 }
 
 object Messages extends Messages

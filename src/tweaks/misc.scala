@@ -4,7 +4,7 @@ import scala.language.reflectiveCalls
 
 import android.widget._
 import android.support.v7.widget._
-import android.view.Gravity
+import android.view.{Gravity,MotionEvent}
 import android.content.res.ColorStateList
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.widget.{RecyclerView,LinearLayoutManager,CardView}
@@ -20,10 +20,13 @@ import macroid._
 import macroid.FullDsl._
 import macroid.contrib.Layouts._
 
+import akka.actor.ActorSelection
+
 import com.melnykov.fab.FloatingActionButton
 
 import tryp.droid.res.{Resources,_}
-import tryp.droid.view.{TrypTextView,DividerItemDecoration}
+import tryp.droid.view.{TrypTextView,DividerItemDecoration,ParallaxHeader}
+import tryp.droid.Messages
 
 trait ResourcesAccess {
   protected def res(implicit c: Context,
@@ -148,10 +151,6 @@ extends Text
     _.setColor(res.c(name))
   }
 
-  def dataChanged(implicit c: Context) = Tweak[RecyclerView] {
-    _.getAdapter.notifyDataSetChanged
-  }
-
   object Fab
   extends ResourcesAccess
   {
@@ -177,6 +176,16 @@ extends Text
   def transitionName(name: String) = Tweak[View] { v ⇒
     TransitionManager.setTransitionName(v, name)
   }
+
+  def translateY(y: Int) = Tweak[View] { _.setTranslationY(y) }
+
+  def setTop(y: Int) = Tweak[View] { _.setTop(y) }
+
+  def invalidate = Tweak[View] { _.invalidate() }
+
+  def relayout = Tweak[View] { _.requestLayout() }
+
+  def parallaxScroll(y: Int) = Tweak[ParallaxHeader] { _.set(y) }
 }
 
 object Misc extends Misc
@@ -192,24 +201,50 @@ extends ResourcesAccess
 object Recycler
 extends ResourcesAccess
 {
-  def recyclerAdapter(a: RecyclerView.Adapter[_]) = {
-    Tweak[RecyclerView](_.setAdapter(a))
-  }
+  val t = Tweak[RecyclerView] _
+
+  def recyclerAdapter(a: RecyclerView.Adapter[_]) = t(_.setAdapter(a))
 
   def linear(implicit c: Context) = {
     Tweak[RecyclerView](_.setLayoutManager(new LinearLayoutManager(c)))
   }
 
+  def layoutManager(m: RecyclerView.LayoutManager)(implicit c: Context) =
+    Tweak[RecyclerView](_.setLayoutManager(m))
+
   def stagger(
-    count: Int, orientation: Int = StaggeredGridLayoutManager.VERTICAL
-  )(implicit c: Context) = {
-    Tweak[RecyclerView](_.setLayoutManager(
-      new StaggeredGridLayoutManager(count, orientation)))
-  }
+    count: Long, orientation: Int = StaggeredGridLayoutManager.VERTICAL
+  )(implicit c: Context) =
+    layoutManager(new StaggeredGridLayoutManager(count.toInt, orientation))
+
+  def grid(count: Long)(implicit c: Context) =
+    layoutManager(new GridLayoutManager(c, count.toInt))
 
   def divider(implicit c: Context) = Tweak[RecyclerView](
     _.addItemDecoration(new DividerItemDecoration(c, null))
   )
+
+  def dataChanged(implicit c: Context) = Tweak[RecyclerView] {
+    _.getAdapter.notifyDataSetChanged
+  }
+
+  def onScroll(callback: (ViewGroup, Int) ⇒ Unit)(implicit c: Context) = {
+    Tweak[RecyclerView] {
+      val listener = new RecyclerView.OnScrollListener {
+        var height = 0
+
+        override def onScrolled(view: RecyclerView, dx: Int, dy: Int) {
+          super.onScrolled(view, dx, dy)
+          height += dy
+          callback(view, height)
+        }
+      }
+      _.setOnScrollListener(listener)
+    }
+  }
+
+  def onScrollActor(actor: ActorSelection)(implicit c: Context) =
+    onScroll((view, y) ⇒ actor ! Messages.Scrolled(view, y))
 }
 
 object Toolbar

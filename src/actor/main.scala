@@ -18,6 +18,8 @@ extends TrypActor[MainFragment]
       }
     case Messages.DataLoaded() ⇒
       ui { _.dataLoaded() }
+    case Messages.Scrolled(view, dy) ⇒
+      ui { _.scrolled(view, dy) }
     case a ⇒
       unhandled(a)
   }
