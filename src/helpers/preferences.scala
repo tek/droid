@@ -26,6 +26,8 @@ class PreferencesFacade(val prefs: SharedPreferences)
     implicit val cacheBoolean: Cache[Boolean] = MMap()
 
     implicit val cacheInt: Cache[Long] = MMap()
+
+    implicit val cacheFloat: Cache[Float] = MMap()
   }
 
   abstract class PrefReader[A]
@@ -49,6 +51,11 @@ class PreferencesFacade(val prefs: SharedPreferences)
     implicit object `Boolean PR` extends PrefReader[Boolean] {
       def zero = false
       def getter = prefs.getBoolean _
+    }
+
+    implicit object `Float PR` extends PrefReader[Float] {
+      def zero = 0.0f
+      def getter = prefs.getFloat _
     }
 
     implicit object `Long PR` extends PrefReader[Long] {
@@ -109,6 +116,10 @@ class PreferencesFacade(val prefs: SharedPreferences)
     PrefCache.get(key, default)
   }
 
+  def float(key: String, default: Float = 0.0f) = {
+    PrefCache.get(key, default)
+  }
+
   def edit(callback: (SharedPreferences.Editor) ⇒ Unit)
   {
     val editor = prefs.edit
@@ -122,6 +133,7 @@ class PreferencesFacade(val prefs: SharedPreferences)
       case b: Boolean ⇒ edit(_.putBoolean(key, b))
       case s: String ⇒ edit(_.putString(key, s))
       case i: Int ⇒ edit(_.putString(key, i.toString))
+      case f: Float ⇒ edit(_.putFloat(key, f))
       case l: Long ⇒ edit(_.putString(key, l.toString))
       case h: java.util.HashSet[_] ⇒ setSet(key, h.toSet)
       case s: Set[_] ⇒ setSet(key, s)
@@ -141,6 +153,7 @@ class PreferencesFacade(val prefs: SharedPreferences)
       case s: String ⇒ updateString(name, s)
       case i: Int ⇒ updateString(name, i.toString)
       case l: Long ⇒ updateString(name, l.toString)
+      case f: Float ⇒ PrefCache.invalidate[Float](name)
       case h: java.util.HashSet[_] ⇒ PrefCache.invalidate[Set[String]](name)
       case s: Set[_] ⇒ PrefCache.invalidate[Set[String]](name)
       case _ ⇒ error(name, value)
