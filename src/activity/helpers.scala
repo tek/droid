@@ -329,13 +329,13 @@ extends MainView
 
   def loadFragment(name: String, ctor: () ⇒ Fragment) {
     val target = new NavigationTarget(name, ctor)
-    loadNavTarget(target)
+    navigate(target)
   }
 
   override def loadShowFragment[A <: TrypModel]
   (model: A, ctor: () ⇒ ShowFragment[A]) {
     val target = new ShowNavigationTarget("Details", ctor, model)
-    loadNavTarget(target)
+    navigate(target)
   }
 }
 
