@@ -97,6 +97,7 @@ extends java.lang.RuntimeException
 abstract class MainFragment
 extends TrypFragment
 with AppPreferences
+with Fab
 {
   override def onStart() {
     super.onStart()
