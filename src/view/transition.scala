@@ -6,7 +6,6 @@ import android.widget._
 import android.view.Gravity
 
 import macroid.FullDsl._
-import macroid.Tweak
 
 import android.transitions.everywhere._
 

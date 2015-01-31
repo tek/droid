@@ -51,10 +51,14 @@ extends Util
   type Intent = android.content.Intent
   type Fragment = android.app.Fragment
   type FrameLayout = android.widget.FrameLayout
+  type RelativeLayout = android.widget.RelativeLayout
 
   type Ui[+A] = macroid.Ui[A]
+  type Tweak[-A <: android.view.View] = macroid.Tweak[A]
+  type Snail[-A <: android.view.View] = macroid.Snail[A]
 
   val Ui = macroid.Ui
+  val Tweak = macroid.Tweak
 
   val Try = scala.util.Try
   val Success = scala.util.Success

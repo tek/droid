@@ -1,7 +1,6 @@
 package tryp.droid
 
-import macroid.{FragmentManagerContext,ActivityContext,AppContext}
-import macroid.{Tweak,CanTweak}
+import macroid.{FragmentManagerContext,ActivityContext,AppContext,CanTweak}
 import macroid.FullDsl._
 
 trait MacroidExt

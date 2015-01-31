@@ -2,7 +2,7 @@ package tryp.droid.tweaks
 
 import scala.concurrent.ExecutionContext
 
-import macroid.{Tweak,CanTweak,Snail}
+import macroid.CanTweak
 import macroid.FullDsl._
 
 import tryp.droid.WidgetBase
