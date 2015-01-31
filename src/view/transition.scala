@@ -100,6 +100,15 @@ extends HasActivity
     transitions += CommonWidgets.transitions
   }
 
+  implicit class `Transition operator`(t: Transition) {
+    def ++(other: Transition) = {
+      (new TransitionSet) tap { s ⇒
+        s.addTransition(t)
+        s.addTransition(other)
+      }
+    }
+  }
+
   object CommonWidgets
   extends Widgets
   {
@@ -107,7 +116,8 @@ extends HasActivity
 
     val content = layout(FL(), "content", fade, duration = 400)
 
-    val fab = widget(w[FloatingActionButton], "fab", move, duration = 400)
+    val fab = widget(w[FloatingActionButton], "fab", move ++ slideRight,
+      duration = 400)
   }
 }
 
@@ -138,6 +148,12 @@ class Widgets(implicit a: Activity)
   }
 
   def slideTop = new Slide(Gravity.TOP)
+
+  def slideBottom = new Slide(Gravity.BOTTOM)
+
+  def slideRight = new Slide(Gravity.RIGHT)
+
+  def slideLeft = new Slide(Gravity.LEFT)
 
   def fade = new Fade
 
