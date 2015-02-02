@@ -20,13 +20,16 @@ with HasActivity
   def instr: Instrumentation = getInstrumentation
   lazy val solo: Solo = new Solo(instr, activity)
 
-  override def setUp {
-    super.setUp
+  override def setUp() {
+    super.setUp()
     prefs.clear()
     appPrefs.clear()
+    pre()
     setActivityInitialTouchMode(false)
     solo
   }
+
+  def pre() {  }
 
   override def tearDown {
     solo.finalize
