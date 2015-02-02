@@ -442,16 +442,24 @@ extends Basic
 {
   import android.content.Context
 
-  def alarmManager =
-    systemService[AlarmManager](Context.ALARM_SERVICE)
+  def alarmManager = systemService[AlarmManager](Context.ALARM_SERVICE)
 
   def scheduleRepeatingWakeAlarm[A <: WakefulBroadcastReceiver: ClassTag]
   (interval: Long) =
   {
-    val intent = new Intent(context, implicitly[ClassTag[A]].runtimeClass)
-    val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0)
     alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-      SystemClock.elapsedRealtime() + 3000, interval * 1000, pendingIntent)
+      SystemClock.elapsedRealtime() + 3000, interval * 1000, alarmIntent[A])
+  }
+
+  def cancelAlarm[A <: WakefulBroadcastReceiver: ClassTag] {
+    alarmManager.cancel(alarmIntent[A])
+  }
+
+  def alarmIntent[A <: WakefulBroadcastReceiver: ClassTag] = {
+    val intent = new Intent(context, implicitly[ClassTag[A]].runtimeClass)
+    intent.putExtra(Keys.intentSource, Values.wakeAlarm)
+    PendingIntent.getBroadcast(context, 0, intent,
+      PendingIntent.FLAG_UPDATE_CURRENT)
   }
 
   def vibrator = systemService[Vibrator](Context.VIBRATOR_SERVICE)
