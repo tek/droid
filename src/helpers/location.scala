@@ -45,12 +45,12 @@ with tryp.droid.Preferences
     .addOnConnectionFailedListener(locationCallbacks)
     .build
 
-  def connect {
-    apiClient.connect
+  def connect() {
+    apiClient.connect()
   }
 
-  def disconnect {
-    apiClient.disconnect
+  def disconnect() {
+    apiClient.disconnect()
   }
 
   def locations = apiClient.isConnected ? apiClient
@@ -59,16 +59,34 @@ with tryp.droid.Preferences
     locations flatMap { client ⇒ Option(LocApi.getLastLocation(client)) }
     }
 
-  def requestGeofences(
-    intent: PendingIntent, locations: Seq[GeofenceData]
-  ) {
+  def requestGeofences(intent: PendingIntent, locations: Seq[GeofenceData])
+  (callback: (Int) ⇒ Unit) {
     val builder = new GeofencingRequest.Builder
     locations foreach { loc ⇒ builder.addGeofence(geofence(loc)) }
     Try {
       GeoApi.addGeofences(apiClient, builder.build, intent)
     } match {
-      case Failure(e) ⇒ Log.e(s"Adding geofences failed (${e})")
-      case _ ⇒
+      case Failure(e) ⇒
+        callback(-1)
+        Log.e(s"Adding geofences failed (${e})")
+      case Success(result) ⇒
+        result.setResultCallback(new ResultCallback[Status] {
+          def onResult(status: Status) {
+            reportGeofenceResult(status)
+            callback(status.getStatusCode)
+          }
+        })
+    }
+  }
+
+  def reportGeofenceResult(status: Status) {
+    import GeofenceStatusCodes._
+    status.getStatusCode match {
+      case GEOFENCE_NOT_AVAILABLE ⇒ Log.e("Geofence service down")
+      case GEOFENCE_TOO_MANY_GEOFENCES ⇒ Log.e("Too many geofences")
+      case GEOFENCE_TOO_MANY_PENDING_INTENTS ⇒
+        Log.e("Too many pending geofence intents")
+      case _ ⇒ Log.i("Geofences installed successfully")
     }
   }
 
@@ -76,13 +94,14 @@ with tryp.droid.Preferences
 
   def alarmDistance = prefs.int("alarm_distance", 100)
 
-  def geofence(fence: GeofenceData) =
+  def geofence(fence: GeofenceData) = {
     new Geofence.Builder()
       .setRequestId(fence.id.toString)
       .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
       .setCircularRegion(fence.lat, fence.long, alarmDistance())
       .setExpirationDuration(expirationDuration)
       .build
+  }
 
   def requestLocationUpdates(intent: PendingIntent) {
     val request = LocationRequest.create
@@ -100,12 +119,12 @@ with tryp.droid.util.CallbackMixin
 {
   abstract override def onStart() {
     super.onStart()
-    connect
+    connect()
   }
 
   abstract override def onStop() {
-    super.onStop
-    disconnect
+    super.onStop()
+    disconnect()
   }
 }
 
@@ -118,7 +137,7 @@ extends LocationsConcern
   def run {
     if (done) {
       done = false
-      connect
+      connect()
     }
   }
 
@@ -133,22 +152,24 @@ extends LocationsConcern
   def onLocationChanged(location: Location) {
     callback(location)
     LocApi.removeLocationUpdates(apiClient, this)
-    disconnect
+    disconnect()
     done = true
   }
 }
 
 case class GeofenceTask(intent: PendingIntent, fences: Seq[GeofenceData])
-(implicit val context: Context)
+(callback: (Int) ⇒ Unit)(implicit val context: Context)
 extends LocationsConcern
 {
-  def run {
-    connect
+  def run() {
+    connect()
   }
 
   def locationConnected(data: Bundle) {
-    requestGeofences(intent, fences)
-    disconnect
+    requestGeofences(intent, fences) { s ⇒
+      disconnect()
+      callback(s)
+    }
   }
 
   def onLocationChanged(location: Location) {
