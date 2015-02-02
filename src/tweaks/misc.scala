@@ -245,6 +245,13 @@ extends ResourcesAccess
 
   def onScrollActor(actor: ActorSelection)(implicit c: Context) =
     onScroll((view, y) ⇒ actor ! Messages.Scrolled(view, y))
+
+  def reverseLayout(implicit c: Context) = t {
+    _.getLayoutManager match {
+      case m: LinearLayoutManager ⇒ m.setReverseLayout(true)
+      case m ⇒ Log.e(s"Used reverseLayout on incompatible type ${m.className}")
+    }
+  }
 }
 
 object Toolbar
