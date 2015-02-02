@@ -119,8 +119,7 @@ extends Transitions
   }
 
   def updateFabPosition() {
-    if (scrollHeight < headerHeight)
-      runUi(faButton <~ translateY(-scrollHeight))
+    runUi(faButton <~ translateY(-scrollHeight))
     syncFabVisibility()
   }
 
