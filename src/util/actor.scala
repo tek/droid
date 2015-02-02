@@ -198,7 +198,7 @@ extends Actor
 
   protected def inject() {
     parameterDispatch foreach {
-      case (name, setter) ⇒ parameters lift(name) foreach(setter)
+      case (name, setter) ⇒ parameters remove(name) foreach(setter)
     }
   }
 }
