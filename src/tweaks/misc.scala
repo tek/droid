@@ -252,6 +252,10 @@ extends ResourcesAccess
       case m ⇒ Log.e(s"Used reverseLayout on incompatible type ${m.className}")
     }
   }
+
+  def scrollTop(implicit c: Context) = t { rv ⇒
+    rv.scrollToPosition(rv.getAdapter.getItemCount - 1)
+  }
 }
 
 object Toolbar

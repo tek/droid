@@ -42,11 +42,13 @@ with RecyclerFragment
   override def onStart() {
     super.onStart
     DebugLog.actor = Some(selectActor("Log"))
-    update()
+    runUi(update())
   }
 
   def update() = {
     adapter.updateItems(DebugLog.buffer)
+    Thread.sleep(100)
+    recyclerView <~ scrollTop
   }
 
   def recyclerTweaks = linear + divider + reverseLayout
