@@ -143,10 +143,9 @@ trait Layout
 
   def fitsSystemWindows = Tweak[View](_.setFitsSystemWindows(true))
 
-  def noClip = Tweak[ViewGroup]{ v ⇒
-    v.setClipChildren(false)
-    v.setClipToPadding(false)
-  }
+  def noClip = Tweak[ViewGroup](_.setClipChildren(false)) + noClipToPadding
+
+  def noClipToPadding = Tweak[ViewGroup](_.setClipToPadding(false))
 
   object FL
   extends ActivityContexts
