@@ -206,11 +206,11 @@ extends ResourcesAccess
   def recyclerAdapter(a: RecyclerView.Adapter[_]) = t(_.setAdapter(a))
 
   def linear(implicit c: Context) = {
-    Tweak[RecyclerView](_.setLayoutManager(new LinearLayoutManager(c)))
+    t(_.setLayoutManager(new LinearLayoutManager(c)))
   }
 
   def layoutManager(m: RecyclerView.LayoutManager)(implicit c: Context) =
-    Tweak[RecyclerView](_.setLayoutManager(m))
+    t(_.setLayoutManager(m))
 
   def stagger(
     count: Long, orientation: Int = StaggeredGridLayoutManager.VERTICAL
@@ -220,16 +220,16 @@ extends ResourcesAccess
   def grid(count: Long)(implicit c: Context) =
     layoutManager(new GridLayoutManager(c, count.toInt))
 
-  def divider(implicit c: Context) = Tweak[RecyclerView](
+  def divider(implicit c: Context) = t(
     _.addItemDecoration(new DividerItemDecoration(c, null))
   )
 
-  def dataChanged(implicit c: Context) = Tweak[RecyclerView] {
+  def dataChanged(implicit c: Context) = t {
     _.getAdapter.notifyDataSetChanged
   }
 
   def onScroll(callback: (ViewGroup, Int) ⇒ Unit)(implicit c: Context) = {
-    Tweak[RecyclerView] {
+    t {
       val listener = new RecyclerView.OnScrollListener {
         var height = 0
 
