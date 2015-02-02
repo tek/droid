@@ -4,7 +4,7 @@ import scala.language.reflectiveCalls
 
 import android.widget._
 import android.support.v7.widget._
-import android.view.{Gravity,MotionEvent}
+import android.view.{Gravity,MotionEvent,GestureDetector}
 import android.content.res.ColorStateList
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.widget.{RecyclerView,LinearLayoutManager,CardView}
@@ -186,6 +186,14 @@ extends Text
   def relayout = Tweak[View] { _.requestLayout() }
 
   def parallaxScroll(y: Int) = Tweak[ParallaxHeader] { _.set(y) }
+
+  def longPress(dispatch: ⇒ Unit)(implicit a: Activity) = {
+    val gl = new GestureDetector.SimpleOnGestureListener {
+      override def onLongPress(e: MotionEvent) { dispatch }
+    }
+    val g = new GestureDetector(a, gl)
+    FuncOn.touch { (v: View, e: MotionEvent) ⇒ Ui(g.onTouchEvent(e)) }
+  }
 }
 
 object Misc extends Misc
