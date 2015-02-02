@@ -256,6 +256,11 @@ extends ResourcesAccess
   def scrollTop(implicit c: Context) = t { rv ⇒
     rv.scrollToPosition(rv.getAdapter.getItemCount - 1)
   }
+
+  def parallaxScroller(actor: ActorSelection)(implicit c: Context) = {
+    onScrollActor(actor) + Layout.noClipToPadding +
+      padding(top = res.dimen("header_height").toInt)
+  }
 }
 
 object Toolbar
