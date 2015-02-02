@@ -4,6 +4,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import android.widget._
 import android.transitions.everywhere.TransitionSet
+import android.support.v7.widget.RecyclerView
 
 import macroid.FullDsl._
 import macroid.FragmentBuilder
@@ -11,6 +12,7 @@ import macroid.FragmentBuilder
 import tryp.droid.util.OS
 import tryp.droid.res.{Layouts,LayoutAdapter,PrefixResourceNamespace}
 import tryp.droid.Macroid._
+import tryp.droid.tweaks.Recycler._
 
 trait FragmentBase
 extends Fragment
@@ -174,5 +176,20 @@ extends ActivityContexts
     inst.model = Some(model)
     FragmentBuilder(Ui(inst), new Bundle)
       .pass(Keys.dataId → model.id).factory.get
+  }
+}
+
+trait RecyclerFragment
+extends TrypFragment
+{
+  def adapter: RecyclerView.Adapter[_]
+
+  def recyclerTweaks: Tweak[RecyclerView]
+
+  val recyclerView = slut[RecyclerView]
+
+  override def layout(state: Bundle) = {
+    w[RecyclerView] <~ recyclerAdapter(adapter) <~ recyclerTweaks <~
+      recyclerView
   }
 }

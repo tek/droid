@@ -27,18 +27,17 @@ extends SimpleRecyclerAdapter[LogViewHolder, String]
 
   def onBindViewHolder(holder: LogViewHolder, position: Int) {
     val item = items(position)
-    runUi (
-      holder.text <~ txt.literal(item)
-    )
+    runUi(holder.text <~ txt.literal(item))
   }
 }
 
 case class LogFragment()
 extends MainFragment
+with RecyclerFragment
 {
   override val actors = Seq(LogActor.props)
 
-  lazy val logAdapter = new LogAdapter
+  lazy val adapter = new LogAdapter
 
   override def onStart() {
     super.onStart
@@ -46,13 +45,9 @@ extends MainFragment
     update()
   }
 
-  def update() {
-    logAdapter.updateItems(DebugLog.buffer)
+  def update() = {
+    adapter.updateItems(DebugLog.buffer)
   }
 
-  override def macroidLayout(state: Bundle) = {
-    FL()(
-      w[RecyclerView] <~ recyclerAdapter(logAdapter) <~ linear <~ divider
-    )
-  }
+  def recyclerTweaks = linear + divider + reverseLayout
 }
