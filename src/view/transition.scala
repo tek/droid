@@ -13,20 +13,21 @@ import android.transitions.everywhere._
 import com.melnykov.fab.FloatingActionButton
 
 import tryp.droid.Macroid._
+import tryp.droid.view.ParallaxHeader
 
-class WidgetBase(transName: String)
+class WidgetBase[A <: View](transName: String)
 {
+  val ui = slut[A]
+
   def tweak = transitionName(transName)
 }
 
 case class Widget[A <: View](view: Ui[A], transName: String,
   transition: Transition, duration: Long = 300)
 (implicit a: Activity)
-extends WidgetBase(transName)
+extends WidgetBase[A](transName)
 {
   lazy val create = view <~ ui
-
-  val ui = slut[A]
 
   lazy val get = create <~ tweak
 
@@ -35,10 +36,15 @@ extends WidgetBase(transName)
   def <~~[B <: Snail[A]](t: B)(implicit ec: ExecutionContext) = ui <~~ t
 }
 
-case class Layout( transName: String, transition: Transition,
-  duration: Long = 300)
+case class Layout[A <: ViewGroup](view: (Ui[View]*) ⇒ Ui[A], transName: String,
+  transition: Transition, duration: Long = 300)
 (implicit a: Activity)
-extends WidgetBase(transName)
+extends WidgetBase[A](transName)
+{
+  def apply(children: Ui[View]*) = view(children: _*)
+
+  def <~[B <: Tweak[A]](t: B) = ui <~ t
+}
 
 object TransitionSets
 {
@@ -94,9 +100,14 @@ extends HasActivity
 
   import macroid.CanTweak
 
-  implicit def `View is tweakable with Widget`[A <: View, B <: WidgetBase] =
+  implicit def `View is tweakable with Widget`[A <: View, B <: Widget[A]] =
     new CanTweak[A, B, A] {
-      def tweak(v: A, w: B) = v <~ w.tweak
+      def tweak(v: A, w: B) = v <~ w.tweak <~ w.ui
+    }
+
+  implicit def `VG is tweakable with Layout`[A <: ViewGroup, B <: Layout[A]] =
+    new CanTweak[A, B, A] {
+      def tweak(v: A, w: B) = v <~ w.tweak <~ w.ui
     }
 
   def resetTransitions() {
@@ -116,7 +127,8 @@ extends HasActivity
   object CommonWidgets
   extends Widgets
   {
-    val header = layout(FL(), "header", slideTop)
+    def pxCtor(c: Ui[View]*) = l[ParallaxHeader](c: _*)
+    val header = layout(pxCtor _, "header", slideTop)
 
     val content = layout(FL(), "content", fade, duration = 400)
 
@@ -148,7 +160,7 @@ class Widgets(implicit a: Activity)
     transition: Transition, duration: Long = 300) =
   {
     addTransitionSet(transName, transition, duration)
-    new Layout(transName, transition)
+    new Layout[A](view, transName, transition)
   }
 
   def slideTop = new Slide(Gravity.TOP)

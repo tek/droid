@@ -11,19 +11,14 @@ import macroid.Snails
 
 import tryp.droid.Macroid._
 import tryp.droid.{Macroid ⇒ T}
-import tryp.droid.view.ParallaxHeader
 
 trait Fab
 extends Transitions
 { self: MainFragment ⇒
 
-  val faButton = slut[FloatingActionButton]
-
   val progress = slut[ProgressBar]
 
-  val pHeader = slut[ParallaxHeader]
-
-  val pContent = slut[RelativeLayout]
+  def fab = CommonWidgets.fab.ui
 
   // Create a wrapper layout containing:
   // * a floating action button, showing 'icon' and dispatching touch to
@@ -33,7 +28,7 @@ extends Transitions
   {
     val geom = rlp(↧, ↦) + margin(right = 16 dp, bottom = 48 dp)
     RL()(
-      content <~ CommonWidgets.content,
+      CommonWidgets.content(content),
       progressUi <~ geom,
       fabUi(icon)(onClick) <~ geom
     )
@@ -47,10 +42,9 @@ extends Transitions
         bottom = res.dimen("fab_margin_normal_minus").toInt)
     val contentParams = rlp(parallax ? ↥ / below(Id.header))
     RL(↔, ↕)(
-      RL(↕)(content) <~ contentParams <~ pContent <~
-        CommonWidgets.content,
-      l[ParallaxHeader](header <~ bgCol("header")) <~ Id.header <~ pHeader <~
-        rlp(↥, ↔, Height(headerHeight)) <~ CommonWidgets.header,
+      CommonWidgets.content(content) <~ contentParams <~ rlp(↕),
+      CommonWidgets.header(header <~ bgCol("header")) <~ Id.header <~
+        rlp(↥, ↔, Height(headerHeight)),
       progressUi <~ geom,
       fabUi(icon)(onClick) <~ geom
     )
@@ -61,7 +55,6 @@ extends Transitions
 
   def fabUi(icon: String)(onClick: ⇒ Unit) = {
     CommonWidgets.fab <~
-      whore(faButton) <~
       image(icon) <~
       imageScale(ImageView.ScaleType.CENTER) <~
       T.Fab.colors("colorAccentStrong", "colorAccent") <~
@@ -79,11 +72,11 @@ extends Transitions
 
   private val fadeTime = 400L
 
-  lazy val fadeToProgress = (faButton <~~ fadeOut(fadeTime) <~ hide) ~
+  lazy val fadeToProgress = (fab <~~ fadeOut(fadeTime) <~ hide) ~
     (progress <~~ fadeIn(fadeTime) <~ show)
 
   lazy val fadeToFab = (progress <~~ fadeOut(fadeTime) <~ hide) ~
-    (faButton <~~ fadeIn(fadeTime) <~ show)
+    (fab <~~ fadeIn(fadeTime) <~ show)
 
   lazy val headerHeight = res.dimen("header_height")
 
@@ -95,13 +88,13 @@ extends Transitions
 
   def changeFabVisibility(snail: Snail[View]) {
     changingFabVisibility = true
-    runUi((faButton <~~ snail) ~~ Ui {
+    runUi((fab <~~ snail) ~~ Ui {
       changingFabVisibility = false
       syncFabVisibility()
     })
   }
 
-  def fabVisible = faButton.exists(_.isShown)
+  def fabVisible = fab.exists(_.isShown)
 
   def showFab() {
     if(!fabVisible) changeFabVisibility(fadeIn(fadeTime))
@@ -119,7 +112,7 @@ extends Transitions
   }
 
   def updateFabPosition() {
-    runUi(faButton <~ translateY(-scrollHeight))
+    runUi(fab <~ translateY(-scrollHeight))
     syncFabVisibility()
   }
 
@@ -128,6 +121,6 @@ extends Transitions
   def scrolled(view: ViewGroup, height: Int) {
     scrollHeight = height
     updateFabPosition()
-    runUi(pHeader <~ parallaxScroll(height))
+    runUi(CommonWidgets.header <~ parallaxScroll(height))
   }
 }

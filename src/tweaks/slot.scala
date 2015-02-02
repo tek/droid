@@ -13,7 +13,7 @@ trait Slots
   {
     def <~(t: Tweak[A]) = target <~ t
 
-    def <~(w: WidgetBase) = target <~ w.tweak
+    def <~(w: WidgetBase[A]) = target <~ w.tweak
 
     def <~(t: Option[Tweak[A]]) = target <~ t
 
