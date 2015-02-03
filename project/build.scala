@@ -27,7 +27,7 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard,
   lazy val macros = p("macros")
     .aar()
 
-  lazy val slickmacros = p("slickmacros")
+  lazy val slick = p("slick")
     .paradise()
     .antSrc
     .export()

@@ -10,7 +10,7 @@ import scala.language.dynamics
 import scala.language.higherKinds
 import scala.language.postfixOps
 import scala.slick.lifted.{ Query => LQuery }
-import scala.slick.lifted.Column
+import scala.slick.lifted.Rep
 
 /**
  * Work in progress

@@ -7,7 +7,7 @@ extends tryp.Deps
 {
   override def deps = super.deps ++ Map(
     "root" → common,
-    "slickmacros" → slickmacros
+    "slick" → slick
   )
 
   lazy val common = Seq(
@@ -30,9 +30,9 @@ extends tryp.Deps
     )
   )
 
-  lazy val slickmacros = Seq(
+  lazy val slick = Seq(
     libraryDependencies ++= Seq(
-      "com.typesafe.slick" %% "slick" % "2.+",
+      "com.typesafe.slick" %% "slick" % "3.0.0-M1",
       "org.slf4j" % "slf4j-nop" % "1.+",
       "joda-time" % "joda-time" % "2.+",
       "org.joda" % "joda-convert" % "1.+",
