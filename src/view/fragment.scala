@@ -150,20 +150,23 @@ extends MainFragment
   var model: Option[A] = None
 
   private def initData(id: Long) {
-    val f = Future { model = fetchData(id) } map(Unit ⇒ update())
+    Future { model = fetchData(id) } map(Unit ⇒ update())
   }
 
   def fetchData(id: Long): Option[A]
 
   def update() {
     model foreach { updateData(_).run }
+    fetchDetails()
   }
+
+  def fetchDetails() {}
 
   def updateData(m: A): Ui[Any]
 
   override def onViewStateRestored(state: Bundle) {
     super.onViewStateRestored(state)
-    update
+    update()
   }
 }
 
