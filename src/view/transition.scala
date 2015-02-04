@@ -60,6 +60,7 @@ case class FragmentTransition()
     val set = new TransitionSet
     transitions foreach set.addTransition
     set.setOrdering(TransitionSet.ORDERING_TOGETHER)
+    transitions.clear()
     TransitionManager.go(s, set)
   }
 
@@ -74,6 +75,8 @@ case class FragmentTransition()
   val transitions: Buffer[TransitionSet] = Buffer()
 
   def clear() { transitions.clear() }
+
+  def isEmpty = transitions.isEmpty
 }
 
 trait Transitions
@@ -112,9 +115,10 @@ extends HasActivity
       def tweak(v: A, w: B) = v <~ w.tweak <~ w.ui
     }
 
-  def resetTransitions() {
-    transitions.clear()
-    transitions += CommonWidgets.transitions
+  def addTransitions(set: Seq[TransitionSet]) {
+    if (transitions.isEmpty)
+      transitions += CommonWidgets.transitions
+    transitions ++= set
   }
 
   implicit class `Transition operator`(t: Transition) {

@@ -113,11 +113,6 @@ with Transitions
 
   lazy val mainActor = createActor(MainActor.props)._2
 
-  def addTransitions(set: Seq[TransitionSet]) {
-    resetTransitions()
-    transitions ++= set
-  }
-
   def showDetails(data: Any) {  }
 }
 
