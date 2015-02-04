@@ -24,17 +24,17 @@ extends Transitions
   // * a floating action button, showing 'icon' and dispatching touch to
   //   'onClick'
   // * the View created by the second block arg.
-  def fabCorner(icon: String)(onClick: ⇒ Unit)(contentView: ⇒ Ui[View]) =
+  def fabCorner(icon: String)(contentView: ⇒ Ui[View]) =
   {
     val geom = rlp(↧, ↦) + margin(right = 16 dp, bottom = 48 dp)
     RL(rlp(↔, ↕))(
       content(contentView),
       progressUi <~ geom,
-      fabUi(icon)(onClick) <~ geom
+      fabUi(icon) <~ geom
     )
   }
 
-  def fabBetween(icon: String, parallax: Boolean = false)(onClick: ⇒ Unit)
+  def fabBetween(icon: String, parallax: Boolean = false)
   (headerView: Ui[View], contentView: Ui[View]) =
   {
     val geom = rlp(↦, alignBottom(Id.header)) +
@@ -46,20 +46,22 @@ extends Transitions
       header(RL(rlp(↔, ↕))(headerView) <~ bgCol("header")) <~ Id.header <~
         rlp(↥, ↔, Height(headerHeight)),
       progressUi <~ geom,
-      fabUi(icon)(onClick) <~ geom
+      fabUi(icon) <~ geom
     )
   }
 
   def progressUi = w[ProgressBar] <~ indeterminate <~ hide <~
         Width(res.dimen("fab_width").toInt) <~ whore(progress)
 
-  def fabUi(icon: String)(onClick: ⇒ Unit) = {
+  def fabUi(icon: String) = {
     fab() <~
       image(icon) <~
       imageScale(ImageView.ScaleType.CENTER) <~
       Fab.colors("colorAccentStrong", "colorAccent") <~
-      On.click { Ui(onClick) }
+      On.click { Ui(fabClick()) }
   }
+
+  def fabClick() {  }
 
   // Runs 'task' in a future while changing the fab to a circular progress
   // indicator. After completion, 'snack' is shown as a toast, if nonempty.
