@@ -154,8 +154,8 @@ class Widgets(implicit a: Activity)
     transition.addTarget(transName)
   }
 
-  def widget[A <: View](view: Ui[A], transName: String, transition: Transition,
-    duration: Long = 300) =
+  def widget[A <: View](view: Ui[A], transName: String = "widget",
+    transition: Transition = new TransitionSet, duration: Long = 300) =
   {
     addTransitionSet(transName, transition, duration)
     Widget(view, transName, transition)
@@ -191,5 +191,12 @@ class Widgets(implicit a: Activity)
 
   def transitions = new TransitionSet {
     transitionSet foreach(addTransition)
+  }
+
+  def text(transName: String = "widget",
+    transition: Transition = new TransitionSet, duration: Long = 300)
+  (implicit a: macroid.ActivityContext) =
+  {
+    widget(w[TextView], transName, transition, duration)
   }
 }
