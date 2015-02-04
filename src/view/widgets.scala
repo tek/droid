@@ -42,7 +42,7 @@ extends Transitions
         bottom = res.dimen("fab_margin_normal_minus").toInt)
     val contentParams = rlp(parallax ? ↥ / below(Id.header))
     RL(rlp(↔, ↕))(
-      content(contentView) <~ contentParams <~ rlp(↕),
+      content(contentView) <~ contentParams,
       header(RL(rlp(↔, ↕))(headerView) <~ bgCol("header")) <~ Id.header <~
         rlp(↥, ↔, Height(headerHeight)),
       progressUi <~ geom,
