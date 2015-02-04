@@ -20,6 +20,8 @@ class WidgetBase[A <: View](transName: String)
   val ui = slut[A]
 
   def tweak = transitionName(transName)
+
+  def <~[B <: Tweak[A]](t: B) = ui <~ t
 }
 
 case class Widget[A <: View](view: Ui[A], transName: String,
@@ -33,8 +35,6 @@ extends WidgetBase[A](transName)
 
   def apply() = get
 
-  def <~[B <: Tweak[A]](t: B) = ui <~ t
-
   def <~~[B <: Snail[A]](t: B)(implicit ec: ExecutionContext) = ui <~~ t
 }
 
@@ -44,8 +44,6 @@ case class Layout[A <: ViewGroup](view: (Ui[View]*) ⇒ Ui[A], transName: String
 extends WidgetBase[A](transName)
 {
   def apply(children: Ui[View]*) = view(children: _*) <~ ui
-
-  def <~[B <: Tweak[A]](t: B) = ui <~ t
 }
 
 object TransitionSets
