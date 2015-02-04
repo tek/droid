@@ -31,7 +31,9 @@ extends WidgetBase[A](transName)
 
   lazy val get = create <~ tweak
 
-  def <~[B <: Tweak[A]](t: B) = get <~ t
+  def apply() = get
+
+  def <~[B <: Tweak[A]](t: B) = ui <~ t
 
   def <~~[B <: Snail[A]](t: B)(implicit ec: ExecutionContext) = ui <~~ t
 }
@@ -41,7 +43,7 @@ case class Layout[A <: ViewGroup](view: (Ui[View]*) ⇒ Ui[A], transName: String
 (implicit a: Activity)
 extends WidgetBase[A](transName)
 {
-  def apply(children: Ui[View]*) = view(children: _*)
+  def apply(children: Ui[View]*) = view(children: _*) <~ ui
 
   def <~[B <: Tweak[A]](t: B) = ui <~ t
 }
@@ -127,7 +129,8 @@ extends HasActivity
   object CommonWidgets
   extends Widgets
   {
-    def pxCtor(c: Ui[View]*) = l[ParallaxHeader](c: _*)
+    private def pxCtor(c: Ui[View]*) = l[ParallaxHeader](c: _*)
+
     val header = layout(pxCtor _, "header", slideTop)
 
     val content = layout(FL(), "content", fade, duration = 400)

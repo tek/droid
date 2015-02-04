@@ -16,34 +16,34 @@ trait Fab
 extends Transitions
 { self: MainFragment ⇒
 
-  val progress = slut[ProgressBar]
+  import CommonWidgets._
 
-  def fab = CommonWidgets.fab.ui
+  val progress = slut[ProgressBar]
 
   // Create a wrapper layout containing:
   // * a floating action button, showing 'icon' and dispatching touch to
   //   'onClick'
   // * the View created by the second block arg.
-  def fabCorner(icon: String)(onClick: ⇒ Unit)(content: ⇒ Ui[View]) =
+  def fabCorner(icon: String)(onClick: ⇒ Unit)(contentView: ⇒ Ui[View]) =
   {
     val geom = rlp(↧, ↦) + margin(right = 16 dp, bottom = 48 dp)
-    RL()(
-      CommonWidgets.content(content),
+    RL(rlp(↔, ↕))(
+      content(contentView),
       progressUi <~ geom,
       fabUi(icon)(onClick) <~ geom
     )
   }
 
   def fabBetween(icon: String, parallax: Boolean = false)(onClick: ⇒ Unit)
-  (header: Ui[View], content: Ui[View]) =
+  (headerView: Ui[View], contentView: Ui[View]) =
   {
     val geom = rlp(↦, alignBottom(Id.header)) +
       margin(right = 16 dp,
         bottom = res.dimen("fab_margin_normal_minus").toInt)
     val contentParams = rlp(parallax ? ↥ / below(Id.header))
-    RL(↔, ↕)(
-      CommonWidgets.content(content) <~ contentParams <~ rlp(↕),
-      CommonWidgets.header(header <~ bgCol("header")) <~ Id.header <~
+    RL(rlp(↔, ↕))(
+      content(contentView) <~ contentParams <~ rlp(↕),
+      header(RL(rlp(↔, ↕))(headerView) <~ bgCol("header")) <~ Id.header <~
         rlp(↥, ↔, Height(headerHeight)),
       progressUi <~ geom,
       fabUi(icon)(onClick) <~ geom
@@ -54,10 +54,10 @@ extends Transitions
         Width(res.dimen("fab_width").toInt) <~ whore(progress)
 
   def fabUi(icon: String)(onClick: ⇒ Unit) = {
-    CommonWidgets.fab <~
+    fab() <~
       image(icon) <~
       imageScale(ImageView.ScaleType.CENTER) <~
-      T.Fab.colors("colorAccentStrong", "colorAccent") <~
+      Fab.colors("colorAccentStrong", "colorAccent") <~
       On.click { Ui(onClick) }
   }
 
@@ -94,7 +94,7 @@ extends Transitions
     })
   }
 
-  def fabVisible = fab.exists(_.isShown)
+  def fabVisible = fab.ui.exists(_.isShown)
 
   def showFab() {
     if(!fabVisible) changeFabVisibility(fadeIn(fadeTime))
@@ -121,6 +121,6 @@ extends Transitions
   def scrolled(view: ViewGroup, height: Int) {
     scrollHeight = height
     updateFabPosition()
-    runUi(CommonWidgets.header <~ parallaxScroll(height))
+    runUi(header <~ parallaxScroll(height))
   }
 }
