@@ -1,5 +1,7 @@
 package tryp.droid.tweaks
 
+import java.net.URL
+
 import scala.language.reflectiveCalls
 
 import android.widget._
@@ -77,6 +79,10 @@ extends ResourcesAccess
     def minWidth(name: String) = {
       val width = res.d(name, Some("min_width")).toInt
       Tweak[TextView](_.setMinWidth(width))
+    }
+
+    def color(name: String) = Tweak[TextView] {
+      _.setTextColor(res.c(name, Some("color")))
     }
   }
 
@@ -166,6 +172,9 @@ extends Text
   def bg(drawable: Drawable) = Tweak[View](_.setBackgroundDrawable(drawable))
 
   def bg(color: Int) = Tweak[View](_.setBackgroundColor(color))
+
+  def bg(url: URL): Tweak[View] =
+    bg(Drawable.createFromStream(url.openConnection().getInputStream(), ""))
 
   def inputType(types: Int) = Tweak[TextView](_.setInputType(types))
 

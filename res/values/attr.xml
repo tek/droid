@@ -20,6 +20,7 @@
   <attr name='drawer_main_bg' format='color|reference'/>
   <attr name='drawer_item_bg' format='color|reference'/>
   <attr name='drawer_item_selected_bg' format='color|reference'/>
+  <attr name='drawer_header_text_color' format='color|reference'/>
   <attr name='toolbar_bg' format='color|reference'/>
   <attr name='toolbar_text' format='color|reference'/>
   <attr name='drawer_arrow_color' format='color|reference'/>

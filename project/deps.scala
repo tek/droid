@@ -19,6 +19,7 @@ extends tryp.Deps
       aar("com.android.support" % "cardview-v7" % "21.+"),
       "com.google.android.gms" % "play-services-maps" % "6.+",
       "com.google.android.gms" % "play-services-location" % "6.+",
+      "com.google.android.gms" % "play-services-plus" % "6.+",
       aar("org.macroid" %% "macroid" % "2.0.0-SNAPSHOT"),
       "com.typesafe.akka" %% "akka-actor" % "2.+",
       "org.scalaz" %% "scalaz-core" % "7.+",
