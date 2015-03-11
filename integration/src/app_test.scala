@@ -16,7 +16,7 @@ with BroadcastSend
 with HasActivity
 {
   def view = null
-  def activity: A = getActivity
+  implicit def activity: A = getActivity
   def instr: Instrumentation = getInstrumentation
   lazy val solo: Solo = new Solo(instr, activity)
 
