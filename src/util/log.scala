@@ -6,7 +6,7 @@ import akka.actor.ActorSelection
 
 import tryp.droid.Messages
 
-class LogBase {
+trait LogBase {
   var tag = "tryp"
 
   def d(message: String) { }
@@ -66,7 +66,7 @@ object StdoutLog extends LogBase {
   override def t(message: String) = println(message)
 }
 
-object DebugLog extends AndroidLog
+trait InternalLog extends LogBase
 {
   var buffer = Buffer[String]()
 
@@ -107,3 +107,9 @@ object DebugLog extends AndroidLog
     super.t(message)
   }
 }
+
+object InternalLog extends InternalLog
+
+object DebugLog
+extends AndroidLog
+with InternalLog

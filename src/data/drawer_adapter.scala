@@ -75,7 +75,8 @@ extends SimpleRecyclerAdapter[DrawerViewHolder, DrawerItem]
       w[TextView] <~ whore(email) <~ textTweaks <~ Id.email <~
         rlp(↤, ↧) <~ margin(left = 8 dp, bottom = 8 dp),
       w[RoundedImageView] <~ whore(avatar) <~
-        imageCornerRadius(photoSize / 2) <~
+        imageCornerRadius(photoSize / 2) <~ imageBorderWidth(2) <~
+        imageBorderColor("header_photo") <~
         rlp(Width(photoSize), Height(photoSize), ↥, ↤) <~ margin(all = 16 dp)
     )
     GPlusHeaderHolder(getUi(layout), name, email, avatar)

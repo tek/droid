@@ -217,6 +217,16 @@ extends Text
   def imageCornerRadius(dist: Float) = Tweak[RoundedImageView] {
     _.setCornerRadius(dist)
   }
+
+  def imageBorderWidth(width: Float) = Tweak[RoundedImageView] {
+    _.setBorderWidth(width)
+  }
+
+  def imageBorderColor(name: String)(implicit c: Context, ns: ResourceNamespace
+    = GlobalResourceNamespace) =
+    Tweak[RoundedImageView] {
+    _.setBorderColor(res.c(name, Some("border_color")))
+  }
 }
 
 object Misc extends Misc

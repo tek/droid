@@ -19,7 +19,7 @@ extends Util
 
   def Log = {
     if (Env.release) {
-      tryp.droid.meta.NullLog
+      tryp.droid.meta.InternalLog
     }
     else if (Env.unittest) {
       tryp.droid.meta.StdoutLog
