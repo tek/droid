@@ -73,7 +73,7 @@ object GPlus
       }
     }
 
-    def withImage(callback: Drawable ⇒ Unit) {
+    def withPhoto(callback: Drawable ⇒ Unit) {
       drawable(photoUrl, callback)
     }
 

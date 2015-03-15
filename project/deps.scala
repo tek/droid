@@ -27,7 +27,8 @@ extends tryp.Deps
       "com.github.andkulikov" % "transitions-everywhere" % "1.+",
       "com.melnykov" % "floatingactionbutton" % "1.+",
       "com.android.support" % "support-v13" % "21.+",
-      "com.github.nscala-time" %% "nscala-time" % "1.+"
+      "com.github.nscala-time" %% "nscala-time" % "1.+",
+      "com.makeramen" % "roundedimageview" % "2.+"
     )
   )
 

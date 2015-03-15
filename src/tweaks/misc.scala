@@ -18,6 +18,8 @@ import android.graphics.drawable.Drawable
 
 import android.transitions.everywhere.TransitionManager
 
+import com.makeramen.roundedimageview.RoundedImageView
+
 import macroid._
 import macroid.FullDsl._
 import macroid.contrib.Layouts._
@@ -107,13 +109,21 @@ extends Text
   def imageScale(sType: ImageView.ScaleType) =
     Tweak[ImageView](_.setScaleType(sType))
 
-  def image(name: String)(implicit c: Context) = {
-    Tweak[ImageView](_.setImageDrawable(theme.drawable(name)))
-  }
+  def image(name: String)(implicit c: Context) =
+    imageDrawable(theme.drawable(name))
+
 
   def imageC(name: String)(implicit c: Context) = {
     imageFitCenter + image(name)
   }
+
+  def imageDrawable(drawable: Drawable)(implicit c: Context) =
+    Tweak[ImageView] { _.setImageDrawable(drawable) }
+
+  def imageDrawableC(drawable: Drawable)(implicit c: Context) = {
+    imageFitCenter + imageDrawable(drawable)
+  }
+
 
   def bgCol(name: String)(
     implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
@@ -202,6 +212,10 @@ extends Text
     }
     val g = new GestureDetector(a, gl)
     FuncOn.touch { (v: View, e: MotionEvent) ⇒ Ui(g.onTouchEvent(e)) }
+  }
+
+  def imageCornerRadius(dist: Float) = Tweak[RoundedImageView] {
+    _.setCornerRadius(dist)
   }
 }
 

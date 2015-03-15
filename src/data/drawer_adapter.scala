@@ -5,9 +5,11 @@ import android.support.v7.widget.RecyclerView
 import android.graphics.{Color,PorterDuff}
 
 import macroid.FullDsl._
-import macroid.contrib.TextTweaks.medium
+import macroid.contrib.TextTweaks.{medium, bold}
 
 import akka.actor.ActorSelection
+
+import com.makeramen.roundedimageview.RoundedImageView
 
 import tryp.droid.Macroid._
 import tryp.droid.res.PrefixResourceNamespace
@@ -24,7 +26,7 @@ case class NavViewHolder(view: View, text: Slot[TextView])
 extends DrawerViewHolder(view)
 
 case class GPlusHeaderHolder(view: View, name: Slot[TextView],
-  email: Slot[TextView])
+  email: Slot[TextView], avatar: Slot[RoundedImageView])
 extends DrawerViewHolder(view)
 {
   def text = name
@@ -64,14 +66,19 @@ extends SimpleRecyclerAdapter[DrawerViewHolder, DrawerItem]
   def gPlusHolder = {
     val name = slut[TextView]
     val email = slut[TextView]
-    val textTweaks = txt.ellipsize() + padding(bottom = 8 dp, left = 8 dp) +
-      txt.color("header_text")
+    val avatar = slut[RoundedImageView]
+    val photoSize = 64 dp
+    val textTweaks = txt.ellipsize() + txt.color("header_text")
     val layout = RL(flp(↔, Height(res.d("header_height"))))(
-      w[TextView] <~ whore(name) <~ textTweaks <~ rlp(↤, above(Id.email)),
+      w[TextView] <~ whore(name) <~ textTweaks <~ rlp(↤, above(Id.email)) <~
+        bold <~ margin(left = 8 dp, top = 16 dp),
       w[TextView] <~ whore(email) <~ textTweaks <~ Id.email <~
-        rlp(↤, ↧)
+        rlp(↤, ↧) <~ margin(left = 8 dp, bottom = 8 dp),
+      w[RoundedImageView] <~ whore(avatar) <~
+        imageCornerRadius(photoSize / 2) <~
+        rlp(Width(photoSize), Height(photoSize), ↥, ↤) <~ margin(all = 16 dp)
     )
-    GPlusHeaderHolder(getUi(layout), name, email)
+    GPlusHeaderHolder(getUi(layout), name, email, avatar)
   }
 
   def onBindViewHolder(holder: DrawerViewHolder, position: Int) {
@@ -93,12 +100,15 @@ extends SimpleRecyclerAdapter[DrawerViewHolder, DrawerItem]
 
   def bindGPlusHeader(holder: DrawerViewHolder, header: GPlusHeader) = {
     holder match {
-      case GPlusHeaderHolder(view, name, email) ⇒
+      case GPlusHeaderHolder(view, name, email, avatar) ⇒
         GPlus { account ⇒
           account.withCover { cover ⇒
             cover.setColorFilter(Color.argb(80, 0, 0, 0),
               PorterDuff.Mode.DARKEN)
             runUi(view <~ bg(cover))
+          }
+          account.withPhoto { photo ⇒
+            runUi(avatar <~ imageDrawableC(photo))
           }
           runUi(
             name <~ account.name.map { n ⇒ txt.literal(n) },
