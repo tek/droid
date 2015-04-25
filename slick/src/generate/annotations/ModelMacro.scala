@@ -17,8 +17,6 @@ class Entity(name: String = null, timestamps: Boolean = false) extends StaticAnn
 
 class Col(name: String = null, tpe: String = null, index: Boolean = false, unique: Boolean = false, pk: Boolean = false, onDelete: ForeignKeyAction = ForeignKeyAction.NoAction, onUpdate: ForeignKeyAction = ForeignKeyAction.NoAction, oldName: String = null) extends StaticAnnotation
 
-//class Part extends StaticAnnotation
-
 trait Timestamps
 
 trait Part
@@ -385,169 +383,169 @@ class SlickMacro(val c: Context)
     object FldDesc {
       def apply(fieldTree: Tree, clsTree: Tree, allClasses: List[ClsDesc]) = {
         val ValDef(mod, name, tpt, rhs) = fieldTree
-        if (reservedNames.exists(_ == name.decodedName.toString))
-          c.abort(c.enclosingPosition, s"Column with name ${name.decodedName.toString} not allowed")
-        else {
-          val flags = Set[FieldFlag]()
-          val annotation = mod.annotations.headOption.map(_.children.head.toString)
-          var colType: String = null
-          var colName: String = asColName(name.decodedName.toString)
-          var onDelete: String = "NoAction"
-          var onUpdate: String = "NoAction"
+        if (reservedNames.contains(name.decodedName.toString))
+          c.abort(c.enclosingPosition,
+            s"Column with name ${name.decodedName.toString} not allowed")
+        val flags = Set[FieldFlag]()
+        val annotation = mod.annotations.headOption.map(_.children.head.toString)
+        var colType: String = null
+        var colName: String = asColName(name.decodedName.toString)
+        var onDelete: String = "NoAction"
+        var onUpdate: String = "NoAction"
 
-          mod.annotations.map(x ⇒ x.toString).foreach {
-            annotation ⇒
-              val params = annotation.substring(annotation.indexOf('(') + 1, annotation.lastIndexOf(')')).split(',').map(_.split("="))
-              if (annotation startsWith "new Col(") {
-                val paramsMap = Map((0 -> "name"), (1 -> "tpe"), (2 -> "index"), (3 -> "unique"), (4 -> "pk"), (4 -> "onDelete"), (5 -> "onUpdate"))
-                val named = params.view.zipWithIndex.map {
-                  case (param, i) ⇒
-                    if (param.length == 1)
-                      (paramsMap(i), param(0).trim)
-                    else {
-                      (param(0).trim, param(1).trim)
-                    }
-                }
-                named.foreach {
-                  param ⇒
-
-                    param._1 match {
-                      case "onDelete" ⇒ onDelete = param._2.replaceAll("^.*\\.", "")
-                      case "onUpdate" ⇒ onUpdate = param._2.replaceAll("^.*\\.", "")
-                      case "name" ⇒ colName = param._2.replaceAll( """^"|"$""", "")
-                      case "tpe" ⇒
-                        flags += FieldFlag.DBTYPE
-                        colType = param._2.replaceAll( """^"|"$""", "")
-                      case "index" if param._2.contains("true") ⇒ flags += FieldFlag.INDEX
-                      case "unique" if param._2.contains("true") ⇒
-                        flags += FieldFlag.INDEX
-                        flags += FieldFlag.UNIQUE
-                      case "pk" if param._2.contains("true") ⇒
-                        flags += FieldFlag.PK
-                    }
-                }
-              } else
-                c.abort(c.enclosingPosition, s"Invalid $annotation on column ${name.decodedName.toString}")
-          }
-          def buildTypeName(tree: Tree): String = {
-            tree match {
-              case Select(subtree, name) ⇒
-                buildTypeName(subtree) + "." + name.decodedName.toString
-              case AppliedTypeTree(subtree, args) ⇒
-                buildTypeName(subtree) + "[" + args.map(it ⇒ buildTypeName(it)).mkString(",") + "]"
-              case Ident(x) ⇒
-                x.decodedName.toString
-              case other ⇒ other.toString
-            }
-          }
-          var typeName: String = buildTypeName(tpt)
-          val clsDesc: Option[ClsDesc] = tpt match {
-            case Ident(tpe) ⇒
-              val clsDesc = allClasses.find(_.name == typeName)
-              clsDesc.foreach {
-                it ⇒
-                  if (it.entity) {
-                    flags += FieldFlag.CASE
-                  } else if (it.part)
-                    flags += FieldFlag.PART
-              }
-              clsDesc
-            case AppliedTypeTree(Ident(option), tpe :: Nil) if option.decodedName.toString == "Option" ⇒
-              typeName = buildTypeName(tpe)
-              flags += FieldFlag.OPTION
-              val clsDesc = allClasses.find(_.name == typeName)
-              clsDesc.foreach {
-                it ⇒
-                  if (it.entity)
-                    flags += FieldFlag.CASE
-              }
-              clsDesc
-            case AppliedTypeTree(Ident(list), tpe :: Nil) if list.decodedName.toString == "List" ⇒
-              typeName = buildTypeName(tpe)
-              val clsDesc = allClasses.find(_.name == typeName).getOrElse(c.abort(c.enclosingPosition, s"List not allowed here ${name.decodedName.toString} not allowed"))
-
-              if (clsDesc.entity)
-                flags ++= Set(FieldFlag.CASE, FieldFlag.LIST)
-              else
-                c.abort(c.enclosingPosition, s"only entity allowed here ${name.decodedName.toString}:${clsDesc.name}")
-              Some(clsDesc)
-            case _ ⇒ None
-          }
-          val tree = mod.annotations
-          tree.foreach {
-            case Apply(Select(New(Ident(index)), _), List(Literal(Constant(unique)))) ⇒
-              if (index.decodedName.toString == "Index") {
-                flags += FieldFlag.INDEX
-                if (unique == true) flags += FieldFlag.UNIQUE
-              }
-
-            case Apply(Select(New(Ident(pk)), _), _) ⇒
-              if (pk.decodedName.toString == "PK") {
-                flags += FieldFlag.PK
-              }
-
-            case Apply(Select(New(Ident(dbType)), _), List(Literal(Constant(dbTypeValue)))) ⇒
-              if (dbType.decodedName.toString == "Type") {
-                flags += FieldFlag.DBTYPE
-                colType = dbTypeValue.asInstanceOf[String]
-              }
-          }
-
-          val ClassDef(_, clsName, _, Template(_, _, body)) = clsTree
-          body.foreach {
-            it ⇒
-              val cns = it match {
-                case Apply(Ident(constraintsTerm), List(Block(stats, expr))) ⇒
-                  Some(plural(decapitalize(clsName.decodedName.toString)), stats :+ expr)
-                case Apply(Apply(Ident(constraintsTerm), List(Literal(Constant(arg)))), List(Block(stats, expr))) ⇒
-                  Some(arg.toString, stats :+ expr)
-                case _ ⇒ None
-              }
-              cns foreach {
-                it ⇒
-                  allClasses.find(_.name == clsName.decodedName.toString).foreach {
-                    x ⇒
-                      x.plural = it._1
+        mod.annotations.map(x ⇒ x.toString).foreach {
+          annotation ⇒
+            val params = annotation.substring(annotation.indexOf('(') + 1, annotation.lastIndexOf(')')).split(',').map(_.split("="))
+            if (annotation startsWith "new Col(") {
+              val paramsMap = Map((0 -> "name"), (1 -> "tpe"), (2 -> "index"), (3 -> "unique"), (4 -> "pk"), (4 -> "onDelete"), (5 -> "onUpdate"))
+              val named = params.view.zipWithIndex.map {
+                case (param, i) ⇒
+                  if (param.length == 1)
+                    (paramsMap(i), param(0).trim)
+                  else {
+                    (param(0).trim, param(1).trim)
                   }
-                  (it._2).foreach {
-                    s ⇒
-                      val st = s.toString.replace("scala.Tuple", "Tuple").split('.').map(_.trim)
-                      if (st.length >= 2) {
-                        val fieldNames = {
-                          if (st(0).endsWith(")")) {
-                            st(0).substring(st(0).indexOf('(') + 1, st(0).lastIndexOf(')')).split(',').map(_.trim)
-                          } else {
-                            Array(st(0).trim)
-                          }
-                        }
-                        if (fieldNames.contains(name.decodedName.toString)) {
-                          st.drop(1).foreach {
-                            s ⇒
-                              val method = s.substring(0, s.indexOf('(')).trim
-                              val arg = s.substring(s.indexOf('(') + 1, s.lastIndexOf(')'))
-                              method match {
-                                case "is" | "are" ⇒
-                                  flags += FieldFlag.INDEX
-                                  if (arg == "unique") flags += FieldFlag.UNIQUE
-                                case "withName" ⇒
-                                  colName = arg.substring(1, arg.length - 1)
-                                case "withType" ⇒
-                                  flags += FieldFlag.DBTYPE; colType = arg.substring(1, arg.length - 1)
-                                case "onUpdate" ⇒ onUpdate = arg
-                                case "onDelete" ⇒ onDelete = arg
-                              }
-                          }
+              }
+              named.foreach {
+                param ⇒
+
+                  param._1 match {
+                    case "onDelete" ⇒ onDelete = param._2.replaceAll("^.*\\.", "")
+                    case "onUpdate" ⇒ onUpdate = param._2.replaceAll("^.*\\.", "")
+                    case "name" ⇒ colName = param._2.replaceAll( """^"|"$""", "")
+                    case "tpe" ⇒
+                      flags += FieldFlag.DBTYPE
+                      colType = param._2.replaceAll( """^"|"$""", "")
+                    case "index" if param._2.contains("true") ⇒ flags += FieldFlag.INDEX
+                    case "unique" if param._2.contains("true") ⇒
+                      flags += FieldFlag.INDEX
+                      flags += FieldFlag.UNIQUE
+                    case "pk" if param._2.contains("true") ⇒
+                      flags += FieldFlag.PK
+                  }
+              }
+            } else
+              c.abort(c.enclosingPosition, s"Invalid $annotation on column ${name.decodedName.toString}")
+        }
+        def buildTypeName(tree: Tree): String = {
+          tree match {
+            case Select(subtree, name) ⇒
+              buildTypeName(subtree) + "." + name.decodedName.toString
+            case AppliedTypeTree(subtree, args) ⇒
+              buildTypeName(subtree) + "[" + args.map(it ⇒ buildTypeName(it)).mkString(",") + "]"
+            case Ident(x) ⇒
+              x.decodedName.toString
+            case other ⇒ other.toString
+          }
+        }
+        var typeName: String = buildTypeName(tpt)
+        val clsDesc: Option[ClsDesc] = tpt match {
+          case Ident(tpe) ⇒
+            val clsDesc = allClasses.find(_.name == typeName)
+            clsDesc.foreach {
+              it ⇒
+                if (it.entity) {
+                  flags += FieldFlag.CASE
+                } else if (it.part)
+                  flags += FieldFlag.PART
+            }
+            clsDesc
+          case AppliedTypeTree(Ident(option), tpe :: Nil) if option.decodedName.toString == "Option" ⇒
+            typeName = buildTypeName(tpe)
+            flags += FieldFlag.OPTION
+            val clsDesc = allClasses.find(_.name == typeName)
+            clsDesc.foreach {
+              it ⇒
+                if (it.entity)
+                  flags += FieldFlag.CASE
+            }
+            clsDesc
+          case AppliedTypeTree(Ident(list), tpe :: Nil) if list.decodedName.toString == "List" ⇒
+            typeName = buildTypeName(tpe)
+            val clsDesc = allClasses.find(_.name == typeName).getOrElse(c.abort(c.enclosingPosition, s"List not allowed here ${name.decodedName.toString} not allowed"))
+
+            if (clsDesc.entity)
+              flags ++= Set(FieldFlag.CASE, FieldFlag.LIST)
+            else
+              c.abort(c.enclosingPosition, s"only entity allowed here ${name.decodedName.toString}:${clsDesc.name}")
+            Some(clsDesc)
+          case _ ⇒ None
+        }
+        val tree = mod.annotations
+        tree.foreach {
+          case Apply(Select(New(Ident(index)), _), List(Literal(Constant(unique)))) ⇒
+            if (index.decodedName.toString == "Index") {
+              flags += FieldFlag.INDEX
+              if (unique == true) flags += FieldFlag.UNIQUE
+            }
+
+          case Apply(Select(New(Ident(pk)), _), _) ⇒
+            if (pk.decodedName.toString == "PK") {
+              flags += FieldFlag.PK
+            }
+
+          case Apply(Select(New(Ident(dbType)), _), List(Literal(Constant(dbTypeValue)))) ⇒
+            if (dbType.decodedName.toString == "Type") {
+              flags += FieldFlag.DBTYPE
+              colType = dbTypeValue.asInstanceOf[String]
+            }
+        }
+
+        val ClassDef(_, clsName, _, Template(_, _, body)) = clsTree
+        body.foreach {
+          it ⇒
+            val cns = it match {
+              case Apply(Ident(constraintsTerm), List(Block(stats, expr))) ⇒
+                Some(plural(decapitalize(clsName.decodedName.toString)), stats :+ expr)
+              case Apply(Apply(Ident(constraintsTerm), List(Literal(Constant(arg)))), List(Block(stats, expr))) ⇒
+                Some(arg.toString, stats :+ expr)
+              case _ ⇒ None
+            }
+            cns foreach {
+              it ⇒
+                allClasses.find(_.name == clsName.decodedName.toString).foreach {
+                  x ⇒
+                    x.plural = it._1
+                }
+                (it._2).foreach {
+                  s ⇒
+                    val st = s.toString.replace("scala.Tuple", "Tuple").split('.').map(_.trim)
+                    if (st.length >= 2) {
+                      val fieldNames = {
+                        if (st(0).endsWith(")")) {
+                          st(0).substring(st(0).indexOf('(') + 1, st(0).lastIndexOf(')')).split(',').map(_.trim)
+                        } else {
+                          Array(st(0).trim)
                         }
                       }
-                  }
-              }
-          }
-          new FldDesc(name.decodedName.toString, colName, typeName, flags, Option(colType), onDelete, onUpdate, clsDesc, fieldTree)
+                      if (fieldNames.contains(name.decodedName.toString)) {
+                        st.drop(1).foreach {
+                          s ⇒
+                            val method = s.substring(0, s.indexOf('(')).trim
+                            val arg = s.substring(s.indexOf('(') + 1, s.lastIndexOf(')'))
+                            method match {
+                              case "is" | "are" ⇒
+                                flags += FieldFlag.INDEX
+                                if (arg == "unique") flags += FieldFlag.UNIQUE
+                              case "withName" ⇒
+                                colName = arg.substring(1, arg.length - 1)
+                              case "withType" ⇒
+                                flags += FieldFlag.DBTYPE; colType = arg.substring(1, arg.length - 1)
+                              case "onUpdate" ⇒ onUpdate = arg
+                              case "onDelete" ⇒ onDelete = arg
+                            }
+                        }
+                      }
+                    }
+                }
+            }
         }
+        new FldDesc(name.decodedName.toString, colName, typeName, flags, Option(colType), onDelete, onUpdate, clsDesc, fieldTree)
       }
     }
 
-    def mkCaseClass(desc: ClsDesc, augment: Boolean = true)(implicit caseDefs: List[ClsDesc]): ClassDef = {
+    def mkCaseClass(desc: ClsDesc, augment: Boolean = true)
+    (implicit caseDefs: List[ClsDesc]): ClassDef = {
       if (desc.part) {
         desc.tree.asInstanceOf[ClassDef]
       } else {
@@ -584,9 +582,9 @@ class SlickMacro(val c: Context)
           it ⇒
             q"""
             def ${TermName("load" + it.name.capitalize)} = for {
-        	  	x <- self.${TermName(objectName(assocTableName(desc.name, it.typeName)))} if x.${TermName(colIdName(desc.name))} === id
+              x <- self.${TermName(objectName(assocTableName(desc.name, it.typeName)))} if x.${TermName(colIdName(desc.name))} === id
               y <- self.${TermName(objectName(it.typeName))} if x.${TermName(colIdName(it.typeName))} === y.id
-        	} yield(y)
+          } yield(y)
             """
         }
         val one2manyDefAdds = desc.assocs.map { it ⇒
@@ -756,20 +754,20 @@ class SlickMacro(val c: Context)
         if (augment)
           if (desc.timestamps)
             s"""def * = (id.?, ${mkTilde(desc.simpleValDefs)}, dateCreated, lastUpdated).shaped <> ({
-		        case (id, ${mkCase(desc.simpleValDefs)}, dateCreated, lastUpdated) ⇒ ${desc.name}(id, ${mkCaseApply(desc.simpleValDefs)}, dateCreated, lastUpdated)
-		      }, { x : ${desc.name} ⇒ Some((x.id, ${mkCaseUnapply(desc.simpleValDefs)}, x.dateCreated, x.lastUpdated))
-		      })"""
+            case (id, ${mkCase(desc.simpleValDefs)}, dateCreated, lastUpdated) ⇒ ${desc.name}(id, ${mkCaseApply(desc.simpleValDefs)}, dateCreated, lastUpdated)
+          }, { x : ${desc.name} ⇒ Some((x.id, ${mkCaseUnapply(desc.simpleValDefs)}, x.dateCreated, x.lastUpdated))
+          })"""
           else
             s"""def * = (id.?, ${mkTilde(desc.simpleValDefs)}).shaped <> ({
-		        case (id, ${mkCase(desc.simpleValDefs)}) ⇒ ${desc.name}(id, ${mkCaseApply(desc.simpleValDefs)})
-		      }, { x : ${desc.name} ⇒ Some((x.id, ${mkCaseUnapply(desc.simpleValDefs)}))
-		      })"""
+            case (id, ${mkCase(desc.simpleValDefs)}) ⇒ ${desc.name}(id, ${mkCaseApply(desc.simpleValDefs)})
+          }, { x : ${desc.name} ⇒ Some((x.id, ${mkCaseUnapply(desc.simpleValDefs)}))
+          })"""
         else
         //s"""def * = (${mkTilde(desc.fields toList)}).shaped <> (${desc.name}.tupled, ${desc.name}.unapply _)"""
           s"""def * = (${mkTilde(desc.fields toList)}).shaped <> ({
-		        case (${mkCase(desc.simpleValDefs)}) ⇒ ${desc.name}( ${mkCaseApply(desc.simpleValDefs)})
-		      }, { x : ${desc.name} ⇒ Some((${mkCaseUnapply(desc.simpleValDefs)}))
-		      })"""
+            case (${mkCase(desc.simpleValDefs)}) ⇒ ${desc.name}( ${mkCaseApply(desc.simpleValDefs)})
+          }, { x : ${desc.name} ⇒ Some((${mkCaseUnapply(desc.simpleValDefs)}))
+          })"""
 
       }
       c.parse(expr)
@@ -779,14 +777,14 @@ class SlickMacro(val c: Context)
       val expr = {
         if (desc.timestamps)
           s"""def forInsert = (${mkTilde(desc.simpleValDefs)}, dateCreated, lastUpdated).shaped <> ({
-		        case (${mkCase(desc.simpleValDefs)}, dateCreated, lastUpdated) ⇒ ${desc.name}(None, ${mkCaseApply(desc.simpleValDefs)}, dateCreated, lastUpdated)
-		      }, { x : ${desc.name} ⇒ Some((${mkCaseUnapply(desc.simpleValDefs)}, x.dateCreated, x.lastUpdated))
-		      })"""
+            case (${mkCase(desc.simpleValDefs)}, dateCreated, lastUpdated) ⇒ ${desc.name}(None, ${mkCaseApply(desc.simpleValDefs)}, dateCreated, lastUpdated)
+          }, { x : ${desc.name} ⇒ Some((${mkCaseUnapply(desc.simpleValDefs)}, x.dateCreated, x.lastUpdated))
+          })"""
         else
           s"""def forInsert = (${mkTilde(desc.simpleValDefs)}).shaped <> ({
-		        case (${mkCase(desc.simpleValDefs)}) ⇒ ${desc.name}(None, ${mkCaseApply(desc.simpleValDefs)})
-		      }, { x : ${desc.name} ⇒ Some((${mkCaseUnapply(desc.simpleValDefs)}))
-		      })"""
+            case (${mkCase(desc.simpleValDefs)}) ⇒ ${desc.name}(None, ${mkCaseApply(desc.simpleValDefs)})
+          }, { x : ${desc.name} ⇒ Some((${mkCaseUnapply(desc.simpleValDefs)}))
+          })"""
 
       }
       c.parse(expr)
@@ -871,18 +869,17 @@ class SlickMacro(val c: Context)
             //val fkAction = if (colInfo.isDefined && colInfo.get.onDelete != null) colInfo.get.onDelete else "ForeignKeyAction.NoAction"
             c.parse( s"""def ${it.name} = foreignKey("${it.name.toLowerCase}${desc.name}2${it.typeName.toLowerCase}", ${colIdName(it.name)}, ${objectName(it.typeName)})(_.id, ${it.onUpdateAction}, ${it.onDeleteAction}) """) // onDelete
         }
-        val assocs = desc.assocs.map {
-          it ⇒
-            new ClsDesc(assocTableName(desc.name, it.typeName), Set(ENTITYDEF),
-              ListBuffer(
-                new FldDesc(decapitalize(desc.name), decapitalize(desc.name),
-                  desc.name, Set(FieldFlag.CASE), None, "NoAction", "NoAction",
-                  Some(desc), ValDef(caseparam, TermName(decapitalize(desc.name)), null, null)),
-                new FldDesc(decapitalize(it.typeName),
-                  decapitalize(it.typeName), it.typeName, Set(FieldFlag.CASE),
-                  None, "NoAction", "NoAction", it.cls, ValDef(caseparam,
-                    TermName(decapitalize(it.typeName)), null, null))),
-              null, plural(decapitalize(assocTableName(desc.name, it.typeName))))
+        val assocs = desc.assocs.map { it ⇒
+          new ClsDesc(assocTableName(desc.name, it.typeName), Set(ENTITYDEF),
+            ListBuffer(
+              new FldDesc(decapitalize(desc.name), decapitalize(desc.name),
+                desc.name, Set(FieldFlag.CASE), None, "NoAction", "NoAction",
+                Some(desc), ValDef(caseparam, TermName(decapitalize(desc.name)), null, null)),
+              new FldDesc(decapitalize(it.typeName),
+                decapitalize(it.typeName), it.typeName, Set(FieldFlag.CASE),
+                None, "NoAction", "NoAction", it.cls, ValDef(caseparam,
+                  TermName(decapitalize(it.typeName)), null, null))),
+            null, plural(decapitalize(assocTableName(desc.name, it.typeName))))
 
         }
         val assocTables = assocs.flatMap {
