@@ -23,6 +23,7 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard,
   )
 
   lazy val showcase = RootProject(file("../../scala/showcase_view"))
+  lazy val core = RootProject(file("../core"))
 
   lazy val macros = p("macros")
     .aar()
@@ -30,7 +31,8 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard,
   lazy val slick = p("slick")
     .paradise()
     .antSrc
-    .export()
+    .export
+    .dep(core)
 
   lazy val root = p("root")
     .path(".")
@@ -50,7 +52,7 @@ object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard,
         "-P:wartremover:traverser:macroid.warts.CheckUi"
       )
     ))
-    .dep(macros, showcase)
+    .dep(macros, showcase, core)
 
   lazy val test = p("test")
     .aar

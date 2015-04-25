@@ -462,7 +462,7 @@ extends ActivityBase
   override def onActivityResult(requestCode: Int, responseCode: Int, intent:
     Intent)
   {
-    if (requestCode == GPlus.RC_SIGN_IN)
+    if (requestCode == GPlusBase.RC_SIGN_IN)
       GPlus.signInComplete(responseCode == android.app.Activity.RESULT_OK)
   }
 }
