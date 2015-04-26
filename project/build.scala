@@ -18,7 +18,8 @@ object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
 
   override lazy val settings = super.settings ++ Seq(
     scalacOptions ++= Seq("-feature", "-language:implicitConversions",
-      "-deprecation", "-language:postfixOps", "-language:reflectiveCalls"),
+      "-deprecation", "-language:postfixOps", "-language:reflectiveCalls",
+      "-language:existentials"),
     scalaVersion := "2.11.5"
   )
 
