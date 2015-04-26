@@ -33,6 +33,7 @@ object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
     .paradise()
     .antSrc
     .export
+    .transitive
     .dep(core)
 
   lazy val root = p("root")
