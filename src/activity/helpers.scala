@@ -58,6 +58,8 @@ with Transitions
   self: FragmentManagement
   with Akkativity ⇒
 
+  implicit val fm: FragmentManagement = self
+
   def setContentView(v: View)
 
   abstract override def onCreate(state: Bundle) {

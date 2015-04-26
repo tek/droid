@@ -20,6 +20,7 @@ import RuleRelativeLayout.Rule
 import tryp.droid.ActivityContexts
 import tryp.droid.res.Resources
 import tryp.droid.Macroid._
+import tryp.droid.{FragmentManagement, MainFragment}
 
 trait Layout
 {
@@ -195,12 +196,12 @@ trait Layout
   }
 
   def frag(ctor: ⇒ Fragment, id: Id = Id.next, tag: String = "")
-  (implicit a: Activity) = {
+  (implicit a: Activity, handler: FragmentManagement) = {
     val t = tag.isEmpty ? id.value.toString / tag
     Ui(
       (new FrameLayout(a)) tap { fl ⇒
         fl.setId(id.value)
-        a.replaceFragment(id, ctor, false, t, false)
+        handler.replaceFragment(id, ctor, false, t, false)
       }
     )
   }
@@ -209,7 +210,7 @@ trait Layout
 
   def showFrag[A <: TrypModel](model: A, ctor: () ⇒ ShowFragment[A],
     id: Id = Id.next)
-  (implicit a: Activity) =
+  (implicit a: Activity, fm: FragmentManagement) =
   {
     frag(ShowFragment(model)(ctor()), id)
   }

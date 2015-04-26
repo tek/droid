@@ -101,6 +101,8 @@ extends TrypFragment
 with AppPreferences
 with Fab
 {
+  implicit val mainFrag: FragmentManagement = this
+
   override def onStart() {
     super.onStart()
     mainActor ! TrypActor.AttachUi(this)

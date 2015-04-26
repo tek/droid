@@ -11,14 +11,15 @@ case class NavigationTarget(title: String, fragment: () ⇒ Fragment,
   home: Boolean = false)
 extends DrawerItem
 {
-  def create(id: Id)(implicit a: Activity) = frag(fragment(), id)
+  def create(id: Id)(implicit a: Activity, fm: FragmentManagement) =
+    frag(fragment(), id)
 }
 
 class ShowNavigationTarget[A <: TrypModel](title: String, fragment: () ⇒
     ShowFragment[A], model: A)
 extends NavigationTarget(title, fragment)
 {
-  override def create(id: Id)(implicit a: Activity) =
+  override def create(id: Id)(implicit a: Activity, fm: FragmentManagement) =
     showFrag(model, fragment, id)
 }
 
