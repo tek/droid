@@ -9,7 +9,7 @@ import scala.collection.mutable.Set
 import scala.slick.model.ForeignKeyAction
 import slickmacros._
 
-class Slick(driver: String = "PostgresDriver", timestamps: Boolean = false)
+class Slick()
 extends StaticAnnotation {
   def macroTransform(annottees: Any*) = macro SlickMacro.impl
 }
@@ -114,7 +114,11 @@ class SlickMacro(val c: Context)
     }
   }
 
-  def asColName(name: String): String = {
+  def mkTableName(typeName: String) = s"${typeName}Table"
+
+  def assocTableName(table1: String, table2: String) = s"${table1}2${table2}"
+
+  def sqlColName(name: String): String = {
     name.toCharArray().zipWithIndex map {
       case (ch, i) if Character.isUpperCase(ch) && i > 0 ⇒
         "_" + Character.toLowerCase(ch)
@@ -122,26 +126,45 @@ class SlickMacro(val c: Context)
     } mkString
   }
 
-  def mkTableName(typeName: String) = s"${typeName}Table"
+  def columnId(name: String) = {
+    TermName(colIdName(name))
+  }
 
-  def assocTableName(table1: String, table2: String) = s"${table1}2${table2}"
+  def colIdName(name: String) = {
+    s"${decapitalize(name)}Id"
+  }
 
-  case class FldDesc(name: String, colName: String, typeName: String, flags:
-    Set[FieldFlag], dbType: Option[String], cls: Option[ClsDesc], tree: Tree) {
-      def unique: Boolean = flags.contains(FieldFlag.UNIQUE)
+  def objectName(typeName: String) = plural(decapitalize(typeName))
 
-      def part: Boolean = flags.contains(FieldFlag.PART)
+  case class FldDesc(
+    name: String,
+    colName: String,
+    typeName: String,
+    flags: Set[FieldFlag],
+    dbType: Option[String],
+    cls: Option[ClsDesc],
+    tree: Tree
+  ) {
+    lazy val unique = flags.contains(FieldFlag.UNIQUE)
 
-      def option: Boolean = flags.contains(FieldFlag.OPTION)
+    lazy val part = flags.contains(FieldFlag.PART)
 
-      def cse: Boolean = flags.contains(FieldFlag.CASE)
+    lazy val option = flags.contains(FieldFlag.OPTION)
 
-      def pk: Boolean = flags.contains(FieldFlag.PK)
+    lazy val cse = flags.contains(FieldFlag.CASE)
 
-      def term = TermName(name)
+    lazy val pk = flags.contains(FieldFlag.PK)
 
-      def load = TermName(s"load${name.capitalize}")
-    }
+    lazy val term = TermName(name)
+
+    lazy val load = TermName(s"load${name.capitalize}")
+
+    lazy val query = TermName(objectName(typeName))
+
+    lazy val colId = columnId(name)
+
+    lazy val sqlColId = sqlColName(colIdName(name))
+  }
 
   object FldDesc {
     def apply(fieldTree: Tree, clsTree: Tree, allClasses: List[ClsDesc]) = {
@@ -151,7 +174,7 @@ class SlickMacro(val c: Context)
           s"Column with name ${name.toString} not allowed")
       val flags = Set[FieldFlag]()
       val annotation = mod.annotations.headOption.map(_.children.head.toString)
-      var colName: String = asColName(name.toString)
+      var colName: String = sqlColName(name.toString)
 
       def buildTypeName(tree: Tree): String = {
         tree match {
@@ -387,19 +410,20 @@ class SlickMacro(val c: Context)
             } else
               it.tree.asInstanceOf[ValDef]
         }
-        val defdefs = desc.foreignKeys.map {
-          it ⇒
-            if (it.option)
-              q"""def ${TermName("load" + it.name.capitalize)}($session) = ${TermName(objectName(it.typeName))}.filter(_.id === ${TermName(colIdName(it.name))}).firstOption"""
-            else
-              q"""def ${TermName("load" + it.name.capitalize)}($session) = ${TermName(objectName(it.typeName))}.filter(_.id === ${TermName(colIdName(it.name))}).first"""
+        val defdefs = desc.foreignKeys.map { field ⇒
+          val first = TermName(field.option ? "firstOption" / "first")
+          q"""
+          def ${field.load}($session) =
+            ${field.query}.filter { _.id === ${field.colId} }.$first
+          """
         }
         val one2manyDefs = desc.assocs.map {
           it ⇒
             q"""
             def ${TermName("load" + it.name.capitalize)} = for {
-              x <- self.${TermName(objectName(assocTableName(desc.name, it.typeName)))} if x.${TermName(colIdName(desc.name))} === id
-              y <- self.${TermName(objectName(it.typeName))} if x.${TermName(colIdName(it.typeName))} === y.id
+              x <- self.${TermName(objectName(assocTableName(desc.name,
+              it.typeName)))} if x.${columnId(desc.name)} === id
+              y <- self.${TermName(objectName(it.typeName))} if x.${columnId(it.typeName)} === y.id
           } yield(y)
             """
         }
@@ -408,9 +432,11 @@ class SlickMacro(val c: Context)
           val singL = decapitalize(sing)
           Seq(
             q"""
-            def ${TermName("add" + sing)}(${TermName(colIdName(sing))} :
+            def ${TermName("add" + sing)}(${columnId(sing)} :
               ${TypeName("Long")})($session) =
-                ${TermName(objectName(assocTableName(desc.name, sing)))}.insert(${TermName(assocTableName(desc.name, it.typeName))}(xid, ${TermName(colIdName(it.typeName))}))
+                ${TermName(objectName(assocTableName(desc.name,
+                sing)))}.insert(${TermName(assocTableName(desc.name,
+                it.typeName))}(xid, ${columnId(it.typeName)}))
             """,
             q"""
             def ${TermName("remove" + it.name.capitalize)}(ids:
@@ -418,8 +444,8 @@ class SlickMacro(val c: Context)
               val assoc = for {
                 x <- self.${
                   TermName(objectName(assocTableName(desc.name, it.typeName)))
-                } if x.${TermName(colIdName(desc.name))} === id &&
-                x.${TermName(colIdName(singL))}.inSet(ids)
+                } if x.${columnId(desc.name)} === id &&
+                x.${columnId(singL)}.inSet(ids)
               } yield x
               assoc.delete
             }
@@ -447,29 +473,12 @@ class SlickMacro(val c: Context)
     def mkColumn(desc: FldDesc): Tree = {
       val q"$mods val $nme:$tpt = $initial" = desc.tree
       if (desc.cse) {
-        if (desc.option) {
-          q"""def ${TermName(colIdName(desc.name))} = column[Option[Long]](${asColName(colIdName(desc.name))})"""
-        } else {
-          q"""def ${TermName(colIdName(desc.name))} = column[Long](${asColName(colIdName(desc.name))})"""
-        }
+        val tp = desc.option ? tq"Option[Long]" / tq"Long"
+        q"""def ${desc.colId} = column[$tp](${desc.sqlColId})"""
       } else {
-        val tpe = desc.typeName
-        desc.dbType map {
-          it ⇒
-            q"""def $nme = column[$tpt](${desc.colName}, O.DBType(${it}))"""
-        } getOrElse {
-          q"""def $nme = column[$tpt](${desc.colName})"""
-        }
-      }
-    }
-
-    def colIdName(caseClassName: String) = {
-      s"${decapitalize(caseClassName)}Id"
-    }
-
-    def objectName(typeName: String)(implicit caseDefs: List[ClsDesc]) = {
-      caseDefs find { typeName == _.name } map { _.plural } getOrElse {
-        plural(decapitalize(typeName))
+        val fields = q"${desc.colName}" ::
+          { desc.dbType map(a ⇒ List(q"O.DBType(${a})")) getOrElse Nil }
+        q"def $nme = column[$tpt](..$fields)"
       }
     }
 
