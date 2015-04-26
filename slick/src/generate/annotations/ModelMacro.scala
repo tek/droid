@@ -47,10 +47,6 @@ object SlickMacro
     val CASE = Value
     val PART = Value
     val LIST = Value
-    val INDEX = Value
-    val PK = Value
-    val UNIQUE = Value
-    val DBTYPE = Value
   }
 }
 
@@ -145,15 +141,11 @@ class SlickMacro(val c: Context)
     cls: Option[ClsDesc],
     tree: Tree
   ) {
-    lazy val unique = flags.contains(FieldFlag.UNIQUE)
-
     lazy val part = flags.contains(FieldFlag.PART)
 
     lazy val option = flags.contains(FieldFlag.OPTION)
 
     lazy val cse = flags.contains(FieldFlag.CASE)
-
-    lazy val pk = flags.contains(FieldFlag.PK)
 
     lazy val term = TermName(name)
 
@@ -164,6 +156,8 @@ class SlickMacro(val c: Context)
     lazy val colId = columnId(name)
 
     lazy val sqlColId = sqlColName(colIdName(name))
+
+    lazy val queryColId = columnId(typeName)
   }
 
   object FldDesc {
@@ -224,9 +218,10 @@ class SlickMacro(val c: Context)
       body.foreach {
         it ⇒
           val cns = it match {
-            case Apply(Ident(constraintsTerm), List(Block(stats, expr))) ⇒
+            case Apply(Ident(_), List(Block(stats, expr))) ⇒
               Some(plural(decapitalize(clsName.toString)), stats :+ expr)
-            case Apply(Apply(Ident(constraintsTerm), List(Literal(Constant(arg)))), List(Block(stats, expr))) ⇒
+            case Apply(Apply(Ident(_), List(Literal(Constant(arg)))),
+              List(Block(stats, expr))) ⇒
               Some(arg.toString, stats :+ expr)
             case _ ⇒ None
           }
@@ -260,7 +255,6 @@ class SlickMacro(val c: Context)
     fields: ListBuffer[FldDesc], tree: Tree, var plural: String)
   {
     def parseBody(allClasses: List[ClsDesc]) {
-      val constraintsTerm = TermName("constraints")
       val ClassDef(mod, name, Nil, Template(parents, self, body)) = tree
       body.foreach {
         it ⇒
@@ -269,81 +263,69 @@ class SlickMacro(val c: Context)
             case _ ⇒
           }
       }
+      if (fields.isEmpty)
+        c.abort(c.enclosingPosition, "Cannot create table with zero column")
     }
 
-    def assoc: Boolean = tree == null
+    lazy val assoc = tree == null
 
-    def part: Boolean = flags.contains(PARTDEF)
+    lazy val part = flags.contains(PARTDEF)
 
-    def entity: Boolean = flags.contains(ENTITYDEF)
+    lazy val entity = flags.contains(ENTITYDEF)
 
-    def timestamps: Boolean = flags.contains(TIMESTAMPSDEF)
+    lazy val timestamps = flags.contains(TIMESTAMPSDEF)
 
-    def uuids: Boolean = flags.contains(UUIDSDEF)
+    lazy val uuids = flags.contains(UUIDSDEF)
 
-    def dateVals = listIfList(timestamps) {
+    lazy val dateVals = listIfList(timestamps) {
       List(
         q" var dateCreated: DateTime = null",
         q" var lastUpdated: DateTime = null"
         )
     }
 
-    def dateDefs = listIfList(timestamps) {
+    lazy val dateDefs = listIfList(timestamps) {
       List(
         q""" def dateCreated = column[DateTime]("date_created") """,
         q""" def lastUpdated = column[DateTime]("last_updated") """
         )
       }
 
-    def foreignKeys: List[FldDesc] = {
-      fields.filter { it ⇒
-        it.flags.contains(FieldFlag.CASE) &&
-          !it.flags.contains(FieldFlag.LIST)
-      } toList
-    }
-
-    def assocs: List[FldDesc] = {
-      fields.filter { it ⇒
-        it.flags.contains(FieldFlag.CASE) &&
-          it.flags.contains(FieldFlag.LIST)
-      } toList
-    }
-
-    def assocNames = {
+    lazy val assocNames = {
       assocs map { ass ⇒ assocTableName(name, ass.typeName) }
     }
 
-    def names = name :: assocNames
+    lazy val names = name :: assocNames
 
-    def queries = names map { n ⇒ Helpers.plural(decapitalize(n)) }
+    lazy val queries = names map { n ⇒ Helpers.plural(decapitalize(n)) }
 
-    def tableName = mkTableName(name)
+    lazy val tableName = mkTableName(name)
 
-    def tableType = TypeName(mkTableName(name))
+    lazy val tableType = TypeName(mkTableName(name))
 
-    def attrs = {
-      fields.filter {
-        it ⇒ !it.flags.contains(FieldFlag.CASE)
-      } toList
+    lazy val obj = TermName(objectName(name))
+
+    lazy val typeName = TypeName(name)
+
+    def assocName(other: String) =
+      TermName(objectName(assocTableName(name, other)))
+
+    def filter(pred: Set[FieldFlag] ⇒ Boolean) =
+      fields.filter(f ⇒ pred(f.flags)).toList
+
+    lazy val foreignKeys = filter { f ⇒
+      f.contains(FieldFlag.CASE) && !f.contains(FieldFlag.LIST)
     }
 
-    def simpleValDefs: List[FldDesc] = {
-      fields.filter {
-        it ⇒ !it.flags.contains(FieldFlag.LIST)
-      } toList
+    lazy val assocs = filter { f ⇒
+      f.contains(FieldFlag.CASE) && f.contains(FieldFlag.LIST)
     }
 
-    def listValDefs: List[FldDesc] = {
-      fields.filter {
-        it ⇒ it.flags.contains(FieldFlag.LIST)
-      } toList
-    }
+    lazy val attrs = filter { !_.contains(FieldFlag.CASE) }
 
-    def listPKs: List[FldDesc] = {
-      fields.filter {
-        it ⇒ it.flags.contains(FieldFlag.PK)
-      } toList
-    }
+    lazy val flat = filter { !_.contains(FieldFlag.LIST) }
+
+    lazy val listValDefs = filter { _.contains(FieldFlag.LIST) }
 
     def allFields = {
       fields.toList.map {
@@ -355,12 +337,7 @@ class SlickMacro(val c: Context)
       } flatten
     }
 
-    def indexes: List[FldDesc] = {
-      allFields.filter {
-        it ⇒
-          it.flags.contains(FieldFlag.INDEX)
-      } toList
-    }
+    lazy val colId = columnId(name)
   }
 
   object ClsDesc {
@@ -384,8 +361,8 @@ class SlickMacro(val c: Context)
 
   def impl(annottees: c.Expr[Any]*) = {
 
-    def mkCaseClass(desc: ClsDesc, augment: Boolean = true)
-    (implicit caseDefs: List[ClsDesc]): ClassDef = {
+    def model(desc: ClsDesc, augment: Boolean = true)
+    (implicit classes: List[ClsDesc]): ClassDef = {
       if (desc.part) desc.tree.asInstanceOf[ClassDef]
       else {
         val uuids = augment && desc.uuids
@@ -396,7 +373,7 @@ class SlickMacro(val c: Context)
           def xid = id.getOrElse(throw new Exception("Object has no id yet"))
           """
         }
-        val valdefs = desc.simpleValDefs.map {
+        val valdefs = desc.flat.map {
           it ⇒
             if (it.cse) {
               val tpt = if (it.option) {
@@ -417,18 +394,18 @@ class SlickMacro(val c: Context)
             ${field.query}.filter { _.id === ${field.colId} }.$first
           """
         }
-        val one2manyDefs = desc.assocs.map {
-          it ⇒
-            q"""
-            def ${TermName("load" + it.name.capitalize)} = for {
-              x <- self.${TermName(objectName(assocTableName(desc.name,
-              it.typeName)))} if x.${columnId(desc.name)} === id
-              y <- self.${TermName(objectName(it.typeName))} if x.${columnId(it.typeName)} === y.id
+        val one2manyDefs = desc.assocs.map { f ⇒
+          q"""
+          def ${f.load} = for {
+            x ← self.${desc.assocName(f.typeName)}
+            if x.${desc.colId} === id
+            y ← self.${f.query}
+            if x.${f.queryColId} === y.id
           } yield(y)
-            """
+          """
         }
-        val one2manyDefAdds = desc.assocs.map { it ⇒
-          val sing = it.typeName
+        val one2manyDefAdds = desc.assocs.map { f ⇒
+          val sing = f.typeName
           val singL = decapitalize(sing)
           Seq(
             q"""
@@ -436,14 +413,14 @@ class SlickMacro(val c: Context)
               ${TypeName("Long")})($session) =
                 ${TermName(objectName(assocTableName(desc.name,
                 sing)))}.insert(${TermName(assocTableName(desc.name,
-                it.typeName))}(xid, ${columnId(it.typeName)}))
+                f.typeName))}(xid, ${columnId(f.typeName)}))
             """,
             q"""
-            def ${TermName("remove" + it.name.capitalize)}(ids:
+            def ${TermName("remove" + f.name.capitalize)}(ids:
               Traversable[Long])($session) = {
               val assoc = for {
                 x <- self.${
-                  TermName(objectName(assocTableName(desc.name, it.typeName)))
+                  TermName(objectName(assocTableName(desc.name, f.typeName)))
                 } if x.${columnId(desc.name)} === id &&
                 x.${columnId(singL)}.inSet(ids)
               } yield x
@@ -486,61 +463,32 @@ class SlickMacro(val c: Context)
      * create the field1 ~ field2 ~ ... ~ fieldN string from case class column
      * does not handle correctly case classes with a single column (adding a dummy field would probably help)
      */
-    def mkTilde(fields: List[FldDesc]): String = {
-      fields match {
-        case Nil ⇒ c.abort(c.enclosingPosition, "Cannot create table with zero column")
-        case field :: Nil ⇒
-          if (field.part)
-            "(" + mkTilde(field.cls.get.fields toList) + ")"
-          else if (field.cse)
-            colIdName(field.name)
-          else
-            field.name
-        case head :: tail ⇒ s"${mkTilde(head :: Nil)}, ${mkTilde(tail)}"
-      }
+    def concatFields(fields: List[FldDesc], prefix: String = "")
+    (formatter: (FldDesc) ⇒ String) = {
+      fields map { field ⇒
+        if (field.part)
+          formatter(field)
+        else if (field.cse)
+          prefix + colIdName(field.name)
+        else
+          prefix + field.name
+      } mkString(", ")
     }
 
-    def mkCaseApply(fields: List[FldDesc]): String = {
-      fields match {
-        case Nil ⇒ c.abort(c.enclosingPosition, "Cannot create table with zero column")
-        case field :: Nil ⇒
-          if (field.part)
-            s"${field.typeName}.tupled.apply(${field.name})"
-          else if (field.cse)
-            colIdName(field.name)
-          else
-            field.name
-        case head :: tail ⇒ s"${mkCaseApply(head :: Nil)}, ${mkCaseApply(tail)}"
-      }
+    def mkTilde(fields: List[FldDesc]): String = concatFields(fields) { f ⇒
+      "(" + mkTilde(f.cls.get.fields toList) + ")"
     }
 
-    def mkCaseUnapply(fields: List[FldDesc]): String = {
-      fields match {
-        case Nil ⇒ c.abort(c.enclosingPosition, "Cannot create table with zero column")
-        case field :: Nil ⇒
-          if (field.part) {
-            s"${field.typeName}.unapply(x.${field.name}).get"
-          } else if (field.cse)
-            "x." + colIdName(field.name)
-          else
-            "x." + field.name
-        case head :: tail ⇒ s"${mkCaseUnapply(head :: Nil)}, ${mkCaseUnapply(tail)}"
-      }
+    def mkCaseApply(fields: List[FldDesc]) = concatFields(fields) { f ⇒
+      s"${f.typeName}.tupled.apply(${f.name})"
     }
 
-    def mkCase(fields: List[FldDesc]): String = {
-      fields match {
-        case Nil ⇒ c.abort(c.enclosingPosition, "Cannot create table with zero column")
-        case field :: Nil ⇒
-          if (field.part) {
-            field.name
-          } else if (field.cse)
-            colIdName(field.name)
-          else
-            field.name
-        case head :: tail ⇒ s"${mkCase(head :: Nil)}, ${mkCase(tail)}"
+    def mkCaseUnapply(fields: List[FldDesc]) =
+      concatFields(fields, "x.") { f ⇒
+        s"${f.typeName}.unapply(x.${f.name}).get"
       }
-    }
+
+    def mkCase(fields: List[FldDesc]) = concatFields(fields) { _.name }
 
     /**
      * create the def * = ... from fields names and case class names
@@ -549,20 +497,20 @@ class SlickMacro(val c: Context)
       val expr = {
         if (augment)
           if (desc.timestamps)
-            s"""def * = (id.?, ${mkTilde(desc.simpleValDefs)}, dateCreated, lastUpdated).shaped <> ({
-            case (id, ${mkCase(desc.simpleValDefs)}, dateCreated, lastUpdated) ⇒ ${desc.name}(id, ${mkCaseApply(desc.simpleValDefs)}, dateCreated, lastUpdated)
-          }, { x : ${desc.name} ⇒ Some((x.id, ${mkCaseUnapply(desc.simpleValDefs)}, x.dateCreated, x.lastUpdated))
+            s"""def * = (id.?, ${mkTilde(desc.flat)}, dateCreated, lastUpdated).shaped <> ({
+            case (id, ${mkCase(desc.flat)}, dateCreated, lastUpdated) ⇒ ${desc.name}(id, ${mkCaseApply(desc.flat)}, dateCreated, lastUpdated)
+          }, { x : ${desc.name} ⇒ Some((x.id, ${mkCaseUnapply(desc.flat)}, x.dateCreated, x.lastUpdated))
           })"""
           else
-            s"""def * = (id.?, ${mkTilde(desc.simpleValDefs)}).shaped <> ({
-            case (id, ${mkCase(desc.simpleValDefs)}) ⇒ ${desc.name}(id, ${mkCaseApply(desc.simpleValDefs)})
-          }, { x : ${desc.name} ⇒ Some((x.id, ${mkCaseUnapply(desc.simpleValDefs)}))
+            s"""def * = (id.?, ${mkTilde(desc.flat)}).shaped <> ({
+            case (id, ${mkCase(desc.flat)}) ⇒ ${desc.name}(id, ${mkCaseApply(desc.flat)})
+          }, { x : ${desc.name} ⇒ Some((x.id, ${mkCaseUnapply(desc.flat)}))
           })"""
         else
         //s"""def * = (${mkTilde(desc.fields toList)}).shaped <> (${desc.name}.tupled, ${desc.name}.unapply _)"""
           s"""def * = (${mkTilde(desc.fields toList)}).shaped <> ({
-            case (${mkCase(desc.simpleValDefs)}) ⇒ ${desc.name}( ${mkCaseApply(desc.simpleValDefs)})
-          }, { x : ${desc.name} ⇒ Some((${mkCaseUnapply(desc.simpleValDefs)}))
+            case (${mkCase(desc.flat)}) ⇒ ${desc.name}( ${mkCaseApply(desc.flat)})
+          }, { x : ${desc.name} ⇒ Some((${mkCaseUnapply(desc.flat)}))
           })"""
 
       }
@@ -572,14 +520,14 @@ class SlickMacro(val c: Context)
     def mkForInsert(desc: ClsDesc): Tree = {
       val expr = {
         if (desc.timestamps)
-          s"""def forInsert = (${mkTilde(desc.simpleValDefs)}, dateCreated, lastUpdated).shaped <> ({
-            case (${mkCase(desc.simpleValDefs)}, dateCreated, lastUpdated) ⇒ ${desc.name}(None, ${mkCaseApply(desc.simpleValDefs)}, dateCreated, lastUpdated)
-          }, { x : ${desc.name} ⇒ Some((${mkCaseUnapply(desc.simpleValDefs)}, x.dateCreated, x.lastUpdated))
+          s"""def forInsert = (${mkTilde(desc.flat)}, dateCreated, lastUpdated).shaped <> ({
+            case (${mkCase(desc.flat)}, dateCreated, lastUpdated) ⇒ ${desc.name}(None, ${mkCaseApply(desc.flat)}, dateCreated, lastUpdated)
+          }, { x : ${desc.name} ⇒ Some((${mkCaseUnapply(desc.flat)}, x.dateCreated, x.lastUpdated))
           })"""
         else
-          s"""def forInsert = (${mkTilde(desc.simpleValDefs)}).shaped <> ({
-            case (${mkCase(desc.simpleValDefs)}) ⇒ ${desc.name}(None, ${mkCaseApply(desc.simpleValDefs)})
-          }, { x : ${desc.name} ⇒ Some((${mkCaseUnapply(desc.simpleValDefs)}))
+          s"""def forInsert = (${mkTilde(desc.flat)}).shaped <> ({
+            case (${mkCase(desc.flat)}) ⇒ ${desc.name}(None, ${mkCaseApply(desc.flat)})
+          }, { x : ${desc.name} ⇒ Some((${mkCaseUnapply(desc.flat)}))
           })"""
 
       }
@@ -622,46 +570,15 @@ class SlickMacro(val c: Context)
       c.parse(mapper)
     }
 
-    def cleanupBody(body: List[Tree]): List[Tree] = {
-      val cleanDefs = List("embed", "onDelete", "index", "timestamps", "dbType")
-      body filter {
-        it ⇒
-          it match {
-            case Apply(Ident(func), List(Ident(field), Literal(dbType))) if cleanDefs.contains(func.toString) ⇒ false
-            case _ ⇒ true
-          }
-      }
-    }
-
-    object ColInfo extends Enumeration {
-      type ColInfo = Value
-      val DBTYPE = Value
-      val TIMESTAMPS = Value
-      val INDEX = Value
-      val ONDELETE = Value
-      val PK = Value
-    }
-    import ColInfo._
-
-    def caseInfo(body: List[Tree]): Map[ColInfo, List[(ColInfo, (String, Tree))]] = {
-      body collect {
-        case Apply(Ident(func), List(Ident(field), dbType)) if func.toString == "dbType" ⇒ (DBTYPE, (field.toString, dbType))
-        case Apply(Ident(func), List(literal)) if func.toString == "timestamps" ⇒ (TIMESTAMPS, (null, literal))
-        case Apply(Ident(func), List(Ident(field), isUnique)) if func.toString == "index" ⇒ (INDEX, (field.toString, isUnique))
-        case Apply(Ident(func), List(Ident(field), action)) if func.toString == "onDelete" ⇒ (ONDELETE, (field.toString, action))
-      } groupBy (_._1)
-    }
-
-    def mkTable(desc: ClsDesc, augment: Boolean = true)(implicit caseDefs: List[ClsDesc]): List[Tree] = {
+    def mkTable(desc: ClsDesc, augment: Boolean = true)
+    (implicit classes: List[ClsDesc]): List[Tree] = {
       if (desc.part)
         List(desc.tree.asInstanceOf[ClassDef])
       else {
-        val simpleVals = desc.simpleValDefs
         val listVals = desc.listValDefs
-        val indexes = desc.indexes
         val foreignKeys = desc.foreignKeys.map {
           it ⇒
-            val cls = caseDefs.find(it.typeName == _.name).getOrElse(throw new Exception(s"Invalid foreign class ${it.name}:${it.typeName}"))
+            val cls = classes.find(it.typeName == _.name).getOrElse(throw new Exception(s"Invalid foreign class ${it.name}:${it.typeName}"))
             c.parse( s"""def ${it.name} = foreignKey("${it.name.toLowerCase}${desc.name}2${it.typeName.toLowerCase}", ${colIdName(it.name)}, ${objectName(it.typeName)})(_.id) """)
         }
         val assocs = desc.assocs.map { it ⇒
@@ -679,9 +596,7 @@ class SlickMacro(val c: Context)
             null, plural(decapitalize(name)))
 
         }
-        val assocTables = assocs.flatMap {
-          it ⇒ mkTable(it, false)
-        }
+        val assocTables = assocs.flatMap { ass ⇒ mkTable(ass, false) }
         val idCol = listIf(augment) {
           q"""
           def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
@@ -690,26 +605,15 @@ class SlickMacro(val c: Context)
         val uuidCol = listIf(desc.uuids) {
           q""" def uuid = column[String]("uuid") """
         }
-        val defdefs = simpleVals.flatMap {
-          it ⇒
-            if (it.part) {
-              it.cls.get.fields.map {
-                fld ⇒
-                  mkColumn(fld)
-              }
-            } else {
-              List(mkColumn(it))
-            }
-        }
-        val indexdefs: List[c.universe.Tree] = indexes.map {
-          it ⇒
-            q"""def ${TermName(it.name + "Index")} = index(${"idx_" + desc.name.toLowerCase + "_" + it.name.toLowerCase}, ${TermName(it.name)}, ${it.unique})"""
+        val defdefs = desc.flat.flatMap { v ⇒
+          if (v.part) v.cls.get.fields.map(mkColumn)
+          else List(mkColumn(v))
         }
         val times = mkTimes(desc, augment)
         val forInsert = mkForInsert(desc)
         val vparams = q"""${TermName("tag")}:${TypeName("Tag")}""" :: Nil
         val plur = plural(decapitalize(desc.name)).toLowerCase
-        val tableDef = q"""
+        val table = q"""
         class ${desc.tableType}(tag: Tag)
         extends Table[${TypeName(desc.name)}](tag, $plur)
         {
@@ -717,23 +621,23 @@ class SlickMacro(val c: Context)
           ..$uuidCol
           ..${desc.dateDefs}
           ..$defdefs
-          ..$indexdefs
           ..$foreignKeys
           $times
         }
         """
-        List(mkCaseClass(desc, augment), tableDef) ++ mkCompanion(desc) ++ assocTables
+        model(desc, augment) :: table :: query(desc) :: assocTables
       }
     }
 
-    def mkCompanion(desc: ClsDesc)(implicit caseDefs: List[ClsDesc]) = {
-      val ex = if (desc.timestamps) "Ex" else ""
-      val crud = if (!desc.assoc) s"with Crud$ex[${desc.name}, ${mkTableName(desc.name)}]" else ""
-
-      val query = c.parse(s"""val ${TermName(objectName(desc.name))} =
-        new TableQuery(tag ⇒ new ${desc.tableType}(tag)) $crud
-      """)
-      query :: Nil
+    def query(desc: ClsDesc)(implicit classes: List[ClsDesc]) = {
+      val bases = listIf(!desc.assoc) {
+        val crud = desc.timestamps ? tq"CrudEx" / tq"Crud"
+        tq"$crud[${desc.typeName}, ${desc.tableType}]"
+      }
+      q"""
+      val ${desc.obj} =
+        new TableQuery(tag ⇒ new ${desc.tableType}(tag)) with ..$bases
+      """
     }
 
     def defMap(body: List[c.universe.Tree]): Map[DefType, List[(DefType, c.universe.Tree)]] = {
@@ -802,16 +706,16 @@ class SlickMacro(val c: Context)
     val timestampsAll = parents.contains("Timestamps")
     val uuids = parents.contains("Uuids")
     val allDefs = defMap(body)
-    implicit val caseDefs = allDefs.getOrElse(CLASSDEF, Nil).map(it ⇒
+    implicit val classes = allDefs.getOrElse(CLASSDEF, Nil).map(it ⇒
         ClsDesc(it._2, timestampsAll, uuids))
-    caseDefs.foreach(_.parseBody(caseDefs))
-    val tables = caseDefs.flatMap(mkTable(_))
+    classes.foreach(_.parseBody(classes))
+    val tables = classes.flatMap(mkTable(_))
     val enums = allDefs.getOrElse(ENUMDEF, Nil).map(_._2) flatMap(enum)
     val defdefs = allDefs.getOrElse(DEFDEF, Nil).map(_._2)
     val imports = allDefs.getOrElse(IMPORTDEF, Nil).map(_._2)
     val otherdefs = allDefs.getOrElse(OTHERDEF, Nil).map(_._2)
     val embeds = allDefs.getOrElse(EMBEDDEF, Nil).map(_._2)
-    val jsonCodecs = if (uuids) caseDefs map(jsonCodec) else Nil
+    val jsonCodecs = if (uuids) classes map(jsonCodec) else Nil
     val metadata = createMetadata
     val result = q"""
     object $name extends ..$bases { self ⇒
