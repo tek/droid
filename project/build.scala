@@ -12,9 +12,9 @@ extends tryp.Proguard
 object DroidPlaceholders
 extends tryp.Placeholders
 
-object DroidBuild extends tryp.MultiBuild(DroidDeps, DroidProguard,
+object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
   DroidPlaceholders) {
-  override lazy val platform = "android-21"
+  lazy val platform = "android-21"
 
   override lazy val settings = super.settings ++ Seq(
     scalacOptions ++= Seq("-feature", "-language:implicitConversions",
