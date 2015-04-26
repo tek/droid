@@ -142,6 +142,11 @@ class SlickMacro(val c: Context)
     else List[Tree]()
   }
 
+  def listIfList(indicator: Boolean)(ctor: ⇒ List[Tree]): List[Tree] = {
+    if (indicator) ctor
+    else List[Tree]()
+  }
+
   val session = q"implicit val session: JdbcBackend#SessionDef"
 
   def constraints(plural: String = null)(f: ⇒ Unit) {}
@@ -209,7 +214,7 @@ class SlickMacro(val c: Context)
     rules.find(it ⇒ name.matches(it._1)).map(it ⇒ name.replaceFirst(it._1, it._2)).getOrElse(name.replaceFirst("([\\w]+)([^s])$", "$1$2s"))
   }
 
-    val reservedNames = List("id", "dateCreated", "lastUpdated")
+    val reservedNames = List("id", "dateCreated", "lastUpdated", "uuid")
     val caseAccessor = scala.reflect.internal.Flags.CASEACCESSOR.asInstanceOf[Long].asInstanceOf[FlagSet]
     val paramAccessor = scala.reflect.internal.Flags.PARAMACCESSOR.asInstanceOf[Long].asInstanceOf[FlagSet]
     val prvate = scala.reflect.internal.Flags.PRIVATE.asInstanceOf[Long].asInstanceOf[FlagSet]
@@ -241,31 +246,34 @@ class SlickMacro(val c: Context)
 
       def assoc: Boolean = tree == null
 
-      def part: Boolean = flags.exists(_ == PARTDEF)
+      def part: Boolean = flags.contains(PARTDEF)
 
-      def entity: Boolean = flags.exists(_ == ENTITYDEF)
+      def entity: Boolean = flags.contains(ENTITYDEF)
 
-      def timestamps: Boolean = flags.exists(_ == TIMESTAMPSDEF)
+      def timestamps: Boolean = flags.contains(TIMESTAMPSDEF)
 
-      def uuids: Boolean = flags.exists(_ == UUIDSDEF)
+      def uuids: Boolean = flags.contains(UUIDSDEF)
 
       def dateVals: List[ValDef] = if (timestamps) dateVal("dateCreated") :: dateVal("lastUpdated") :: Nil else Nil
 
-      def dateDefs =
-        if (timestamps)
-          c.parse( """def dateCreated = column[org.joda.time.DateTime]("date_created")""") :: c.parse( """def lastUpdated = column[org.joda.time.DateTime]("last_updated")""") :: Nil
-        else
-          Nil
+      def dateDefs = listIfList(timestamps) {
+        List(
+          q""" def dateCreated = column[DateTime]("date_created") """,
+          q""" def lastUpdated = column[DateTime]("last_updated") """
+          )
+        }
 
       def foreignKeys: List[FldDesc] = {
-        fields.filter {
-          it ⇒ it.flags.exists(_ == FieldFlag.CASE) && !it.flags.exists(_ == FieldFlag.LIST)
+        fields.filter { it ⇒
+          it.flags.contains(FieldFlag.CASE) &&
+            !it.flags.contains(FieldFlag.LIST)
         } toList
       }
 
       def assocs: List[FldDesc] = {
-        fields.filter {
-          it ⇒ it.flags.exists(_ == FieldFlag.CASE) && it.flags.exists(_ == FieldFlag.LIST)
+        fields.filter { it ⇒
+          it.flags.contains(FieldFlag.CASE) &&
+            it.flags.contains(FieldFlag.LIST)
         } toList
       }
 
@@ -277,19 +285,19 @@ class SlickMacro(val c: Context)
 
       def simpleValDefs: List[FldDesc] = {
         fields.filter {
-          it ⇒ !it.flags.exists(_ == FieldFlag.LIST)
+          it ⇒ !it.flags.contains(FieldFlag.LIST)
         } toList
       }
 
       def listValDefs: List[FldDesc] = {
         fields.filter {
-          it ⇒ it.flags.exists(_ == FieldFlag.LIST)
+          it ⇒ it.flags.contains(FieldFlag.LIST)
         } toList
       }
 
       def listPKs: List[FldDesc] = {
         fields.filter {
-          it ⇒ it.flags.exists(_ == FieldFlag.PK)
+          it ⇒ it.flags.contains(FieldFlag.PK)
         } toList
       }
 
@@ -306,7 +314,7 @@ class SlickMacro(val c: Context)
       def indexes: List[FldDesc] = {
         allFields.filter {
           it ⇒
-            it.flags.exists(_ == FieldFlag.INDEX)
+            it.flags.contains(FieldFlag.INDEX)
         } toList
       }
     }
@@ -318,7 +326,7 @@ class SlickMacro(val c: Context)
           c.abort(c.enclosingPosition, s"Only case classes allowed here ${name.decodedName.toString}")
 
         val annotations = mod.annotations.map(_.children.head.toString)
-        val isPart = annotations.exists(_ == "new Part") || parents.exists(_.toString.contains("Part"))
+        val isPart = annotations.contains("new Part") || parents.exists(_.toString.contains("Part"))
         val flags = Set[ClassFlag]()
         if (isPart)
           flags += PARTDEF
@@ -334,15 +342,15 @@ class SlickMacro(val c: Context)
   case class FldDesc(name: String, colName: String, typeName: String, flags:
     Set[FieldFlag], dbType: Option[String], onDelete: String, onUpdate: String,
     cls: Option[ClsDesc], tree: Tree) {
-      def unique: Boolean = flags.exists(_ == FieldFlag.UNIQUE)
+      def unique: Boolean = flags.contains(FieldFlag.UNIQUE)
 
-      def part: Boolean = flags.exists(_ == FieldFlag.PART)
+      def part: Boolean = flags.contains(FieldFlag.PART)
 
-      def option: Boolean = flags.exists(_ == FieldFlag.OPTION)
+      def option: Boolean = flags.contains(FieldFlag.OPTION)
 
-      def cse: Boolean = flags.exists(_ == FieldFlag.CASE)
+      def cse: Boolean = flags.contains(FieldFlag.CASE)
 
-      def pk: Boolean = flags.exists(_ == FieldFlag.PK)
+      def pk: Boolean = flags.contains(FieldFlag.PK)
 
       def term = TermName(name)
 
@@ -574,9 +582,9 @@ class SlickMacro(val c: Context)
         val defdefs = desc.foreignKeys.map {
           it ⇒
             if (it.option)
-              q"""def ${TermName("load" + it.name.capitalize)}(implicit session : JdbcBackend#SessionDef) = ${TermName(objectName(it.typeName))}.filter(_.id === ${TermName(colIdName(it.name))}).firstOption"""
+              q"""def ${TermName("load" + it.name.capitalize)}($session) = ${TermName(objectName(it.typeName))}.filter(_.id === ${TermName(colIdName(it.name))}).firstOption"""
             else
-              q"""def ${TermName("load" + it.name.capitalize)}(implicit session : JdbcBackend#SessionDef) = ${TermName(objectName(it.typeName))}.filter(_.id === ${TermName(colIdName(it.name))}).first"""
+              q"""def ${TermName("load" + it.name.capitalize)}($session) = ${TermName(objectName(it.typeName))}.filter(_.id === ${TermName(colIdName(it.name))}).first"""
         }
         val one2manyDefs = desc.assocs.map {
           it ⇒
@@ -593,11 +601,12 @@ class SlickMacro(val c: Context)
           Seq(
             q"""
             def ${TermName("add" + sing)}(${TermName(colIdName(sing))} :
-              ${TypeName("Long")})(implicit session : JdbcBackend#SessionDef) =
+              ${TypeName("Long")})($session) =
                 ${TermName(objectName(assocTableName(desc.name, sing)))}.insert(${TermName(assocTableName(desc.name, it.typeName))}(xid, ${TermName(colIdName(it.typeName))}))
             """,
             q"""
-            def ${TermName("remove" + it.name.capitalize)}(ids: Traversable[Long])(implicit session : JdbcBackend#SessionDef) = {
+            def ${TermName("remove" + it.name.capitalize)}(ids:
+              Traversable[Long])($session) = {
               val assoc = for {
                 x <- self.${
                   TermName(objectName(assocTableName(desc.name, it.typeName)))
@@ -974,7 +983,7 @@ class SlickMacro(val c: Context)
       val attrs = cls.attrs map { a ⇒ (a.name, q"obj.${a.term}") }
       val (names, values) = (fks ++ assocs ++ attrs).unzip
       q"""
-      implicit def $ident (implicit session: JdbcBackend#SessionDef) =
+      implicit def $ident ($session) =
         $encoder { obj: $name ⇒
           (..$values) }(..$names)
       """
