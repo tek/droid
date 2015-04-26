@@ -2,6 +2,8 @@ package tryp.droid.test
 
 import org.scalatest._
 
+import tryp.droid._
+
 abstract class TrypTest
 extends FeatureSpec
 with RobolectricSuite
@@ -16,6 +18,17 @@ with tryp.droid.HasActivity
   Env.test = true
 
   override protected def beforeAll() {
+  }
+
+  def waitFor(timeout: Int)(pred: ⇒ Boolean) {
+    val start = Time.millis
+    while (!pred && Time.millis - start < timeout) {
+      Thread.sleep(200L)
+    }
+  }
+
+  def wait(pred: ⇒ Boolean) {
+    waitFor(5000)(pred)
   }
 }
 
