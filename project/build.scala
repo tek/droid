@@ -20,7 +20,11 @@ object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
     scalacOptions ++= Seq("-feature", "-language:implicitConversions",
       "-deprecation", "-language:postfixOps", "-language:reflectiveCalls",
       "-language:existentials"),
-    scalaVersion := "2.11.5"
+    scalaVersion := "2.11.6"
+  )
+
+  override def globalSettings = super.globalSettings ++ Seq(
+    lintEnabled in Android := false
   )
 
   lazy val showcase = RootProject(file("../../scala/showcase_view"))
