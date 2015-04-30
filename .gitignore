@@ -8,3 +8,4 @@ local.properties
 libs
 target/
 .history
+.tags
