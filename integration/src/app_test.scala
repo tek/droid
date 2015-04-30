@@ -92,6 +92,10 @@ trait TrypTestImplicits
     def mapA[B](f: A ⇒ B) = {
       o map f
     }
+
+    def getA = {
+      o getOrElse { sys.error("unreachable") }
+    }
   }
 }
 
