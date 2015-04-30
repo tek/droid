@@ -128,3 +128,13 @@ extends ResourceNamespace
 
   override def toString = "global"
 }
+
+trait ResourcesAccess {
+  protected def res(implicit c: Context,
+    ns: ResourceNamespace = GlobalResourceNamespace) = Resources()
+
+  protected def theme(implicit c: Context,
+    ns: ResourceNamespace = GlobalResourceNamespace) = {
+    res.theme
+  }
+}

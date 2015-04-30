@@ -32,16 +32,6 @@ import tryp.droid.res.{Resources,_}
 import tryp.droid.view.{TrypTextView,DividerItemDecoration,ParallaxHeader}
 import tryp.droid.Messages
 
-trait ResourcesAccess {
-  protected def res(implicit c: Context,
-    ns: ResourceNamespace = GlobalResourceNamespace) = Resources()
-
-  protected def theme(implicit c: Context,
-    ns: ResourceNamespace = GlobalResourceNamespace) = {
-    res.theme
-  }
-}
-
 trait Text
 extends ResourcesAccess
 {
