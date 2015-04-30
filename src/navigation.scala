@@ -12,7 +12,7 @@ case class NavigationTarget(title: String, fragment: () ⇒ Fragment,
 extends DrawerItem
 {
   def create(id: Id)(implicit a: Activity, fm: FragmentManagement) =
-    frag(fragment(), id)
+    frag(fragment(), id, title)
 }
 
 class ShowNavigationTarget[A <: TrypModel](title: String, fragment: () ⇒
