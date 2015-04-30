@@ -3,7 +3,7 @@ import sbt.Keys._
 import android.Keys._
 
 object DroidDeps
-extends tryp.Deps
+extends tryp.AndroidDeps
 {
   override def deps = super.deps ++ Map(
     "root" → common,
