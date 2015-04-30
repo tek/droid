@@ -1,8 +1,12 @@
 package tryp.droid.test
 
+import scala.reflect.classTag
+
 import android.app.Instrumentation
 import android.test.ActivityInstrumentationTestCase2
 import android.widget._
+
+import junit.framework.Assert._
 
 import com.robotium.solo._
 
@@ -74,8 +78,8 @@ with HasActivity
 
 trait TrypTestImplicits
 {
-  implicit class `Option with assertion`[A](o: Option[A]) {
-    assert(o.nonEmpty)
+  implicit class `Option with assertion`[A: ClassTag](o: Option[A]) {
+    assertTrue(s"Option of type ${classTag[A].className} is empty", o.nonEmpty)
 
     def foreachA(f: A ⇒ Unit) {
       o foreach f
