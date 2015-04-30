@@ -8,6 +8,7 @@ extends java.lang.RuntimeException(msg)
 case class Resources(implicit val context: Context,
   ns: ResourceNamespace = GlobalResourceNamespace)
 extends tryp.droid.Preferences
+with tryp.droid.AppPreferences
 {
   type IdTypes = Int with String with Id
 
