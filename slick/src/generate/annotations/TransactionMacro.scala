@@ -5,25 +5,29 @@ import java.sql.Driver
 
 import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros
-import scala.reflect.macros.Context
+import scala.reflect.macros.whitebox.Context
 
 import javax.sql.DataSource
 import java.util.Properties
 
 class DBTransaction extends StaticAnnotation {
-  def macroTransform(annottees: Any*) = macro TransactionMacro.implTransaction
+  def macroTransform(annottees: Any*): Any =
+    macro TransactionMacro.implTransaction
 }
 
 class DBNewTransaction extends StaticAnnotation {
-  def macroTransform(annottees: Any*) = macro TransactionMacro.implNewTransaction
+  def macroTransform(annottees: Any*): Any
+  = macro TransactionMacro.implNewTransaction
 }
 
 class DBSession extends StaticAnnotation {
-  def macroTransform(annottees: Any*) = macro TransactionMacro.implSession
+  def macroTransform(annottees: Any*): Any =
+    macro TransactionMacro.implSession
 }
 
 class DBNewSession extends StaticAnnotation {
-  def macroTransform(annottees: Any*) = macro TransactionMacro.implNewSession
+  def macroTransform(annottees: Any*): Any =
+    macro TransactionMacro.implNewSession
 }
 
 
@@ -76,7 +80,7 @@ object TransactionMacro {
           } map {
             it =>
               val q"$mods val $name:$tpt = $rhs" :: Nil = it
-              name.decoded
+              name.toString
           } map {
             it =>
               (it, None)
@@ -86,21 +90,21 @@ object TransactionMacro {
           val implicitValName = TermName(implictParam._1)
 
           val newvparams = implictParam._2 map (vparamss ++ _) getOrElse (vparamss)
-          val def_def = q"""$mods def ${TermName("_" + name.decoded)}[..$tparams](...$newvparams): $tpt = {
-		    val _db =
-		      if ($implicitValName.jndiName ne null)
-		        Database.forName($implicitValName.jndiName)
-		      else if ($implicitValName.dataSource ne null)
-		        Database.forDataSource($implicitValName.dataSource)
-		      else if ($implicitValName.driver ne null)
-		        Database.forDriver($implicitValName.driver, $implicitValName.url, $implicitValName.user, $implicitValName.password, $implicitValName.properties)
-		      else if ($implicitValName.driverClassName ne null)
-		        Database.forURL($implicitValName.url, $implicitValName.user, $implicitValName.password, $implicitValName.properties, $implicitValName.driverClassName)
-		        else
-		          throw new SlickException("One of jndiName / dataSource / driver / driverClassName must be set")
+          val def_def = q"""$mods def ${TermName("_" + name.toString)}[..$tparams](...$newvparams): $tpt = {
+        val _db =
+          if ($implicitValName.jndiName ne null)
+            Database.forName($implicitValName.jndiName)
+          else if ($implicitValName.dataSource ne null)
+            Database.forDataSource($implicitValName.dataSource)
+          else if ($implicitValName.driver ne null)
+            Database.forDriver($implicitValName.driver, $implicitValName.url, $implicitValName.user, $implicitValName.password, $implicitValName.properties)
+          else if ($implicitValName.driverClassName ne null)
+            Database.forURL($implicitValName.url, $implicitValName.user, $implicitValName.password, $implicitValName.properties, $implicitValName.driverClassName)
+            else
+              throw new SlickException("One of jndiName / dataSource / driver / driverClassName must be set")
                 dbLock synchronized {
                   _db ${TermName(sessionType)} { implicit session =>
-                    $body 
+                    $body
                   }
                 }
               }"""
@@ -108,7 +112,7 @@ object TransactionMacro {
 
           val defdef = q"""$mods def $name[..$tparams](...$vparamss): $tpt = {
             $def_def
-            ${TermName("_" + name.decoded)}(..$callparams)
+            ${TermName("_" + name.toString)}(..$callparams)
           }
           """
 

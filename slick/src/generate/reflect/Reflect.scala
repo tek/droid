@@ -15,11 +15,11 @@ class ObjectRef(any: AnyRef) {
   def typeDesc(t: Type) = {
     try {
       val tpe = t.asInstanceOf[TypeRefApi]
-      TypeDesc(tpe.sym.name.decoded, tpe.args.map(_.typeSymbol.name.decoded))
+      TypeDesc(tpe.sym.name.toString, tpe.args.map(_.typeSymbol.name.toString))
     } catch {
       case e: Throwable =>
         val tpe = t.asInstanceOf[TypeApi]
-        TypeDesc(tpe.typeSymbol.name.decoded, List())
+        TypeDesc(tpe.typeSymbol.name.toString, List())
     }
   }
   def tables = members.filter(_.typeSignature <:< typeOf[RelationalTableComponent#Table[_]])
@@ -28,32 +28,32 @@ class ObjectRef(any: AnyRef) {
     def fieldMirror(symbol: Symbol) = instanceMirror.reflectField(symbol.asTerm)
 
     members.collect {
-      case s if s.isClass && (s.asClass.isCaseClass || s.asClass.baseClasses.exists(_.name.decoded == "Table")) =>
+      case s if s.isClass && (s.asClass.isCaseClass || s.asClass.baseClasses.exists(_.name.toString == "Table")) =>
         val c = s.asClass
-        val isTable = c.baseClasses.exists(_.name.decoded == "Table")
+        val isTable = c.baseClasses.exists(_.name.toString == "Table")
         val t = c.toType
         val membersDesc = t.members.flatMap { m =>
           if (!m.isMethod) {
-            Some(MemberDesc(m.name.decoded, typeDesc(m.typeSignature), List()))
+            Some(MemberDesc(m.name.toString, typeDesc(m.typeSignature), List()))
           } else {
             val f = m.asMethod
             val t = f.typeSignature
 
             val ignore = List("equals", "toString", "hashCode", "canEqual", "productIterator", "productElement", "productArity", "productPrefix", "copy")
-            val toIgnore = ignore.exists(f.name.decoded.startsWith(_))
+            val toIgnore = ignore.exists(f.name.toString.startsWith(_))
             if (f.owner == c && !f.isGetter && !f.isSetter && !f.isConstructor && !toIgnore) {
               val retType = typeDesc(f.returnType)
-              val paramsDesc = f.paramss.flatMap { p =>
-                p.map { s => ParamDesc(s.name.decoded, typeDesc(s.typeSignature))
+              val paramsDesc = f.paramLists.flatMap { p =>
+                p.map { s => ParamDesc(s.name.toString, typeDesc(s.typeSignature))
                 }
               }
-              Some(MemberDesc(f.name.decoded, retType, paramsDesc))
+              Some(MemberDesc(f.name.toString, retType, paramsDesc))
             } else {
               None
             }
           }
         } toList;
-        ClassDesc(c.name.decoded, isTable, membersDesc)
+        ClassDesc(c.name.toString, isTable, membersDesc)
     } toList;
   }
 }

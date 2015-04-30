@@ -1,6 +1,6 @@
 package slickmacros
 
-import scala.reflect.macros.Context
+import scala.reflect.macros.whitebox.Context
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{ universe => u }
 import scala.language.experimental.macros
@@ -25,7 +25,7 @@ object DynamicAccessors {
     import c.universe._
     import Flag._
     val param = scala.reflect.internal.Flags.PARAM.asInstanceOf[Long].asInstanceOf[FlagSet]
-    val Select(Apply(implct, query :: Nil), methodName) = c.typeCheck(c.prefix.tree)
+    val Select(Apply(implct, query :: Nil), methodName) = c.typecheck(c.prefix.tree)
     val paramnames = args.map(_.tree).map {
       case Apply(_, List(Literal(Constant(paramname: String)), _)) => Select(Ident(TermName("row")), TermName(paramname))
     } toList
@@ -47,10 +47,10 @@ object DynamicAccessors {
   def insertImpl[T: c.WeakTypeTag](c: Context)(obj: c.Expr[T]): c.Expr[Int] = {
     import c.universe._
     def getTypeTag[T: u.TypeTag](obj: T) = u.typeTag[T]
-    val prefix = c.typeCheck(c.prefix.tree)
-    val args = c.typeCheck(obj.tree)
+    val prefix = c.typecheck(c.prefix.tree)
+    val args = c.typecheck(obj.tree)
     val instanceT = implicitly[c.WeakTypeTag[T]].tpe
-    val field = prefix.tpe.members filter (member => member.name.decoded == "myType") head
+    val field = prefix.tpe.members filter (member => member.name.toString == "myType") head
     val traitType = field.typeSignatureIn(prefix.tpe)
     if (traitType.typeSymbol == args.tpe.typeSymbol) {
       val result = Apply(Select(prefix, TermName("doInsert")), List(args))
