@@ -103,6 +103,7 @@ trait Searchable {
 
   def viewsOfType[A <: View: ClassTag]: Seq[A] = {
     view match {
+      case v: A ⇒ Seq(v)
       case layout: ViewGroup ⇒ {
         layout.children map {
           case v: A ⇒ Seq(v)
@@ -110,7 +111,6 @@ trait Searchable {
           case _ ⇒ Nil
         } flatten
       }
-      case v: A ⇒ Seq(v)
       case _ ⇒ Nil
     }
   }
