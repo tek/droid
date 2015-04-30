@@ -22,7 +22,7 @@ extends tryp.AndroidDeps
       "com.google.android.gms" % "play-services-plus" % "6.+",
       aar("org.macroid" %% "macroid" % "2.0.0-SNAPSHOT"),
       "com.typesafe.akka" %% "akka-actor" % "2.+",
-      "org.scalaz" %% "scalaz-core" % "7.+",
+      "org.scalaz" %% "scalaz-core" % "7.1.+",
       "com.scalarx" %% "scalarx" % "0.+",
       "com.github.andkulikov" % "transitions-everywhere" % "1.+",
       "com.melnykov" % "floatingactionbutton" % "1.+",
@@ -38,8 +38,8 @@ extends tryp.AndroidDeps
       "org.slf4j" % "slf4j-nop" % "1.+",
       "joda-time" % "joda-time" % "2.+",
       "org.joda" % "joda-convert" % "1.+",
-      "org.scala-lang" % "scala-reflect" % "2.11.5",
-      "org.scala-lang" % "scala-compiler" % "2.11.5"
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value
     )
   )
 }
