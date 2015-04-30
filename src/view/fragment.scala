@@ -130,6 +130,10 @@ with Fab
   }
 
   def dataLoaded() {}
+
+  def result(data: Any) {
+    Log.w(s"Unhandled result in ${this.className}: ${data}")
+  }
 }
 
 abstract class ShowFragment[A <: TrypModel]

@@ -1,5 +1,7 @@
 package tryp.droid
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 import com.typesafe.config.ConfigFactory
 
 import akka.actor.{ ActorSelection, ActorSystem, Actor, Props }
@@ -127,12 +129,17 @@ object TrypActor {
 
 abstract class TrypActor[A <: AkkaComponent: ClassTag]
 extends Actor
+with AkkaComponent
 {
   import TrypActor._
 
   var attachedUi: Option[A] = None
 
   lazy val core = context.system.actorSelection("/user/core")
+
+  def actorSystem = context.system
+
+  def mainActor = actor(MainActor.props)
 
   lazy val noUiError =
     new java.lang.RuntimeException("No Ui attached to actor")
@@ -216,8 +223,10 @@ extends TrypActor[A]
 
   def receiveBasic(m: Any) = {
     m match {
-      case Back() ⇒
-        ui { _.back() }
+      case Back(result) ⇒
+        ui { _.back() } onComplete { _ ⇒
+          result foreach { mainActor ! _ }
+        }
       case Navigation(target) ⇒
         ui { _.navigate(target) }
       case Transitions(sets) ⇒
