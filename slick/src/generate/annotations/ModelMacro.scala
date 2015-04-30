@@ -14,12 +14,6 @@ extends StaticAnnotation {
   def macroTransform(annottees: Any*) = macro SlickMacro.impl
 }
 
-trait Timestamps
-
-trait Part
-
-trait Uuids
-
 object SlickMacro
 {
   object DefType extends Enumeration {
@@ -683,12 +677,13 @@ class SlickMacro(val c: Context)
     def createMetadata(implicit classes: List[ClsDesc]) = {
       val data = classes flatMap { cls ⇒
         cls.queries map { name ⇒
-          q"TableMetadata(${name}, ${TermName(name)})"
+          (name, q"schema.TableMetadata(${name}, ${TermName(name)})")
         }
       }
-      q"""
-      val tables = List(..$data)
-      """
+    List(
+      q""" val tables = List(..${data.unzip._2}) """,
+      q""" val tableMap = Map(..$data) """
+    )
     }
 
     val (name, bases, body) = annottees.map(_.tree).toList match {
@@ -702,7 +697,7 @@ class SlickMacro(val c: Context)
       case _ ⇒
         c.abort(c.enclosingPosition, "DB definition must be single object")
     }
-    val parents = bases map { _.toString }
+    val parents = bases map { _.toString.split('.').last }
     val timestampsAll = parents.contains("Timestamps")
     val uuids = parents.contains("Uuids")
     val allDefs = defMap(body)
@@ -717,8 +712,9 @@ class SlickMacro(val c: Context)
     val embeds = allDefs.getOrElse(EMBEDDEF, Nil).map(_._2)
     val jsonCodecs = if (uuids) classes map(jsonCodec) else Nil
     val metadata = createMetadata
+    val extraBases = List(tq"schema.Schema")
     val result = q"""
-    object $name extends ..$bases { self ⇒
+    object $name extends ..${bases ++ extraBases} { self ⇒
       import scala.slick.util.TupleMethods._
       import scala.slick.jdbc.JdbcBackend
       import scala.slick.driver.SQLiteDriver.simple._
@@ -737,7 +733,7 @@ class SlickMacro(val c: Context)
       ..$embeds
       ..$tables
       ..$jsonCodecs
-      $metadata
+      ..$metadata
 
       val dbLock = new Object
     }

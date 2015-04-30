@@ -1,4 +1,4 @@
-package slickmacros
+package schema
 
 import scala.slick.driver.SQLiteDriver.simple._
 import scala.slick.jdbc.meta.MTable
