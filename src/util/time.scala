@@ -8,7 +8,9 @@ import rx.ops._
 import java.util.{Timer, TimerTask}
 
 object Time {
-  def now = System.currentTimeMillis / 1000
+  def millis = System.currentTimeMillis
+
+  def now = millis / 1000
 
   def hms(seconds: Long, daytime: Boolean = false): String = {
     val intervals = diffIntervalsHms(seconds)
