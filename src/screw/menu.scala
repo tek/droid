@@ -5,7 +5,7 @@ import android.view.MenuItem
 import tryp.droid.res._
 
 trait MenuScrews
-extends tryp.droid.tweaks.ResourcesAccess
+extends tryp.droid.res.ResourcesAccess
 {
   protected case class Menu(implicit c: Context, ns: ResourceNamespace)
   {
