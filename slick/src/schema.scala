@@ -417,6 +417,17 @@ class SchemaMacros(val c: Context)
             }
             """,
             q"""
+            def ${TermName("delete" + plur)}(ids: Traversable[Long])
+            ($session) = {
+              val other = for {
+                x ← ${f.query}
+                if x.id.inSet(ids)
+              } yield x
+              other.delete
+              ${TermName("remove" + plur)}(ids)
+            }
+            """,
+            q"""
             def ${TermName("replace" + plur)}(ids: Traversable[Long])
             ($session) = {
               val removals = for {
@@ -777,13 +788,13 @@ class SchemaMacros(val c: Context)
             a ← p.additions
             if a.target === obj.id
           } yield a.id
-          pending foreach { _.removeAdditions(adds.list) }
+          pending foreach { _.deleteAdditions(adds.list) }
           val ups = for {
             p ← pendingActions if p.model === name
             a ← p.updates
             if a.target === obj.id
           } yield a.id
-          pending foreach { _.removeUpdates(ups.list) }
+          pending foreach { _.deleteUpdates(ups.list) }
         }
 
         override def deleteById(id: Long)($session) = byId(id) foreach(delete)
