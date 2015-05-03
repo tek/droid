@@ -3,6 +3,8 @@ package tryp.droid
 import scala.language.dynamics
 import scala.reflect.runtime.universe._
 import scala.collection.convert.wrapAll._
+import scala.concurrent.duration.Duration
+import scala.concurrent.Await
 
 import scalaz._
 import Scalaz.{Id ⇒ sId,_}
@@ -169,8 +171,12 @@ with ActivityContexts
     Option(activity) foreach { _.runOnUiThread(runner) }
   }
 
-  def ui(callback: ⇒ Unit) {
+  def ui(callback: ⇒ Unit) = {
     Ui(callback).run
+  }
+
+  def uiBlock(callback: ⇒ Unit) {
+    Await.ready(ui(callback), Duration.Inf)
   }
 
   def inflateLayout[A <: View: ClassTag](name: String): Ui[A] = {
