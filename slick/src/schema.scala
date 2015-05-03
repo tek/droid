@@ -836,7 +836,6 @@ class SchemaMacros(val c: Context)
       import scala.slick.jdbc.JdbcBackend
       import scala.slick.driver.SQLiteDriver.simple._
       import slick.dao.Crud._
-      import slick.Implicits._
       import slick._
       import db.Uuids._
       import argonaut._
