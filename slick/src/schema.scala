@@ -294,7 +294,7 @@ class SchemaMacros(val c: Context)
 
     lazy val tableType = TypeName(mkTableName(name))
 
-    lazy val obj = TermName(objectName(name))
+    lazy val query = TermName(objectName(name))
 
     lazy val typeName = TypeName(name)
 
@@ -432,12 +432,10 @@ class SchemaMacros(val c: Context)
             """
           )
         } flatten
-        val resolve = listIf(sync) {
+        val complete = listIf(sync) {
           q"""
           def completeSync()($session) {
-            import PendingActionsSchema._
-            additions.filter(_.target === id).delete
-            updates.filter(_.target === id).delete
+            ${desc.query}.completeSync(this)
           }
           """
         }
@@ -453,7 +451,7 @@ class SchemaMacros(val c: Context)
         {
           ..$defdefs
           ..$one2many
-          ..$resolve
+          ..$complete
         }
         """
       }
@@ -649,10 +647,10 @@ class SchemaMacros(val c: Context)
       )
       val base = tq"$crud[${desc.typeName}, ${desc.tableType}]"
       q"""
-      val ${desc.obj} =
+      val ${desc.query} =
         new TableQuery(tag ⇒ new ${desc.tableType}(tag)) with $base
         {
-          def name = ${desc.obj.toString}
+          def name = ${desc.query.toString}
         }
       """
     }
@@ -771,6 +769,21 @@ class SchemaMacros(val c: Context)
             id ← a.id
           } sets.addDeletion(id)
           obj.id foreach(deleteId)
+        }
+
+        def completeSync(obj: C)($session) = {
+          val adds = for {
+            p ← pendingActions if p.model === name
+            a ← p.additions
+            if a.target === obj.id
+          } yield a.id
+          pending foreach { _.removeAdditions(adds.list) }
+          val ups = for {
+            p ← pendingActions if p.model === name
+            a ← p.updates
+            if a.target === obj.id
+          } yield a.id
+          pending foreach { _.removeUpdates(ups.list) }
         }
 
         override def deleteById(id: Long)($session) = byId(id) foreach(delete)

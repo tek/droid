@@ -160,7 +160,7 @@ with BeforeEach
     db withSession { implicit s ⇒
       a.completeSync()
     }
-    additions("alphas") === List(Addition(Some(2), 2))
-    1 must_== 1
+    additions("alphas") === List(Addition(Some(2), 2)) &&
+      additions("betas") === List(Addition(Some(3), 1))
   }
 }
