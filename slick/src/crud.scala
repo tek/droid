@@ -1,11 +1,7 @@
 package slick
 
-import scala.language.existentials
-import scala.language.reflectiveCalls
-import language.experimental.macros
 import scala.slick.driver.SQLiteDriver.simple._
 import scala.slick.jdbc.JdbcBackend
-import scala.slick.profile.RelationalTableComponent
 import org.joda.time.DateTime
 import scalaz._, Scalaz._
 

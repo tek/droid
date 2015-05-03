@@ -2,8 +2,6 @@ package slick
 
 import scala.reflect.macros.whitebox.Context
 import scala.annotation.StaticAnnotation
-import scala.language.existentials
-import language.experimental.macros
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Set
 
@@ -396,11 +394,11 @@ class SchemaMacros(val c: Context)
           Seq(
             q"""
             def ${f.loadMany} = for {
-              x ← self.$query
+              x ← $query
               if x.${desc.colId} === id
-              y ← self.${f.query}
+              y ← ${f.query}
               if x.${f.queryColId} === y.id
-            } yield(y)
+            } yield y
             """,
             q"""
             def $add($otherId: Long)($session) =

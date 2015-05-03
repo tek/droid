@@ -1,10 +1,8 @@
 package slick.db
 
-
 import java.sql.Driver
 
 import scala.annotation.StaticAnnotation
-import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context
 
 import javax.sql.DataSource
