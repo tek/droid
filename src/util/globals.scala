@@ -72,6 +72,8 @@ extends Util
   type Buffer[A] = scala.collection.mutable.Buffer[A]
   type MMap[A, B] = scala.collection.mutable.Map[A, B]
   type Promise[A] = scala.concurrent.Promise[A]
+
+  def GPlus: tryp.droid.GPlusBase = tryp.droid.Classes.plus
 }
 
 trait Globals

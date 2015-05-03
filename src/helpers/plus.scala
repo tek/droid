@@ -1,11 +1,14 @@
 package tryp.droid
 
+import concurrent.ExecutionContext.Implicits.global
+
 import java.net.URL
 
 import android.graphics.drawable.Drawable
 
 import com.google.android.gms.common._
 import com.google.android.gms.plus._
+import com.google.android.gms.auth._
 
 trait GPlus
 extends PlayServices
@@ -49,13 +52,14 @@ extends GPlusTask(callback)
 {
   override def apiConnectionFailed(connectionResult: ConnectionResult) {
     act.startIntentSenderForResult(
-      connectionResult.getResolution().getIntentSender(), GPlus.RC_SIGN_IN,
+      connectionResult.getResolution().getIntentSender(), GPlusBase.RC_SIGN_IN,
       null, 0, 0, 0
     )
   }
 }
 
-object GPlus
+class GPlusBase
+extends res.ResourcesAccess
 {
   class Account(plus: GPlus)(implicit val context: Context)
   extends Basic
@@ -86,11 +90,12 @@ object GPlus
     def email = plus.email
   }
 
-  val scheduled: Buffer[(Account) ⇒ Unit] = Buffer()
+  type PlusCallback[A] = (Account) ⇒ A
+  type PlusJob = (GPlus) ⇒ Unit
 
-  val RC_SIGN_IN = 0
+  val scheduled: Buffer[PlusJob] = Buffer()
 
-  var signedIn = false
+  val signedIn = rx.Var(false)
 
   var signInTask: Option[GPlusSignIn] = None
 
@@ -118,7 +123,7 @@ object GPlus
   }
 
   def signInComplete(success: Boolean)(implicit c: Context) {
-    signedIn = success
+    signedIn() = success
     signInTask = None
     if (success) {
       scheduled foreach(withAccount)
@@ -126,21 +131,34 @@ object GPlus
     }
   }
 
-  def apply(callback: (Account) ⇒ Unit)(implicit a: Activity) {
-    if (signedIn) {
-      withAccount(callback)
+  def apply[A](callback: PlusCallback[A])(implicit a: Activity) = {
+    val promise = Promise[A]()
+    val job: PlusJob = { plus ⇒
+      Future {
+        Try(callback(new Account(plus))) match {
+          case Success(result) ⇒ promise success result
+          case Failure(error) ⇒ promise failure error
+        }
+      }
+    }
+    if (signedIn()) {
+      withAccount(job)
     }
     else {
-      scheduled += callback
+      scheduled += job
       signIn()
     }
+    promise
   }
 
-  def withAccount(callback: (Account) ⇒ Unit)(implicit c: Context) {
-    val task = GPlusTask { plus ⇒
-      val account = new Account(plus)
-      callback(account)
-    }
-    task.connect()
+  def withAccount(job: PlusJob)(implicit c: Context) {
+    GPlusTask(job).connect()
   }
+}
+
+object GPlusBase
+extends GPlusBase
+{
+  val RC_SIGN_IN = 0
+  val RC_TOKEN_FAIL = 1
 }
