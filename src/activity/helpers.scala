@@ -82,7 +82,8 @@ with Transitions
     loadView(frag(fragment, Id.content))
   }
 
-  def loadShowFragment[A <: TrypModel](model: A, ctor: () ⇒ ShowFragment[A]) {
+  def loadShowFragment[A <: TrypModel: ClassTag]
+  (model: A, ctor: () ⇒ ShowFragment[A]) {
     loadView(showFrag(model, ctor, Id.content))
   }
 
@@ -329,7 +330,7 @@ extends MainView
     navigate(target)
   }
 
-  override def loadShowFragment[A <: TrypModel]
+  override def loadShowFragment[A <: TrypModel: ClassTag]
   (model: A, ctor: () ⇒ ShowFragment[A]) {
     val target = new ShowNavigationTarget("Details", ctor, model)
     navigate(target)

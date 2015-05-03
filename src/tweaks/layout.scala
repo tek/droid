@@ -208,11 +208,11 @@ trait Layout
 
   import tryp.droid.{ShowFragment,TrypModel}
 
-  def showFrag[A <: TrypModel](model: A, ctor: () ⇒ ShowFragment[A],
+  def showFrag[A <: TrypModel: ClassTag](model: A, ctor: () ⇒ ShowFragment[A],
     id: Id = Id.next)
   (implicit a: Activity, fm: FragmentManagement) =
   {
-    frag(ShowFragment(model)(ctor()), id)
+    frag(ShowFragment(model)(ctor()), id, implicitly[ClassTag[A]].className)
   }
 
   import android.view.ViewGroup.LayoutParams._

@@ -15,8 +15,8 @@ extends DrawerItem
     frag(fragment(), id, title)
 }
 
-class ShowNavigationTarget[A <: TrypModel](title: String, fragment: () ⇒
-    ShowFragment[A], model: A)
+class ShowNavigationTarget[A <: TrypModel: ClassTag](title: String,
+  fragment: () ⇒ ShowFragment[A], model: A)
 extends NavigationTarget(title, fragment)
 {
   override def create(id: Id)(implicit a: Activity, fm: FragmentManagement) =
