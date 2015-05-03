@@ -86,5 +86,5 @@ extends GlobalsBase
 trait TrypDroidGlobals
 extends Globals
 {
-  val Fragments = tryp.droid.Classes.fragments
+  def Fragments = tryp.droid.Classes.fragments
 }
