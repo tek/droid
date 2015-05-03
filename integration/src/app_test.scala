@@ -74,6 +74,9 @@ with HasActivity
       solo.enterText(_, text)
     }
   }
+
+  def frag[A <: Fragment: ClassTag](names: String*) =
+    activity.findNestedFrag[A](names: _*)
 }
 
 trait TrypTestImplicits
