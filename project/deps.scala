@@ -33,13 +33,18 @@ extends tryp.AndroidDeps
   )
 
   lazy val slick = Seq(
+    resolvers += "Scalaz Bintray Repo" at
+      "https://dl.bintray.com/scalaz/releases",
     libraryDependencies ++= Seq(
       "com.typesafe.slick" %% "slick" % "2.+",
       "org.slf4j" % "slf4j-nop" % "1.+",
       "joda-time" % "joda-time" % "2.+",
       "org.joda" % "joda-convert" % "1.+",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+      "org.specs2" %%  "specs2-core" % "3.+" % "test",
+      "org.xerial" % "sqlite-jdbc" % "3.+" % "test",
+      "io.argonaut" %% "argonaut" % "6.+" % "test"
     )
   )
 }

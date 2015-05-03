@@ -1,4 +1,4 @@
-package slickmacros
+package slick
 
 import scala.reflect.macros.whitebox.Context
 import scala.reflect.runtime.universe._

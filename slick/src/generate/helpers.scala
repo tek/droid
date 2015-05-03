@@ -1,4 +1,4 @@
-package slickmacros
+package slick
 
 object Helpers
 {
@@ -45,8 +45,12 @@ object Helpers
       ("(\\w*)octopus$", "$1octopi"),
       ("(\\w*)radius$", "$1radii"),
       // If nothing else matches, and word ends in s, assume plural already
-      ("(\\w+)(s)$", "$1s"))
+      ("(\\w+)(s)$", "$1s")
+    )
     rules.find(it ⇒ name.matches(it._1)).map(it ⇒ name.replaceFirst(it._1, it._2)).getOrElse(name.replaceFirst("([\\w]+)([^s])$", "$1$2s"))
   }
 
+  def singular(name: String) = {
+    if (name.lastOption.contains('s')) name.init else name
+  }
 }

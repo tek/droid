@@ -1,4 +1,4 @@
-package slickmacros.reflect
+package slick.reflect
 
 import scala.reflect.runtime.universe._
 import scala.slick.profile._

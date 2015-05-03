@@ -1,4 +1,4 @@
-package object slickmacros extends tryp.core.meta.Globals
-package slickmacros {
-  package object annotations extends tryp.core.meta.Globals
+package object slick extends tryp.core.meta.Globals
+package slick {
+  package object db extends tryp.core.meta.Globals
 }

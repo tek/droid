@@ -1,4 +1,4 @@
-package slickmacros.annotations
+package slick
 
 import scala.reflect.macros.whitebox.Context
 import scala.annotation.StaticAnnotation
@@ -7,14 +7,14 @@ import language.experimental.macros
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Set
 import scala.slick.model.ForeignKeyAction
-import slickmacros._
+import slick._
 
-class Slick()
+class Schema
 extends StaticAnnotation {
-  def macroTransform(annottees: Any*) = macro SlickMacro.impl
+  def macroTransform(annottees: Any*) = macro SchemaMacros.create
 }
 
-object SlickMacro
+object SchemaHelpers
 {
   object DefType extends Enumeration {
     type DefType = Value
@@ -44,10 +44,10 @@ object SlickMacro
   }
 }
 
-class SlickMacro(val c: Context)
+class SchemaMacros(val c: Context)
 {
   import c.universe._
-  import SlickMacro._
+  import SchemaHelpers._
   import DefType._
   import ClassFlag._
   import FieldFlag._
@@ -106,7 +106,8 @@ class SlickMacro(val c: Context)
 
   def mkTableName(typeName: String) = s"${typeName}Table"
 
-  def assocTableName(table1: String, table2: String) = s"${table1}2${table2}"
+  def assocTableName(from: ClsDesc, to: FldDesc) =
+    s"${from.name}2${to.singularName.capitalize}"
 
   def sqlColName(name: String): String = {
     name.toCharArray().zipWithIndex map {
@@ -145,6 +146,8 @@ class SlickMacro(val c: Context)
 
     lazy val load = TermName(s"load${name.capitalize}")
 
+    lazy val loadMany = TermName(s"load${plural(name.capitalize)}")
+
     lazy val query = TermName(objectName(typeName))
 
     lazy val colId = columnId(name)
@@ -152,6 +155,8 @@ class SlickMacro(val c: Context)
     lazy val sqlColId = sqlColName(colIdName(name))
 
     lazy val queryColId = columnId(typeName)
+
+    lazy val singularName = singular(name)
   }
 
   object FldDesc {
@@ -285,11 +290,9 @@ class SlickMacro(val c: Context)
         )
       }
 
-    lazy val assocNames = {
-      assocs map { ass ⇒ assocTableName(name, ass.typeName) }
-    }
+    lazy val assocQuerys = assocs map { ass ⇒ assocName(ass) }
 
-    lazy val names = name :: assocNames
+    lazy val names = name :: assocQuerys
 
     lazy val queries = names map { n ⇒ Helpers.plural(decapitalize(n)) }
 
@@ -301,8 +304,12 @@ class SlickMacro(val c: Context)
 
     lazy val typeName = TypeName(name)
 
-    def assocName(other: String) =
-      TermName(objectName(assocTableName(name, other)))
+    def assocQuery(other: FldDesc) =
+      TermName(objectName(assocName(other)))
+
+    def assocModel(other: FldDesc) = TermName(assocName(other))
+
+    def assocName(other: FldDesc) = assocTableName(this, other)
 
     def filter(pred: Set[FieldFlag] ⇒ Boolean) =
       fields.filter(f ⇒ pred(f.flags)).toList
@@ -353,7 +360,7 @@ class SlickMacro(val c: Context)
     }
   }
 
-  def impl(annottees: c.Expr[Any]*) = {
+  def create(annottees: c.Expr[Any]*) = {
 
     def model(desc: ClsDesc, augment: Boolean = true)
     (implicit classes: List[ClsDesc]): ClassDef = {
@@ -388,44 +395,59 @@ class SlickMacro(val c: Context)
             ${field.query}.filter { _.id === ${field.colId} }.$first
           """
         }
-        val one2manyDefs = desc.assocs.map { f ⇒
-          q"""
-          def ${f.load} = for {
-            x ← self.${desc.assocName(f.typeName)}
-            if x.${desc.colId} === id
-            y ← self.${f.query}
-            if x.${f.queryColId} === y.id
-          } yield(y)
-          """
-        }
-        val one2manyDefAdds = desc.assocs.map { f ⇒
+        val one2many = desc.assocs.map { f ⇒
           val sing = f.typeName
           val singL = decapitalize(sing)
+          val plur = f.name.capitalize
+          val col = columnId(singL)
+          val query = desc.assocQuery(f)
+          val model = desc.assocModel(f)
+          val myId = desc.colId
+          val otherId = columnId(sing)
+          val add = TermName("add" + f.singularName.capitalize)
           Seq(
             q"""
-            def ${TermName("add" + sing)}(${columnId(sing)} :
-              ${TypeName("Long")})($session) =
-                ${TermName(objectName(assocTableName(desc.name,
-                sing)))}.insert(${TermName(assocTableName(desc.name,
-                f.typeName))}(xid, ${columnId(f.typeName)}))
+            def ${f.loadMany} = for {
+              x ← self.$query
+              if x.${desc.colId} === id
+              y ← self.${f.query}
+              if x.${f.queryColId} === y.id
+            } yield(y)
             """,
             q"""
-            def ${TermName("remove" + f.name.capitalize)}(ids:
-              Traversable[Long])($session) = {
+            def $add($otherId: Long)($session) =
+                $query.insert($model(xid, $otherId))
+            """,
+            q"""
+            def ${TermName("remove" + plur)}(ids: Traversable[Long])
+            ($session) = {
               val assoc = for {
-                x <- self.${
-                  TermName(objectName(assocTableName(desc.name, f.typeName)))
-                } if x.${columnId(desc.name)} === id &&
-                x.${columnId(singL)}.inSet(ids)
+                x ← $query
+                if x.$myId === id && x.$otherId.inSet(ids)
               } yield x
               assoc.delete
+            }
+            """,
+            q"""
+            def ${TermName("replace" + plur)}(ids: Traversable[Long])
+            ($session) = {
+              val removals = for {
+                x ← $query
+                if x.$myId === id && !x.$otherId.inSet(ids)
+              } yield x
+              removals.delete
+              val existing = (for { x ← $query } yield x.$otherId).list
+              ids filter { i ⇒ !existing.contains(i) } foreach {
+                $add
+              }
             }
             """
           )
         } flatten
         val bases = Seq(
-          (augment ? tq"Model"),
-          (uuids ? tq"Uuids")
+          (augment ? tq"db.Model"),
+          ((augment && desc.timestamps) ? tq"db.Timestamps"),
+          (uuids ? tq"db.Uuids")
         ).flatten
         q"""
         case class ${TypeName(desc.name)}(..$idval, ..$valdefs,
@@ -434,14 +456,13 @@ class SlickMacro(val c: Context)
         {
           ..$xid
           ..$defdefs
-          ..$one2manyDefs
-          ..$one2manyDefAdds
+          ..$one2many
         }
         """
       }
     }
 
-    def mkColumn(desc: FldDesc): Tree = {
+    def column(desc: FldDesc): Tree = {
       val q"$mods val $nme:$tpt = $initial" = desc.tree
       if (desc.cse) {
         val tp = desc.option ? tq"Option[Long]" / tq"Long"
@@ -453,10 +474,6 @@ class SlickMacro(val c: Context)
       }
     }
 
-    /**
-     * create the field1 ~ field2 ~ ... ~ fieldN string from case class column
-     * does not handle correctly case classes with a single column (adding a dummy field would probably help)
-     */
     def concatFields(fields: List[FldDesc], prefix: String = "")
     (formatter: (FldDesc) ⇒ String) = {
       fields map { field ⇒
@@ -484,9 +501,6 @@ class SlickMacro(val c: Context)
 
     def mkCase(fields: List[FldDesc]) = concatFields(fields) { _.name }
 
-    /**
-     * create the def * = ... from fields names and case class names
-     */
     def mkTimes(desc: ClsDesc, augment: Boolean = true): Tree = {
       val expr = {
         if (augment)
@@ -564,7 +578,8 @@ class SlickMacro(val c: Context)
       c.parse(mapper)
     }
 
-    def mkTable(desc: ClsDesc, augment: Boolean = true)
+    def mkTable(desc: ClsDesc, augment: Boolean = true,
+      sync: Boolean = false)
     (implicit classes: List[ClsDesc]): List[Tree] = {
       if (desc.part)
         List(desc.tree.asInstanceOf[ClassDef])
@@ -573,10 +588,10 @@ class SlickMacro(val c: Context)
         val foreignKeys = desc.foreignKeys.map {
           it ⇒
             val cls = classes.find(it.typeName == _.name).getOrElse(throw new Exception(s"Invalid foreign class ${it.name}:${it.typeName}"))
-            c.parse( s"""def ${it.name} = foreignKey("${it.name.toLowerCase}${desc.name}2${it.typeName.toLowerCase}", ${colIdName(it.name)}, ${objectName(it.typeName)})(_.id) """)
+            c.parse( s"""def ${it.name} = foreignKey("${it.name.toLowerCase}", ${colIdName(it.name)}, ${objectName(it.typeName)})(_.id) """)
         }
         val assocs = desc.assocs.map { it ⇒
-          val name = assocTableName(desc.name, it.typeName)
+          val name = desc.assocName(it)
           new ClsDesc(name, Set(ENTITYDEF),
             ListBuffer(
               new FldDesc(decapitalize(desc.name), decapitalize(desc.name),
@@ -600,9 +615,28 @@ class SlickMacro(val c: Context)
           q""" def uuid = column[String]("uuid") """
         }
         val defdefs = desc.flat.flatMap { v ⇒
-          if (v.part) v.cls.get.fields.map(mkColumn)
-          else List(mkColumn(v))
+          if (v.part) v.cls.get.fields.map(column)
+          else List(column(v))
         }
+        val one2many = desc.assocs.map { f ⇒
+          val sing = f.typeName
+          val singL = decapitalize(sing)
+          val col = columnId(singL)
+          val query = desc.assocQuery(f)
+          val model = desc.assocModel(f)
+          val myId = desc.colId
+          val otherId = columnId(sing)
+          Seq(
+            q"""
+            def ${f.term} = for {
+              x ← self.$query
+              if x.${desc.colId} === id
+              y ← self.${f.query}
+              if x.${f.queryColId} === y.id
+            } yield(y)
+            """
+          )
+        } flatten
         val times = mkTimes(desc, augment)
         val forInsert = mkForInsert(desc)
         val vparams = q"""${TermName("tag")}:${TypeName("Tag")}""" :: Nil
@@ -615,22 +649,28 @@ class SlickMacro(val c: Context)
           ..$uuidCol
           ..${desc.dateDefs}
           ..$defdefs
+          ..$one2many
           ..$foreignKeys
           $times
         }
         """
-        model(desc, augment) :: table :: query(desc) :: assocTables
+        model(desc, augment) :: table :: query(desc, sync) :: assocTables
       }
     }
 
-    def query(desc: ClsDesc)(implicit classes: List[ClsDesc]) = {
+    def query(desc: ClsDesc, sync: Boolean)
+    (implicit classes: List[ClsDesc]) = {
       val bases = listIf(!desc.assoc) {
-        val crud = desc.timestamps ? tq"CrudEx" / tq"Crud"
+        val crud = sync ? tq"PendingActionsCrudEx" /
+          (desc.timestamps ? tq"CrudEx" / tq"Crud")
         tq"$crud[${desc.typeName}, ${desc.tableType}]"
       }
       q"""
       val ${desc.obj} =
         new TableQuery(tag ⇒ new ${desc.tableType}(tag)) with ..$bases
+        {
+          def name = ${desc.obj.toString}
+        }
       """
     }
 
@@ -664,7 +704,9 @@ class SlickMacro(val c: Context)
       val ident = TermName(s"${cls.name}JsonCodec")
       val encoder = TermName(s"jencode${cls.fields.length}L")
       val fks = cls.foreignKeys map { a ⇒ (a.name, q"obj.${a.load}.uuid") }
-      val assocs = cls.assocs map { a ⇒ (a.name, q"obj.${a.load}.list.uuids") }
+      val assocs = cls.assocs map { a ⇒
+        (a.name, q"obj.${a.loadMany}.list.uuids")
+      }
       val attrs = cls.attrs map { a ⇒ (a.name, q"obj.${a.term}") }
       val (names, values) = (fks ++ assocs ++ attrs).unzip
       q"""
@@ -677,13 +719,86 @@ class SlickMacro(val c: Context)
     def createMetadata(implicit classes: List[ClsDesc]) = {
       val data = classes flatMap { cls ⇒
         cls.queries map { name ⇒
-          (name, q"schema.TableMetadata(${name}, ${TermName(name)})")
+          (name, q"db.TableMetadata(${name}, ${TermName(name)})")
         }
       }
-    List(
-      q""" val tables = List(..${data.unzip._2}) """,
-      q""" val tableMap = Map(..$data) """
-    )
+      List(
+        q""" val tables = List(..${data.unzip._2}) """,
+        q""" val tableMap = Map(..$data) """,
+        q""" val metadata = db.SchemaMetadata(tableMap) """
+      )
+    }
+
+    def createPendingActionsTable(implicit classes: List[ClsDesc]) = {
+      val schema = q"""
+      @slick.Schema()
+      object PendingActionsSchema
+      {
+        case class Addition(target: Long)
+        case class Update(target: Long)
+        case class Deletion(target: String)
+        case class PendingActionSet(model: String, additions: List[Addition],
+          updates: List[Update], deletions: List[Deletion])
+      }
+      """
+      val crudEx = q"""
+      trait PendingActionsCrudEx[
+      C <: db.Model with db.Uuids with db.Timestamps,
+      T <: Table[C] with TableEx[C]
+      ]
+      extends CrudEx[C, T]
+      { self: TableQuery[T] ⇒
+
+        import PendingActionsSchema._
+
+        def name: String
+
+        def pending($session) = pendingActions.filter {
+          _.model === name }.firstOption.orElse {
+            pendingActions.insert(PendingActionSet(None, name))
+          }
+
+        override def insert(obj: C)($session) = {
+          val added = super.insert(obj)
+          for {
+            sets ← pending
+            o ← added
+            oid ← o.id
+            a ← additions.insert(Addition(None, oid))
+            id ← a.id
+          } sets.addAddition(id)
+          added
+        }
+
+        override def update(obj: C)($session) = {
+          for {
+            sets ← pending
+            oid ← obj.id
+            a ← updates.insert(Update(None, oid))
+            id ← a.id
+          } sets.addUpdate(id)
+          super.update(obj)
+        }
+
+        def delete(obj: C)($session) = {
+          for {
+            sets ← pending
+            uuid ← obj.uuid
+            a ← deletions.insert(Deletion(None, uuid))
+            id ← a.id
+          } sets.addDeletion(id)
+          obj.id foreach(deleteId)
+        }
+
+        override def deleteById(id: Long)($session) = byId(id) foreach(delete)
+      }
+      """
+      List(
+        schema,
+        q"val pendingActions = PendingActionsSchema.pendingActionSets",
+        q"val pendingMetadata = PendingActionsSchema.metadata",
+        crudEx
+      )
     }
 
     val (name, bases, body) = annottees.map(_.tree).toList match {
@@ -700,11 +815,12 @@ class SlickMacro(val c: Context)
     val parents = bases map { _.toString.split('.').last }
     val timestampsAll = parents.contains("Timestamps")
     val uuids = parents.contains("Uuids")
+    val sync = parents.contains("Sync")
     val allDefs = defMap(body)
     implicit val classes = allDefs.getOrElse(CLASSDEF, Nil).map(it ⇒
         ClsDesc(it._2, timestampsAll, uuids))
     classes.foreach(_.parseBody(classes))
-    val tables = classes.flatMap(mkTable(_))
+    val tables = classes.flatMap(mkTable(_, true, sync))
     val enums = allDefs.getOrElse(ENUMDEF, Nil).map(_._2) flatMap(enum)
     val defdefs = allDefs.getOrElse(DEFDEF, Nil).map(_._2)
     val imports = allDefs.getOrElse(IMPORTDEF, Nil).map(_._2)
@@ -712,16 +828,17 @@ class SlickMacro(val c: Context)
     val embeds = allDefs.getOrElse(EMBEDDEF, Nil).map(_._2)
     val jsonCodecs = if (uuids) classes map(jsonCodec) else Nil
     val metadata = createMetadata
-    val extraBases = List(tq"schema.Schema")
+    val pendingActions = if (sync) createPendingActionsTable else Nil
+    val extraBases = List(tq"slick.schema.Base")
     val result = q"""
     object $name extends ..${bases ++ extraBases} { self ⇒
       import scala.slick.util.TupleMethods._
       import scala.slick.jdbc.JdbcBackend
       import scala.slick.driver.SQLiteDriver.simple._
-      import slickmacros.dao.Crud._
-      import slickmacros.Uuids._
-      import slickmacros.Implicits._
-      import slickmacros._
+      import slick.dao.Crud._
+      import slick.Implicits._
+      import slick._
+      import db.Uuids._
       import argonaut._
       import Argonaut._
       import java.sql.Timestamp
@@ -734,6 +851,7 @@ class SlickMacro(val c: Context)
       ..$tables
       ..$jsonCodecs
       ..$metadata
+      ..$pendingActions
 
       val dbLock = new Object
     }

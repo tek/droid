@@ -1,4 +1,4 @@
-package slickmacros
+package slick.db
 
 trait Uuids
 {

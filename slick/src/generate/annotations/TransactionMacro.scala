@@ -1,4 +1,4 @@
-package slickmacros.annotations
+package slick.db
 
 
 import java.sql.Driver
@@ -85,7 +85,7 @@ object TransactionMacro {
             it =>
               (it, None)
           } getOrElse {
-            ("_dbOptions", Some(List(q"implicit val _dbOptions:slickmacros.annotations.DBConnectionInfo") :: Nil))
+            ("_dbOptions", Some(List(q"implicit val _dbOptions:slick.db.DBConnectionInfo") :: Nil))
           }
           val implicitValName = TermName(implictParam._1)
 
