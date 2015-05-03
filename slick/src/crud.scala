@@ -1,4 +1,4 @@
-package slick.dao
+package slick
 
 import scala.language.existentials
 import scala.language.reflectiveCalls
@@ -7,53 +7,63 @@ import scala.slick.driver.SQLiteDriver.simple._
 import scala.slick.jdbc.JdbcBackend
 import scala.slick.profile.RelationalTableComponent
 import org.joda.time.DateTime
+import scalaz._, Scalaz._
 
-import slick._
+trait TableEx[C <: db.Model] {
+  def id: Column[Long]
+}
 
-object Crud {
-  type TableEx[C] = {
-    def id: Column[Long]
+trait CrudCompat[C, T <: Table[C]]
+{
+  self: TableQuery[T] ⇒
+
+  def insert(obj: C)(implicit session: JdbcBackend#SessionDef) = {
+    self += obj
+    some(obj)
+  }
+}
+
+trait Crud[C <: db.Model, T <: Table[C] with TableEx[C]]
+extends CrudCompat[C, T]
+{
+  self: TableQuery[T] ⇒
+
+  def deleteById(id: Long)(implicit session: JdbcBackend#SessionDef) {
+    deleteId(id)
   }
 
-  trait Crud[C <: db.Model, T <: Table[C] with TableEx[C]] {
-    self: TableQuery[T] ⇒
+  def deleteId(objId: Long)(implicit session: JdbcBackend#SessionDef) =
+    self.filter { _.id === objId }.delete
 
-    def deleteById(id: Long)(implicit session: JdbcBackend#SessionDef) {
-      deleteId(id)
-    }
+  def byId(objId: Long)(implicit session: JdbcBackend#SessionDef) =
+    self.filter(_.id === objId).firstOption
 
-    def deleteId(objId: Long)(implicit session: JdbcBackend#SessionDef) =
-      self.filter { _.id === objId }.delete
-
-    def byId(objId: Long)(implicit session: JdbcBackend#SessionDef) =
-      self.filter(_.id === objId).firstOption
-
-    def update(obj: C)(implicit session: JdbcBackend#SessionDef) = {
-      (for {row ← self if row.id === obj.id.get} yield row) update (obj)
-    }
-
-    def insert(obj: C)(implicit session: JdbcBackend#SessionDef) = {
-      // val res = self returning (self.map(_.id)) insert (obj)
-      self += obj
-      val q = for { o ← self.sortBy(_.id.desc).take(1) } yield o
-      q.list.headOption
-    }
+  def update(obj: C)(implicit session: JdbcBackend#SessionDef) = {
+    (for {row ← self if row.id === obj.id.get} yield row) update (obj)
   }
 
-  trait CrudEx[C <: db.Model with db.Timestamps,
-  T <: Table[C] with TableEx[C]] extends Crud[C, T] {
-    self: TableQuery[T] ⇒
-    override def update(obj: C)(implicit session: JdbcBackend#SessionDef): Int = {
-      obj.lastUpdated = DateTime.now
-      super.update(obj)
-    }
+  override def insert(obj: C)(implicit session: JdbcBackend#SessionDef) = {
+    // returning is not supported in SQLDroid
+    // val res = self returning (self.map(_.id)) insert (obj)
+    super.insert(obj)
+    val q = for { o ← self.sortBy(_.id.desc).take(1) } yield o
+    q.list.headOption
+  }
+}
 
-    override def insert(obj: C)(implicit session: JdbcBackend#SessionDef) = {
-      // because x.copy(dateCreated = , lastUpdated = ) is not available for
-      // type parameters :(
-      obj.dateCreated = DateTime.now
-      obj.lastUpdated = obj.dateCreated
-      super.insert(obj)
-    }
+trait CrudEx[C <: db.Model with db.Timestamps,
+T <: Table[C] with TableEx[C]] extends Crud[C, T] {
+  self: TableQuery[T] ⇒
+  override def update(obj: C)(implicit session: JdbcBackend#SessionDef) = {
+    obj.lastUpdated = DateTime.now
+    super.update(obj)
+  }
+
+  override def insert(obj: C)(implicit session: JdbcBackend#SessionDef) = {
+    // because x.copy(dateCreated = , lastUpdated = ) is not available for
+    // type parameters :(
+    obj.dateCreated = DateTime.now
+    obj.lastUpdated = obj.dateCreated
+    super.insert(obj)
   }
 }

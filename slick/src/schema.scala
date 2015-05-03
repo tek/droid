@@ -6,8 +6,6 @@ import scala.language.existentials
 import language.experimental.macros
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Set
-import scala.slick.model.ForeignKeyAction
-import slick._
 
 class Schema
 extends StaticAnnotation {
@@ -66,10 +64,8 @@ class SchemaMacros(val c: Context)
 
   val session = q"implicit val session: JdbcBackend#SessionDef"
 
-  def constraints(plural: String = null)(f: ⇒ Unit) {}
-
   lazy val dateTime = {
-    Seq(
+      Seq(
       q"""
       implicit val DateTimeTypeMapper =
         MappedColumnType.base[DateTime, Timestamp](
@@ -86,15 +82,13 @@ class SchemaMacros(val c: Context)
 
   val reservedNames = List("id", "dateCreated", "lastUpdated", "uuid")
 
-  def decapitalize(name: String): String = {
-    if (name == null || name.length == 0) {
-      name;
-    } else {
+  def decapitalize(name: String) = {
+    if (name.length == 0) name
+    else {
       val chars = name.toCharArray()
       var i = 0
       while (i < chars.length && Character.isUpperCase(chars(i))) {
         if (i > 0 && i < chars.length - 1 && Character.isLowerCase(chars(i + 1))) {
-
         } else {
           chars(i) = Character.toLowerCase(chars(i))
         }
@@ -362,20 +356,14 @@ class SchemaMacros(val c: Context)
 
   def create(annottees: c.Expr[Any]*) = {
 
-    def model(desc: ClsDesc, augment: Boolean = true)
+    def model(desc: ClsDesc, augment: Boolean = true, sync: Boolean = false)
     (implicit classes: List[ClsDesc]): ClassDef = {
       if (desc.part) desc.tree.asInstanceOf[ClassDef]
       else {
         val uuids = augment && desc.uuids
         val idval = listIf(augment)(q"val id: Option[Long] = None")
         val uuidval = listIf(uuids)(q"val uuid: Option[String] = None")
-        val xid = listIf(augment) {
-          q"""
-          def xid = id.getOrElse(throw new Exception("Object has no id yet"))
-          """
-        }
-        val valdefs = desc.flat.map {
-          it ⇒
+        val valdefs = desc.flat.map { it ⇒
             if (it.cse) {
               val tpt = if (it.option) {
                 tq"Option[Long]"
@@ -416,7 +404,7 @@ class SchemaMacros(val c: Context)
             """,
             q"""
             def $add($otherId: Long)($session) =
-                $query.insert($model(xid, $otherId))
+              id flatMap { i ⇒ $query.insert($model(i, $otherId)) }
             """,
             q"""
             def ${TermName("remove" + plur)}(ids: Traversable[Long])
@@ -444,6 +432,15 @@ class SchemaMacros(val c: Context)
             """
           )
         } flatten
+        val resolve = listIf(sync) {
+          q"""
+          def completeSync()($session) {
+            import PendingActionsSchema._
+            additions.filter(_.target === id).delete
+            updates.filter(_.target === id).delete
+          }
+          """
+        }
         val bases = Seq(
           (augment ? tq"db.Model"),
           ((augment && desc.timestamps) ? tq"db.Timestamps"),
@@ -454,9 +451,9 @@ class SchemaMacros(val c: Context)
           ..${desc.dateVals}, ..$uuidval)
         extends ..$bases
         {
-          ..$xid
           ..$defdefs
           ..$one2many
+          ..$resolve
         }
         """
       }
@@ -518,23 +515,6 @@ class SchemaMacros(val c: Context)
         //s"""def * = (${mkTilde(desc.fields toList)}).shaped <> (${desc.name}.tupled, ${desc.name}.unapply _)"""
           s"""def * = (${mkTilde(desc.fields toList)}).shaped <> ({
             case (${mkCase(desc.flat)}) ⇒ ${desc.name}( ${mkCaseApply(desc.flat)})
-          }, { x : ${desc.name} ⇒ Some((${mkCaseUnapply(desc.flat)}))
-          })"""
-
-      }
-      c.parse(expr)
-    }
-
-    def mkForInsert(desc: ClsDesc): Tree = {
-      val expr = {
-        if (desc.timestamps)
-          s"""def forInsert = (${mkTilde(desc.flat)}, dateCreated, lastUpdated).shaped <> ({
-            case (${mkCase(desc.flat)}, dateCreated, lastUpdated) ⇒ ${desc.name}(None, ${mkCaseApply(desc.flat)}, dateCreated, lastUpdated)
-          }, { x : ${desc.name} ⇒ Some((${mkCaseUnapply(desc.flat)}, x.dateCreated, x.lastUpdated))
-          })"""
-        else
-          s"""def forInsert = (${mkTilde(desc.flat)}).shaped <> ({
-            case (${mkCase(desc.flat)}) ⇒ ${desc.name}(None, ${mkCaseApply(desc.flat)})
           }, { x : ${desc.name} ⇒ Some((${mkCaseUnapply(desc.flat)}))
           })"""
 
@@ -638,12 +618,14 @@ class SchemaMacros(val c: Context)
           )
         } flatten
         val times = mkTimes(desc, augment)
-        val forInsert = mkForInsert(desc)
-        val vparams = q"""${TermName("tag")}:${TypeName("Tag")}""" :: Nil
         val plur = plural(decapitalize(desc.name)).toLowerCase
+        val bases = Seq(
+          (augment ? tq"TableEx[${desc.typeName}]")
+        ).flatten
         val table = q"""
         class ${desc.tableType}(tag: Tag)
-        extends Table[${TypeName(desc.name)}](tag, $plur)
+        extends Table[${desc.typeName}](tag, $plur)
+        with ..$bases
         {
           ..$idCol
           ..$uuidCol
@@ -654,20 +636,21 @@ class SchemaMacros(val c: Context)
           $times
         }
         """
-        model(desc, augment) :: table :: query(desc, sync) :: assocTables
+        model(desc, augment, sync) :: table :: query(desc, sync) :: assocTables
       }
     }
 
     def query(desc: ClsDesc, sync: Boolean)
     (implicit classes: List[ClsDesc]) = {
-      val bases = listIf(!desc.assoc) {
-        val crud = sync ? tq"PendingActionsCrudEx" /
-          (desc.timestamps ? tq"CrudEx" / tq"Crud")
-        tq"$crud[${desc.typeName}, ${desc.tableType}]"
-      }
+      val crud = desc.assoc ? tq"CrudCompat" / (
+        sync ? tq"PendingActionsCrudEx" / (
+          desc.timestamps ? tq"CrudEx" / tq"Crud"
+        )
+      )
+      val base = tq"$crud[${desc.typeName}, ${desc.tableType}]"
       q"""
       val ${desc.obj} =
-        new TableQuery(tag ⇒ new ${desc.tableType}(tag)) with ..$bases
+        new TableQuery(tag ⇒ new ${desc.tableType}(tag)) with $base
         {
           def name = ${desc.obj.toString}
         }
@@ -835,7 +818,6 @@ class SchemaMacros(val c: Context)
       import scala.slick.util.TupleMethods._
       import scala.slick.jdbc.JdbcBackend
       import scala.slick.driver.SQLiteDriver.simple._
-      import slick.dao.Crud._
       import slick._
       import db.Uuids._
       import argonaut._

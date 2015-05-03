@@ -42,19 +42,10 @@ extends Specification
   }
 }
 
-class ExtSchemaTest
+abstract class ExtSchemaTest
 extends Specification
 with BeforeAll
 {
-  def is = s2"""
-  The extended schema should
-
-  create models $checkModels
-  add list associations $listAssoc
-  add flat associations $flatAssoc
-  create pending actions $pendingAct
-  """
-
   import ExtTestSchema._
 
   implicit val dbInfo = slick.db.DBConnectionInfo(
@@ -65,7 +56,7 @@ with BeforeAll
   def db = Database.forURL(dbInfo.url, null, null, null,
     dbInfo.driverClassName)
 
-  @DBSession def beforeAll() {
+  @DBSession def resetDb() {
     metadata.dropAll()
     pendingMetadata.dropAll()
     metadata.createMissingTables()
@@ -82,13 +73,41 @@ with BeforeAll
         b ← betas.insert(Beta(None, "yello", aId, a2Id))
         bId ← b.id
         c ← gammas.insert(Gamma(None, "hello"))
-
       } yield (a, b, bId, c)
     }
   }
 
   lazy val models = createModels.get
-  
+
+  def additions(model: String) = {
+    db withSession { implicit s ⇒
+      val adds = for {
+        a ← pendingActions if a.model === model
+        add ← a.additions
+      } yield add
+      adds.list
+    }
+  }
+}
+
+class BasicExtSchemaTest
+extends ExtSchemaTest
+{
+  def is = s2"""
+  The extended schema should
+
+  create models $checkModels
+  add list associations $listAssoc
+  add flat associations $flatAssoc
+  create pending actions $pendingAct
+  """
+
+  import ExtTestSchema._
+
+  def beforeAll() {
+    resetDb()
+  }
+
   def checkModels() = Try(models) must beSuccessfulTry
 
   def listAssoc = {
@@ -108,24 +127,39 @@ with BeforeAll
   }
 
   def pendingAct = {
-    import ExtTestSchema.PendingActionsSchema._
+    import ExtTestSchema.PendingActionsSchema.Addition
+    println(additions("alphas"))
+    println(additions("betas"))
+    println(additions("gammas"))
+    val (a, b, bId, c) = models
+    additions("alphas") === List(Addition(Some(1), 1), Addition(Some(2), 2)) &&
+      additions("betas") === List(Addition(Some(3), 1)) &&
+      additions("gammas") === List(Addition(Some(4), 1))
+  }
+}
+
+class AdvancedExtSchemaTest
+extends ExtSchemaTest
+{
+  def is = s2"""
+  The extended schema should also
+
+  resolve pending actions $resolve
+  """
+
+  import ExtTestSchema._
+
+  def beforeAll() {
+    resetDb()
+  }
+
+  def resolve = {
+    import ExtTestSchema.PendingActionsSchema.Addition
+    val (a, b, bId, c) = models
     db withSession { implicit s ⇒
-      val (a, b, bId, c) = models
-      val aAdds = for {
-        a ← pendingActions if a.model === "alphas"
-        add ← a.additions
-      } yield add
-      val bAdds = for {
-        ba ← pendingActions if ba.model === "betas"
-        bad ← ba.additions
-      } yield bad
-      val cAdds = for {
-        ca ← pendingActions if ca.model === "gammas"
-        cad ← ca.additions
-      } yield cad
-      aAdds.list === List(Addition(Some(1),1), Addition(Some(2),2)) &&
-        bAdds.list === List(Addition(Some(3),1)) &&
-        cAdds.list === List(Addition(Some(4),1))
+      a.completeSync()
     }
+    additions("alphas") === List(Addition(Some(2), 2))
+    1 must_== 1
   }
 }

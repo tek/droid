@@ -22,7 +22,6 @@ extends tryp.AndroidDeps
       "com.google.android.gms" % "play-services-plus" % "6.+",
       aar("org.macroid" %% "macroid" % "2.0.0-SNAPSHOT"),
       "com.typesafe.akka" %% "akka-actor" % "2.+",
-      "org.scalaz" %% "scalaz-core" % "7.1.+",
       "com.scalarx" %% "scalarx" % "0.+",
       "com.github.andkulikov" % "transitions-everywhere" % "1.+",
       "com.melnykov" % "floatingactionbutton" % "1.+",
@@ -42,6 +41,7 @@ extends tryp.AndroidDeps
       "org.joda" % "joda-convert" % "1.+",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+      "org.scalaz" %% "scalaz-core" % "7.1.+",
       "org.specs2" %%  "specs2-core" % "3.+" % "test",
       "org.xerial" % "sqlite-jdbc" % "3.+" % "test",
       "io.argonaut" %% "argonaut" % "6.+" % "test"
