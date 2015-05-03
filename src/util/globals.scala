@@ -61,6 +61,7 @@ extends Util
   val Tweak = macroid.Tweak
 
   val Try = scala.util.Try
+  val Promise = scala.concurrent.Promise
   val Success = scala.util.Success
   val Failure = scala.util.Failure
   val Future = scala.concurrent.Future
@@ -70,6 +71,7 @@ extends Util
   type ClassTag[A] = scala.reflect.ClassTag[A]
   type Buffer[A] = scala.collection.mutable.Buffer[A]
   type MMap[A, B] = scala.collection.mutable.Map[A, B]
+  type Promise[A] = scala.concurrent.Promise[A]
 }
 
 trait Globals
