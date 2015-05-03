@@ -7,7 +7,7 @@ extends tryp.AndroidDeps
 {
   override def deps = super.deps ++ Map(
     "root" → common,
-    "slick" → slick
+    "slick-core" → slickCore
   )
 
   lazy val common = Seq(
@@ -31,7 +31,7 @@ extends tryp.AndroidDeps
     )
   )
 
-  lazy val slick = Seq(
+  lazy val slickCore = Seq(
     resolvers += "Scalaz Bintray Repo" at
       "https://dl.bintray.com/scalaz/releases",
     libraryDependencies ++= Seq(

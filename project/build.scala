@@ -33,11 +33,10 @@ object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
   lazy val macros = p("macros")
     .aar()
 
-  lazy val slick = p("slick")
+  lazy val slickCore = p("slick-core")
     .paradise()
     .antSrc
     .export
-    .transitive
     .dep(core)
 
   lazy val root = p("root")
