@@ -44,7 +44,6 @@ extends Specification
 
 abstract class ExtSchemaTest
 extends Specification
-with BeforeAll
 {
   import ExtTestSchema._
 
@@ -92,6 +91,7 @@ with BeforeAll
 
 class BasicExtSchemaTest
 extends ExtSchemaTest
+with BeforeAll
 {
   def is = s2"""
   The extended schema should
@@ -140,6 +140,7 @@ extends ExtSchemaTest
 
 class AdvancedExtSchemaTest
 extends ExtSchemaTest
+with BeforeEach
 {
   def is = s2"""
   The extended schema should also
@@ -149,7 +150,7 @@ extends ExtSchemaTest
 
   import ExtTestSchema._
 
-  def beforeAll() {
+  def before() {
     resetDb()
   }
 
