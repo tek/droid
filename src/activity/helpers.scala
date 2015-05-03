@@ -1,6 +1,7 @@
 package tryp.droid.activity
 
 import scala.collection.JavaConversions._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import android.content.SharedPreferences
 import android.content.res.Configuration
@@ -10,6 +11,9 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.{ActionBarDrawerToggle,ActionBarActivity}
 import android.support.v7.widget.Toolbar
+
+import com.google.android.gms.common._
+import com.google.android.gms.auth._
 
 import android.transitions.everywhere.TransitionSet
 
@@ -461,11 +465,70 @@ with DrawerLayout.DrawerListener
 
 trait GPlusIntegration
 extends ActivityBase
-{
+with AppPreferences
+{ self: Akkativity ⇒
+
+  abstract override def onCreate(state: Bundle) {
+    super.onCreate(state)
+    authTokenObserver
+  }
+
+  var fetchingPlusToken = false
+
+  def authToken: Var[String]
+
+  def authorizeToken(account: String, plusToken: String)
+
+  lazy val authTokenState = Rx { (authToken(), GPlus.signedIn()) }
+
+  lazy val authTokenObserver = Obs(authTokenState) {
+    if (authToken() == "" && !fetchingPlusToken) obtainToken()
+  }
+
+  def obtainToken() {
+    fetchingPlusToken = true
+    fetchPlusToken.future andThen {
+      case Success((account, plusToken)) ⇒
+        authorizeToken(account, plusToken)
+      case Failure(ex: UserRecoverableAuthException) ⇒
+        requestPermission(ex.getIntent)
+      case Failure(ex) ⇒
+        Log.e(s"Google Plus auth token request failed: ${ex}")
+    } onComplete { _ ⇒ fetchingPlusToken = false }
+  }
+
+  def serverClientId(implicit c: Context) =
+    res.string("gplus_oauth_server_client_id")
+
+  val scopes = Scopes.PLUS_LOGIN
+
+  def scopeString(implicit c: Context) =
+    s"oauth2:server:client_id:$serverClientId:api_scope:$scopes"
+
+  def fetchPlusToken = {
+    GPlus { plus ⇒
+      plus.email map {e ⇒ (e, plusToken(e)) } getOrElse {
+        throw new Exception("Plus account name unavailable")
+      }
+    }
+  }
+
+  def plusToken(email: String) =
+    GoogleAuthUtil.getToken(this, email, scopeString)
+
+  def requestPermission(intent: Intent) =
+    startActivityForResult(intent, GPlusBase.RC_TOKEN_FAIL)
+
+  def plusTokenResolved(success: Boolean) {
+    if (success) obtainToken()
+  }
+
   override def onActivityResult(requestCode: Int, responseCode: Int, intent:
     Intent)
   {
     if (requestCode == GPlusBase.RC_SIGN_IN)
       GPlus.signInComplete(responseCode == android.app.Activity.RESULT_OK)
+    else if (requestCode == GPlusBase.RC_TOKEN_FAIL)
+      plusTokenResolved(responseCode == android.app.Activity.RESULT_OK)
   }
 }
