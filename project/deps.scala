@@ -7,7 +7,8 @@ extends tryp.AndroidDeps
 {
   override def deps = super.deps ++ Map(
     "root" → common,
-    "slick-core" → slickCore
+    "slick-core" → slickCore,
+    "slick" → slick
   )
 
   lazy val common = Seq(
@@ -41,10 +42,15 @@ extends tryp.AndroidDeps
       "org.joda" % "joda-convert" % "1.+",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.scalaz" %% "scalaz-core" % "7.1.+",
+      "org.scalaz" %% "scalaz-core" % "7.1.+"
+    )
+  )
+
+  lazy val slick = Seq(
+    libraryDependencies ++= Seq(
+      "io.argonaut" %% "argonaut" % "6.+",
       "org.specs2" %%  "specs2-core" % "3.+" % "test",
-      "org.xerial" % "sqlite-jdbc" % "3.+" % "test",
-      "io.argonaut" %% "argonaut" % "6.+" % "test"
+      "org.xerial" % "sqlite-jdbc" % "3.+" % "test"
     )
   )
 }
