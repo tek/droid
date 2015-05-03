@@ -795,6 +795,15 @@ class SchemaMacros(val c: Context)
           pending foreach { _.deleteUpdates(ups.list) }
         }
 
+        def completeDeletion(uuid: String)($session) = {
+          val dels = for {
+            p ← pendingActions if p.model === name
+            a ← p.deletions
+            if a.target === uuid
+          } yield a.id
+          pending foreach { _.deleteDeletions(dels.list) }
+        }
+
         override def deleteById(id: Long)($session) = byId(id) foreach(delete)
       }
       """
