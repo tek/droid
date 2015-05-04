@@ -16,13 +16,6 @@ object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
   DroidPlaceholders) {
   lazy val platform = "android-21"
 
-  override lazy val settings = super.settings ++ Seq(
-    scalacOptions ++= Seq("-feature", "-language:implicitConversions",
-      "-deprecation", "-language:postfixOps", "-language:reflectiveCalls",
-      "-language:existentials", "-language:experimental.macros"),
-    scalaVersion := "2.11.6"
-  )
-
   override def globalSettings = super.globalSettings ++ Seq(
     lintEnabled in Android := false
   )
