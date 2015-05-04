@@ -1,11 +1,13 @@
-package slick
+package slick.db
 
 import scala.slick.driver.SQLiteDriver.simple._
 import scala.slick.jdbc.JdbcBackend
-import org.joda.time.DateTime
+
 import scalaz._, Scalaz._
 
-trait TableEx[C <: db.Model] {
+import org.joda.time.DateTime
+
+trait TableEx[C <: Model] {
   def id: Column[Long]
 }
 
@@ -19,7 +21,7 @@ trait CrudCompat[C, T <: Table[C]]
   }
 }
 
-trait Crud[C <: db.Model, T <: Table[C] with TableEx[C]]
+trait Crud[C <: Model, T <: Table[C] with TableEx[C]]
 extends CrudCompat[C, T]
 {
   self: TableQuery[T] ⇒
@@ -34,6 +36,9 @@ extends CrudCompat[C, T]
   def byId(objId: Long)(implicit session: JdbcBackend#SessionDef) =
     self.filter(_.id === objId).firstOption
 
+  def byIds(ids: Traversable[Long])(implicit session: JdbcBackend#SessionDef) =
+    self.filter(_.id inSet(ids)).list
+
   def update(obj: C)(implicit session: JdbcBackend#SessionDef) = {
     (for {row ← self if row.id === obj.id.get} yield row) update (obj)
   }
@@ -47,7 +52,7 @@ extends CrudCompat[C, T]
   }
 }
 
-trait CrudEx[C <: db.Model with db.Timestamps,
+trait CrudEx[C <: Model with Timestamps,
 T <: Table[C] with TableEx[C]] extends Crud[C, T] {
   self: TableQuery[T] ⇒
   override def update(obj: C)(implicit session: JdbcBackend#SessionDef) = {

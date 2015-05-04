@@ -1,13 +1,14 @@
 package slick.test
 
 import scala.slick.driver.SQLiteDriver.simple._
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
-import slick.{schema, Schema}
-import slick.db.DBSession
+import slick._
+import slick.db._
 
 import org.specs2._
 import org.specs2.specification._
-
 
 @Schema()
 object SimpleTestSchema
@@ -17,7 +18,7 @@ object SimpleTestSchema
   case class Gamma(name: String, bet: List[Beta])
 }
 
-@Schema()
+@SyncSchema()
 object ExtTestSchema
 extends schema.Timestamps
 with schema.Uuids
@@ -127,15 +128,20 @@ with BeforeAll
   }
 
   def pendingAct = {
-    import ExtTestSchema.PendingActionsSchema.Addition
-    println(additions("alphas"))
-    println(additions("betas"))
-    println(additions("gammas"))
+    import PendingActionsSchema.Addition
     val (a, b, bId, c) = models
     additions("alphas") === List(Addition(Some(1), 1), Addition(Some(2), 2)) &&
       additions("betas") === List(Addition(Some(3), 1)) &&
       additions("gammas") === List(Addition(Some(4), 1))
   }
+}
+
+class DummyHttpClient
+extends HttpClient
+{
+  override def post(path: String, body: String = "{}") = "{}"
+  override def put(path: String, body: String = "{}") = "{}"
+  override def delete(path: String, body: String = "{}") = "{}"
 }
 
 class AdvancedExtSchemaTest
@@ -146,6 +152,7 @@ with BeforeEach
   The extended schema should also
 
   resolve pending actions $resolve
+  sync pending actions to a backend $sync
   """
 
   import ExtTestSchema._
@@ -155,12 +162,24 @@ with BeforeEach
   }
 
   def resolve = {
-    import ExtTestSchema.PendingActionsSchema.Addition
+    import PendingActionsSchema.Addition
     val (a, b, bId, c) = models
     db withSession { implicit s ⇒
       a.completeSync()
     }
     additions("alphas") === List(Addition(Some(2), 2)) &&
       additions("betas") === List(Addition(Some(3), 1))
+  }
+
+  def sync = {
+    val (a, b, bId, c) = models
+    val backend = new BackendSync {
+      def http = new DummyHttpClient
+    }
+    val fut = db withSession { implicit s ⇒
+      backend(ExtTestSchema)
+    }
+    Await.ready(fut, 3 seconds)
+    1 must_== 1
   }
 }

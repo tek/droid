@@ -4,7 +4,7 @@ import scala.slick.driver.SQLiteDriver.simple._
 import scala.slick.jdbc.JdbcBackend
 import scala.slick.jdbc.meta.MTable
 
-case class TableMetadata(name: String, table: TableQuery[_ <: Table[_]])
+class TableMetadataBase(name: String, table: TableQuery[_ <: Table[_]])
 {
   def ddl = table.ddl
 
@@ -12,7 +12,11 @@ case class TableMetadata(name: String, table: TableQuery[_ <: Table[_]])
     MTable.getTables(name).list.isEmpty
 }
 
-case class SchemaMetadata(tables: Map[String, TableMetadata])
+case class TableMetadata(name: String, table: TableQuery[_ <: Table[_]])
+extends TableMetadataBase(name, table)
+
+case class SchemaMetadata
+(tables: Map[String, _ <: TableMetadataBase])
 {
   def createMissingTables()(implicit session: JdbcBackend#SessionDef) {
     tables foreach {
