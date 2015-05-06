@@ -6,33 +6,12 @@ import akka.actor.ActorSelection
 
 import tryp.droid.Messages
 
-trait LogBase {
-  var tag = "tryp"
-
-  def d(message: String) { }
-
-  def p(message: Any) = {
-    if (message == null)
-      i("null")
-    else
-      i(message.toString)
-  }
-
-  def i(message: String) { }
-
-  def w(message: String) { }
-
-  def e(message: String) { }
-
-  def e(message: String, t: Throwable) { }
-
-  def t(message: String) { }
-}
-
-object NullLog extends LogBase
+import tryp.core.util._
 
 class AndroidLog extends LogBase
 {
+  var tag = "tryp"
+
   override def d(message: String) = android.util.Log.d(tag, message)
 
   override def i(message: String) = android.util.Log.i(tag, message)
@@ -51,20 +30,6 @@ class AndroidLog extends LogBase
 }
 
 object AndroidLog extends AndroidLog
-
-object StdoutLog extends LogBase {
-  override def d(message: String) = println(message)
-
-  override def i(message: String) = println(message)
-
-  override def w(message: String) = println(message)
-
-  override def e(message: String) = println(message)
-
-  override def e(message: String, t: Throwable) = println(message)
-
-  override def t(message: String) = println(message)
-}
 
 trait InternalLog extends LogBase
 {

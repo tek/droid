@@ -13,16 +13,17 @@ with JodaExt
 }
 
 trait GlobalsBase
-extends Util
+extends tryp.core.meta.Globals
+with Util
 {
   val Env = tryp.droid.meta.Env
 
-  def Log = {
+  override def Log = {
     if (Env.release) {
       tryp.droid.meta.InternalLog
     }
     else if (Env.unittest) {
-      tryp.droid.meta.StdoutLog
+      tryp.core.meta.StdoutLog
     }
     else {
       tryp.droid.meta.DebugLog
@@ -30,11 +31,6 @@ extends Util
   }
 
   def log(message: String) = Log.d(message)
-
-  def p[A](item: A): A = {
-    (Log.p(item))
-    item
-  }
 
   val layouts = tryp.droid.res.Layouts
 
@@ -59,19 +55,6 @@ extends Util
 
   val Ui = macroid.Ui
   val Tweak = macroid.Tweak
-
-  val Try = scala.util.Try
-  val Promise = scala.concurrent.Promise
-  val Success = scala.util.Success
-  val Failure = scala.util.Failure
-  val Future = scala.concurrent.Future
-  val Buffer = scala.collection.mutable.Buffer
-  val MMap = scala.collection.mutable.Map
-
-  type ClassTag[A] = scala.reflect.ClassTag[A]
-  type Buffer[A] = scala.collection.mutable.Buffer[A]
-  type MMap[A, B] = scala.collection.mutable.Map[A, B]
-  type Promise[A] = scala.concurrent.Promise[A]
 
   def GPlus: tryp.droid.GPlusBase = tryp.droid.Classes.plus
 }
