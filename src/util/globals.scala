@@ -4,7 +4,6 @@ trait Util
 extends Control
 with MetadataExt
 with OptionExt
-with StringOpsExt
 with SeqExt
 with AkkaExt
 with AndroidExt
