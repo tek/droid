@@ -79,9 +79,9 @@ trait SchemaMacrosBase
     else List[Tree]()
   }
 
-  val session = q"implicit val session: JdbcBackend#SessionDef"
+  val session = q"implicit val s: Session"
 
-  lazy val dateTime = {
+  def dateTime = {
       Seq(
       q"""
       implicit val DateTimeTypeMapper =
@@ -89,10 +89,6 @@ trait SchemaMacrosBase
         { dt ⇒ new Timestamp(dt.getMillis) },
         { ts ⇒ new DateTime(ts.getTime) }
       )
-      """,
-      q"""
-      implicit val dateTimeJsonFormat =
-        jencode1L { (dt: DateTime) ⇒ dt.getEra } ("time")
       """
     )
   }
@@ -159,6 +155,8 @@ trait SchemaMacrosBase
 
     lazy val loadMany = TermName(s"load${plural(name.capitalize)}")
 
+    lazy val replaceMany = TermName(s"replace${plural(name.capitalize)}")
+
     lazy val query = TermName(objectName(typeName))
 
     lazy val colId = columnId(name)
@@ -171,7 +169,7 @@ trait SchemaMacrosBase
   }
 
   object FldDesc {
-    def apply(fieldTree: Tree, clsTree: Tree, allClasses: List[ClsDesc]) = {
+    def apply(fieldTree: Tree, allClasses: List[ClsDesc]) = {
       val ValDef(mod, name, tpt, rhs) = fieldTree
       if (reservedNames.contains(name.toString))
         c.abort(c.enclosingPosition,
@@ -224,52 +222,54 @@ trait SchemaMacrosBase
           Some(clsDesc)
         case _ ⇒ None
       }
-      val ClassDef(_, clsName, _, Template(_, _, body)) = clsTree
-      body.foreach {
-        it ⇒
-          val cns = it match {
-            case Apply(Ident(_), List(Block(stats, expr))) ⇒
-              Some(plural(decapitalize(clsName.toString)), stats :+ expr)
-            case Apply(Apply(Ident(_), List(Literal(Constant(arg)))),
-              List(Block(stats, expr))) ⇒
-              Some(arg.toString, stats :+ expr)
-            case _ ⇒ None
-          }
-          cns foreach {
-            it ⇒
-              allClasses.find(_.name == clsName.toString).foreach {
-                x ⇒
-                  x.plural = it._1
-              }
-              (it._2).foreach {
-                s ⇒
-                  val st = s.toString.replace("scala.Tuple", "Tuple").split('.').map(_.trim)
-                  if (st.length >= 2) {
-                    val fieldNames = {
-                      if (st(0).endsWith(")")) {
-                        st(0).substring(st(0).indexOf('(') + 1, st(0).lastIndexOf(')')).split(',').map(_.trim)
-                      } else {
-                        Array(st(0).trim)
-                      }
-                    }
-                  }
-              }
-          }
-      }
+      // val ClassDef(_, clsName, _, Template(_, _, body)) = clsTree
+      // body.foreach {
+      //   it ⇒
+      //     val cns = it match {
+      //       case Apply(Ident(_), List(Block(stats, expr))) ⇒
+      //         Some(plural(decapitalize(clsName.toString)), stats :+ expr)
+      //       case Apply(Apply(Ident(_), List(Literal(Constant(arg)))),
+      //         List(Block(stats, expr))) ⇒
+      //         Some(arg.toString, stats :+ expr)
+      //       case _ ⇒ None
+      //     }
+      //     cns foreach {
+      //       it ⇒
+      //         allClasses.find(_.name == clsName.toString).foreach {
+      //           x ⇒
+      //             x.plural = it._1
+      //         }
+      //         (it._2).foreach {
+      //           s ⇒
+      //             val st = s.toString.replace("scala.Tuple", "Tuple").split('.').map(_.trim)
+      //             if (st.length >= 2) {
+      //               val fieldNames = {
+      //                 if (st(0).endsWith(")")) {
+      //                   st(0).substring(st(0).indexOf('(') + 1, st(0).lastIndexOf(')')).split(',').map(_.trim)
+      //                 } else {
+      //                   Array(st(0).trim)
+      //                 }
+      //               }
+      //             }
+      //         }
+      //     }
+      // }
       new FldDesc(name.toString, colName, typeName, flags,
         None, clsDesc, fieldTree)
     }
   }
 
+  // TODO move id column here
   case class ClsDesc(name: String, flags: Set[ClassFlag],
-    fields: ListBuffer[FldDesc], tree: Tree, var plural: String)
+    fields: ListBuffer[FldDesc], tree: Tree, var plural: String,
+    val bases: List[Tree] = List(), uuid: Boolean = false)
   {
     def parseBody(allClasses: List[ClsDesc]) {
       val ClassDef(mod, name, Nil, Template(parents, self, body)) = tree
       body.foreach {
         it ⇒
           it match {
-            case ValDef(_, _, _, _) ⇒ fields += FldDesc(it, tree, allClasses)
+            case ValDef(_, _, _, _) ⇒ fields += FldDesc(it, allClasses)
             case _ ⇒
           }
       }
@@ -284,8 +284,6 @@ trait SchemaMacrosBase
     lazy val entity = flags.contains(ENTITYDEF)
 
     lazy val timestamps = flags.contains(TIMESTAMPSDEF)
-
-    lazy val uuids = flags.contains(UUIDSDEF)
 
     lazy val dateVals = listIfList(timestamps) {
       List(
@@ -315,6 +313,8 @@ trait SchemaMacrosBase
 
     lazy val typeName = TypeName(name)
 
+    lazy val compName = TermName(name)
+
     def assocQuery(other: FldDesc) =
       TermName(objectName(assocName(other)))
 
@@ -339,35 +339,81 @@ trait SchemaMacrosBase
 
     lazy val listValDefs = filter { _.contains(FieldFlag.LIST) }
 
-    def allFields = {
-      fields.toList.map {
-        it ⇒
-          if (it.part)
-            it.cls.get.fields toList
-          else
-            it :: Nil
-      } flatten
+    lazy val colId = columnId(name)
+
+    lazy val caseValDefs = flat.map { attr ⇒
+      if (attr.cse) {
+        val tpe = attr.option ? tq"Option[Long]" / tq"Long"
+        val q"$mod val $name: $ignoretype = $value" = attr.tree
+        val termName = TermName(name.toString + "Id")
+        q"val $termName: $tpe"
+      }
+      else attr.tree.asInstanceOf[ValDef]
     }
 
-    lazy val colId = columnId(name)
+    lazy val nonDateFields = attrs ++ foreignKeys ++ assocs
+
+    lazy val nonDateFieldNames = "uuid" :: nonDateFields.map(_.name)
+
+    lazy val mapper = s"${name}Mapper"
+
+    lazy val mapperType = TypeName(mapper)
+
+    lazy val mapperTerm = TermName(mapper)
+
+    lazy val mapperFields = {
+      val atts = attrs map { a ⇒ q"val ${a.term}: ${TypeName(a.typeName)}" }
+      val fks = foreignKeys map { a ⇒ q"val ${a.term}: String" }
+      val ass = assocs map { a ⇒ q"val ${a.term}: Seq[String]" }
+      val uuid = q"val uuid: String"
+      uuid :: atts ++ fks ++ ass
+    }
+
+    def tildeFields(augment: Boolean) = {
+      // formatFields(augment, prepend = augment ? List("id.?") / Nil)
+      formatFields(augment)
+    }
+
+    def modelFields(augment: Boolean) = {
+      formatFields(augment, augment ? List("id") / Nil)
+    }
+
+    def appendFields(augment: Boolean) = List(
+      (augment && timestamps) ? "dateCreated",
+      (augment && timestamps) ? "lastUpdated",
+      (augment && uuid) ? "uuid"
+      ) flatten
+
+    def modelFieldsPrefixed(augment: Boolean, prefix: String) = {
+      modelFields(augment) map { a ⇒ q"${TermName(prefix)}.$a" }
+    }
+
+    def formatFields(augment: Boolean, prepend: List[String] = List()) = {
+      val fields = flat.map { field ⇒
+        if (field.cse) colIdName(field.name) else field.name
+      }
+      (prepend ++ fields ++ appendFields(augment)) map { TermName(_) }
+    }
   }
 
   object ClsDesc {
-    def apply(tree: Tree, timestampAll: Boolean, uuids: Boolean) = {
+    def apply(tree: Tree, timestampAll: Boolean, uuid: Boolean) = {
       val q"case class $name(..$fields) extends ..$bases { ..$body }" =
         tree
       val parents = bases map { _.toString }
       val isPart = parents.contains("Part")
       val timestamps = parents.contains("Timestamps")
+      val realBases = bases filterNot { b ⇒
+        b.toString.contains("Part") || b.toString.contains("Timestamps")
+      }
       val flags = Set[ClassFlag]()
       if (isPart)
         flags += PARTDEF
       else
         flags += ENTITYDEF
       if (timestampAll || timestamps) flags += TIMESTAMPSDEF
-      if (uuids) flags += UUIDSDEF
       new ClsDesc(name.toString, flags, ListBuffer(), tree,
-        plural(decapitalize(name.toString)))
+        plural(decapitalize(name.toString)), realBases, uuid)
     }
   }
 }

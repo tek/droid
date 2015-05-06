@@ -67,20 +67,20 @@ object TransactionMacro {
 
     val result = {
       annottees.map(_.tree).toList match {
-        case q"$mods def $name[..$tparams](...$vparamss): $tpt = $body" :: Nil =>
+        case q"$mods def $name[..$tparams](...$vparamss): $tpt = $body" :: Nil ⇒
           val implictParam = vparamss.find {
-            it =>
+            it ⇒
               it match {
                 // "$IMPLICIT ..." did not work here
-                case q"$mods val $name:$tpt = $rhs" :: Nil if mods.hasFlag(implict) && tpt.toString == "DBConnectionInfo" => true
-                case _ => false
+                case q"$mods val $name:$tpt = $rhs" :: Nil if mods.hasFlag(implict) && tpt.toString == "DBConnectionInfo" ⇒ true
+                case _ ⇒ false
               }
           } map {
-            it =>
+            it ⇒
               val q"$mods val $name:$tpt = $rhs" :: Nil = it
               name.toString
           } map {
-            it =>
+            it ⇒
               (it, None)
           } getOrElse {
             ("_dbOptions", Some(List(q"implicit val _dbOptions:slick.db.DBConnectionInfo") :: Nil))
@@ -101,7 +101,7 @@ object TransactionMacro {
             else
               throw new SlickException("One of jndiName / dataSource / driver / driverClassName must be set")
                 dbLock synchronized {
-                  _db ${TermName(sessionType)} { implicit session =>
+                  _db ${TermName(sessionType)} { implicit session ⇒
                     $body
                   }
                 }
@@ -115,7 +115,7 @@ object TransactionMacro {
           """
 
           defdef
-        case _ => c.abort(c.enclosingPosition, "Transaction may be attached to a method definition only")
+        case _ ⇒ c.abort(c.enclosingPosition, "Transaction may be attached to a method definition only")
       }
     }
     c.Expr[Any](result)

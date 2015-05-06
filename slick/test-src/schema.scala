@@ -4,47 +4,18 @@ import scala.slick.driver.SQLiteDriver.simple._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
+import argonaut._
+import Argonaut._
+
 import slick._
 import slick.db._
 
 import org.specs2._
 import org.specs2.specification._
 
-@Schema()
-object SimpleTestSchema
-{
-  case class Alpha(name: String)
-  case class Beta(name: String, alp: Alpha)
-  case class Gamma(name: String, bet: List[Beta])
-}
-
-@SyncSchema()
-object ExtTestSchema
-extends schema.Timestamps
-with schema.Uuids
-with schema.Sync
-{
-  case class Alpha(name: String)
-  case class Beta(name: String, alp: Alpha, alp2: Alpha)
-  case class Gamma(name: String, bet: List[Beta], bet2: List[Beta])
-}
-
-class SimpleSchemaTest
-extends Specification
-{
-  def is = s2"""
-  The simple schema should
-
-  work $e1
-  """
-
-  def e1 = {
-    1 must_== 1
-  }
-}
-
 abstract class ExtSchemaTest
 extends Specification
+with BeforeAll
 {
   import ExtTestSchema._
 
@@ -71,6 +42,7 @@ extends Specification
         a2 ← alphas.insert(Alpha(None, "something else"))
         a2Id ← a2.id
         b ← betas.insert(Beta(None, "yello", aId, a2Id))
+        b2 ← betas.insert(Beta(None, "chello", aId, a2Id))
         bId ← b.id
         c ← gammas.insert(Gamma(None, "hello"))
       } yield (a, b, bId, c)
@@ -92,7 +64,6 @@ extends Specification
 
 class BasicExtSchemaTest
 extends ExtSchemaTest
-with BeforeAll
 {
   def is = s2"""
   The extended schema should
@@ -116,7 +87,7 @@ with BeforeAll
     val (a, b, bId, c) = models
       c.addBet(bId)
       c.addBet2(bId)
-      c.loadBets.list must contain(b)
+      c.bet must contain(b)
     }
   }
 
@@ -136,50 +107,120 @@ with BeforeAll
   }
 }
 
-class DummyHttpClient
+class DummyHttpClient(responses: Seq[String])
 extends HttpClient
 {
-  override def post(path: String, body: String = "{}") = "{}"
-  override def put(path: String, body: String = "{}") = "{}"
-  override def delete(path: String, body: String = "{}") = "{}"
+  val it = Iterator(responses: _*)
+
+  def response = if (it.hasNext) Option(it.next) else None
+
+  override def post(path: String, body: String = "{}") = response
+  override def put(path: String, body: String = "{}") = response
+  override def delete(path: String, body: String = "{}") = response
+  override def get(path: String, body: String = "{}") = response
+}
+
+class CompletePendingTest
+extends ExtSchemaTest
+{
+  def is = s2"""
+  After completing the first alpha addition, there should be
+
+  one alpha addition left $alpha
+  one beta addition left $beta
+  """
+
+  import ExtTestSchema._
+  import PendingActionsSchema.Addition
+
+  def beforeAll() {
+    resetDb()
+    val (a, b, bId, c) = models
+    db withSession { implicit s ⇒
+      alphas.completeSync(additions("alphas").head)
+    }
+  }
+
+  def alpha = {
+    additions("alphas") === List(Addition(Some(2), 2))
+  }
+
+  def beta = {
+    additions("betas") === List(Addition(Some(3), 1))
+  }
 }
 
 class AdvancedExtSchemaTest
 extends ExtSchemaTest
-with BeforeEach
 {
   def is = s2"""
-  The extended schema should also
+  Sync of pending actions to a backend
 
-  resolve pending actions $resolve
-  sync pending actions to a backend $sync
+  apply uuids to multiple records in a table $alpha
+  apply multiple changed foreign keys to a record $beta
+  apply multiple changed associations to a record $gamma
   """
 
   import ExtTestSchema._
+  import scala.concurrent.ExecutionContext.Implicits.global
 
-  def before() {
-    resetDb()
+  implicit class `json shortcut`[A: EncodeJson](a: A) {
+    def js = a.asJson.spaces2
   }
 
-  def resolve = {
-    import PendingActionsSchema.Addition
+  def beforeAll() {
+    resetDb()
     val (a, b, bId, c) = models
     db withSession { implicit s ⇒
-      a.completeSync()
+      val a1 = AlphaMapper("uuid_alpha_1", "response_alpha_1")
+      val a2 = AlphaMapper("uuid_alpha_2", "response_alpha_2")
+      val b1 = BetaMapper("uuid_beta_1", "response_beta_1",
+        "uuid_alpha_2", "uuid_alpha_1")
+      val b2 = BetaMapper("uuid_beta_2", "response_beta_2",
+        "uuid_alpha_2", "uuid_alpha_2")
+      val c = GammaMapper("uuid_gamma_1", "response_gamma_1",
+        List("uuid_beta_1", "uuid_beta_2"), List())
+      val responses =
+        a1.js ::
+        a2.js ::
+        Seq(a1, a2).js ::
+        b1.js ::
+        b2.js ::
+        Seq(b1, b2).js ::
+        c.js ::
+        Seq(c).js ::
+        Nil
+      val backend = new BackendSync {
+        val http = new DummyHttpClient(responses)
+      }
+      val fut = backend(ExtTestSchema)
+      fut onFailure {
+        case e ⇒ throw e
+      }
+      Await.ready(fut, 3 seconds)
     }
-    additions("alphas") === List(Addition(Some(2), 2)) &&
-      additions("betas") === List(Addition(Some(3), 1))
   }
 
-  def sync = {
-    val (a, b, bId, c) = models
-    val backend = new BackendSync {
-      def http = new DummyHttpClient
+  def alpha = {
+    db withSession { implicit s ⇒
+      val uuids = alphas.list.map(_.uuid).flatten
+      uuids must_== List("uuid_alpha_1", "uuid_alpha_2")
     }
-    val fut = db withSession { implicit s ⇒
-      backend(ExtTestSchema)
+  }
+
+  def beta = {
+    db withSession { implicit s ⇒
+      val ids = betas.list.headOption map { b ⇒ (b.alpId, b.alp2Id) }
+      ids must beSome((2L, 1L))
     }
-    Await.ready(fut, 3 seconds)
-    1 must_== 1
+  }
+
+  def gamma = {
+    db withSession { implicit s ⇒
+      val betas = gammas.list.headOption map {
+        c ⇒ (c.loadBets.list, c.loadBet2s.list) } map {
+        case (b1, b2) ⇒ (b1.ids, b2.ids) }
+      betas must beSome((Set(1, 2), Set()))
+    }
   }
 }

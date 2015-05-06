@@ -1,4 +1,4 @@
-package object slick extends tryp.core.meta.Globals
+package object slick extends Globals
 package slick {
-  package object db extends tryp.core.meta.Globals
+  package object db extends Globals
 }

@@ -31,3 +31,9 @@ object Uuids
     def uuids = seq map(_.uuid)
   }
 }
+
+trait Sync
+extends Uuids
+{
+  type Adapter
+}

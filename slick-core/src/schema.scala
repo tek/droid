@@ -23,116 +23,94 @@ extends SchemaMacrosBase
 
   def extra(implicit classes: List[ClsDesc]): List[Tree] = Nil
 
-  def model(desc: ClsDesc, augment: Boolean = true, sync: Boolean = false)
-  (implicit classes: List[ClsDesc]): ClassDef = {
-    if (desc.part) desc.tree.asInstanceOf[ClassDef]
-    else {
-      val uuids = augment && desc.uuids
-      val idval = listIf(augment)(q"val id: Option[Long] = None")
-      val uuidval = listIf(uuids)(q"val uuid: Option[String] = None")
-      val valdefs = desc.flat.map { it ⇒
-          if (it.cse) {
-            val tpt = if (it.option) {
-              tq"Option[Long]"
-            } else {
-              tq"Long"
-            }
-            val ValDef(mod, nme, _, _) = it.tree
-            val termName = TermName(nme.toString + "Id")
-            q"val $termName:$tpt"
-          } else
-            it.tree.asInstanceOf[ValDef]
-      }
-      val defdefs = desc.foreignKeys.map { field ⇒
-        val first = TermName(field.option ? "firstOption" / "first")
-        q"""
-        def ${field.load}($session) =
-          ${field.query}.filter { _.id === ${field.colId} }.$first
-        """
-      }
-      val one2many = desc.assocs.map { f ⇒
-        val sing = f.typeName
-        val singL = decapitalize(sing)
-        val plur = f.name.capitalize
-        val col = columnId(singL)
-        val query = desc.assocQuery(f)
-        val model = desc.assocModel(f)
-        val myId = desc.colId
-        val otherId = columnId(sing)
-        val add = TermName("add" + f.singularName.capitalize)
-        Seq(
-          q"""
-          def ${f.loadMany} = for {
-            x ← $query
-            if x.${desc.colId} === id
-            y ← ${f.query}
-            if x.${f.queryColId} === y.id
-          } yield y
-          """,
-          q"""
-          def $add($otherId: Long)($session) =
-            id flatMap { i ⇒ $query.insert($model(i, $otherId)) }
-          """,
-          q"""
-          def ${TermName("remove" + plur)}(ids: Traversable[Long])
-          ($session) = {
-            val assoc = for {
-              x ← $query
-              if x.$myId === id && x.$otherId.inSet(ids)
-            } yield x
-            assoc.delete
-          }
-          """,
-          q"""
-          def ${TermName("delete" + plur)}(ids: Traversable[Long])
-          ($session) = {
-            val other = for {
-              x ← ${f.query}
-              if x.id.inSet(ids)
-            } yield x
-            other.delete
-            ${TermName("remove" + plur)}(ids)
-          }
-          """,
-          q"""
-          def ${TermName("replace" + plur)}(ids: Traversable[Long])
-          ($session) = {
-            val removals = for {
-              x ← $query
-              if x.$myId === id && !x.$otherId.inSet(ids)
-            } yield x
-            removals.delete
-            val existing = (for { x ← $query } yield x.$otherId).list
-            ids filter { i ⇒ !existing.contains(i) } foreach {
-              $add
-            }
-          }
-          """
-        )
-      } flatten
-      val complete = listIf(sync) {
-        q"""
-        def completeSync()($session) {
-          ${desc.query}.completeSync(this)
-        }
-        """
-      }
-      val bases = Seq(
-        (augment ? tq"db.Model"),
-        ((augment && desc.timestamps) ? tq"db.Timestamps"),
-        (uuids ? tq"db.Uuids")
-      ).flatten
+  def extraPre(implicit classes: List[ClsDesc]): List[Tree] = Nil
+
+  def model(desc: ClsDesc, augment: Boolean = true) = {
+    val idval = listIf(augment)(q"val id: Option[Long] = None")
+    val valdefs = desc.caseValDefs
+    val defdefs = desc.foreignKeys.map { field ⇒
+      val first = TermName(field.option ? "firstOption" / "first")
       q"""
-      case class ${TypeName(desc.name)}(..$idval, ..$valdefs,
-        ..${desc.dateVals}, ..$uuidval)
-      extends ..$bases
-      {
-        ..$defdefs
-        ..$one2many
-        ..$complete
-      }
+      def ${field.load}($session) =
+        ${field.query}.filter { _.id === ${field.colId} }.$first
       """
     }
+    val one2many = desc.assocs.map { f ⇒
+      val sing = f.typeName
+      val singL = decapitalize(sing)
+      val plur = plural(f.name.capitalize)
+      val col = columnId(singL)
+      val query = desc.assocQuery(f)
+      val model = desc.assocModel(f)
+      val myId = desc.colId
+      val otherId = columnId(sing)
+      val add = TermName("add" + f.singularName.capitalize)
+      Seq(
+        q"""
+        def ${f.loadMany} = for {
+          x ← self.$query
+          if x.${desc.colId} === id
+          y ← self.${f.query}
+          if x.${f.queryColId} === y.id
+        } yield y
+        """,
+        q"""
+        def ${f.term}($session) = ${f.loadMany}.list
+        """,
+        q"""
+        def $add($otherId: Long)($session) =
+          id flatMap { i ⇒ self.$query.insert($model(i, $otherId)) }
+        """,
+        q"""
+        def ${TermName("remove" + plur)}(ids: Traversable[Long])
+        ($session) = {
+          val assoc = for {
+            x ← self.$query
+            if x.$myId === id && x.$otherId.inSet(ids)
+          } yield x
+          assoc.delete
+        }
+        """,
+        q"""
+        def ${TermName("delete" + plur)}(ids: Traversable[Long])
+        ($session) = {
+          val other = for {
+            x ← self.${f.query}
+            if x.id.inSet(ids)
+          } yield x
+          other.delete
+          ${TermName("remove" + plur)}(ids)
+        }
+        """,
+        q"""
+        def ${TermName("replace" + plur)}(ids: Traversable[Long])
+        ($session) = {
+          val removals = for {
+            x ← self.$query
+            if x.$myId === id && !x.$otherId.inSet(ids)
+          } yield x
+          removals.delete
+          val existing = (for { x ← self.$query } yield x.$otherId).list
+          ids filter { i ⇒ !existing.contains(i) } foreach {
+            $add
+          }
+        }
+        """
+      )
+    } flatten
+    val bases = Seq(
+      (augment ? tq"db.Model"),
+      ((augment && desc.timestamps) ? tq"db.Timestamps")
+    ).flatten ++ desc.bases
+    q"""
+    case class ${TypeName(desc.name)}(..$idval, ..$valdefs,
+      ..${desc.dateVals})
+    extends ..$bases
+    {
+      ..$defdefs
+      ..$one2many
+    }
+    """
   }
 
   def column(desc: FldDesc): Tree = {
@@ -174,28 +152,17 @@ extends SchemaMacrosBase
 
   def mkCase(fields: List[FldDesc]) = concatFields(fields) { _.name }
 
-  def mkTimes(desc: ClsDesc, augment: Boolean = true): Tree = {
-    val expr = {
-      if (augment)
-        if (desc.timestamps)
-          s"""def * = (id.?, ${mkTilde(desc.flat)}, dateCreated, lastUpdated).shaped <> ({
-          case (id, ${mkCase(desc.flat)}, dateCreated, lastUpdated) ⇒ ${desc.name}(id, ${mkCaseApply(desc.flat)}, dateCreated, lastUpdated)
-        }, { x : ${desc.name} ⇒ Some((x.id, ${mkCaseUnapply(desc.flat)}, x.dateCreated, x.lastUpdated))
-        })"""
-        else
-          s"""def * = (id.?, ${mkTilde(desc.flat)}).shaped <> ({
-          case (id, ${mkCase(desc.flat)}) ⇒ ${desc.name}(id, ${mkCaseApply(desc.flat)})
-        }, { x : ${desc.name} ⇒ Some((x.id, ${mkCaseUnapply(desc.flat)}))
-        })"""
-      else
-      //s"""def * = (${mkTilde(desc.fields toList)}).shaped <> (${desc.name}.tupled, ${desc.name}.unapply _)"""
-        s"""def * = (${mkTilde(desc.fields toList)}).shaped <> ({
-          case (${mkCase(desc.flat)}) ⇒ ${desc.name}( ${mkCaseApply(desc.flat)})
-        }, { x : ${desc.name} ⇒ Some((${mkCaseUnapply(desc.flat)}))
-        })"""
-
-    }
-    c.parse(expr)
+  def times(cls: ClsDesc, augment: Boolean) = {
+    val tilde = cls.tildeFields(augment)
+    val args = cls.modelFields(augment)
+    val patParams = args map { a ⇒ pq"$a" }
+    val pattern = pq"""(..$patParams)"""
+    val idqm = augment ? List(q"id.?") / Nil
+    val tupleArgs = cls.modelFieldsPrefixed(augment, "a")
+    q"""
+    def * = (..$idqm, ..$tilde).shaped <> ((${cls.compName}.apply _).tupled,
+      ${cls.compName}.unapply)
+    """
   }
 
   def mkEnumMapper(moduleDef: c.universe.Tree): Tree = {
@@ -234,105 +201,112 @@ extends SchemaMacrosBase
     c.parse(mapper)
   }
 
-  def mkTable(desc: ClsDesc, augment: Boolean = true,
-    sync: Boolean = false)
-  (implicit classes: List[ClsDesc]): List[Tree] = {
-    if (desc.part)
-      List(desc.tree.asInstanceOf[ClassDef])
-    else {
-      val listVals = desc.listValDefs
-      val foreignKeys = desc.foreignKeys.map {
-        it ⇒
-          val cls = classes.find(it.typeName == _.name).getOrElse(throw new Exception(s"Invalid foreign class ${it.name}:${it.typeName}"))
-          c.parse( s"""def ${it.name} = foreignKey("${it.name.toLowerCase}", ${colIdName(it.name)}, ${objectName(it.typeName)})(_.id) """)
-      }
-      val assocs = desc.assocs.map { it ⇒
-        val name = desc.assocName(it)
-        new ClsDesc(name, Set(ENTITYDEF),
-          ListBuffer(
-            new FldDesc(decapitalize(desc.name), decapitalize(desc.name),
-              desc.name, Set(FieldFlag.CASE), None,
-              Some(desc), q"val ${TermName(decapitalize(desc.name))} = null"),
-            new FldDesc(decapitalize(it.typeName),
-              decapitalize(it.typeName), it.typeName, Set(FieldFlag.CASE),
-              None, it.cls,
-              q"val ${TermName(decapitalize(it.typeName))} = null")
-            ),
-          null, plural(decapitalize(name)))
+  def tableBase(cls: ClsDesc) = tq"TableEx[${cls.typeName}]"
 
-      }
-      val assocTables = assocs.flatMap { ass ⇒ mkTable(ass, false) }
-      val idCol = listIf(augment) {
-        q"""
-        def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-        """
-      }
-      val uuidCol = listIf(desc.uuids) {
-        q""" def uuid = column[String]("uuid") """
-      }
-      val defdefs = desc.flat.flatMap { v ⇒
-        if (v.part) v.cls.get.fields.map(column)
-        else List(column(v))
-      }
-      val one2many = desc.assocs.map { f ⇒
-        val sing = f.typeName
-        val singL = decapitalize(sing)
-        val col = columnId(singL)
-        val query = desc.assocQuery(f)
-        val model = desc.assocModel(f)
-        val myId = desc.colId
-        val otherId = columnId(sing)
-        Seq(
-          q"""
-          def ${f.term} = for {
-            x ← self.$query
-            if x.${desc.colId} === id
-            y ← self.${f.query}
-            if x.${f.queryColId} === y.id
-          } yield(y)
-          """
-        )
-      } flatten
-      val times = mkTimes(desc, augment)
-      val plur = plural(decapitalize(desc.name)).toLowerCase
-      val bases = Seq(
-        (augment ? tq"TableEx[${desc.typeName}]")
-      ).flatten
-      val table = q"""
-      class ${desc.tableType}(tag: Tag)
-      extends Table[${desc.typeName}](tag, $plur)
-      with ..$bases
-      {
-        ..$idCol
-        ..$uuidCol
-        ..${desc.dateDefs}
-        ..$defdefs
-        ..$one2many
-        ..$foreignKeys
-        $times
-      }
+  def table(cls: ClsDesc, augment: Boolean = true)
+  (implicit classes: List[ClsDesc]) =
+  {
+    val listVals = cls.listValDefs
+    val foreignKeys = cls.foreignKeys.map { fk ⇒
+      val cls = classes.find(fk.typeName == _.name).getOrElse(throw new Exception(s"Invalid foreign class ${fk.name}:${fk.typeName}"))
+      c.parse( s"""def ${fk.name} = foreignKey("${fk.name.toLowerCase}", ${colIdName(fk.name)}, ${objectName(fk.typeName)})(_.id) """)
+    }
+    val idCol = listIf(augment) {
+      q"""
+      def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
       """
-      model(desc, augment, sync) :: table :: query(desc) :: assocTables
+    }
+    val defdefs = cls.flat.flatMap { v ⇒
+      if (v.part) v.cls.get.fields.map(column)
+      else List(column(v))
+    }
+    val one2many = cls.assocs.map { f ⇒
+      val sing = f.typeName
+      val singL = decapitalize(sing)
+      val col = columnId(singL)
+      val query = cls.assocQuery(f)
+      val model = cls.assocModel(f)
+      val myId = cls.colId
+      val otherId = columnId(sing)
+      Seq(
+        q"""
+        def ${f.term} = for {
+          x ← self.$query
+          if x.${cls.colId} === id
+          y ← self.${f.query}
+          if x.${f.queryColId} === y.id
+        } yield(y)
+        """
+      )
+    } flatten
+    val tim = times(cls, augment)
+    val plur = plural(decapitalize(cls.name)).toLowerCase
+    val bases = listIf(augment)(tableBase(cls))
+    q"""
+    class ${cls.tableType}(tag: Tag)
+    extends Table[${cls.typeName}](tag, $plur)
+    with ..$bases
+    {
+      ..$idCol
+      ..${cls.dateDefs}
+      ..$defdefs
+      ..$one2many
+      ..$foreignKeys
+      $tim
+    }
+    """
+  }
+
+  def assocTables(cls: ClsDesc)(implicit classes: List[ClsDesc]) = {
+    cls.assocs.flatMap { ass ⇒
+      val name = cls.assocName(ass)
+      val assocCls = new ClsDesc(name, Set(ENTITYDEF),
+        ListBuffer(
+          new FldDesc(decapitalize(cls.name), decapitalize(cls.name),
+            cls.name, Set(FieldFlag.CASE), None,
+            Some(cls), q"val ${TermName(decapitalize(cls.name))} = null"),
+          new FldDesc(decapitalize(ass.typeName),
+            decapitalize(ass.typeName), ass.typeName, Set(FieldFlag.CASE),
+            None, ass.cls,
+            q"val ${TermName(decapitalize(ass.typeName))} = null")
+          ),
+        null, plural(decapitalize(name)))
+      transform(assocCls, false)
     }
   }
 
-  def queryBase(desc: ClsDesc) = {
-    val crud = desc.assoc ? tq"CrudCompat" / (
-      desc.timestamps ? tq"CrudEx" / tq"Crud"
-    )
-    tq"$crud[${desc.typeName}, ${desc.tableType}]"
+  def transform(cls: ClsDesc, augment: Boolean = true)
+  (implicit classes: List[ClsDesc]): List[Tree] =
+  {
+    if (cls.part)
+      List(cls.tree.asInstanceOf[ClassDef])
+    else {
+      model(cls, augment) :: table(cls, augment) :: query(cls) ::
+        assocTables(cls)
+    }
   }
 
-  def queryType(desc: ClsDesc): Tree = tq"TableQuery"
+  def queryBase(cls: ClsDesc) = {
+    val crud = cls.assoc ? tq"CrudCompat" / (
+      cls.timestamps ? tq"CrudEx" / tq"Crud"
+    )
+    tq"$crud[${cls.typeName}, ${cls.tableType}]"
+  }
 
-  def query(desc: ClsDesc) = {
-    val tp = queryType(desc)
-    val base = queryBase(desc)
+  def queryType(cls: ClsDesc): Tree = tq"TableQuery"
+
+  def queryExtra(cls: ClsDesc): List[Tree] = Nil
+
+  def query(cls: ClsDesc) = {
+    val tp = queryType(cls)
+    val base = queryBase(cls)
+    val extra = queryExtra(cls)
     q"""
-    val ${desc.query} =
-      new $tp(tag ⇒ new ${desc.tableType}(tag)) with $base
+    val ${cls.query} =
+      new $tp(tag ⇒ new ${cls.tableType}(tag)) with $base
       {
-        def name = ${desc.query.toString}
+        def name = ${cls.query.toString}
+        ..$extra
       }
     """
   }
@@ -343,6 +317,7 @@ extends SchemaMacrosBase
         it match {
           case ModuleDef(mod, name, Template(List(Ident(t)), _, _)) if t.isTypeName && t.toString == "Enumeration" ⇒ List((ENUMDEF, it))
           case ClassDef(mod, name, Nil, body) if mod.hasFlag(Flag.CASE) ⇒ List((CLASSDEF, it))
+          case q"implicit class $name(..$params) { ..$body }" ⇒ List((DEFDEF, it))
           case DefDef(_, _, _, _, _, _) ⇒ List((DEFDEF, it))
           case Import(_, _) ⇒ List((IMPORTDEF, it))
           case _ ⇒ List((OTHERDEF, it))
@@ -351,32 +326,7 @@ extends SchemaMacrosBase
   }
 
   def enum(tree: Tree) = {
-    val q"object $name extends ..$bases { ..$body }" = tree
-    val nameS = name.toString
-    val tpe = TypeName(nameS)
-    val ident = TermName(s"enum${name}Codec")
-    val json = q"""
-    implicit val $ident = jencode1L { v: $name.$tpe ⇒ v.toString } ($nameS)
-    """
-    val mapper = mkEnumMapper(tree)
-    List(tree, mapper, json)
-  }
-
-  def jsonCodec(cls: ClsDesc) = {
-    val name = TypeName(cls.name)
-    val ident = TermName(s"${cls.name}JsonCodec")
-    val encoder = TermName(s"jencode${cls.fields.length}L")
-    val fks = cls.foreignKeys map { a ⇒ (a.name, q"obj.${a.load}.uuid") }
-    val assocs = cls.assocs map { a ⇒
-      (a.name, q"obj.${a.loadMany}.list.uuids")
-    }
-    val attrs = cls.attrs map { a ⇒ (a.name, q"obj.${a.term}") }
-    val (names, values) = (fks ++ assocs ++ attrs).unzip
-    q"""
-    implicit def $ident ($session) =
-      $encoder { obj: $name ⇒
-        (..$values) }(..$names)
-    """
+    List(tree, mkEnumMapper(tree))
   }
 
   def createMetadata(implicit classes: List[ClsDesc]) = {
@@ -394,44 +344,44 @@ extends SchemaMacrosBase
 
   val extraBases = List(tq"slick.SchemaBase")
 
+  def createClsDesc(tree: Tree, timestamps: Boolean) = {
+    ClsDesc(tree, timestamps, false)
+  }
+
   def impl(name: TermName, bases: List[Tree], body: List[Tree]) = {
     val parents = bases map { _.toString.split('.').last }
-    val timestampsAll = parents.contains("Timestamps")
-    val uuids = parents.contains("Uuids")
-    val sync = parents.contains("Sync")
+    val timestamps = parents.contains("Timestamps")
     val allDefs = defMap(body)
-    implicit val classes = allDefs.getOrElse(CLASSDEF, Nil).map(it ⇒
-        ClsDesc(it._2, timestampsAll, uuids))
+    implicit val classes =
+      allDefs.getOrElse(CLASSDEF, Nil).map(d ⇒ createClsDesc(d._2, timestamps))
     classes.foreach(_.parseBody(classes))
-    val tables = classes.flatMap(mkTable(_, true, sync))
+    val database = classes.flatMap(transform(_, true))
     val enums = allDefs.getOrElse(ENUMDEF, Nil).map(_._2) flatMap(enum)
     val defdefs = allDefs.getOrElse(DEFDEF, Nil).map(_._2)
     val imports = allDefs.getOrElse(IMPORTDEF, Nil).map(_._2)
     val otherdefs = allDefs.getOrElse(OTHERDEF, Nil).map(_._2)
     val embeds = allDefs.getOrElse(EMBEDDEF, Nil).map(_._2)
-    val jsonCodecs = if (uuids) classes map(jsonCodec) else Nil
     val metadata = createMetadata
     val result = q"""
     object $name extends ..${bases ++ extraBases} { self ⇒
+      import scalaz._, Scalaz._
       import scala.slick.util.TupleMethods._
       import scala.slick.jdbc.JdbcBackend
       import scala.slick.driver.SQLiteDriver.simple._
-      import slick._
-      import slick.db._
       import Uuids._
-      import argonaut._
-      import Argonaut._
       import java.sql.Timestamp
       import org.joda.time.DateTime
 
+      ..$extraPre
       ..$dateTime
       ..$enums
       ..$imports
       ..$embeds
-      ..$tables
-      ..$jsonCodecs
+      ..$database
       ..$metadata
+      ..$defdefs
       ..$extra
+      ..$otherdefs
 
       val dbLock = new Object
     }
