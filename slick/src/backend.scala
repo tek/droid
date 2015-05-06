@@ -21,7 +21,7 @@ trait BackendSync
   {
     import scala.concurrent.ExecutionContext.Implicits.global
     Future {
-      pendingActionSets.list foreach { set ⇒
+      PendingActionSet.list foreach { set ⇒
         schema.syncMetadata.tables.get(set.model) foreach { meta ⇒
           val syncer = Syncer(meta.table, set)
           syncer.send()

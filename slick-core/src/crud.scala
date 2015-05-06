@@ -57,24 +57,14 @@ extends CrudCompat[C, T]
   def delete(obj: C)(implicit s: Session) = obj.id foreach(deleteId)
 }
 
-// FIXME replace null with None
-trait CrudEx[C <: Model with Timestamps,
+trait CrudEx[C <: Model with Timestamps[C],
 T <: Table[C] with TableEx[C]] extends Crud[C, T] {
   self: TableQuery[T] ⇒
   override def update(obj: C)(implicit s: Session) = {
-    if (obj.dateCreated == null)
-      obj.dateCreated = obj.id flatMap(byId) map(_.dateCreated) getOrElse {
-        DateTime.now
-      }
-    obj.lastUpdated = DateTime.now
-    super.update(obj)
+    super.update(obj.withDates(u = Some(DateTime.now)))
   }
 
   override def insert(obj: C)(implicit s: Session) = {
-    // because x.copy(dateCreated = , lastUpdated = ) is not available for
-    // type parameters :(
-    obj.dateCreated = DateTime.now
-    obj.lastUpdated = obj.dateCreated
-    super.insert(obj)
+    super.insert(obj.withDates(c = Some(DateTime.now)))
   }
 }

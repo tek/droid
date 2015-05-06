@@ -6,7 +6,7 @@ import db._
 
 trait Types
 {
-  type ExtModel = Model with Sync with Timestamps
-  type ExtTable[A <: ExtModel] = Table[A] with SyncTable[A]
+  type ExtModel[A] = Model with Sync with Timestamps[A]
+  type ExtTable[A <: ExtModel[A]] = Table[A] with SyncTable[A]
   type Uuid = String
 }

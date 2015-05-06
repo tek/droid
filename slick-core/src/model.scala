@@ -14,10 +14,11 @@ object Model
   }
 }
 
-trait Timestamps
+trait Timestamps[A]
 {
-  var dateCreated: DateTime
-  var lastUpdated: DateTime
+  val created: Option[DateTime]
+  val updated: Option[DateTime]
+  def withDates(c: Option[DateTime] = None, u: Option[DateTime] = None): A
 }
 
 trait Uuids

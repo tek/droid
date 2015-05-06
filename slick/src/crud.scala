@@ -48,19 +48,19 @@ extends TableEx[A]
 // FIXME Timestamps is not needed
 // but exists in CrudEx
 trait SyncCrud[
-A <: Model with Sync with Timestamps,
+A <: Model with Sync with Timestamps[A],
 B <: Table[A] with SyncTable[A]
 ]
 extends CrudEx[A, B]
 { self: TableQuery[B] ⇒
 
-  def name: String
+  def path: String
 
-  def pendingActions = PendingActionsSchema.pendingActionSets
+  def pendingActions = PendingActionsSchema.PendingActionSet
 
   def pending(implicit s: Session) = pendingActions.filter {
-    _.model === name }.firstOption.orElse {
-      pendingActions.insert(PendingActionSet(None, name))
+    _.model === path }.firstOption.orElse {
+      pendingActions.insert(PendingActionSet(None, path))
     }
 
   override def insert(obj: A)(implicit s: Session) = {
@@ -69,7 +69,7 @@ extends CrudEx[A, B]
       sets ← pending
       o ← added
       oid ← o.id
-      a ← additions.insert(Addition(None, oid))
+      a ← Addition.insert(Addition(None, oid))
       id ← a.id
     } sets.addAddition(id)
     added
@@ -79,7 +79,7 @@ extends CrudEx[A, B]
     for {
       sets ← pending
       oid ← obj.id
-      a ← updates.insert(Update(None, oid))
+      a ← Update.insert(Update(None, oid))
       id ← a.id
     } sets.addUpdate(id)
     super.update(obj)
@@ -89,7 +89,7 @@ extends CrudEx[A, B]
     for {
       sets ← pending
       uuid ← obj.uuid
-      a ← deletions.insert(Deletion(None, uuid))
+      a ← Deletion.insert(Deletion(None, uuid))
       id ← a.id
     } sets.addDeletion(id)
     super.delete(obj)
@@ -126,13 +126,13 @@ trait SyncTableQueryBase
   def uuidById(id: Long)(implicit s: Session): Option[Types#Uuid]
 }
 
-trait BackendMapper[A <: Types#ExtModel]
+trait BackendMapper[A <: Types#ExtModel[A]]
 {
   def uuid: String
 }
 
 abstract class SyncTableQuery[
-A <: Types#ExtModel,
+A <: Types#ExtModel[A],
 B <: Types#ExtTable[A],
 C <: BackendMapper[A]]
 (cons: (Tag) ⇒ B)

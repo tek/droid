@@ -42,7 +42,8 @@ extends tryp.AndroidDeps
       "org.joda" % "joda-convert" % "1.+",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.scalaz" %% "scalaz-core" % "7.1.+"
+      "org.scalaz" %% "scalaz-core" % "7.1.+",
+      "org.specs2" %%  "specs2-core" % "3.+" % "test"
     )
   )
 

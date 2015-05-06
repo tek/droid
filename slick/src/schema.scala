@@ -12,7 +12,7 @@ extends SchemaBase
 
 class SyncSchema
 extends StaticAnnotation {
-  def macroTransform(annottees: Any*): Any = macro SyncSchemaMacros.create
+  def macroTransform(annottees: Any*): Any = macro SyncSchemaMacros.process
 }
 
 trait Empty
@@ -22,186 +22,179 @@ extends SchemaMacros(ct)
 {
   import c.universe._
 
-  def jsonEnumCodec(tree: Tree) = {
-    val q"object $name extends ..$bases { ..$body }" = tree
-    val nameS = name.toString
-    val tpe = TypeName(nameS)
-    val ident = TermName(s"enum${name}Codec")
-    q"""
-    implicit val $ident = jencode1L { v: $name.$tpe ⇒ v.toString } ($nameS)
-    """
-  }
-
-  override def enum(tree: Tree) = super.enum(tree) :+ jsonEnumCodec(tree)
-
-  override def model(cls: ClsDesc, augment: Boolean = true) = {
-    val base = super.model(cls, augment)
-    if (!augment) base
-    else {
-      val q"case class $name(..$fields) extends ..$bases { ..$body }" = base
-      val uuidval = q"val uuid: Option[String] = None"
-      q"""
-      case class $name (..$fields, $uuidval)
-      extends ..$bases
-      with db.Sync
-      {
-        ..$body
-      }
-      """
-    }
-  }
-
-  // TODO merge with query?
-  def modelCompanion(cls: ClsDesc) = {
-    val comp = cls.compName
-    val fromJson = {
-      val name = cls.typeName
-      val attrs = cls.attrs map { a ⇒
-        q"val ${a.term}: ${TypeName(a.typeName)}"
-      }
-      val fks = cls.foreignKeys map { a ⇒ q"val ${a.term}: String" }
-      val assocs = cls.assocs map { a ⇒ q"val ${a.term}: Seq[String]" }
-      val fields = attrs ++ fks ++ assocs
-      val attrArgs = cls.attrs map { _.term }
-    }
-    q"""
-    object $comp
-    {
-    }
-    """
-  }
-
-  override def tableBase(cls: ClsDesc) = tq"SyncTable[${cls.typeName}]"
-
-  override def table(cls: ClsDesc, augment: Boolean = true)
-  (implicit classes: List[ClsDesc]) =
+  case class UuidColSpec()
+  extends AttrSpecBase
   {
-    val base = super.table(cls, augment)
-    val q"class $name(..$fields) extends ..$bases { ..$body }" = base
-    val uuidCol = q""" def uuid = column[Option[String]]("uuid") """
-    q"""
-    class $name (..$fields)
-    extends ..$bases
-    {
-      ..$body
-      $uuidCol
-    }
-    """
+    def name = TermName("uuid")
+
+    def tpt = tq"Option[String]"
+
+    override def default = q"None"
   }
 
-  override def queryBase(cls: ClsDesc) =
-    cls.assoc ? super.queryBase(cls) / tq"Empty"
+  class SyncModelOps(m: ModelSpec)
+  extends ModelOps(m)
+  {
+    lazy val uuidColumn = UuidColSpec()
 
-  override def queryType(cls: ClsDesc) =
-    cls.assoc ? super.queryType(cls) /
-      tq"SyncTableQuery[${cls.typeName}, ${cls.tableType}, ${cls.mapperType}]"
+    lazy val mapperFields = uuidColumn :: attrs ++ foreignKeys ++ assocs
 
-  def handleMapper(cls: ClsDesc) = {
-    val tp = cls.typeName
-    val comp = cls.compName
-    val mapper = cls.mapperType
-    val attrs = cls.attrs map { f ⇒ q"mapper.${f.term}" }
-    val fks = cls.foreignKeys map { f ⇒
-      q"""
-      ${f.query}.idByUuid(mapper.${f.term}).getOrElse(uuidError(mapper))
-      """
+    lazy val mapperFieldStrings = mapperFields.map(_.name.toString)
+
+    override def extraColumns = List(uuidColumn)
+
+    override def modelBases = super.modelBases :+ tq"Sync"
+
+    override def tableBases = List(tq"SyncTable[$name]")
+
+    override def queryBase = tq"Empty"
+
+    override def queryType =
+      tq"SyncTableQuery[$name, $tableName, $mapperType]"
+
+    override def queryExtra = {
+      List(
+        q"""
+        implicit def encodeJson($session) = ${TermName(s"${name}EncodeJson")}
+        """,
+        q"""
+        implicit def mapperCodecJson($session) =
+          ${TermName(s"${name}MapperCodecJson")}
+        """
+      ) ++ handleMapper
     }
-    val fields = attrs ++ fks :+ q"uuid = Some(mapper.uuid)"
-    val assocUpdates = cls.assocs map { f ⇒
-      q"""
-      obj.${f.replaceMany}(${f.query}.idsByUuids(mapper.${f.term}))
-      """
-    }
-    List(
-    q"""
-    def syncFromMapper(mapper: $mapper)($session) {
-      idByUuid(mapper.uuid) some { id ⇒ updateFromMapper(id, mapper) } none {
-        createFromMapper(mapper)
+
+    def handleMapper = {
+      val mapper = mapperType
+      val att = attrs map { f ⇒ q"mapper.${f.term}" }
+      val fks = foreignKeys map { f ⇒
+        q"""
+        ${f.query}.idByUuid(mapper.${f.term}).getOrElse(uuidError(mapper))
+        """
       }
+      val fields = att ++ fks :+ q"uuid = Some(mapper.uuid)"
+      val assocUpdates = assocs map { f ⇒
+        q"""
+        obj.${f.replaceMany}(${f.query}.idsByUuids(mapper.${f.term}))
+        """
+      }
+      List(
+        q"""
+        def syncFromMapper(mapper: $mapperType)($session) {
+          idByUuid(mapper.uuid) some {
+            id ⇒ updateFromMapper(id, mapper) } none {
+            createFromMapper(mapper)
+          }
+        }
+        """,
+        q"""
+        def updateFromMapper(id: Long, mapper: $mapper)($session) {
+          applyMapper(Some(id), mapper, update)
+        }
+        """,
+        q"""
+        def createFromMapper(mapper: $mapper)($session) {
+          applyMapper(None, mapper, insert)
+        }
+        """,
+        q"""
+        def applyMapper(id: Option[Long], mapper: $mapper, app: $name ⇒ Any)
+        ($session) {
+          val obj = $term(id, ..$fields)
+          ..$assocUpdates
+        }
+        """,
+        q"""
+        def uuidError(mapper: $mapper) = {
+          throw new Exception(s"Invalid uuid found in mapper $$mapper")
+        }
+        """
+    )
     }
-    """,
-    q"""
-    def updateFromMapper(id: Long, mapper: $mapper)($session) {
-      applyMapper(Some(id), mapper, update)
-    }
-    """,
-    q"""
-    def createFromMapper(mapper: $mapper)($session) {
-      applyMapper(None, mapper, insert)
-    }
-    """,
-    q"""
-    def applyMapper(id: Option[Long], mapper: $mapper, app: $tp ⇒ Any)
-    ($session) {
-      val obj = $comp(id, ..$fields)
-      app(obj)
-      ..$assocUpdates
-    }
-    """,
-    q"""
-    def uuidError(mapper: $mapper) = {
-      throw new Exception(s"Invalid uuid found in mapper $$mapper")
-    }
-    """
-  )
-  }
 
-  override def queryExtra(cls: ClsDesc): List[Tree] = {
-    if (cls.assoc) super.queryExtra(cls)
-    else List(
+    def encodeJson = {
+      val ident = TermName(s"${name.toString}EncodeJson")
+      val fks = foreignKeys map { a ⇒ (a.nameS, q"obj.${a.load}.uuid") }
+      val ass = assocs map { a ⇒
+        (a.nameS, q"obj.${a.loadMany}.list.uuids")
+      }
+      val att = attrs map { a ⇒ (a.nameS, q"obj.${a.term}") }
+      val (names, values) = (fks ++ ass ++ att).unzip
+      val encoder = TermName(s"jencode${values.length}L")
       q"""
-      implicit def encodeJson($session) = ${TermName(s"${cls.name}EncodeJson")}
-      """,
-      q"""
-      implicit def mapperCodecJson($session) =
-        ${TermName(s"${cls.name}MapperCodecJson")}
-      """,
-      q"""
-      val path = ${cls.plural}
+      implicit def $ident ($session) =
+        $encoder { obj: $name ⇒ (..$values) }(..$names)
       """
-    ) ++ handleMapper(cls)
-  }
-
-  def encodeJson(cls: ClsDesc) = {
-    val name = cls.typeName
-    val comp = cls.compName
-    val ident = TermName(s"${cls.name}EncodeJson")
-    val encoder = TermName(s"jencode${cls.fields.length}L")
-    val fks = cls.foreignKeys map { a ⇒ (a.name, q"obj.${a.load}.uuid") }
-    val assocs = cls.assocs map { a ⇒
-      (a.name, q"obj.${a.loadMany}.list.uuids")
     }
-    val attrs = cls.attrs map { a ⇒ (a.name, q"obj.${a.term}") }
-    val (names, values) = (fks ++ assocs ++ attrs).unzip
-    q"""
-    implicit def $ident ($session) =
-      $encoder { obj: $name ⇒ (..$values) }(..$names)
-    """
+
+    def mapperCodec = {
+      val ident = TermName(s"${name.toString}MapperCodecJson")
+      val names = mapperFieldStrings
+      val decoder = TermName(s"casecodec${names.length}")
+      q"""
+      implicit def $ident ($session) =
+        $decoder($mapperTerm.apply, $mapperTerm.unapply)(..$names)
+      """
+    }
+
+    def jsonCodec = List(encodeJson, mapperCodec)
+
+    def backendMapper = {
+      q"""
+      case class $mapperType(..$mapperParams)
+      extends BackendMapper[$name]
+      """
+    }
+
+    lazy val mapper = s"${name}Mapper"
+
+    lazy val mapperType = TypeName(mapper)
+
+    lazy val mapperTerm = TermName(mapper)
+
+    lazy val mapperParams = {
+      val atts = attrs map { _.valDef }
+      val fks = foreignKeys map { a ⇒ q"val ${a.term}: String" }
+      val ass = assocs map { a ⇒ q"val ${a.term}: Seq[String]" }
+      val uuid = q"val uuid: String"
+      uuid :: atts ++ fks ++ ass
+    }
   }
 
-  def mapperCodec(cls: ClsDesc) = {
-    val comp = cls.compName
-    val ident = TermName(s"${cls.name}MapperCodecJson")
-    val names = cls.nonDateFieldNames
-    val decoder = TermName(s"casecodec${names.length}")
-    q"""
-    implicit def $ident ($session) =
-      $decoder(${cls.mapperTerm}.apply, ${cls.mapperTerm}.unapply)(..$names)
-    """
+  class SyncAssocOps(a: AssocSpec)
+  extends AssocOps(a)
+
+  override implicit def modelOps(cls: ModelSpec) = new SyncModelOps(cls)
+  override implicit def assocOps(cls: AssocSpec) = new SyncAssocOps(cls)
+
+  implicit object SyncEnumProcessor
+  extends BasicEnumProcessor[SyncSchemaMacros]
+  {
+    override def apply(enum: EnumSpec) = super.apply(enum) :+ jsonEncode(enum)
+
+    def jsonEncode(enum: EnumSpec) = {
+      val name = enum.name
+      val nameS = name.toString
+      val tpe = TypeName(nameS)
+      val ident = TermName(s"enum${name}Codec")
+      q"""
+      implicit val $ident = jencode1L { v: $name.$tpe ⇒ v.toString } ($nameS)
+      """
+    }
   }
 
-  def jsonCodec(cls: ClsDesc) = {
-    List(encodeJson(cls), mapperCodec(cls))
+  class SyncTransformer(cls: TableSpec)
+  extends Transformer(cls)
+  {
+
   }
 
-  def backendMapper(cls: ClsDesc) = {
-    val name = cls.mapperType
-    val fields = cls.mapperFields
-    q"""
-    case class $name(..$fields)
-    extends BackendMapper[${cls.typeName}]
-    """
+  object SyncTransformer
+  {
+    def apply(cls: TableSpec) = new SyncTransformer(cls)
   }
+
+  override def transform(cls: TableSpec) = SyncTransformer(cls).result
 
   override def dateTime = {
     super.dateTime ++ Seq(
@@ -212,43 +205,37 @@ extends SchemaMacros(ct)
     )
   }
 
-  override def extraPre(implicit classes: List[ClsDesc]): List[Tree] = {
+  override def extraPre(classes: List[ModelSpec]): List[Tree] = {
     List(
       q"import argonaut._",
       q"import Argonaut._"
     )
   }
 
-  override def extra(implicit classes: List[ClsDesc]) = {
-    val modelComps = classes.map(modelCompanion)
-    val jsonCodecs = classes.map(jsonCodec).flatten
-    val backendMappers = classes.map(backendMapper)
+  override def extra(classes: List[ModelSpec]) = {
+    val jsonCodecs = classes.map(_.jsonCodec).flatten
+    val backendMappers = classes.map(_.backendMapper)
     List(
       q"import PendingActionsSchema._",
-      q"val pendingActions = PendingActionsSchema.pendingActionSets",
+      q"val pendingActions = PendingActionsSchema.PendingActionSet",
       q"val pendingMetadata = PendingActionsSchema.metadata",
-      q"val syncMetadata = ${syncMetadata}"
-    ) ++ modelComps ++ backendMappers ++ jsonCodecs
+      q"val syncMetadata = ${syncMetadata(classes)}"
+    ) ++ backendMappers ++ jsonCodecs
   }
 
-  def syncMetadata(implicit classes: List[ClsDesc]) = {
+  def syncMetadata(classes: List[ModelSpec]) = {
     val data = classes map { cls ⇒
-      val name = cls.query
       val meta = q"""
-      db.SyncTableMetadata[${cls.typeName}, ${cls.tableType},
+      db.SyncTableMetadata[${cls.name}, ${cls.tableName},
       ${cls.mapperType}](
-        ${name.toString}, $name
+        ${cls.path}, ${cls.query}
       )
       """
-      (name.toString, meta)
+      (cls.path, meta)
     }
     q"db.SyncSchemaMetadata(Map(..$data))"
   }
 
   override val extraBases =
     List(tq"slick.SyncSchemaBase")
-
-  override def createClsDesc(tree: Tree, timestamps: Boolean) = {
-    ClsDesc(tree, timestamps, true)
-  }
 }

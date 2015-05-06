@@ -18,7 +18,7 @@ extends TableMetadataBase
 
 // FIXME parameterization superfluous, as all type specific action is done in
 // SyncTableQuery
-case class SyncTableMetadata[A <: Types#ExtModel,
+case class SyncTableMetadata[A <: Types#ExtModel[A],
 B <: Types#ExtTable[A],
 C <: BackendMapper[A]
 ]

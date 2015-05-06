@@ -37,14 +37,14 @@ with BeforeAll
   def createModels = {
     db withSession { implicit s ⇒
       for {
-        a ← alphas.insert(Alpha(None, "something"))
+        a ← Alpha.insert(Alpha(None, "something"))
         aId ← a.id
-        a2 ← alphas.insert(Alpha(None, "something else"))
+        a2 ← Alpha.insert(Alpha(None, "something else"))
         a2Id ← a2.id
-        b ← betas.insert(Beta(None, "yello", aId, a2Id))
-        b2 ← betas.insert(Beta(None, "chello", aId, a2Id))
+        b ← Beta.insert(Beta(None, "yello", aId, a2Id))
+        b2 ← Beta.insert(Beta(None, "chello", aId, a2Id))
         bId ← b.id
-        c ← gammas.insert(Gamma(None, "hello"))
+        c ← Gamma.insert(Gamma(None, "hello"))
       } yield (a, b, bId, c)
     }
   }
@@ -127,7 +127,7 @@ extends ExtSchemaTest
   After completing the first alpha addition, there should be
 
   one alpha addition left $alpha
-  one beta addition left $beta
+  both beta additions left $beta
   """
 
   import ExtTestSchema._
@@ -137,7 +137,7 @@ extends ExtSchemaTest
     resetDb()
     val (a, b, bId, c) = models
     db withSession { implicit s ⇒
-      alphas.completeSync(additions("alphas").head)
+      Alpha.completeSync(additions("alphas").head)
     }
   }
 
@@ -146,7 +146,7 @@ extends ExtSchemaTest
   }
 
   def beta = {
-    additions("betas") === List(Addition(Some(3), 1))
+    additions("betas") === List(Addition(Some(3), 1), Addition(Some(4),2))
   }
 }
 
@@ -203,21 +203,21 @@ extends ExtSchemaTest
 
   def alpha = {
     db withSession { implicit s ⇒
-      val uuids = alphas.list.map(_.uuid).flatten
+      val uuids = Alpha.list.map(_.uuid).flatten
       uuids must_== List("uuid_alpha_1", "uuid_alpha_2")
     }
   }
 
   def beta = {
     db withSession { implicit s ⇒
-      val ids = betas.list.headOption map { b ⇒ (b.alpId, b.alp2Id) }
+      val ids = Beta.list.headOption map { b ⇒ (b.alpId, b.alp2Id) }
       ids must beSome((2L, 1L))
     }
   }
 
   def gamma = {
     db withSession { implicit s ⇒
-      val betas = gammas.list.headOption map {
+      val betas = Gamma.list.headOption map {
         c ⇒ (c.loadBets.list, c.loadBet2s.list) } map {
         case (b1, b2) ⇒ (b1.ids, b2.ids) }
       betas must beSome((Set(1, 2), Set()))

@@ -4,80 +4,18 @@ import scala.reflect.macros.whitebox.Context
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Set
 
+import tryp.core.Annotation
+
 trait SchemaBase
 {
   def tableMap: Map[String, db.TableMetadata]
   def metadata: db.SchemaMetadata
 }
 
-object SchemaHelpers
-{
-  object DefType extends Enumeration {
-    type DefType = Value
-    val CLASSDEF = Value
-    val DEFDEF = Value
-    val IMPORTDEF = Value
-    val ENUMDEF = Value
-    val EMBEDDEF = Value
-    val OTHERDEF = Value
-  }
-
-  object ClassFlag extends Enumeration {
-    type ClassFlag = Value
-    val PARTDEF = Value
-    val ENTITYDEF = Value
-    val TIMESTAMPSDEF = Value
-    val UUIDSDEF = Value
-    val OTHER = Value
-  }
-
-  object FieldFlag extends Enumeration {
-    type FieldFlag = Value
-    val OPTION = Value
-    val CASE = Value
-    val PART = Value
-    val LIST = Value
-  }
-}
-
 trait SchemaMacrosBase
+extends Annotation
 {
-  val c: Context
-
   import c.universe._
-  import SchemaHelpers._
-  import DefType._
-  import ClassFlag._
-  import FieldFlag._
-  import Helpers._
-  import Flag._
-
-  def create(annottees: c.Expr[Any]*) = {
-    val (name, bases, body) = annottees.map(_.tree).toList match {
-      case (o: ModuleDef) :: Nil ⇒
-        o match {
-          case q"object $name extends ..$bases { ..$body }" ⇒
-            (name, bases, body)
-          case _ ⇒
-            c.abort(c.enclosingPosition, "Malformed DB definition")
-        }
-      case _ ⇒
-        c.abort(c.enclosingPosition, "DB definition must be single object")
-    }
-    impl(name, bases, body)
-  }
-
-  def impl(name: TermName, bases: List[Tree], body: List[Tree]): c.Expr[Any]
-
-  def listIf(indicator: Boolean)(ctor: ⇒ Tree): List[Tree] = {
-    if (indicator) List(ctor)
-    else List[Tree]()
-  }
-
-  def listIfList(indicator: Boolean)(ctor: ⇒ List[Tree]): List[Tree] = {
-    if (indicator) ctor
-    else List[Tree]()
-  }
 
   val session = q"implicit val s: Session"
 
@@ -93,28 +31,7 @@ trait SchemaMacrosBase
     )
   }
 
-  val reservedNames = List("id", "dateCreated", "lastUpdated", "uuid")
-
-  def decapitalize(name: String) = {
-    if (name.length == 0) name
-    else {
-      val chars = name.toCharArray()
-      var i = 0
-      while (i < chars.length && Character.isUpperCase(chars(i))) {
-        if (i > 0 && i < chars.length - 1 && Character.isLowerCase(chars(i + 1))) {
-        } else {
-          chars(i) = Character.toLowerCase(chars(i))
-        }
-        i = i + 1
-      }
-      new String(chars)
-    }
-  }
-
-  def mkTableName(typeName: String) = s"${typeName}Table"
-
-  def assocTableName(from: ClsDesc, to: FldDesc) =
-    s"${from.name}2${to.singularName.capitalize}"
+  val reservedNames = List("id", "created", "updated", "uuid")
 
   def sqlColName(name: String): String = {
     name.toCharArray().zipWithIndex map {
@@ -124,296 +41,460 @@ trait SchemaMacrosBase
     } mkString
   }
 
-  def columnId(name: String) = {
-    TermName(colIdName(name))
+  implicit class SlickStringOps(s: String) {
+    def plural = Helpers.plural(s)
+    def decapitalize = Helpers.decapitalize(s)
+    def singular = Helpers.singular(s)
+    def objectName = TermName(s.decapitalize.plural)
+    def u = s.capitalize
+    def d = s.decapitalize
+    def dp = s.d.plural
+    def up = s.u.plural
+    def ds = s.d.singular
+    def us = s.u.singular
+    def columnId = TermName(s.colIdName)
+    def colIdName = s"${s.decapitalize}Id"
   }
 
-  def colIdName(name: String) = {
-    s"${decapitalize(name)}Id"
+  implicit def `TermName to SlickStringOps`(name: TermName) =
+    new SlickStringOps(name.toString)
+
+  implicit def `TypeName to SlickStringOps`(name: TypeName) =
+    new SlickStringOps(name.toString)
+
+  implicit def `Tree to SlickStringOps`(name: Tree) =
+    new SlickStringOps(name.toString)
+
+  implicit class `TermName extensions`(name: TermName) {
+    def prefix(s: String) = TermName(s"${s}${name.u}")
+    def prefixPlural(s: String) = TermName(s"${s}${name.up}")
+    def capitalize = name.toString.capitalize
+    def snakeCase = name.toString.snakeCase
   }
 
-  def objectName(typeName: String) = plural(decapitalize(typeName))
-
-  case class FldDesc(
-    name: String,
-    colName: String,
-    typeName: String,
-    flags: Set[FieldFlag],
-    dbType: Option[String],
-    cls: Option[ClsDesc],
-    tree: Tree
-  ) {
-    lazy val part = flags.contains(FieldFlag.PART)
-
-    lazy val option = flags.contains(FieldFlag.OPTION)
-
-    lazy val cse = flags.contains(FieldFlag.CASE)
-
-    lazy val term = TermName(name)
-
-    lazy val load = TermName(s"load${name.capitalize}")
-
-    lazy val loadMany = TermName(s"load${plural(name.capitalize)}")
-
-    lazy val replaceMany = TermName(s"replace${plural(name.capitalize)}")
-
-    lazy val query = TermName(objectName(typeName))
-
-    lazy val colId = columnId(name)
-
-    lazy val sqlColId = sqlColName(colIdName(name))
-
-    lazy val queryColId = columnId(typeName)
-
-    lazy val singularName = singular(name)
-  }
-
-  object FldDesc {
-    def apply(fieldTree: Tree, allClasses: List[ClsDesc]) = {
-      val ValDef(mod, name, tpt, rhs) = fieldTree
-      if (reservedNames.contains(name.toString))
-        c.abort(c.enclosingPosition,
-          s"Column with name ${name.toString} not allowed")
-      val flags = Set[FieldFlag]()
-      val annotation = mod.annotations.headOption.map(_.children.head.toString)
-      var colName: String = sqlColName(name.toString)
-
-      def buildTypeName(tree: Tree): String = {
-        tree match {
-          case Select(subtree, name) ⇒
-            buildTypeName(subtree) + "." + name.toString
-          case AppliedTypeTree(subtree, args) ⇒
-            buildTypeName(subtree) + "[" + args.map(it ⇒ buildTypeName(it)).mkString(",") + "]"
-          case Ident(x) ⇒
-            x.toString
-          case other ⇒ other.toString
-        }
-      }
-      var typeName: String = buildTypeName(tpt)
-      val clsDesc: Option[ClsDesc] = tpt match {
-        case Ident(tpe) ⇒
-          val clsDesc = allClasses.find(_.name == typeName)
-          clsDesc.foreach {
-            it ⇒
-              if (it.entity) {
-                flags += FieldFlag.CASE
-              } else if (it.part)
-                flags += FieldFlag.PART
-          }
-          clsDesc
-        case AppliedTypeTree(Ident(option), tpe :: Nil) if option.toString == "Option" ⇒
-          typeName = buildTypeName(tpe)
-          flags += FieldFlag.OPTION
-          val clsDesc = allClasses.find(_.name == typeName)
-          clsDesc.foreach {
-            it ⇒
-              if (it.entity)
-                flags += FieldFlag.CASE
-          }
-          clsDesc
-        case AppliedTypeTree(Ident(list), tpe :: Nil) if list.toString == "List" ⇒
-          typeName = buildTypeName(tpe)
-          val clsDesc = allClasses.find(_.name == typeName).getOrElse(c.abort(c.enclosingPosition, s"List not allowed here ${name.toString} not allowed"))
-
-          if (clsDesc.entity)
-            flags ++= Set(FieldFlag.CASE, FieldFlag.LIST)
-          else
-            c.abort(c.enclosingPosition, s"only entity allowed here ${name.toString}:${clsDesc.name}")
-          Some(clsDesc)
-        case _ ⇒ None
-      }
-      // val ClassDef(_, clsName, _, Template(_, _, body)) = clsTree
-      // body.foreach {
-      //   it ⇒
-      //     val cns = it match {
-      //       case Apply(Ident(_), List(Block(stats, expr))) ⇒
-      //         Some(plural(decapitalize(clsName.toString)), stats :+ expr)
-      //       case Apply(Apply(Ident(_), List(Literal(Constant(arg)))),
-      //         List(Block(stats, expr))) ⇒
-      //         Some(arg.toString, stats :+ expr)
-      //       case _ ⇒ None
-      //     }
-      //     cns foreach {
-      //       it ⇒
-      //         allClasses.find(_.name == clsName.toString).foreach {
-      //           x ⇒
-      //             x.plural = it._1
-      //         }
-      //         (it._2).foreach {
-      //           s ⇒
-      //             val st = s.toString.replace("scala.Tuple", "Tuple").split('.').map(_.trim)
-      //             if (st.length >= 2) {
-      //               val fieldNames = {
-      //                 if (st(0).endsWith(")")) {
-      //                   st(0).substring(st(0).indexOf('(') + 1, st(0).lastIndexOf(')')).split(',').map(_.trim)
-      //                 } else {
-      //                   Array(st(0).trim)
-      //                 }
-      //               }
-      //             }
-      //         }
-      //     }
-      // }
-      new FldDesc(name.toString, colName, typeName, flags,
-        None, clsDesc, fieldTree)
+  implicit class `TypeName extensions`(name: TypeName) {
+    def suffix(s: String) = TypeName(s"${name.u}${s}")
+    def tree = {
+      val pq"_: $t" = pq"_: $name"
+      t
     }
   }
 
-  // TODO move id column here
-  case class ClsDesc(name: String, flags: Set[ClassFlag],
-    fields: ListBuffer[FldDesc], tree: Tree, var plural: String,
-    val bases: List[Tree] = List(), uuid: Boolean = false)
+  implicit class `Tree extensions`(tree: Tree) {
+    def typeName = {
+      tree match {
+        case tq"$a[..$b]" ⇒ TypeName(tree.toString)
+        case pq"_: ${tn: TypeName}" ⇒ tn
+        case tq"${tn: TypeName}" ⇒ tn
+      }
+    }
+  }
+
+  case class EnumSpec(name: TermName, body: List[Tree])
+
+  trait EnumProcessor[A <: SchemaMacrosBase]
   {
-    def parseBody(allClasses: List[ClsDesc]) {
-      val ClassDef(mod, name, Nil, Template(parents, self, body)) = tree
-      body.foreach {
-        it ⇒
-          it match {
-            case ValDef(_, _, _, _) ⇒ fields += FldDesc(it, allClasses)
-            case _ ⇒
-          }
+    def apply(enum: EnumSpec): List[Tree]
+  }
+
+  trait BasicEnumProcessor[A <: SchemaMacrosBase]
+  extends EnumProcessor[A]
+  {
+    def apply(enum: EnumSpec): List[Tree] = List(
+      mapper(enum),
+      q"import ${enum.name}._"
+    )
+
+    def mapper(enum: EnumSpec): Tree = {
+      q"""
+      object ${enum.name}
+      extends Enumeration
+      {
+        ..${enum.body}
+        implicit val mapper =
+          MappedColumnType.base[Value, Int](_.id, ${enum.name}.apply)
       }
-      if (fields.isEmpty)
-        c.abort(c.enclosingPosition, "Cannot create table with zero column")
+      """
+    }
+  }
+
+  trait AttrSpecBase
+  {
+    def name: TermName
+    def tpt: Tree
+
+    def nameS = name.toString
+
+    lazy val option = tpt match {
+      case tq"Option[..$_]" ⇒ true
+      case _ ⇒ false
     }
 
-    lazy val assoc = tree == null
+    lazy val actualType = AttrSpec.actualType(tpt)
 
-    lazy val part = flags.contains(PARTDEF)
+    lazy val term = name
 
-    lazy val entity = flags.contains(ENTITYDEF)
+    lazy val load = name.prefix("load")
 
-    lazy val timestamps = flags.contains(TIMESTAMPSDEF)
+    lazy val loadMany = name.prefixPlural("load")
 
-    lazy val dateVals = listIfList(timestamps) {
-      List(
-        q" var dateCreated: DateTime = null",
-        q" var lastUpdated: DateTime = null"
-        )
+    lazy val replaceMany = name.prefixPlural("replace")
+
+    def sqlColId = name.snakeCase
+
+    lazy val assocQueryColId = name.ds.columnId
+
+    lazy val singularName = name.singular
+
+    lazy val valDef = q"val $name: $tpt = $default"
+
+    lazy val paramName = name
+
+    def column =
+      q"def $colName = column[$colType]($sqlColId, ..$columnFlags)"
+
+    def default: Tree = q""
+
+    lazy val colName = name
+
+    lazy val colId = name.columnId
+
+    def colType = tpt
+
+    def columnFlags: List[Select] = Nil
+
+    def singularTerm = TermName(name.ds)
+
+    def tilde: Tree = q"$colName"
+  }
+
+  case class AttrSpec(name: TermName, tpt: Tree, override val default: Tree)
+  extends AttrSpecBase
+
+  trait ReferenceSpec
+  {
+    self: AttrSpecBase ⇒
+
+    def query = TermName(actualType.toString)
+  }
+
+  case class ForeignKeySpec(name: TermName, tpt: Tree)
+  extends AttrSpecBase
+  with ReferenceSpec
+  {
+    override def colType = option ? tq"Option[$keyType]" / keyType
+
+    def keyType = tq"Long"
+
+    override lazy val colName = colId
+
+    override def sqlColId = name.colIdName.snakeCase
+
+    override lazy val valDef = q"val $colId: $colType"
+
+    override lazy val paramName = colName
+
+    def sqlFk = name.snakeCase
+
+    def fkDef = q"def $name = foreignKey($sqlFk, $colId, $query)(_.id)"
+  }
+
+  case class AssociationSpec(name: TermName, tpt: Tree,
+    override val default: Tree)
+  extends AttrSpecBase
+  with ReferenceSpec
+  {
+    override def column =
+      throw new Exception("AssociationSpec can't become column")
+  }
+
+  case class IdColSpec()
+  extends AttrSpecBase
+  {
+    def name = TermName("id")
+
+    def tpt = tq"Option[Long]"
+
+    override def colType = tq"Long"
+
+    // override lazy val sqlColId = "id"
+
+    override def columnFlags = List(q"O.PrimaryKey", q"O.AutoInc")
+
+    override def tilde = q"id.?"
+  }
+
+  case class DateColSpec(desc: String)
+  extends AttrSpecBase
+  {
+    def name = TermName(desc)
+
+    def tpt = tq"Option[DateTime]"
+
+    override def default = q"None"
+  }
+
+  object AttrSpec {
+
+    def actualType[A >: Tree with TypeName](input: A): Tree = {
+      val tpt = input match {
+        case n: TypeName ⇒ n.tree
+        case t: Tree ⇒ t
+      }
+      tpt match {
+        case tq"Option[..$act]" ⇒ act.head
+        case tq"List[..$act]" ⇒ act.head
+        case tq"${act}" ⇒ act
+      }
     }
 
-    lazy val dateDefs = listIfList(timestamps) {
-      List(
-        q""" def dateCreated = column[DateTime]("date_created") """,
-        q""" def lastUpdated = column[DateTime]("last_updated") """
-        )
+    def isAssoc(tpe: Tree) = {
+      tpe match {
+        case tq"List[..$act]" ⇒ true
+        case _ ⇒ false
       }
+    }
+  }
+
+  class TableOpsBase(m: TableSpec)
+  {
+    def name = m.name
+    def params = m.params
+    def bases = m.bases
+    implicit def info = m.info
+    def crudBase = tq"CrudCompat"
+  }
+
+  abstract class TableOps[B <: TableSpec](m: TableSpec)
+  extends TableOpsBase(m)
+  {
+    lazy val timestamps = info.timestamps
+
+    def nameS = name.toString
+
+    def pluralS = nameS.plural
+
+    def path = name.dp.snakeCase
 
     lazy val assocQuerys = assocs map { ass ⇒ assocName(ass) }
 
-    lazy val names = name :: assocQuerys
+    lazy val names = name.toString :: assocQuerys
 
-    lazy val queries = names map(objectName)
+    lazy val queries = names map(_.objectName)
 
-    lazy val tableName = mkTableName(name)
+    lazy val tableName = name.suffix("Table")
 
-    lazy val tableType = TypeName(mkTableName(name))
+    lazy val query = term
 
-    lazy val query = TermName(objectName(name))
+    lazy val term = name.toTermName
 
-    lazy val typeName = TypeName(name)
+    def assocQuery(other: AttrSpecBase) =
+      TermName(assocName(other))
 
-    lazy val compName = TermName(name)
+    def assocModel(other: AttrSpecBase) = TermName(assocName(other))
 
-    def assocQuery(other: FldDesc) =
-      TermName(objectName(assocName(other)))
+    def assocName(other: AttrSpecBase) = assocTableName(other)
 
-    def assocModel(other: FldDesc) = TermName(assocName(other))
+    def assocTableName(to: AttrSpecBase) =
+      s"${name}2${to.singularName.u}"
 
-    def assocName(other: FldDesc) = assocTableName(this, other)
-
-    def filter(pred: Set[FieldFlag] ⇒ Boolean) =
-      fields.filter(f ⇒ pred(f.flags)).toList
-
-    lazy val foreignKeys = filter { f ⇒
-      f.contains(FieldFlag.CASE) && !f.contains(FieldFlag.LIST)
+    def fieldType[A <: AttrSpecBase: ClassTag] = params.collect {
+      case f: A ⇒ f
     }
 
-    lazy val assocs = filter { f ⇒
-      f.contains(FieldFlag.CASE) && f.contains(FieldFlag.LIST)
+    lazy val foreignKeys = fieldType[ForeignKeySpec]
+
+    lazy val assocs = fieldType[AssociationSpec]
+
+    lazy val attrs = fieldType[AttrSpec]
+
+    def modelParams: List[AttrSpecBase] = attrs ++ foreignKeys
+
+    lazy val colId = name.columnId
+
+    lazy val valDefs = modelParams.map(_.valDef)
+
+    def tildeFields = {
+      modelParams map { _.tilde }
     }
 
-    lazy val attrs = filter { !_.contains(FieldFlag.CASE) }
+    val sqlTableId = name.dp.toLowerCase
 
-    lazy val flat = filter { !_.contains(FieldFlag.LIST) }
+    def columns = modelParams.map { _.column }
 
-    lazy val listValDefs = filter { _.contains(FieldFlag.LIST) }
+    def tableBases: List[Tree] = Nil
 
-    lazy val colId = columnId(name)
+    def modelBases: List[Tree] = Nil
 
-    lazy val caseValDefs = flat.map { attr ⇒
-      if (attr.cse) {
-        val tpe = attr.option ? tq"Option[Long]" / tq"Long"
-        val q"$mod val $name: $ignoretype = $value" = attr.tree
-        val termName = TermName(name.toString + "Id")
-        q"val $termName: $tpe"
+    def queryBase = tq"$crudBase[$name, $tableName]"
+
+    def queryType: Tree = tq"TableQuery"
+
+    def queryExtra: List[Tree] = Nil
+
+    def times = {
+      q"""
+      def * = (..$tildeFields).shaped <> (
+        ($term.apply _).tupled, $term.unapply
+      )
+      """
+    }
+
+    def modelExtra: List[Tree] = Nil
+  }
+
+  class ModelOps(m: ModelSpec)
+  extends TableOps[ModelSpec](m)
+  {
+    def assocTables = {
+      assocs.map { ass ⇒
+        val assType = TypeName(assocName(ass))
+        val fks = List(
+          ForeignKeySpec(TermName(name.d), name.tree),
+          ForeignKeySpec(ass.singularTerm, ass.actualType)
+        )
+        AssocSpec(assType, fks)
       }
-      else attr.tree.asInstanceOf[ValDef]
     }
 
-    lazy val nonDateFields = attrs ++ foreignKeys ++ assocs
+    lazy val idColumn = IdColSpec()
 
-    lazy val nonDateFieldNames = "uuid" :: nonDateFields.map(_.name)
-
-    lazy val mapper = s"${name}Mapper"
-
-    lazy val mapperType = TypeName(mapper)
-
-    lazy val mapperTerm = TermName(mapper)
-
-    lazy val mapperFields = {
-      val atts = attrs map { a ⇒ q"val ${a.term}: ${TypeName(a.typeName)}" }
-      val fks = foreignKeys map { a ⇒ q"val ${a.term}: String" }
-      val ass = assocs map { a ⇒ q"val ${a.term}: Seq[String]" }
-      val uuid = q"val uuid: String"
-      uuid :: atts ++ fks ++ ass
+    override def modelParams = {
+      nonDateFields ++ dateColumns
     }
 
-    def tildeFields(augment: Boolean) = {
-      // formatFields(augment, prepend = augment ? List("id.?") / Nil)
-      formatFields(augment)
+    def nonDateFields = idColumn :: super.modelParams ++ extraColumns
+
+    override def modelExtra = {
+      timestamps ? List(withDates) / Nil
     }
 
-    def modelFields(augment: Boolean) = {
-      formatFields(augment, augment ? List("id") / Nil)
-    }
-
-    def appendFields(augment: Boolean) = List(
-      (augment && timestamps) ? "dateCreated",
-      (augment && timestamps) ? "lastUpdated",
-      (augment && uuid) ? "uuid"
-      ) flatten
-
-    def modelFieldsPrefixed(augment: Boolean, prefix: String) = {
-      modelFields(augment) map { a ⇒ q"${TermName(prefix)}.$a" }
-    }
-
-    def formatFields(augment: Boolean, prepend: List[String] = List()) = {
-      val fields = flat.map { field ⇒
-        if (field.cse) colIdName(field.name) else field.name
+    def withDates = {
+      val fields = nonDateFields map { _.paramName }
+      q"""
+      def withDates(c: Option[DateTime] = None, u: Option[DateTime] = None) = {
+        val newCreated = c orElse created orElse u orElse Some(DateTime.now) 
+        val newUpdated = u orElse newCreated
+        ${term}(..$fields, created = newCreated, updated = newUpdated)
       }
-      (prepend ++ fields ++ appendFields(augment)) map { TermName(_) }
+      """
+    }
+
+    def extraColumns: List[AttrSpecBase] = Nil
+
+    def dateColumns = {
+      timestamps ? List(DateColSpec("created"), DateColSpec("updated")) / Nil
+    }
+
+    override def tableBases = List(tq"TableEx[$name]")
+
+    override def modelBases = List(
+      Some(tq"db.Model"),
+      timestamps ? tq"db.Timestamps[$name]"
+    ).flatten ++ bases
+
+    override def crudBase = {
+      info.timestamps ? tq"CrudEx" / tq"Crud"
     }
   }
 
-  object ClsDesc {
-    def apply(tree: Tree, timestampAll: Boolean, uuid: Boolean) = {
-      val q"case class $name(..$fields) extends ..$bases { ..$body }" =
-        tree
-      val parents = bases map { _.toString }
-      val isPart = parents.contains("Part")
-      val timestamps = parents.contains("Timestamps")
-      val realBases = bases filterNot { b ⇒
-        b.toString.contains("Part") || b.toString.contains("Timestamps")
-      }
-      val flags = Set[ClassFlag]()
-      if (isPart)
-        flags += PARTDEF
-      else
-        flags += ENTITYDEF
-      if (timestampAll || timestamps) flags += TIMESTAMPSDEF
-      new ClsDesc(name.toString, flags, ListBuffer(), tree,
-        plural(decapitalize(name.toString)), realBases, uuid)
+  class AssocOps(m: AssocSpec)
+  extends TableOps[AssocSpec](m)
+
+  abstract class TableSpec
+  (implicit val info: BasicInfo)
+  {
+    def name: TypeName
+    def params: List[AttrSpecBase]
+    def bases: List[Tree]
+  }
+
+  case class ModelSpec(
+    name: TypeName, params: List[AttrSpecBase], bases: List[Tree],
+    body: List[Tree]
+  )
+  (implicit info: BasicInfo)
+  extends TableSpec
+
+  case class AssocSpec(name: TypeName, params: List[AttrSpecBase])
+  (implicit info: BasicInfo)
+  extends TableSpec
+  {
+    def bases = Nil
+  }
+
+  object ModelSpec
+  {
+    def parse(
+      name: TypeName, params: List[ValDef], bases: List[Tree], body: List[Tree]
+    )(implicit info: BasicInfo) = {
+      val attrs = params map parseParam
+      new ModelSpec(name, attrs, bases, body)
     }
+
+    def parseParam(tree: ValDef)(implicit info: BasicInfo) = {
+      val q"$mod val $name: $tpt = $default" = tree
+      val model = info.isModel(AttrSpec.actualType(tpt))
+      val assoc = AttrSpec.isAssoc(tpt)
+      if (model) {
+        if (assoc) AssociationSpec(name, tpt, default)
+        else ForeignKeySpec(name, tpt)
+      }
+      else AttrSpec(name, tpt, default)
+    }
+  }
+
+  case class SchemaSpec[A <: SchemaMacrosBase: EnumProcessor](
+    comp: CompanionData,
+    models: List[ModelSpec],
+    enums: List[EnumSpec],
+    misc: List[Tree]
+  )
+  {
+    def enum = enums map implicitly[EnumProcessor[A]].apply
+  }
+
+  object SchemaSpec
+  {
+    def parse[A <: SchemaMacrosBase: EnumProcessor](comp: CompanionData)
+    (implicit info: BasicInfo) =
+    {
+      val z = (List[ModelSpec](), List[EnumSpec](), List[Tree]())
+      val (models, enums, other) = comp.body.foldRight(z) {
+        case (tree, (models, enums, misc)) ⇒ tree match {
+          case q"object $name extends Enumeration { ..$body }" ⇒
+            (models, EnumSpec(name, body) :: enums, misc)
+          case q"case class $name(..$params) extends ..$bases { ..$body }" ⇒
+            (parseModel(name, params, bases, body) :: models, enums, misc)
+          case a ⇒
+            (models, enums, a :: misc)
+        }
+      }
+      SchemaSpec(comp, models, enums, other)
+    }
+
+    def parseModel(
+      name: TypeName, params: List[ValDef], bases: List[Tree], body: List[Tree]
+    )(implicit info: BasicInfo) = {
+      ModelSpec.parse(name, params, bases, body)
+    }
+  }
+
+  case class BasicInfo(comp: CompanionData)
+  {
+    val models = comp.body.collect {
+      case q"case class $name(..$fields) extends ..$bases { ..$body }" ⇒ name
+    }
+
+    def isModel(tpt: Tree) = {
+      val tq"${name: TypeName}" = tpt
+      models.contains(name)
+    }
+
+    val baseNames = comp.bases map { _.toString.split('.').last }
+
+    def hasBase(name: String) = baseNames.contains(name)
+
+    lazy val timestamps = hasBase("Timestamps")
   }
 }
