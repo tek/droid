@@ -7,6 +7,7 @@ import akka.actor.ActorSelection
 import tryp.droid.Messages
 
 import tryp.core.util._
+import tryp.core.meta._
 
 class AndroidLog extends LogBase
 {
