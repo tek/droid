@@ -101,6 +101,7 @@ extends SchemaMacros(ct)
         def applyMapper(id: Option[Long], mapper: $mt, app: $name ⇒ Any)
         ($session) {
           val obj = $term(id, ..$fields)
+          app(obj)
           ..$assocUpdates
         }
         """,
