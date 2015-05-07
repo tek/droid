@@ -31,8 +31,7 @@ trait BackendSync
     }
   }
 
-  case class Syncer(table: SyncTableQueryBase,
-    set: PendingActionSet)
+  case class Syncer(table: SyncTableQueryBase, set: PendingActionSet)
   (implicit s: Session)
   {
     def errorWrap[A](action: ⇒ Option[String])(callback: (String) ⇒ Unit) {

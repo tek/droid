@@ -227,10 +227,7 @@ extends SchemaMacros(ct)
   def syncMetadata(classes: List[ModelSpec]) = {
     val data = classes map { cls ⇒
       val meta = q"""
-      db.SyncTableMetadata[${cls.name}, ${cls.tableName},
-      ${cls.mapperType}](
-        ${cls.path}, ${cls.query}
-      )
+      db.SyncTableMetadata(${cls.path}, ${cls.query})
       """
       (cls.path, meta)
     }
