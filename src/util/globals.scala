@@ -1,13 +1,8 @@
 package tryp.droid.util
 
 trait Util
-extends Control
-with MetadataExt
-with OptionExt
-with SeqExt
-with AkkaExt
+extends AkkaExt
 with AndroidExt
-with JodaExt
 {
 }
 

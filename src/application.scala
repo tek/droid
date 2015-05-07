@@ -9,7 +9,7 @@ trait TrypApplication
     if ((getApplicationInfo.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
       Env.debug = true
     }
-    Log.tag = name
+    tryp.droid.meta.AndroidLog.tag = name
   }
 }
 
