@@ -65,7 +65,7 @@ extends SchemaMacros(ct)
     }
 
     def handleMapper = {
-      val mapper = mapperType
+      val mt = mapperType
       val att = attrs map { f ⇒ q"mapper.${f.term}" }
       val fks = foreignKeys map { f ⇒
         q"""
@@ -80,7 +80,7 @@ extends SchemaMacros(ct)
       }
       List(
         q"""
-        def syncFromMapper(mapper: $mapperType)($session) {
+        def syncFromMapper(mapper: $mt)($session) {
           idByUuid(mapper.uuid) some {
             id ⇒ updateFromMapper(id, mapper) } none {
             createFromMapper(mapper)
@@ -88,24 +88,24 @@ extends SchemaMacros(ct)
         }
         """,
         q"""
-        def updateFromMapper(id: Long, mapper: $mapper)($session) {
+        def updateFromMapper(id: Long, mapper: $mt)($session) {
           applyMapper(Some(id), mapper, update)
         }
         """,
         q"""
-        def createFromMapper(mapper: $mapper)($session) {
+        def createFromMapper(mapper: $mt)($session) {
           applyMapper(None, mapper, insert)
         }
         """,
         q"""
-        def applyMapper(id: Option[Long], mapper: $mapper, app: $name ⇒ Any)
+        def applyMapper(id: Option[Long], mapper: $mt, app: $name ⇒ Any)
         ($session) {
           val obj = $term(id, ..$fields)
           ..$assocUpdates
         }
         """,
         q"""
-        def uuidError(mapper: $mapper) = {
+        def uuidError(mapper: $mt) = {
           throw new Exception(s"Invalid uuid found in mapper $$mapper")
         }
         """
