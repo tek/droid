@@ -451,7 +451,7 @@ extends Annotation
     misc: List[Tree]
   )
   {
-    def enum = enums map implicitly[EnumProcessor[A]].apply
+    def enum = enums map implicitly[EnumProcessor[A]].apply flatten
   }
 
   object SchemaSpec

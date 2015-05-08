@@ -6,7 +6,13 @@ import slick.db._
 @Schema()
 object SimpleTestSchema
 {
-  case class Alpha(name: String)
+  object Flag extends Enumeration {
+    type Flag = Value
+    val On = Value
+    val Off = Value
+  }
+
+  case class Alpha(name: String, flagger: Flag)
   case class Beta(name: String, alp: Alpha)
   case class Gamma(name: String, bet: List[Beta])
 }
