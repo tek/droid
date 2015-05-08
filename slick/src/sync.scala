@@ -28,8 +28,6 @@ extends SchemaMacros(ct)
     def name = TermName("uuid")
 
     def tpt = tq"Option[String]"
-
-    override def default = q"None"
   }
 
   class SyncModelOps(m: ModelSpec)

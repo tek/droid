@@ -169,8 +169,14 @@ extends Annotation
     def tilde: Tree = q"$colName"
   }
 
-  case class AttrSpec(name: TermName, tpt: Tree, override val default: Tree)
+  case class AttrSpec(name: TermName, tpt: Tree, customDefault: Tree)
   extends AttrSpecBase
+  {
+    override def default = {
+      if (customDefault != q"") customDefault
+      else super.default
+    }
+  }
 
   trait ReferenceSpec
   {
