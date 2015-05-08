@@ -159,6 +159,7 @@ extends ExtSchemaTest
   apply uuids to multiple records in a table $alpha
   apply multiple changed foreign keys to a record $beta
   apply multiple changed associations to a record $gamma
+  apply changed fields to a record $alphaValues
   """
 
   import ExtTestSchema._
@@ -221,6 +222,13 @@ extends ExtSchemaTest
         c ⇒ (c.loadBets.list, c.loadBet2s.list) } map {
         case (b1, b2) ⇒ (b1.ids, b2.ids) }
       betas must beSome((Set(1, 2), Set()))
+    }
+  }
+
+  def alphaValues = {
+    db withSession { implicit s ⇒
+      Alpha.firstOption must beSome(Alpha("uuid_alpha_1", "response_alpha_1",
+        Flag.Off))
     }
   }
 }
