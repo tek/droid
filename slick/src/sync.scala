@@ -41,7 +41,9 @@ extends SchemaMacros(ct)
 
     lazy val mapperFieldStrings = mapperFields.map(_.name.toString)
 
-    override def extraColumns = List(uuidColumn)
+    def attrsWithUuid = attrs :+ uuidColumn
+
+    override def extraColumns = uuidColumn :: super.extraColumns
 
     override def modelBases = super.modelBases :+ tq"slick.db.Sync"
 
@@ -66,15 +68,16 @@ extends SchemaMacros(ct)
 
     def handleMapper = {
       val mt = mapperType
-      val att = attrs map { f ⇒ q"mapper.${f.term}" }
+      val att = attrsWithUuid map { f ⇒ q"${f.term} = mapper.${f.term}" }
       val fks = foreignKeys map { f ⇒
         q"""
-        ${f.query}.idByUuid(mapper.${f.term}).getOrElse {
-          uuidError(mapper, ${f.nameS}, mapper.${f.term})
+        ${f.colName} =
+          ${f.query}.idByUuid(mapper.${f.term}) getOrElse {
+          uuidError(mapper, ${f.nameS}, Some(mapper.${f.term}))
         }
         """
       }
-      val fields = att ++ fks :+ q"uuid = Some(mapper.uuid)"
+      val fields = att ++ fks
       val assocUpdates = assocs map { f ⇒
         q"""
         obj.${f.replaceMany}(${f.query}.idsByUuids(mapper.${f.term}))
@@ -83,8 +86,8 @@ extends SchemaMacros(ct)
       List(
         q"""
         def syncFromMapper(mapper: $mt)($session) {
-          idByUuid(mapper.uuid) some {
-            id ⇒ updateFromMapper(id, mapper) } none {
+          mapper.uuid.flatMap(idByUuid) map {
+            id ⇒ updateFromMapper(id, mapper) } getOrElse {
             createFromMapper(mapper)
           }
         }
@@ -102,15 +105,16 @@ extends SchemaMacros(ct)
         q"""
         def applyMapper(id: Option[Long], mapper: $mt, app: $name ⇒ Any)
         ($session) {
-          val obj = $term(id, ..$fields)
+          val obj = $term(..$fields, id = id)
           app(obj)
           ..$assocUpdates
         }
         """,
         q"""
-        def uuidError(mapper: $mt, attr: String, uuid: String) = {
+        def uuidError(mapper: $mt, attr: String, uuid: Option[String]) = {
           throw new Exception(
-            s"Invalid uuid found in mapper $$mapper for attr $$attr: $$uuid"
+            s"Invalid uuid found in mapper $$mapper for attr $$attr:" +
+              uuid.getOrElse("none")
           )
         }
         """
@@ -158,11 +162,10 @@ extends SchemaMacros(ct)
     lazy val mapperTerm = TermName(mapper)
 
     lazy val mapperParams = {
-      val atts = attrs map { _.valDef }
+      val atts = attrsWithUuid map { _.valDef }
       val fks = foreignKeys map { a ⇒ q"val ${a.term}: String" }
       val ass = assocs map { a ⇒ q"val ${a.term}: Seq[String]" }
-      val uuid = q"val uuid: String"
-      uuid :: atts ++ fks ++ ass
+      atts ++ fks ++ ass
     }
   }
 

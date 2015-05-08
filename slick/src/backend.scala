@@ -53,7 +53,7 @@ trait BackendSync
 
     def additions() {
       withJson(set.additions) foreach {
-        case (a @ Addition(_, target), data) ⇒
+        case (a @ Addition(target, _), data) ⇒
           errorWrap { http.post(table.path, data) } { result ⇒
             table.setUuidFromJson(target, result)
             table.completeSync(a)
@@ -63,7 +63,7 @@ trait BackendSync
 
     def updates() {
       withJson(set.updates) foreach {
-        case (u @ Update(_, target), data) ⇒
+        case (u @ Update(target, _), data) ⇒
           table.uuidById(target) foreach { uuid ⇒
             errorWrap { http.put(s"${table.path}/${uuid}", data) } { _ ⇒
               table.completeSync(u)

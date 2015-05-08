@@ -37,14 +37,14 @@ with BeforeAll
   def createModels = {
     db withSession { implicit s ⇒
       for {
-        a ← Alpha.insert(Alpha(None, "something", Flag.On))
+        a ← Alpha.insert(Alpha("something", Flag.On))
         aId ← a.id
-        a2 ← Alpha.insert(Alpha(None, "something else", Flag.On))
+        a2 ← Alpha.insert(Alpha("something else", Flag.On))
         a2Id ← a2.id
-        b ← Beta.insert(Beta(None, "yello", aId, a2Id))
-        b2 ← Beta.insert(Beta(None, "chello", aId, a2Id))
+        b ← Beta.insert(Beta("yello", aId, a2Id))
+        b2 ← Beta.insert(Beta("chello", aId, a2Id))
         bId ← b.id
-        c ← Gamma.insert(Gamma(None, "hello"))
+        c ← Gamma.insert(Gamma("hello"))
       } yield (a, b, bId, c)
     }
   }
@@ -101,9 +101,9 @@ extends ExtSchemaTest
   def pendingAct = {
     import PendingActionsSchema.Addition
     val (a, b, bId, c) = models
-    additions("alphas") === List(Addition(Some(1), 1), Addition(Some(2), 2)) &&
-      additions("betas") === List(Addition(Some(3), 1)) &&
-      additions("gammas") === List(Addition(Some(4), 1))
+    additions("alphas") === List(Addition(1, Some(1)), Addition(2, Some(2))) &&
+      additions("betas") === List(Addition(1, Some(3))) &&
+      additions("gammas") === List(Addition(1, Some(4)))
   }
 }
 
@@ -142,11 +142,11 @@ extends ExtSchemaTest
   }
 
   def alpha = {
-    additions("alphas") === List(Addition(Some(2), 2))
+    additions("alphas") === List(Addition(2, Some(2)))
   }
 
   def beta = {
-    additions("betas") === List(Addition(Some(3), 1), Addition(Some(4),2))
+    additions("betas") === List(Addition(1, Some(3)), Addition(2, Some(4)))
   }
 }
 
@@ -173,13 +173,13 @@ extends ExtSchemaTest
     resetDb()
     val (a, b, bId, c) = models
     db withSession { implicit s ⇒
-      val a1 = AlphaMapper("uuid_alpha_1", "response_alpha_1", Flag.Off)
-      val a2 = AlphaMapper("uuid_alpha_2", "response_alpha_2", Flag.Off)
-      val b1 = BetaMapper("uuid_beta_1", "response_beta_1",
+      val a1 = AlphaMapper("response_alpha_1", Flag.Off, Some("uuid_alpha_1"))
+      val a2 = AlphaMapper("response_alpha_2", Flag.Off, Some("uuid_alpha_2"))
+      val b1 = BetaMapper("response_beta_1", Some("uuid_beta_1"),
         "uuid_alpha_2", "uuid_alpha_1")
-      val b2 = BetaMapper("uuid_beta_2", "response_beta_2",
+      val b2 = BetaMapper("response_beta_2", Some("uuid_beta_2"),
         "uuid_alpha_2", "uuid_alpha_2")
-      val c = GammaMapper("uuid_gamma_1", "response_gamma_1",
+      val c = GammaMapper("response_gamma_1", Some("uuid_gamma_1"),
         List("uuid_beta_1", "uuid_beta_2"), List())
       val responses =
         a1.js ::
@@ -227,8 +227,7 @@ extends ExtSchemaTest
 
   def alphaValues = {
     db withSession { implicit s ⇒
-      Alpha.firstOption must beSome(Alpha("uuid_alpha_1", "response_alpha_1",
-        Flag.Off))
+      Alpha.firstOption.map(_.flog) must beSome(Flag.Off)
     }
   }
 }

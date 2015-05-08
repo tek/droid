@@ -60,7 +60,7 @@ extends CrudEx[A, B]
 
   def pending(implicit s: Session) = pendingActions.filter {
     _.model === path }.firstOption.orElse {
-      pendingActions.insert(PendingActionSet(None, path))
+      pendingActions.insert(PendingActionSet(path))
     }
 
   override def insert(obj: A)(implicit s: Session) = {
@@ -69,7 +69,7 @@ extends CrudEx[A, B]
       sets ← pending
       o ← added
       oid ← o.id
-      a ← Addition.insert(Addition(None, oid))
+      a ← Addition.insert(Addition(oid))
       id ← a.id
     } sets.addAddition(id)
     added
@@ -79,7 +79,7 @@ extends CrudEx[A, B]
     for {
       sets ← pending
       oid ← obj.id
-      a ← Update.insert(Update(None, oid))
+      a ← Update.insert(Update(oid))
       id ← a.id
     } sets.addUpdate(id)
     super.update(obj)
@@ -89,7 +89,7 @@ extends CrudEx[A, B]
     for {
       sets ← pending
       uuid ← obj.uuid
-      a ← Deletion.insert(Deletion(None, uuid))
+      a ← Deletion.insert(Deletion(uuid))
       id ← a.id
     } sets.addDeletion(id)
     super.delete(obj)
@@ -128,7 +128,7 @@ trait SyncTableQueryBase
 
 trait BackendMapper[A <: Types#ExtModel[A]]
 {
-  def uuid: String
+  def uuid: Option[String]
 }
 
 abstract class SyncTableQuery[
@@ -153,7 +153,7 @@ with SyncCrud[A, B]
       val q = for {
         o ← this if o.id === id
       } yield o.uuid
-      q.update(Some(mapper.uuid))
+      q.update(mapper.uuid)
     }
   }
 

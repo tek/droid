@@ -360,7 +360,7 @@ extends Annotation
       nonDateFields ++ dateColumns
     }
 
-    def nonDateFields = idColumn :: super.modelParams ++ extraColumns
+    def nonDateFields = super.modelParams ++ extraColumns
 
     override def modelExtra = {
       timestamps ? List(withDates) / Nil
@@ -377,7 +377,7 @@ extends Annotation
       """
     }
 
-    def extraColumns: List[AttrSpecBase] = Nil
+    def extraColumns: List[AttrSpecBase] = List(idColumn)
 
     def dateColumns = {
       timestamps ? List(DateColSpec("created"), DateColSpec("updated")) / Nil
