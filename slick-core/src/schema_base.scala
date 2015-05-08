@@ -112,7 +112,8 @@ extends Annotation
       {
         ..${enum.body}
         implicit val mapper =
-          MappedColumnType.base[Value, Int](_.id, ${enum.name}.apply)
+          MappedColumnType.base[Value, String](_.toString,
+            ${enum.name}.withName)
       }
       """
     }
