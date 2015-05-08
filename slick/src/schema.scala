@@ -69,7 +69,9 @@ extends SchemaMacros(ct)
       val att = attrs map { f ⇒ q"mapper.${f.term}" }
       val fks = foreignKeys map { f ⇒
         q"""
-        ${f.query}.idByUuid(mapper.${f.term}).getOrElse(uuidError(mapper))
+        ${f.query}.idByUuid(mapper.${f.term}).getOrElse {
+          uuidError(mapper, ${f.nameS}, mapper.${f.term})
+        }
         """
       }
       val fields = att ++ fks :+ q"uuid = Some(mapper.uuid)"
@@ -106,8 +108,10 @@ extends SchemaMacros(ct)
         }
         """,
         q"""
-        def uuidError(mapper: $mt) = {
-          throw new Exception(s"Invalid uuid found in mapper $$mapper")
+        def uuidError(mapper: $mt, attr: String, uuid: String) = {
+          throw new Exception(
+            s"Invalid uuid found in mapper $$mapper for attr $$attr: $$uuid"
+          )
         }
         """
     )
