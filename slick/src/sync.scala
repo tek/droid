@@ -197,7 +197,6 @@ extends SchemaMacros(ct)
                   DecodeResult.fail($error + e, c.history)
               }
             case None ⇒
-              p("none: " + c.focus)
               DecodeResult.fail($error + "Invalid input '$${c.focus}'",
                 c.history)
           }
@@ -224,13 +223,33 @@ extends SchemaMacros(ct)
 
   override def transform(cls: TableSpec) = SyncTransformer(cls).result
 
-  override def dateTime = {
-    super.dateTime ++ Seq(
+  def dateTimeCodecJson = {
+    val error = q""" "Error parsing json for DateTime: " """
+    val decoder =
       q"""
-      implicit val dateTimeJsonFormat =
-        jencode1L { (dt: DateTime) ⇒ dt.getEra } ("time")
+      {
+        c ⇒ c.focus.string match {
+          case Some(s) ⇒
+            Try(s.toLong) match {
+              case scala.util.Success(d) ⇒ DecodeResult.ok(d.toDateTime)
+              case scala.util.Failure(e) ⇒
+                DecodeResult.fail($error + e, c.history)
+            }
+          case None ⇒
+            DecodeResult.fail($error + "Invalid input '$${c.focus}'",
+              c.history)
+        }
+      }
       """
+    q"""
+    implicit val dateTimeCodecJson: CodecJson[DateTime] = CodecJson(
+      (dt: DateTime) ⇒ jString(dt.unix.toString), $decoder
     )
+    """
+  }
+
+  override def dateTime = {
+    super.dateTime ++ Seq(dateTimeCodecJson)
   }
 
   override def extraPre(classes: List[ModelSpec]): List[Tree] = {

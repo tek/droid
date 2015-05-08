@@ -4,6 +4,8 @@ import scala.slick.driver.SQLiteDriver.simple._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
+import com.github.nscala_time.time.Imports.DateTime
+
 import argonaut._
 import Argonaut._
 
@@ -41,8 +43,8 @@ with BeforeAll
         aId ← a.id
         a2 ← Alpha.insert(Alpha("something else", Flag.On))
         a2Id ← a2.id
-        b ← Beta.insert(Beta("yello", aId, a2Id))
-        b2 ← Beta.insert(Beta("chello", aId, a2Id))
+        b ← Beta.insert(Beta("yello", None, aId, a2Id))
+        b2 ← Beta.insert(Beta("chello", Some(DateTime.now), aId, a2Id))
         bId ← b.id
         c ← Gamma.insert(Gamma("hello"))
       } yield (a, b, bId, c)
@@ -175,9 +177,9 @@ extends ExtSchemaTest
     db withSession { implicit s ⇒
       val a1 = AlphaMapper("response_alpha_1", Flag.Off, Some("uuid_alpha_1"))
       val a2 = AlphaMapper("response_alpha_2", Flag.Off, Some("uuid_alpha_2"))
-      val b1 = BetaMapper("response_beta_1", Some("uuid_beta_1"),
+      val b1 = BetaMapper("response_beta_1", None, Some("uuid_beta_1"),
         "uuid_alpha_2", "uuid_alpha_1")
-      val b2 = BetaMapper("response_beta_2", Some("uuid_beta_2"),
+      val b2 = BetaMapper("response_beta_2", None, Some("uuid_beta_2"),
         "uuid_alpha_2", "uuid_alpha_2")
       val c = GammaMapper("response_gamma_1", Some("uuid_gamma_1"),
         List("uuid_beta_1", "uuid_beta_2"), List())

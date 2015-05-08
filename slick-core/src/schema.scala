@@ -189,7 +189,7 @@ extends SchemaMacrosBase
     import scala.slick.driver.SQLiteDriver.simple._
     import slick.db.Uuids._
     import java.sql.Timestamp
-    import org.joda.time.DateTime
+    import com.github.nscala_time.time.Imports._
     """
   }
 
