@@ -181,7 +181,8 @@ extends SchemaMacrosBase
 
   def extraPre(classes: List[ModelSpec]): List[Tree] = Nil
 
-  def imports = q"""
+  def imports = {
+    q"""
     import scalaz._, Scalaz._
     import scala.slick.util.TupleMethods._
     import scala.slick.jdbc.JdbcBackend
@@ -190,6 +191,7 @@ extends SchemaMacrosBase
     import java.sql.Timestamp
     import org.joda.time.DateTime
     """
+  }
 
   def schemaSpec(comp: CompanionData)(implicit info: BasicInfo):
   SchemaSpec[_ <: SchemaMacros] =
