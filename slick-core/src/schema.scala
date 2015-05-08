@@ -166,13 +166,13 @@ extends SchemaMacrosBase
 
   def createMetadata(tables: List[TableSpec]) = {
     val data = tables map { t ⇒
-      (t.path, q"db.TableMetadata(${t.path}, ${t.query})")
+      (t.path, q"slick.db.TableMetadata(${t.path}, ${t.query})")
     }
-    List(
-      q""" val tables = List(..${data.unzip._2}) """,
-      q""" val tableMap = Map(..$data) """,
-      q""" val metadata = db.SchemaMetadata(tableMap) """
-    )
+    q"""
+    val tables = List(..${data.unzip._2})
+    val tableMap = Map(..$data)
+    val metadata = slick.db.SchemaMetadata(tableMap)
+    """
   }
 
   val extraBases = List(tq"slick.SchemaBase")
@@ -180,6 +180,16 @@ extends SchemaMacrosBase
   def extra(classes: List[ModelSpec]): List[Tree] = Nil
 
   def extraPre(classes: List[ModelSpec]): List[Tree] = Nil
+
+  def imports = q"""
+    import scalaz._, Scalaz._
+    import scala.slick.util.TupleMethods._
+    import scala.slick.jdbc.JdbcBackend
+    import scala.slick.driver.SQLiteDriver.simple._
+    import slick.db.Uuids._
+    import java.sql.Timestamp
+    import org.joda.time.DateTime
+    """
 
   def schemaSpec(comp: CompanionData)(implicit info: BasicInfo):
   SchemaSpec[_ <: SchemaMacros] =
@@ -198,14 +208,7 @@ extends SchemaMacrosBase
     object ${comp.name}
     extends ..${comp.bases ++ extraBases}
     { self ⇒
-      import scalaz._, Scalaz._
-      import scala.slick.util.TupleMethods._
-      import scala.slick.jdbc.JdbcBackend
-      import scala.slick.driver.SQLiteDriver.simple._
-      import Uuids._
-      import java.sql.Timestamp
-      import org.joda.time.DateTime
-
+      ..$imports
       ..${extraPre(models)}
       ..$dateTime
       ..$enums

@@ -262,7 +262,7 @@ extends Annotation
     def params = m.params
     def bases = m.bases
     implicit def info = m.info
-    def crudBase = tq"CrudCompat"
+    def crudBase = tq"slick.db.CrudCompat"
   }
 
   abstract class TableOps[B <: TableSpec](m: TableSpec)
@@ -386,15 +386,15 @@ extends Annotation
       timestamps ? List(DateColSpec("created"), DateColSpec("updated")) / Nil
     }
 
-    override def tableBases = List(tq"TableEx[$name]")
+    override def tableBases = List(tq"slick.db.TableEx[$name]")
 
     override def modelBases = List(
-      Some(tq"db.Model"),
-      timestamps ? tq"db.Timestamps[$name]"
+      Some(tq"slick.db.Model"),
+      timestamps ? tq"slick.db.Timestamps[$name]"
     ).flatten ++ bases
 
     override def crudBase = {
-      info.timestamps ? tq"CrudEx" / tq"Crud"
+      info.timestamps ? tq"slick.db.CrudEx" / tq"slick.db.Crud"
     }
   }
 

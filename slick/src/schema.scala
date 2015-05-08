@@ -43,14 +43,14 @@ extends SchemaMacros(ct)
 
     override def extraColumns = List(uuidColumn)
 
-    override def modelBases = super.modelBases :+ tq"Sync"
+    override def modelBases = super.modelBases :+ tq"slick.db.Sync"
 
-    override def tableBases = List(tq"SyncTable[$name]")
+    override def tableBases = List(tq"slick.db.SyncTable[$name]")
 
-    override def queryBase = tq"Empty"
+    override def queryBase = tq"slick.Empty"
 
     override def queryType =
-      tq"SyncTableQuery[$name, $tableName, $mapperType]"
+      tq"slick.db.SyncTableQuery[$name, $tableName, $mapperType]"
 
     override def queryExtra = {
       List(
@@ -147,7 +147,7 @@ extends SchemaMacros(ct)
     def backendMapper = {
       q"""
       case class $mapperType(..$mapperParams)
-      extends BackendMapper[$name]
+      extends slick.db.BackendMapper[$name]
       """
     }
 
@@ -243,9 +243,9 @@ extends SchemaMacros(ct)
     val jsonCodecs = classes.map(_.jsonCodec).flatten
     val backendMappers = classes.map(_.backendMapper)
     List(
-      q"import PendingActionsSchema._",
-      q"val pendingActions = PendingActionsSchema.PendingActionSet",
-      q"val pendingMetadata = PendingActionsSchema.metadata",
+      q"import slick.db.PendingActionsSchema._",
+      q"val pendingActions = PendingActionSet",
+      q"val pendingMetadata = slick.db.PendingActionsSchema.metadata",
       q"val syncMetadata = ${syncMetadata(classes)}"
     ) ++ backendMappers ++ jsonCodecs
   }
@@ -253,11 +253,11 @@ extends SchemaMacros(ct)
   def syncMetadata(classes: List[ModelSpec]) = {
     val data = classes map { cls ⇒
       val meta = q"""
-      db.SyncTableMetadata(${cls.path}, ${cls.query})
+      slick.db.SyncTableMetadata(${cls.path}, ${cls.query})
       """
       (cls.path, meta)
     }
-    q"db.SyncSchemaMetadata(Map(..$data))"
+    q"slick.db.SyncSchemaMetadata(Map(..$data))"
   }
 
   override val extraBases =

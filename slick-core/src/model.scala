@@ -35,6 +35,3 @@ object Uuids
 
 trait Sync
 extends Uuids
-{
-  type Adapter
-}
