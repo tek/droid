@@ -23,7 +23,13 @@ extends schema.Timestamps
 with schema.Uuids
 with schema.Sync
 {
-  case class Alpha(name: String)
+  object Flag extends Enumeration {
+    type Flag = Value
+    val On = Value
+    val Off = Value
+  }
+
+  case class Alpha(name: String, flog: Flag)
   case class Beta(name: String, alp: Alpha, alp2: Alpha)
   case class Gamma(name: String, bet: List[Beta], bet2: List[Beta])
 }

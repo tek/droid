@@ -37,9 +37,9 @@ with BeforeAll
   def createModels = {
     db withSession { implicit s ⇒
       for {
-        a ← Alpha.insert(Alpha(None, "something"))
+        a ← Alpha.insert(Alpha(None, "something", Flag.On))
         aId ← a.id
-        a2 ← Alpha.insert(Alpha(None, "something else"))
+        a2 ← Alpha.insert(Alpha(None, "something else", Flag.On))
         a2Id ← a2.id
         b ← Beta.insert(Beta(None, "yello", aId, a2Id))
         b2 ← Beta.insert(Beta(None, "chello", aId, a2Id))
@@ -172,8 +172,8 @@ extends ExtSchemaTest
     resetDb()
     val (a, b, bId, c) = models
     db withSession { implicit s ⇒
-      val a1 = AlphaMapper("uuid_alpha_1", "response_alpha_1")
-      val a2 = AlphaMapper("uuid_alpha_2", "response_alpha_2")
+      val a1 = AlphaMapper("uuid_alpha_1", "response_alpha_1", Flag.Off)
+      val a2 = AlphaMapper("uuid_alpha_2", "response_alpha_2", Flag.Off)
       val b1 = BetaMapper("uuid_beta_1", "response_beta_1",
         "uuid_alpha_2", "uuid_alpha_1")
       val b2 = BetaMapper("uuid_beta_2", "response_beta_2",

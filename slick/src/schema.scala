@@ -182,8 +182,30 @@ extends SchemaMacros(ct)
       val nameS = name.toString
       val tpe = TypeName(nameS)
       val ident = TermName(s"enum${name}Codec")
+      val error = q"""
+      "Error parsing json for Enumeration attr '" + $nameS + s"': "
+      """
+      val decoder =
+        q"""
+        {
+          c ⇒ c.focus.string match {
+            case Some(n) ⇒
+              Try($name.withName(n)) match {
+                case scala.util.Success(e) ⇒ DecodeResult.ok(e)
+                case scala.util.Failure(e) ⇒
+                  DecodeResult.fail($error + e, c.history)
+              }
+            case None ⇒
+              p("none: " + c.focus)
+              DecodeResult.fail($error + "Invalid input '$${c.focus}'",
+                c.history)
+          }
+        }
+        """
       q"""
-      implicit val $ident = jencode1L { v: $name.$tpe ⇒ v.toString } ($nameS)
+      implicit val $ident: CodecJson[$tpe] = CodecJson(
+        (v: $name.$tpe) ⇒ jString(v.toString), $decoder
+      )
       """
     }
   }
