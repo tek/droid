@@ -27,7 +27,7 @@ extends SchemaMacrosBase
     val alphaType = AttrSpec.actualType(schema.models.head.name)
     val gammaModel = schema.models.last
     val assocType = AttrSpec.actualType(gammaModel.params.head.tpt)
-    val optAttr = gammaModel.params.last
+    val optAttr = gammaModel.params(1)
     val optType = AttrSpec.actualType(optAttr.tpt)
     val alphaIsModel = info.isModel(optType)
     val alpFk = gammaModel.foreignKeys.last
