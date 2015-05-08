@@ -236,4 +236,7 @@ extends SchemaMacros(ct)
 
   override val extraBases =
     List(tq"slick.SyncSchemaBase")
+
+  override def schemaSpec(comp: CompanionData)(implicit info: BasicInfo) =
+    SchemaSpec.parse[SyncSchemaMacros](comp)
 }

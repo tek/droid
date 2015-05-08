@@ -181,8 +181,9 @@ extends SchemaMacrosBase
 
   def extraPre(classes: List[ModelSpec]): List[Tree] = Nil
 
-  def schemaSpec(comp: CompanionData)(implicit info: BasicInfo) =
-    SchemaSpec.parse(comp)
+  def schemaSpec(comp: CompanionData)(implicit info: BasicInfo):
+  SchemaSpec[_ <: SchemaMacros] =
+    SchemaSpec.parse[SchemaMacros](comp)
 
   def impl(cls: ClassData, comp: CompanionData) = {
     implicit val info = BasicInfo(comp)

@@ -470,7 +470,7 @@ extends Annotation
             (models, enums, a :: misc)
         }
       }
-      SchemaSpec(comp, models, enums, other)
+      SchemaSpec[A](comp, models, enums, other)
     }
 
     def parseModel(
