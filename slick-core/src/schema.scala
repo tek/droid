@@ -211,6 +211,7 @@ extends SchemaMacrosBase
     extends ..${comp.bases ++ extraBases}
     { self ⇒
       ..$imports
+      ..${schema.imports}
       ..${extraPre(models)}
       ..$dateTime
       ..$enums

@@ -445,7 +445,8 @@ extends Annotation
     comp: CompanionData,
     models: List[ModelSpec],
     enums: List[EnumSpec],
-    misc: List[Tree]
+    misc: List[Tree],
+    imports: List[Tree]
   )
   {
     def enum = enums map implicitly[EnumProcessor[A]].apply flatten
@@ -456,18 +457,21 @@ extends Annotation
     def parse[A <: SchemaMacrosBase: EnumProcessor](comp: CompanionData)
     (implicit info: BasicInfo) =
     {
-      val z = (List[ModelSpec](), List[EnumSpec](), List[Tree]())
-      val (models, enums, other) = comp.body.foldRight(z) {
-        case (tree, (models, enums, misc)) ⇒ tree match {
+      val z = (List[ModelSpec](), List[EnumSpec](), List[Tree](), List[Tree]())
+      val (models, enums, misc, imports) = comp.body.foldRight(z) {
+        case (tree, (models, enums, misc, imports)) ⇒ tree match {
           case q"object $name extends Enumeration { ..$body }" ⇒
-            (models, EnumSpec(name, body) :: enums, misc)
+            (models, EnumSpec(name, body) :: enums, misc, imports)
           case q"case class $name(..$params) extends ..$bases { ..$body }" ⇒
-            (parseModel(name, params, bases, body) :: models, enums, misc)
+            (parseModel(name, params, bases, body) :: models, enums, misc,
+              imports)
+          case i @ q"import $ref.{..$sels}" ⇒
+            (models, enums, misc, i :: imports)
           case a ⇒
-            (models, enums, a :: misc)
+            (models, enums, a :: misc, imports)
         }
       }
-      SchemaSpec[A](comp, models, enums, other)
+      SchemaSpec[A](comp, models, enums, misc, imports)
     }
 
     def parseModel(
