@@ -27,7 +27,6 @@ extends tryp.AndroidDeps
       "com.github.andkulikov" % "transitions-everywhere" % "1.+",
       "com.melnykov" % "floatingactionbutton" % "1.+",
       "com.android.support" % "support-v13" % "21.+",
-      "com.github.nscala-time" %% "nscala-time" % "1.+",
       "com.makeramen" % "roundedimageview" % "2.+"
     )
   )
@@ -38,8 +37,6 @@ extends tryp.AndroidDeps
     libraryDependencies ++= Seq(
       "com.typesafe.slick" %% "slick" % "2.+",
       "org.slf4j" % "slf4j-nop" % "1.+",
-      "joda-time" % "joda-time" % "2.+",
-      "org.joda" % "joda-convert" % "1.+",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "org.scalaz" %% "scalaz-core" % "7.1.+",
