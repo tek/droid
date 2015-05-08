@@ -154,7 +154,7 @@ extends Annotation
     def column =
       q"def $colName = column[$colType]($sqlColId, ..$columnFlags)"
 
-    def default: Tree = q""
+    def default: Tree = option ? q"None" / q""
 
     lazy val colName = name
 
@@ -218,8 +218,6 @@ extends Annotation
 
     override def colType = tq"Long"
 
-    // override lazy val sqlColId = "id"
-
     override def columnFlags = List(q"O.PrimaryKey", q"O.AutoInc")
 
     override def tilde = q"id.?"
@@ -231,8 +229,6 @@ extends Annotation
     def name = TermName(desc)
 
     def tpt = tq"Option[DateTime]"
-
-    override def default = q"None"
   }
 
   object AttrSpec {
