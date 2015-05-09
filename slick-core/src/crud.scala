@@ -44,6 +44,7 @@ extends CrudCompat[C, T]
       row ← self if row.id === obj.id
     } yield row
     q update obj
+    obj
   }
 
   override def insert(obj: C)(implicit s: Session) = {
