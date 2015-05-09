@@ -377,7 +377,7 @@ extends Annotation
 
     override def extractorFields = super.extractorFields :+ idColumn
 
-    override def modelExtra = {
+    override def modelExtra = m.body ++ {
       timestamps ? List(withDate) / Nil
     }
 
