@@ -308,15 +308,15 @@ extends Annotation
 
     lazy val attrs = fieldType[AttrSpec]
 
-    def modelParams: List[AttrSpecBase] = attrs ++ foreignKeys
+    def modelParams: List[AttrSpecBase] = dataFields
+
+    def dataFields = attrs ++ foreignKeys
 
     lazy val colId = name.columnId
 
     lazy val valDefs = modelParams.map(_.valDef)
 
-    def tildeFields = {
-      modelParams map { _.tilde }
-    }
+    def tildeFields = modelParams map { _.tilde }
 
     val sqlTableId = name.dp.toLowerCase
 
@@ -330,7 +330,19 @@ extends Annotation
 
     def queryType: Tree = tq"TableQuery"
 
-    def queryExtra: List[Tree] = Nil
+    def queryExtra: List[Tree] = List(extractor)
+
+    def extractor = {
+      val fields = extractorFields map { f ⇒ q"m.${f.term}" }
+      q"""
+      object e
+      {
+        def unapply(m: $tpe) = Some((..$fields))
+      }
+      """
+    }
+
+    def extractorFields: List[AttrSpecBase] = attrs
 
     def times = {
       q"""
@@ -359,11 +371,11 @@ extends Annotation
 
     lazy val idColumn = IdColSpec()
 
-    override def modelParams = {
-      nonDateFields ++ dateColumns
-    }
+    override def modelParams = nonDateFields ++ dateColumns
 
-    def nonDateFields = super.modelParams ++ extraColumns
+    def nonDateFields = dataFields ++ extraColumns
+
+    override def extractorFields = super.extractorFields :+ idColumn
 
     override def modelExtra = {
       timestamps ? List(withDate) / Nil

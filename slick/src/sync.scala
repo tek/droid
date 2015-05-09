@@ -53,7 +53,7 @@ extends SchemaMacros(ct)
       tq"slick.db.SyncTableQuery[$tpe, $tableName, $mapperType]"
 
     override def queryExtra = {
-      List(
+      super.queryExtra ++ List(
         q"""
         implicit def encodeJson($session) = ${TermName(s"${name}EncodeJson")}
         """,
