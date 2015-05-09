@@ -56,7 +56,7 @@ object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
         "-P:wartremover:traverser:macroid.warts.CheckUi"
       )
     ))
-    .dep(macros, showcase, core)
+    .dep(macros, showcase, core, slick)
 
   lazy val test = p("test")
     .aar
