@@ -13,7 +13,7 @@ import slick._
 
 trait Action[+A]
 {
-  def id: Option[Long]
+  def id: Long
   def target: A
 }
 
@@ -68,20 +68,16 @@ extends CrudEx[A, B]
     for {
       sets ← pending
       o ← added
-      oid ← o.id
-      a ← Addition.insert(Addition(oid))
-      id ← a.id
-    } sets.addAddition(id)
+      a ← Addition.insert(Addition(o.id))
+    } sets.addAddition(a.id)
     added
   }
 
   override def update(obj: A)(implicit s: Session) = {
     for {
       sets ← pending
-      oid ← obj.id
-      a ← Update.insert(Update(oid))
-      id ← a.id
-    } sets.addUpdate(id)
+      a ← Update.insert(Update(obj.id))
+    } sets.addUpdate(a.id)
     super.update(obj)
   }
 
@@ -90,8 +86,7 @@ extends CrudEx[A, B]
       sets ← pending
       uuid ← obj.uuid
       a ← Deletion.insert(Deletion(uuid))
-      id ← a.id
-    } sets.addDeletion(id)
+    } sets.addDeletion(a.id)
     super.delete(obj)
   }
 
@@ -102,7 +97,7 @@ extends CrudEx[A, B]
     byId(id) flatMap { _.uuid }
 
   def idByUuid(uuid: String)(implicit s: Session) =
-    self.filter(_.uuid === uuid).firstOption flatMap { _.id }
+    self.filter(_.uuid === uuid).firstOption map { _.id }
 
   def idsByUuids(uuids: Iterable[String])(implicit s: Session) = {
     val q = for {
@@ -172,17 +167,13 @@ with SyncCrud[A, B]
   def syncFromMapper(mapper: C)(implicit s: Session)
 
   def completeSync(a: Action[Long])(implicit s: Session) = {
-    a.id foreach { id ⇒
-      pending foreach { pa ⇒
-        pa.deleteAdditions(List(id))
-        pa.deleteUpdates(List(id))
-      }
+    pending foreach { pa ⇒
+      pa.deleteAdditions(List(a.id))
+      pa.deleteUpdates(List(a.id))
     }
   }
 
   def completeDeletion(a: Deletion)(implicit s: Session) = {
-    a.id foreach { id ⇒
-      pending foreach { _.deleteDeletions(List(id)) }
-    }
+    pending foreach { _.deleteDeletions(List(a.id)) }
   }
 }

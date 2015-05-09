@@ -59,7 +59,7 @@ extends SchemaMacrosBase
           """,
           q"""
           def $add($otherId: Long)($session) =
-            id flatMap { i ⇒ $assocQuery.insert($model(i, $otherId)) }
+            $assocQuery.insert($model(id, $otherId))
             """,
             q"""
             def ${TermName("remove" + plur)}(ids: Traversable[Long])
@@ -187,7 +187,6 @@ extends SchemaMacrosBase
     import scala.slick.util.TupleMethods._
     import scala.slick.jdbc.JdbcBackend
     import scala.slick.driver.SQLiteDriver.simple._
-    import slick.db.Uuids._
     import java.sql.Timestamp
     import com.github.nscala_time.time.Imports._
     """

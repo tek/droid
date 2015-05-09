@@ -92,16 +92,16 @@ extends SchemaMacros(ct)
         """,
         q"""
         def updateFromMapper(id: Long, mapper: $mt)($session) {
-          applyMapper(Some(id), mapper, update)
+          applyMapper(id, mapper, update)
         }
         """,
         q"""
         def createFromMapper(mapper: $mt)($session) {
-          applyMapper(None, mapper, insert)
+          applyMapper(0, mapper, insert)
         }
         """,
         q"""
-        def applyMapper(id: Option[Long], mapper: $mt, app: $name ⇒ Any)
+        def applyMapper(id: Long, mapper: $mt, app: $name ⇒ Any)
         ($session) {
           val obj = $term(..$fields, id = id)
           app(obj)
@@ -255,7 +255,8 @@ extends SchemaMacros(ct)
   override def extraPre(classes: List[ModelSpec]): List[Tree] = {
     List(
       q"import argonaut._",
-      q"import Argonaut._"
+      q"import Argonaut._",
+      q"import slick.db.Uuids._"
     )
   }
 
@@ -280,8 +281,7 @@ extends SchemaMacros(ct)
     q"slick.db.SyncSchemaMetadata(Map(..$data))"
   }
 
-  override val extraBases =
-    List(tq"slick.SyncSchemaBase")
+  override val extraBases = List(tq"slick.SyncSchemaBase")
 
   override def schemaSpec(comp: CompanionData)(implicit info: BasicInfo) =
     SchemaSpec.parse[SyncSchemaMacros](comp)

@@ -4,13 +4,13 @@ import org.joda.time.DateTime
 
 trait Model
 {
-  def id: Option[Long]
+  def id: Long
 }
 
 object Model
 {
   implicit class `DB Model sequence`[A <: Model](seq: Seq[A]) {
-    def ids = seq.map(_.id).flatten.toSet
+    def ids = seq.map(_.id).toSet
   }
 }
 

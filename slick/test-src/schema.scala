@@ -40,14 +40,11 @@ with BeforeAll
     db withSession { implicit s ⇒
       for {
         a ← Alpha.insert(Alpha("something", Flag.On))
-        aId ← a.id
         a2 ← Alpha.insert(Alpha("something else", Flag.On))
-        a2Id ← a2.id
-        b ← Beta.insert(Beta("yello", None, aId, a2Id))
-        b2 ← Beta.insert(Beta("chello", Some(DateTime.now), aId, a2Id))
-        bId ← b.id
+        b ← Beta.insert(Beta("yello", None, a.id, a2.id))
+        b2 ← Beta.insert(Beta("chello", Some(DateTime.now), a.id, a2.id))
         c ← Gamma.insert(Gamma("hello"))
-      } yield (a, b, bId, c)
+      } yield (a, b, b.id, c)
     }
   }
 
@@ -103,9 +100,9 @@ extends ExtSchemaTest
   def pendingAct = {
     import PendingActionsSchema.Addition
     val (a, b, bId, c) = models
-    additions("alphas") === List(Addition(1, Some(1)), Addition(2, Some(2))) &&
-      additions("betas") === List(Addition(1, Some(3))) &&
-      additions("gammas") === List(Addition(1, Some(4)))
+    additions("alphas") === List(Addition(1, 1), Addition(2, 2)) &&
+      additions("betas") === List(Addition(1, 3)) &&
+      additions("gammas") === List(Addition(1, 4))
   }
 }
 
@@ -144,11 +141,11 @@ extends ExtSchemaTest
   }
 
   def alpha = {
-    additions("alphas") === List(Addition(2, Some(2)))
+    additions("alphas") === List(Addition(2, 2))
   }
 
   def beta = {
-    additions("betas") === List(Addition(1, Some(3)), Addition(2, Some(4)))
+    additions("betas") === List(Addition(1, 3), Addition(2, 4))
   }
 }
 

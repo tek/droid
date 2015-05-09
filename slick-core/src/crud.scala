@@ -41,7 +41,7 @@ extends CrudCompat[C, T]
 
   def update(obj: C)(implicit s: Session) = {
     val q = for {
-      row ← self if row.id === obj.id.getOrElse(0L)
+      row ← self if row.id === obj.id
     } yield row
     q update obj
   }
@@ -54,7 +54,7 @@ extends CrudCompat[C, T]
     q.list.headOption
   }
 
-  def delete(obj: C)(implicit s: Session) = obj.id foreach(deleteId)
+  def delete(obj: C)(implicit s: Session) = deleteId(obj.id)
 }
 
 trait CrudEx[C <: Model with Timestamps[C],

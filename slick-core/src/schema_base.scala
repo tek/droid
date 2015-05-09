@@ -220,13 +220,11 @@ extends Annotation
   {
     def name = TermName("id")
 
-    def tpt = tq"Option[Long]"
+    def tpt = tq"Long"
 
-    override def colType = tq"Long"
+    override def default = q"0"
 
     override def columnFlags = List(q"O.PrimaryKey", q"O.AutoInc")
-
-    override def tilde = q"id.?"
   }
 
   case class DateColSpec(desc: String)
