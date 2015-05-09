@@ -61,10 +61,10 @@ trait CrudEx[C <: Model with Timestamps[C],
 T <: Table[C] with TableEx[C]] extends Crud[C, T] {
   self: TableQuery[T] ⇒
   override def update(obj: C)(implicit s: Session) = {
-    super.update(obj.withDates(u = Some(DateTime.now)))
+    super.update(obj.withDate(DateTime.now))
   }
 
   override def insert(obj: C)(implicit s: Session) = {
-    super.insert(obj.withDates(c = Some(DateTime.now)))
+    super.insert(obj)
   }
 }

@@ -16,9 +16,9 @@ object Model
 
 trait Timestamps[A]
 {
-  val created: Option[DateTime]
-  val updated: Option[DateTime]
-  def withDates(c: Option[DateTime] = None, u: Option[DateTime] = None): A
+  val created: DateTime
+  val updated: DateTime
+  def withDate(u: DateTime): A
 }
 
 trait Uuids

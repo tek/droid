@@ -232,7 +232,9 @@ extends Annotation
   {
     def name = TermName(desc)
 
-    def tpt = tq"Option[DateTime]"
+    def tpt = tq"DateTime"
+
+    override def default = q"DateTime.now"
   }
 
   object AttrSpec {
@@ -367,16 +369,14 @@ extends Annotation
     def nonDateFields = super.modelParams ++ extraColumns
 
     override def modelExtra = {
-      timestamps ? List(withDates) / Nil
+      timestamps ? List(withDate) / Nil
     }
 
-    def withDates = {
+    def withDate = {
       val fields = nonDateFields map { _.paramName }
       q"""
-      def withDates(c: Option[DateTime] = None, u: Option[DateTime] = None) = {
-        val newCreated = c orElse created orElse u orElse Some(DateTime.now) 
-        val newUpdated = u orElse newCreated
-        ${term}(..$fields, created = newCreated, updated = newUpdated)
+      def withDate(u: DateTime) = {
+        ${term}(..$fields, created = created, updated = u)
       }
       """
     }
