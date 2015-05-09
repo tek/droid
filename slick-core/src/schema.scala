@@ -32,11 +32,17 @@ extends SchemaMacrosBase
       val valdefs = cls.valDefs
       val defdefs = cls.foreignKeys.map { field ⇒
         val first = TermName(field.option ? "firstOption" / "first")
-        q"""
-        def ${field.load}($session) =
-          ${field.query}.filter { _.id === ${field.colId} }.$first
-        """
-      }
+        List(
+          q"""
+          def ${field.load}($session) =
+            ${field.query}.filter { _.id === ${field.colId} }
+          """, 
+          q"""
+          def ${field.term}($session) =
+            ${field.load}.$first
+          """
+        )
+      } flatten
       val one2many = cls.assocs.map { f ⇒
         val plur = f.name.up
         val assocQuery = q"self.${cls.assocQuery(f)}"

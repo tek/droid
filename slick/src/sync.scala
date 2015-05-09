@@ -121,7 +121,7 @@ extends SchemaMacros(ct)
 
     def encodeJson = {
       val ident = TermName(s"${name.toString}EncodeJson")
-      val fks = foreignKeys map { a ⇒ (a.nameS, q"obj.${a.load}.uuid") }
+      val fks = foreignKeys map { a ⇒ (a.nameS, q"obj.${a.term}.uuid") }
       val ass = assocs map { a ⇒
         (a.nameS, q"obj.${a.loadMany}.list.uuids")
       }
