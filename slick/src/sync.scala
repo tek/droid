@@ -50,7 +50,7 @@ extends SchemaMacros(ct)
     override def queryBase = tq"slick.Empty"
 
     override def queryType =
-      tq"slick.db.SyncTableQuery[$tpe, $tableName, $mapperType]"
+      tq"slick.db.SyncTableQuery[$tpe, $tableType, $mapperType]"
 
     override def queryExtra = {
       super.queryExtra ++ List(

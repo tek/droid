@@ -136,7 +136,7 @@ extends SchemaMacrosBase
       } flatten
       val tableId = cls.sqlTableId
       q"""
-      class ${cls.tableName}(tag: Tag)
+      class ${cls.tableType}(tag: Tag)
       extends Table[${cls.tpe}](tag, $tableId)
       with ..${cls.tableBases}
       {
@@ -151,7 +151,7 @@ extends SchemaMacrosBase
     def query = {
       q"""
       object ${cls.term}
-      extends ${cls.queryType}(tag ⇒ new ${cls.tableName}(tag))
+      extends ${cls.queryType}(tag ⇒ new ${cls.tableType}(tag))
       with ${cls.queryBase}
       {
         def path = ${cls.path}
@@ -172,7 +172,7 @@ extends SchemaMacrosBase
 
   def createMetadata(tables: List[TableSpec]) = {
     val data = tables map { t ⇒
-      (t.path, q"slick.db.TableMetadata(${t.path}, ${t.query})")
+      (t.tableName, q"slick.db.TableMetadata(${t.path}, ${t.query})")
     }
     q"""
     val tables = List(..${data.unzip._2})

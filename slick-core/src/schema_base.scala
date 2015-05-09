@@ -274,7 +274,9 @@ extends Annotation
   {
     lazy val timestamps = info.timestamps
 
-    def path = name.dp.snakeCase
+    def tableName = name.dp
+
+    def path = tableName.snakeCase
 
     lazy val assocQuerys = assocs map { ass ⇒ assocName(ass) }
 
@@ -282,7 +284,7 @@ extends Annotation
 
     lazy val queries = names map(_.objectName)
 
-    lazy val tableName = tpe.suffix("Table")
+    lazy val tableType = tpe.suffix("Table")
 
     lazy val query = term
 
@@ -326,7 +328,7 @@ extends Annotation
 
     def modelBases: List[Tree] = Nil
 
-    def queryBase = tq"$crudBase[$tpe, $tableName]"
+    def queryBase = tq"$crudBase[$tpe, $tableType]"
 
     def queryType: Tree = tq"TableQuery"
 
