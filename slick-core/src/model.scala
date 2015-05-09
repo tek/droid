@@ -1,6 +1,6 @@
 package slick.db
 
-import org.joda.time.DateTime
+import com.github.nscala_time.time.Imports.DateTime
 
 trait Model
 {

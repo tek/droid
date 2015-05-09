@@ -5,7 +5,7 @@ import scala.slick.jdbc.JdbcBackend
 
 import scalaz._, Scalaz._
 
-import org.joda.time.DateTime
+import com.github.nscala_time.time.Imports.DateTime
 
 trait TableEx[C <: Model] {
   def id: Column[Long]

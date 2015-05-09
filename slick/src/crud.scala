@@ -7,7 +7,7 @@ import argonaut._, Argonaut._
 
 import scalaz._, Scalaz._
 
-import org.joda.time.DateTime
+import com.github.nscala_time.time.Imports.DateTime
 
 import slick._
 
