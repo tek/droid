@@ -261,7 +261,8 @@ extends Annotation
 
   class TableOpsBase(m: TableSpec)
   {
-    def name = m.name
+    def tpe = m.tpe
+    def name = tpe.toString
     def params = m.params
     def bases = m.bases
     implicit def info = m.info
@@ -273,23 +274,19 @@ extends Annotation
   {
     lazy val timestamps = info.timestamps
 
-    def nameS = name.toString
-
-    def pluralS = nameS.plural
-
     def path = name.dp.snakeCase
 
     lazy val assocQuerys = assocs map { ass ⇒ assocName(ass) }
 
-    lazy val names = name.toString :: assocQuerys
+    lazy val names = name :: assocQuerys
 
     lazy val queries = names map(_.objectName)
 
-    lazy val tableName = name.suffix("Table")
+    lazy val tableName = tpe.suffix("Table")
 
     lazy val query = term
 
-    lazy val term = name.toTermName
+    lazy val term = tpe.toTermName
 
     def assocQuery(other: AttrSpecBase) =
       TermName(assocName(other))
@@ -329,7 +326,7 @@ extends Annotation
 
     def modelBases: List[Tree] = Nil
 
-    def queryBase = tq"$crudBase[$name, $tableName]"
+    def queryBase = tq"$crudBase[$tpe, $tableName]"
 
     def queryType: Tree = tq"TableQuery"
 
@@ -353,7 +350,7 @@ extends Annotation
       assocs.map { ass ⇒
         val assType = TypeName(assocName(ass))
         val fks = List(
-          ForeignKeySpec(TermName(name.d), name.tree),
+          ForeignKeySpec(TermName(name.d), tpe.tree),
           ForeignKeySpec(ass.singularTerm, ass.actualType)
         )
         AssocSpec(assType, fks)
@@ -387,11 +384,11 @@ extends Annotation
       timestamps ? List(DateColSpec("created"), DateColSpec("updated")) / Nil
     }
 
-    override def tableBases = List(tq"slick.db.TableEx[$name]")
+    override def tableBases = List(tq"slick.db.TableEx[$tpe]")
 
     override def modelBases = List(
       Some(tq"slick.db.Model"),
-      timestamps ? tq"slick.db.Timestamps[$name]"
+      timestamps ? tq"slick.db.Timestamps[$tpe]"
     ).flatten ++ bases
 
     override def crudBase = {
@@ -405,19 +402,19 @@ extends Annotation
   abstract class TableSpec
   (implicit val info: BasicInfo)
   {
-    def name: TypeName
+    def tpe: TypeName
     def params: List[AttrSpecBase]
     def bases: List[Tree]
   }
 
   case class ModelSpec(
-    name: TypeName, params: List[AttrSpecBase], bases: List[Tree],
+    tpe: TypeName, params: List[AttrSpecBase], bases: List[Tree],
     body: List[Tree]
   )
   (implicit info: BasicInfo)
   extends TableSpec
 
-  case class AssocSpec(name: TypeName, params: List[AttrSpecBase])
+  case class AssocSpec(tpe: TypeName, params: List[AttrSpecBase])
   (implicit info: BasicInfo)
   extends TableSpec
   {
@@ -427,10 +424,10 @@ extends Annotation
   object ModelSpec
   {
     def parse(
-      name: TypeName, params: List[ValDef], bases: List[Tree], body: List[Tree]
+      tpe: TypeName, params: List[ValDef], bases: List[Tree], body: List[Tree]
     )(implicit info: BasicInfo) = {
       val attrs = params map parseParam
-      new ModelSpec(name, attrs, bases, body)
+      new ModelSpec(tpe, attrs, bases, body)
     }
 
     def parseParam(tree: ValDef)(implicit info: BasicInfo) = {
@@ -466,8 +463,8 @@ extends Annotation
         case (tree, (models, enums, misc, imports)) ⇒ tree match {
           case q"object $name extends Enumeration { ..$body }" ⇒
             (models, EnumSpec(name, body) :: enums, misc, imports)
-          case q"case class $name(..$params) extends ..$bases { ..$body }" ⇒
-            (parseModel(name, params, bases, body) :: models, enums, misc,
+          case q"case class $tpe(..$params) extends ..$bases { ..$body }" ⇒
+            (ModelSpec.parse(tpe, params, bases, body) :: models, enums, misc,
               imports)
           case i @ q"import $ref.{..$sels}" ⇒
             (models, enums, misc, i :: imports)
@@ -476,12 +473,6 @@ extends Annotation
         }
       }
       SchemaSpec[A](comp, models, enums, misc, imports)
-    }
-
-    def parseModel(
-      name: TypeName, params: List[ValDef], bases: List[Tree], body: List[Tree]
-    )(implicit info: BasicInfo) = {
-      ModelSpec.parse(name, params, bases, body)
     }
   }
 

@@ -45,12 +45,12 @@ extends SchemaMacros(ct)
 
     override def modelBases = super.modelBases :+ tq"slick.db.Sync"
 
-    override def tableBases = List(tq"slick.db.SyncTable[$name]")
+    override def tableBases = List(tq"slick.db.SyncTable[$tpe]")
 
     override def queryBase = tq"slick.Empty"
 
     override def queryType =
-      tq"slick.db.SyncTableQuery[$name, $tableName, $mapperType]"
+      tq"slick.db.SyncTableQuery[$tpe, $tableName, $mapperType]"
 
     override def queryExtra = {
       List(
@@ -101,7 +101,7 @@ extends SchemaMacros(ct)
         }
         """,
         q"""
-        def applyMapper(id: Long, mapper: $mt, app: $name ⇒ Any)
+        def applyMapper(id: Long, mapper: $mt, app: $tpe ⇒ Any)
         ($session) {
           val obj = $term(..$fields, id = id)
           app(obj)
@@ -120,7 +120,7 @@ extends SchemaMacros(ct)
     }
 
     def encodeJson = {
-      val ident = TermName(s"${name.toString}EncodeJson")
+      val ident = TermName(s"${name}EncodeJson")
       val fks = foreignKeys map { a ⇒ (a.nameS, q"obj.${a.term}.uuid") }
       val ass = assocs map { a ⇒
         (a.nameS, q"obj.${a.loadMany}.list.uuids")
@@ -130,12 +130,12 @@ extends SchemaMacros(ct)
       val encoder = TermName(s"jencode${values.length}L")
       q"""
       implicit def $ident ($session) =
-        $encoder { obj: $name ⇒ (..$values) }(..$names)
+        $encoder { obj: $tpe ⇒ (..$values) }(..$names)
       """
     }
 
     def mapperCodec = {
-      val ident = TermName(s"${name.toString}MapperCodecJson")
+      val ident = TermName(s"${name}MapperCodecJson")
       val names = mapperFieldStrings
       val decoder = TermName(s"casecodec${names.length}")
       q"""
@@ -149,7 +149,7 @@ extends SchemaMacros(ct)
     def backendMapper = {
       q"""
       case class $mapperType(..$mapperParams)
-      extends slick.db.BackendMapper[$name]
+      extends slick.db.BackendMapper[$tpe]
       """
     }
 

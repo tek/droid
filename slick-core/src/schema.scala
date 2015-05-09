@@ -105,7 +105,7 @@ extends SchemaMacrosBase
           )
       }.flatten
       q"""
-      case class ${cls.name}(..$valdefs)
+      case class ${cls.tpe}(..$valdefs)
       extends ..${cls.modelBases}
       {
         ..$defdefs
@@ -137,7 +137,7 @@ extends SchemaMacrosBase
       val tableId = cls.sqlTableId
       q"""
       class ${cls.tableName}(tag: Tag)
-      extends Table[${cls.name}](tag, $tableId)
+      extends Table[${cls.tpe}](tag, $tableId)
       with ..${cls.tableBases}
       {
         ..${cls.columns}
