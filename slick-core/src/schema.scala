@@ -1,8 +1,6 @@
 package slick
 
 import scala.reflect.macros.whitebox.Context
-import scala.collection.mutable.ListBuffer
-import scala.collection.mutable.Set
 
 class Schema
 extends annotation.StaticAnnotation
