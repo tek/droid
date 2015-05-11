@@ -9,6 +9,8 @@ import com.github.nscala_time.time.Imports.DateTime
 import argonaut._
 import Argonaut._
 
+import scalaz._, Scalaz._
+
 import slick._
 import slick.db._
 
@@ -102,7 +104,7 @@ extends HttpClient
 {
   val it = Iterator(responses: _*)
 
-  def response = if (it.hasNext) Option(it.next) else None
+  def response = if (it.hasNext) it.next.right else "No response left".left
 
   override def post(path: String, body: String = "{}") = response
   override def put(path: String, body: String = "{}") = response

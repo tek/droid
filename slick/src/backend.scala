@@ -3,14 +3,16 @@ package slick
 import scala.slick.driver.SQLiteDriver.simple._
 import scala.slick.jdbc.JdbcBackend
 
+import scalaz._, Scalaz._
+
 import db._
 
 trait HttpClient
 {
-  def post(path: String, body: String = "{}"): Option[String]
-  def put(path: String, body: String = "{}"): Option[String]
-  def delete(path: String, body: String = "{}"): Option[String]
-  def get(path: String, body: String = "{}"): Option[String]
+  def post(path: String, body: String = "{}"): \/[String, String]
+  def put(path: String, body: String = "{}"): \/[String, String]
+  def delete(path: String, body: String = "{}"): \/[String, String]
+  def get(path: String, body: String = "{}"): \/[String, String]
 }
 
 trait BackendSync
@@ -34,15 +36,16 @@ trait BackendSync
   case class Syncer(table: SyncTableQueryBase, set: PendingActionSet)
   (implicit s: Session)
   {
-    def errorWrap[A](action: ⇒ Option[String])(callback: (String) ⇒ Unit) {
+    def errorWrap[A](action: ⇒ \/[String, String])(callback: (String) ⇒ Unit) {
       Try(action) match {
-        case Success(Some(result)) ⇒
-          callback(result)
-        case Success(None) ⇒
-          Log.e(s"No result in sync request")
-        case Failure(e) ⇒
-          Log.e(s"Error during sync request: $e")
-        }
+        case Success(\/-(result)) ⇒ callback(result)
+        case Success(-\/(err)) ⇒ error(err)
+        case Failure(err) ⇒ error(err)
+      }
+    }
+
+    def error(e: Any) {
+      Log.e(s"Error during sync request: $e")
     }
 
     def send() {
