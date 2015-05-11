@@ -99,8 +99,8 @@ extends ExtSchemaTest
   }
 }
 
-class DummyHttpClient(responses: Seq[String])
-extends HttpClient
+class DummyRestClient(responses: Seq[String])
+extends RestClient
 {
   val it = Iterator(responses: _*)
 
@@ -187,7 +187,7 @@ extends ExtSchemaTest
         Seq(c).js ::
         Nil
       val backend = new BackendSync {
-        val http = new DummyHttpClient(responses)
+        val rest = new DummyRestClient(responses)
       }
       val fut = backend(ExtTestSchema)
       fut onFailure {

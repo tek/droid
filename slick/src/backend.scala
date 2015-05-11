@@ -7,7 +7,7 @@ import scalaz._, Scalaz._
 
 import db._
 
-trait HttpClient
+trait RestClient
 {
   def post(path: String, body: String = "{}"): \/[String, String]
   def put(path: String, body: String = "{}"): \/[String, String]
@@ -57,7 +57,7 @@ trait BackendSync
     def additions() {
       withJson(set.additions) foreach {
         case (a @ Addition(target, _), data) ⇒
-          errorWrap { http.post(table.path, data) } { result ⇒
+          errorWrap { rest.post(table.path, data) } { result ⇒
             table.setUuidFromJson(target, result)
             table.completeSync(a)
           }
@@ -68,7 +68,7 @@ trait BackendSync
       withJson(set.updates) foreach {
         case (u @ Update(target, _), data) ⇒
           table.uuidById(target) foreach { uuid ⇒
-            errorWrap { http.put(s"${table.path}/${uuid}", data) } { _ ⇒
+            errorWrap { rest.put(s"${table.path}/${uuid}", data) } { _ ⇒
               table.completeSync(u)
             }
           }
@@ -77,14 +77,14 @@ trait BackendSync
 
     def deletions() {
       set.deletions foreach { d ⇒
-        errorWrap { http.delete(table.path, d.target) } { _ ⇒
+        errorWrap { rest.delete(table.path, d.target) } { _ ⇒
           table.completeDeletion(d)
         }
       }
     }
 
     def fetch() {
-      errorWrap { http.get(table.path) } { table.syncFromJson }
+      errorWrap { rest.get(table.path) } { table.syncFromJson }
     }
 
     def withJson[A](actions: Seq[Action[Long]]) = {
@@ -92,5 +92,5 @@ trait BackendSync
     }
   }
 
-  def http: HttpClient
+  def rest: RestClient
 }
