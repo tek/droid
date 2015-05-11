@@ -274,9 +274,9 @@ extends Annotation
   {
     lazy val timestamps = info.timestamps
 
-    def tableName = name.dp
+    def tableName = name.toLowerCase
 
-    def path = tableName.snakeCase
+    def path = name.plural.snakeCase
 
     lazy val assocQuerys = assocs map { ass ⇒ assocName(ass) }
 

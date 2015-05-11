@@ -274,7 +274,7 @@ extends SchemaMacros(ct)
   def syncMetadata(classes: List[ModelSpec]) = {
     val data = classes map { cls ⇒
       val meta = q"""
-      slick.db.SyncTableMetadata(${cls.path}, ${cls.query})
+      slick.db.SyncTableMetadata(${cls.tableName}, ${cls.query})
       """
       (cls.path, meta)
     }
