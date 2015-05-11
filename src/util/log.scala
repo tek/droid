@@ -9,31 +9,44 @@ import tryp.droid.Messages
 import tryp.core.util._
 import tryp.core.meta._
 
-class AndroidLog extends LogBase
+trait AndroidLog
+extends LogInterface
 {
   var tag = "tryp"
 
-  override def d(message: String) = android.util.Log.d(tag, message)
+  abstract override def d(message: String) = android.util.Log.d(tag, message)
 
-  override def i(message: String) = android.util.Log.i(tag, message)
+  abstract override def i(message: String) = android.util.Log.i(tag, message)
 
-  override def w(message: String) = android.util.Log.w(tag, message)
+  abstract override def w(message: String) = android.util.Log.w(tag, message)
 
-  override def e(message: String) = android.util.Log.e(tag, message)
+  abstract override def e(message: String) = android.util.Log.e(tag, message)
 
-  override def e(message: String, t: Throwable) = {
+  abstract override def e(message: String, t: Throwable) = {
     android.util.Log.e(tag, message, t)
   }
 
-  override def t(message: String) = {
+  abstract override def t(message: String) = {
     i(s"[${tryp.droid.Time.nowHms}] ${message}")
   }
 }
 
-object AndroidLog extends AndroidLog
-
-trait InternalLog extends LogBase
+object AndroidLog
+extends LogBase
+with AndroidLog
 {
+  override def d(m: String) = super.d(m)
+  override def i(m: String) = super.i(m)
+  override def w(m: String) = super.w(m)
+  override def e(m: String) = super.e(m)
+  override def e(m: String, t: Throwable) = super.e(m, t)
+  override def t(m: String) = super.t(m)
+}
+
+trait InternalLog
+extends LogInterface
+{
+
   var buffer = Buffer[String]()
 
   var actor: Option[ActorSelection] = None
@@ -43,39 +56,58 @@ trait InternalLog extends LogBase
     actor foreach { _ ! Messages.Log(message) }
   }
 
-  override def d(message: String) = {
+  abstract override def d(message: String) = {
     log(message)
     super.d(message)
   }
 
-  override def i(message: String) = {
+  abstract override def i(message: String) = {
     log(message)
     super.i(message)
   }
 
-  override def w(message: String) = {
+  abstract override def w(message: String) = {
     log(message)
     super.w(message)
   }
 
-  override def e(message: String) = {
+  abstract override def e(message: String) = {
     log(message)
     super.e(message)
   }
 
-  override def e(message: String, t: Throwable) = {
+  abstract override def e(message: String, t: Throwable) = {
     log(message)
     super.e(message)
   }
 
-  override def t(message: String) = {
+  abstract override def t(message: String) = {
     log(message)
     super.t(message)
   }
 }
 
-object InternalLog extends InternalLog
+object InternalLog
+extends LogBase
+with InternalLog
+{
+  override def d(m: String) = super.d(m)
+  override def i(m: String) = super.i(m)
+  override def w(m: String) = super.w(m)
+  override def e(m: String) = super.e(m)
+  override def e(m: String, t: Throwable) = super.e(m, t)
+  override def t(m: String) = super.t(m)
+}
 
 object DebugLog
-extends AndroidLog
+extends LogBase
+with AndroidLog
 with InternalLog
+{
+  override def d(m: String) = super.d(m)
+  override def i(m: String) = super.i(m)
+  override def w(m: String) = super.w(m)
+  override def e(m: String) = super.e(m)
+  override def e(m: String, t: Throwable) = super.e(m, t)
+  override def t(m: String) = super.t(m)
+}
