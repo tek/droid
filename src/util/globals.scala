@@ -51,6 +51,8 @@ with Util
   val Tweak = macroid.Tweak
 
   def GPlus: tryp.droid.GPlusBase = tryp.droid.Classes.plus
+
+  type Model = slick.db.Model
 }
 
 trait Globals

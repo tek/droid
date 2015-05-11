@@ -13,7 +13,6 @@ import tryp.droid.util.OS
 import tryp.droid.res.{Layouts,LayoutAdapter,PrefixResourceNamespace}
 import tryp.droid.Macroid._
 import tryp.droid.tweaks.Recycler._
-import slick.db.Model
 
 trait FragmentBase
 extends Fragment

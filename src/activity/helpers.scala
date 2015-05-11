@@ -26,7 +26,6 @@ import tryp.droid._
 import tryp.droid.util.CallbackMixin
 import Macroid._
 import Screws._
-import slick.db.Model
 
 trait ActivityBase
 extends Activity
@@ -121,7 +120,7 @@ with Transitions
 
   lazy val mainActor = createActor(MainActor.props)._2
 
-  def showDetails(data: Any) {  }
+  def showDetails(data: Model) {  }
 }
 
 abstract trait ManagePreferences

@@ -12,7 +12,7 @@ class Messages
   case class Inject(name: String, value: Any)
   case class Back(result: Option[Any] = None)
   case class Result(data: Any)
-  case class ShowDetails(data: Any)
+  case class ShowDetails(data: Model)
   case class Log(message: String)
   case class Transitions(transitions: Seq[TransitionSet])
   case class Showcase()
