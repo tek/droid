@@ -26,6 +26,7 @@ import tryp.droid._
 import tryp.droid.util.CallbackMixin
 import Macroid._
 import Screws._
+import slick.db.Model
 
 trait ActivityBase
 extends Activity
@@ -86,7 +87,7 @@ with Transitions
     loadView(frag(fragment, Id.content))
   }
 
-  def loadShowFragment[A <: TrypModel: ClassTag]
+  def loadShowFragment[A <: Model: ClassTag]
   (model: A, ctor: () ⇒ ShowFragment[A]) {
     loadView(showFrag(model, ctor, Id.content))
   }
@@ -334,7 +335,7 @@ extends MainView
     navigate(target)
   }
 
-  override def loadShowFragment[A <: TrypModel: ClassTag]
+  override def loadShowFragment[A <: slick.db.Model: ClassTag]
   (model: A, ctor: () ⇒ ShowFragment[A]) {
     val target = new ShowNavigationTarget("Details", ctor, model)
     navigate(target)

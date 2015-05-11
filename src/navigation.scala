@@ -15,7 +15,7 @@ extends DrawerItem
     frag(fragment(), id, title)
 }
 
-class ShowNavigationTarget[A <: TrypModel: ClassTag](title: String,
+class ShowNavigationTarget[A <: slick.db.Model: ClassTag](title: String,
   fragment: () ⇒ ShowFragment[A], model: A)
 extends NavigationTarget(title, fragment)
 {

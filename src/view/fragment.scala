@@ -13,6 +13,7 @@ import tryp.droid.util.OS
 import tryp.droid.res.{Layouts,LayoutAdapter,PrefixResourceNamespace}
 import tryp.droid.Macroid._
 import tryp.droid.tweaks.Recycler._
+import slick.db.Model
 
 trait FragmentBase
 extends Fragment
@@ -136,7 +137,7 @@ with Fab
   }
 }
 
-abstract class ShowFragment[A <: TrypModel]
+abstract class ShowFragment[A <: Model]
 extends MainFragment
 {
   override def onCreate(state: Bundle) {
@@ -179,7 +180,7 @@ extends MainFragment
 object ShowFragment
 extends ActivityContexts
 {
-  def apply[A <: TrypModel](model: A)(ctor: ⇒ ShowFragment[A])
+  def apply[A <: Model](model: A)(ctor: ⇒ ShowFragment[A])
   (implicit a: Activity) = {
     val inst = ctor
     inst.model = Some(model)

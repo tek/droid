@@ -206,9 +206,9 @@ trait Layout
     )
   }
 
-  import tryp.droid.{ShowFragment,TrypModel}
+  import tryp.droid.ShowFragment
 
-  def showFrag[A <: TrypModel: ClassTag](model: A, ctor: () ⇒ ShowFragment[A],
+  def showFrag[A <: slick.db.Model: ClassTag](model: A, ctor: () ⇒ ShowFragment[A],
     id: Id = Id.next)
   (implicit a: Activity, fm: FragmentManagement) =
   {
