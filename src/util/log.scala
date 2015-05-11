@@ -12,7 +12,7 @@ import tryp.core.meta._
 trait AndroidLog
 extends LogInterface
 {
-  var tag = "tryp"
+  def tag = AndroidLog.tag
 
   abstract override def d(message: String) = android.util.Log.d(tag, message)
 
@@ -35,6 +35,8 @@ object AndroidLog
 extends LogBase
 with AndroidLog
 {
+  var tag = "tryp"
+
   override def d(m: String) = super.d(m)
   override def i(m: String) = super.i(m)
   override def w(m: String) = super.w(m)
