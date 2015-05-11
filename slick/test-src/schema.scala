@@ -16,18 +16,9 @@ import org.specs2._
 import org.specs2.specification._
 
 abstract class ExtSchemaTest
-extends Specification
-with BeforeAll
+extends SlickTest
 {
   import ExtTestSchema._
-
-  implicit val dbInfo = slick.db.DBConnectionInfo(
-    url = s"jdbc:sqlite:slick/target/slick_test.db",
-    driverClassName = "org.sqlite.JDBC"
-  )
-
-  def db = Database.forURL(dbInfo.url, null, null, null,
-    dbInfo.driverClassName)
 
   @DBSession def resetDb() {
     metadata.dropAll()
