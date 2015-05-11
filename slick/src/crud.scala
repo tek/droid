@@ -153,11 +153,12 @@ with SyncCrud[A, B]
   }
 
   def syncFromJson(json: String)(implicit s: Session) {
-    json.decodeOption[List[C]] some { mappers ⇒
-      mappers foreach syncFromMapper
-    } none {
-      Log.e(s"Error decoding json from sync:")
-      Log.e(json)
+    json.decodeEither[List[C]] match {
+      case \/-(mappers) ⇒
+        mappers foreach syncFromMapper
+      case -\/(error) ⇒
+        Log.e(s"Error decoding json from sync: ${error}")
+        Log.e(json)
     }
   }
 
