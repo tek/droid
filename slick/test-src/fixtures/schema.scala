@@ -26,7 +26,7 @@ extends schema.Timestamps
     val Off = Value
   }
 
-  case class Alpha(name: String, flog: Flag)
+  case class Alpha(name: String, flog: Flag, num: Double)
   case class Beta(name: String, killed: Option[DateTime], alp: Alpha,
     alp2: Alpha)
   case class Gamma(name: String, bet: List[Beta], bet2: List[Beta])

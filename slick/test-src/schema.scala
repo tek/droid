@@ -32,8 +32,8 @@ extends SlickTest
   def createModels = {
     db withSession { implicit s ⇒
       for {
-        a ← Alpha.insert(Alpha("something", Flag.On))
-        a2 ← Alpha.insert(Alpha("something else", Flag.On))
+        a ← Alpha.insert(Alpha("something", Flag.On, 4.0))
+        a2 ← Alpha.insert(Alpha("something else", Flag.On, 4.0))
         b ← Beta.insert(Beta("yello", None, a.id, a2.id))
         b2 ← Beta.insert(Beta("chello", Some(DateTime.now), a.id, a2.id))
         c ← Gamma.insert(Gamma("hello"))
@@ -148,7 +148,8 @@ extends ExtSchemaTest
   def is = s2"""
   Sync of pending actions to a backend
 
-  apply uuids to multiple records in a table $alpha
+  apply uuids to multiple records in a table $alphaUuids
+  apply names to multiple records in a table $alphaNames
   apply multiple changed foreign keys to a record $beta
   apply multiple changed associations to a record $gamma
   apply changed fields to a record $alphaValues
@@ -165,8 +166,10 @@ extends ExtSchemaTest
     resetDb()
     val (a, b, bId, c) = models
     db withSession { implicit s ⇒
-      val a1 = AlphaMapper("response_alpha_1", Flag.Off, Some("uuid_alpha_1"))
-      val a2 = AlphaMapper("response_alpha_2", Flag.Off, Some("uuid_alpha_2"))
+      val a1 = AlphaMapper("response_alpha_1", Flag.Off, 5.0,
+        Some("uuid_alpha_1"))
+      val a2 = AlphaMapper("response_alpha_2", Flag.Off, 5.0,
+        Some("uuid_alpha_2"))
       val b1 = BetaMapper("response_beta_1", None, Some("uuid_beta_1"),
         "uuid_alpha_2", "uuid_alpha_1")
       val b2 = BetaMapper("response_beta_2", None, Some("uuid_beta_2"),
@@ -194,10 +197,17 @@ extends ExtSchemaTest
     }
   }
 
-  def alpha = {
+  def alphaUuids = {
     db withSession { implicit s ⇒
       val uuids = Alpha.list.map(_.uuid).flatten
       uuids must_== List("uuid_alpha_1", "uuid_alpha_2")
+    }
+  }
+
+  def alphaNames = {
+    db withSession { implicit s ⇒
+      val uuids = Alpha.list.map(_.name)
+      uuids must_== List("response_alpha_1", "response_alpha_2")
     }
   }
 

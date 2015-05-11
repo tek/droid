@@ -35,7 +35,7 @@ extends SchemaMacros(ct)
   {
     lazy val uuidColumn = UuidColSpec()
 
-    lazy val mapperFields = uuidColumn :: attrs ++ foreignKeys ++ assocs
+    lazy val mapperFields = attrs ++ (uuidColumn :: foreignKeys) ++ assocs
 
     lazy val mapperFieldStrings = mapperFields.map(_.name.toString)
 
@@ -159,12 +159,7 @@ extends SchemaMacros(ct)
 
     lazy val mapperTerm = TermName(mapper)
 
-    lazy val mapperParams = {
-      val atts = attrsWithUuid map { _.valDef }
-      val fks = foreignKeys map { a ⇒ q"val ${a.term}: String" }
-      val ass = assocs map { a ⇒ q"val ${a.term}: Seq[String]" }
-      atts ++ fks ++ ass
-    }
+    lazy val mapperParams = mapperFields map { _.mapperParam }
   }
 
   class SyncAssocOps(a: AssocSpec)

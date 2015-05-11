@@ -167,6 +167,8 @@ extends Annotation
     def singularTerm = TermName(name.ds)
 
     def tilde: Tree = q"$colName"
+
+    def mapperParam = valDef
   }
 
   case class AttrSpec(name: TermName, tpt: Tree, customDefault: Tree)
@@ -204,6 +206,8 @@ extends Annotation
     def sqlFk = name.snakeCase
 
     def fkDef = q"def $name = foreignKey($sqlFk, $colId, $query)(_.id)"
+
+    override def mapperParam = q"val ${term}: String"
   }
 
   case class AssociationSpec(name: TermName, tpt: Tree,
@@ -213,6 +217,8 @@ extends Annotation
   {
     override def column =
       throw new Exception("AssociationSpec can't become column")
+
+    override def mapperParam = q"val ${term}: Seq[String]"
   }
 
   case class IdColSpec()
@@ -276,7 +282,7 @@ extends Annotation
 
     def tableName = name.toLowerCase
 
-    def path = name.plural.snakeCase
+    def path = name.plural.toLowerCase
 
     lazy val assocQuerys = assocs map { ass ⇒ assocName(ass) }
 
