@@ -22,13 +22,13 @@ extends TableMetadataBase
 case class SchemaMetadata
 (tables: Map[String, _ <: TableMetadataBase])
 {
-  def createMissingTables()(implicit session: JdbcBackend#SessionDef) {
-    tables foreach {
+  def createMissingTables()(implicit session: JdbcBackend#SessionDef) = {
+    tables collect {
       case (name, table) if(table.empty) ⇒ table.ddl.create
     }
   }
 
-  def dropAll()(implicit session: JdbcBackend#SessionDef) {
-    tables foreach { case (name, table) ⇒ Try(table.ddl.drop) }
+  def dropAll()(implicit session: JdbcBackend#SessionDef) = {
+    tables collect { case (name, table) ⇒ Try(table.ddl.drop) }
   }
 }
