@@ -30,6 +30,8 @@ object Uuids
 {
   implicit class `seq of Uuids`(seq: Seq[_ <: Uuids]) {
     def uuids = seq map(_.uuid)
+
+    def flatUuids = uuids flatten
   }
 }
 

@@ -130,9 +130,7 @@ trait SyncTableQueryBase
 }
 
 trait BackendMapper[A <: Types#ExtModel[A]]
-{
-  def uuid: Option[String]
-}
+extends Uuids
 
 abstract class SyncTableQuery[
 A <: Types#ExtModel[A],
@@ -164,13 +162,22 @@ with SyncCrud[A, B]
     json.decodeEither[List[C]] match {
       case \/-(mappers) ⇒
         mappers foreach syncFromMapper
+        deleteFromSync(mappers)
       case -\/(error) ⇒
         Log.e(s"Error decoding json from sync: ${error}")
         Log.e(json)
     }
   }
 
-  def deleteByUuids(ids: Traversable[String])(implicit s: Session) {
+  def deleteFromSync(mappers: List[C])(implicit s: Session) {
+    val present = for { o ← this } yield o.uuid
+    val deleted = present.buildColl[Set] &~ mappers.uuids.toSet
+    deleteByUuidsUnrecorded(deleted flatten)
+  }
+
+  def deleteByUuidsUnrecorded(uuids: Traversable[String])(implicit s: Session)
+  {
+    filter { _.uuid inSet(uuids) }.delete
   }
 
   def syncFromMapper(mapper: C)(implicit s: Session)

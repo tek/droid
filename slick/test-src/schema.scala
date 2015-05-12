@@ -32,11 +32,12 @@ extends SlickTest
   def createModels = {
     db withSession { implicit s ⇒
       for {
-        a ← Alpha.insert(Alpha("something", Flag.On, 4.0))
-        a2 ← Alpha.insert(Alpha("something else", Flag.On, 4.0))
-        b ← Beta.insert(Beta("yello", None, a.id, a2.id))
-        b2 ← Beta.insert(Beta("chello", Some(DateTime.now), a.id, a2.id))
-        c ← Gamma.insert(Gamma("hello"))
+        a ← Alpha.insert(Alpha("alpha1", Flag.On, 4.0))
+        a2 ← Alpha.insert(Alpha("alpha2", Flag.On, 4.0))
+        b ← Beta.insert(Beta("beta1", None, a.id, a2.id))
+        b2 ← Beta.insert(Beta("beta2", Some(DateTime.now), a.id, a2.id))
+        c ← Gamma.insert(Gamma("gamma1"))
+        c2 ← Gamma.insert(Gamma("gamma2"))
       } yield (a, b, b.id, c)
     }
   }
@@ -120,6 +121,7 @@ extends ExtSchemaTest
 
   one alpha addition left $alpha
   both beta additions left $beta
+  both gamma additions left $gamma
   """
 
   import ExtTestSchema._
@@ -140,6 +142,10 @@ extends ExtSchemaTest
   def beta = {
     additions("betas") === List(Addition(1, 3), Addition(2, 4))
   }
+
+  def gamma = {
+    additions("gammas") === List(Addition(1, 5), Addition(2, 6))
+  }
 }
 
 class AdvancedExtSchemaTest
@@ -151,9 +157,10 @@ extends ExtSchemaTest
   apply uuids to multiple records in a table $alphaUuids
   apply names to multiple records in a table $alphaNames
   apply multiple changed foreign keys to a record $beta
-  apply multiple changed associations to a record $gamma
+  apply multiple changed associations to a record $gammaAssoc
   apply changed fields to a record $alphaValues
   create no new pending actions $pendingActions
+  delete one record $deleteGamma
   """
 
   import ExtTestSchema._
@@ -178,6 +185,8 @@ extends ExtSchemaTest
         "uuid_alpha_2", "uuid_alpha_2")
       val c = GammaMapper("response_gamma_1", Some("uuid_gamma_1"),
         List("uuid_beta_1", "uuid_beta_2"), List())
+      val c2 = GammaMapper("response_gamma_2", Some("uuid_gamma_2"),
+        List(), List())
       val responses =
         a1.js ::
         a2.js ::
@@ -186,6 +195,7 @@ extends ExtSchemaTest
         b2.js ::
         Seq(b1, b2).js ::
         c.js ::
+        c2.js ::
         Seq(c).js ::
         Nil
       val backend = new BackendSync {
@@ -201,7 +211,7 @@ extends ExtSchemaTest
 
   def alphaUuids = {
     db withSession { implicit s ⇒
-      val uuids = Alpha.list.map(_.uuid).flatten
+      val uuids = Alpha.list.flatUuids
       uuids must_== List("uuid_alpha_1", "uuid_alpha_2")
     }
   }
@@ -220,7 +230,7 @@ extends ExtSchemaTest
     }
   }
 
-  def gamma = {
+  def gammaAssoc = {
     db withSession { implicit s ⇒
       val betas = Gamma.list.headOption map {
         c ⇒ (c.loadBets.list, c.loadBet2s.list) } map {
@@ -238,6 +248,12 @@ extends ExtSchemaTest
   def pendingActions = {
     db withSession { implicit s ⇒
       Update.list must be empty
+    }
+  }
+
+  def deleteGamma = {
+    db withSession { implicit s ⇒
+      Gamma.list.flatUuids must_== List("uuid_gamma_1")
     }
   }
 }
