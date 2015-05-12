@@ -489,6 +489,7 @@ with AppPreferences
     fetchingPlusToken = true
     fetchPlusToken.future andThen {
       case Success((account, plusToken)) ⇒
+        Log.i(s"Successfully obtained plus token: ${plusToken}")
         authorizeToken(account, plusToken)
       case Failure(ex: UserRecoverableAuthException) ⇒
         requestPermission(ex.getIntent)
