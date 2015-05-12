@@ -12,22 +12,18 @@ import tryp.core.meta._
 trait AndroidLog
 extends LogInterface
 {
-  def tag = AndroidLog.tag
+  def tg = AndroidLog.tag
 
-  abstract override def d(message: String) = android.util.Log.d(tag, message)
+  abstract override def d(message: String) = android.util.Log.d(tg, message)
 
-  abstract override def i(message: String) = android.util.Log.i(tag, message)
+  abstract override def i(message: String) = android.util.Log.i(tg, message)
 
-  abstract override def w(message: String) = android.util.Log.w(tag, message)
+  abstract override def w(message: String) = android.util.Log.w(tg, message)
 
-  abstract override def e(message: String) = android.util.Log.e(tag, message)
+  abstract override def e(message: String) = android.util.Log.e(tg, message)
 
   abstract override def e(message: String, t: Throwable) = {
-    android.util.Log.e(tag, message, t)
-  }
-
-  abstract override def t(message: String) = {
-    i(s"[${tryp.droid.Time.nowHms}] ${message}")
+    android.util.Log.e(tg, message, t)
   }
 }
 
@@ -42,7 +38,6 @@ with AndroidLog
   override def w(m: String) = super.w(m)
   override def e(m: String) = super.e(m)
   override def e(m: String, t: Throwable) = super.e(m, t)
-  override def t(m: String) = super.t(m)
 }
 
 trait InternalLog
@@ -54,7 +49,7 @@ extends LogInterface
   var actor: Option[ActorSelection] = None
 
   def log(message: String) {
-    buffer += tryp.droid.Time.nowHms + " -- " + message
+    buffer += tryp.core.Time.nowHms + " -- " + message
     actor foreach { _ ! Messages.Log(message) }
   }
 
@@ -82,11 +77,6 @@ extends LogInterface
     log(message)
     super.e(message)
   }
-
-  abstract override def t(message: String) = {
-    log(message)
-    super.t(message)
-  }
 }
 
 object InternalLog
@@ -98,7 +88,6 @@ with InternalLog
   override def w(m: String) = super.w(m)
   override def e(m: String) = super.e(m)
   override def e(m: String, t: Throwable) = super.e(m, t)
-  override def t(m: String) = super.t(m)
 }
 
 object DebugLog
@@ -111,5 +100,4 @@ with InternalLog
   override def w(m: String) = super.w(m)
   override def e(m: String) = super.e(m)
   override def e(m: String, t: Throwable) = super.e(m, t)
-  override def t(m: String) = super.t(m)
 }
