@@ -153,9 +153,11 @@ extends ExtSchemaTest
   apply multiple changed foreign keys to a record $beta
   apply multiple changed associations to a record $gamma
   apply changed fields to a record $alphaValues
+  create no new pending actions $pendingActions
   """
 
   import ExtTestSchema._
+  import PendingActionsSchema._
   import scala.concurrent.ExecutionContext.Implicits.global
 
   implicit class `json shortcut`[A: EncodeJson](a: A) {
@@ -230,6 +232,12 @@ extends ExtSchemaTest
   def alphaValues = {
     db withSession { implicit s ⇒
       Alpha.firstOption.map(_.flog) must beSome(Flag.Off)
+    }
+  }
+
+  def pendingActions = {
+    db withSession { implicit s ⇒
+      Update.list must be empty
     }
   }
 }

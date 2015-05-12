@@ -81,6 +81,14 @@ extends CrudEx[A, B]
     super.update(obj)
   }
 
+  def insertUnrecorded(obj: A)(implicit s: Session) = {
+    super.insert(obj)
+  }
+
+  def updateUnrecorded(obj: A)(implicit s: Session) = {
+    super.update(obj)
+  }
+
   override def delete(obj: A)(implicit s: Session) = {
     for {
       sets ← pending

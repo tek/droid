@@ -92,12 +92,12 @@ extends SchemaMacros(ct)
         """,
         q"""
         def updateFromMapper(id: Long, mapper: $mt)($session) {
-          applyMapper(id, mapper, update)
+          applyMapper(id, mapper, updateUnrecorded)
         }
         """,
         q"""
         def createFromMapper(mapper: $mt)($session) {
-          applyMapper(0, mapper, insert)
+          applyMapper(0, mapper, insertUnrecorded)
         }
         """,
         q"""
