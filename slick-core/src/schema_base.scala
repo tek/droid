@@ -219,6 +219,8 @@ extends Annotation
       throw new Exception("AssociationSpec can't become column")
 
     override def mapperParam = q"val ${term}: Seq[String]"
+
+    def tableType = TypeName(actualType.toString + "Table")
   }
 
   case class IdColSpec()

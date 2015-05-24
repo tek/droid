@@ -51,7 +51,8 @@ extends SchemaMacrosBase
         val add = f.singularTerm.prefix("add")
         Seq(
           q"""
-          def ${f.loadMany} = for {
+          def ${f.loadMany}: Query[${f.tableType}, ${f.actualType}, Seq] = for
+          {
             x ← $assocQuery
             if x.${cls.colId} === id
             y ← $otherQuery
