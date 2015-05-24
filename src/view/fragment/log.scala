@@ -42,10 +42,10 @@ with RecyclerFragment
   override def onStart() {
     super.onStart
     DebugLog.actor = Some(selectActor("Log"))
-    runUi(update())
+    runUi(updateLog())
   }
 
-  def update() = {
+  def updateLog() = {
     adapter.updateItems(DebugLog.buffer)
     Thread.sleep(100)
     recyclerView <~ scrollTop
