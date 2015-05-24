@@ -27,7 +27,8 @@ extends tryp.AndroidDeps
       "com.github.andkulikov" % "transitions-everywhere" % "1.+",
       "com.melnykov" % "floatingactionbutton" % "1.+",
       "com.android.support" % "support-v13" % "21.+",
-      "com.makeramen" % "roundedimageview" % "2.+"
+      "com.makeramen" % "roundedimageview" % "2.+",
+      "com.github.amlcurran" % "showcaseview" % "0.+"
     )
   )
 

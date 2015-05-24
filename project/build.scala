@@ -20,8 +20,7 @@ object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
     skip in update := true
   )
 
-  lazy val showcase = RootProject(file("../../scala/showcase_view"))
-  lazy val core = RootProject(file("../core"))
+  lazy val trypCore = RootProject(file("../core"))
 
   lazy val macros = p("macros")
     .aar()
@@ -30,7 +29,7 @@ object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
     .paradise()
     .antSrc
     .export
-    .dep(core)
+    .dep(trypCore)
 
   lazy val slick = p("slick")
     .paradise()
@@ -56,7 +55,7 @@ object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
         "-P:wartremover:traverser:macroid.warts.CheckUi"
       )
     ))
-    .dep(macros, showcase, core, slick)
+    .dep(macros, trypCore, slick)
 
   lazy val test = p("test")
     .aar
