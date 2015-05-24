@@ -205,18 +205,18 @@ extends SchemaMacros(ct)
     }
   }
 
-  class SyncTransformer(cls: TableSpec)
-  extends Transformer(cls)
+  class SyncTableTransformer(cls: TableSpec)
+  extends TableTransformer(cls)
   {
 
   }
 
-  object SyncTransformer
+  object SyncTableTransformer
   {
-    def apply(cls: TableSpec) = new SyncTransformer(cls)
+    def apply(cls: TableSpec) = new SyncTableTransformer(cls)
   }
 
-  override def transform(cls: TableSpec) = SyncTransformer(cls).result
+  override def transform(cls: TableSpec) = SyncTableTransformer(cls).result
 
   def dateTimeCodecJson = {
     val error = q""" "Error parsing json for DateTime: " """

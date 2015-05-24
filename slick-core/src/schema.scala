@@ -24,7 +24,7 @@ extends SchemaMacrosBase
   implicit def modelOps(cls: ModelSpec) = new ModelOps(cls)
   implicit def assocOps(cls: AssocSpec) = new AssocOps(cls)
 
-  class Transformer(cls: TableSpec)
+  class TableTransformer(cls: TableSpec)
   {
     def model = {
       val valdefs = cls.valDefs
@@ -34,7 +34,7 @@ extends SchemaMacrosBase
           q"""
           def ${field.load}($session) =
             ${field.query}.filter { _.id === ${field.colId} }
-          """, 
+          """,
           q"""
           def ${field.term}($session) =
             ${field.load}.$first
@@ -43,8 +43,8 @@ extends SchemaMacrosBase
       } flatten
       val one2many = cls.assocs.map { f ⇒
         val plur = f.name.up
-        val assocQuery = q"self.${cls.assocQuery(f)}"
-        val otherQuery = q"self.${f.query}"
+        val assocQuery = q"${cls.assocQuery(f)}"
+        val otherQuery = q"${f.query}"
         val model = cls.assocModel(f)
         val myId = cls.colId
         val otherId = f.assocQueryColId
@@ -116,8 +116,8 @@ extends SchemaMacrosBase
     def table = {
       val foreignKeys = cls.foreignKeys.map { _.fkDef }
       val one2many = cls.assocs.map { f ⇒
-        val assocQuery = q"self.${cls.assocQuery(f)}"
-        val otherQuery = q"self.${f.query}"
+        val assocQuery = q"${cls.assocQuery(f)}"
+        val otherQuery = q"${f.query}"
         val model = cls.assocModel(f)
         val myId = cls.colId
         val otherId = f.colId
@@ -160,12 +160,12 @@ extends SchemaMacrosBase
     def result: List[Tree] = model :: table :: query :: Nil
   }
 
-  object Transformer
+  object TableTransformer
   {
-    def apply(cls: TableSpec) = new Transformer(cls)
+    def apply(cls: TableSpec) = new TableTransformer(cls)
   }
 
-  def transform(cls: TableSpec) = Transformer(cls).result
+  def transform(cls: TableSpec) = TableTransformer(cls).result
 
   def createMetadata(tables: List[TableSpec]) = {
     val data = tables map { t ⇒
@@ -199,31 +199,34 @@ extends SchemaMacrosBase
   SchemaSpec[_ <: SchemaMacros] =
     SchemaSpec.parse[SchemaMacros](comp)
 
-  def impl(cls: ClassData, comp: CompanionData) = {
-    implicit val info = BasicInfo(comp)
-    val schema = schemaSpec(comp)
-    val models = schema.models
-    val assoc = models flatMap(_.assocTables)
-    val tables = models ++ assoc
-    val database = tables.flatMap(transform)
-    val enums = schema.enum
-    val metadata = createMetadata(tables)
-    q"""
-    object ${comp.name}
-    extends ..${comp.bases ++ extraBases}
-    { self ⇒
-      ..$imports
-      ..${schema.imports}
-      ..${extraPre(models)}
-      ..$dateTime
-      ..$enums
-      ..$database
-      ..$metadata
-      ..${extra(models)}
-      ..${schema.misc}
-
-      val dbLock = new Object
+  object SchemaTransformer
+  extends Transformer
+  {
+    def apply(cls: ClassData, comp: CompanionData) = {
+      implicit val info = BasicInfo(comp)
+      val schema = schemaSpec(comp)
+      val models = schema.models
+      val assoc = models flatMap(_.assocTables)
+      val tables = models ++ assoc
+      val database = tables.flatMap(transform)
+      val enums = schema.enum
+      val metadata = createMetadata(tables)
+      val body = q"""
+        ..$imports
+        ..${schema.imports}
+        ..${extraPre(models)}
+        ..$dateTime
+        ..$enums
+        ..$database
+        ..$metadata
+        ..${extra(models)}
+        ..${schema.misc}
+        val dbLock = new Object
+      """
+      val bases = comp.bases ++ extraBases
+      (cls, comp.copy(body = body.children, bases = bases))
     }
-    """
   }
+
+  val transformers = SchemaTransformer :: Nil
 }
