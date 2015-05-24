@@ -44,7 +44,7 @@ extends CrudCompat[C, T]
       row ← self if row.id === obj.id
     } yield row
     q update obj
-    obj
+    Some(obj)
   }
 
   override def insert(obj: C)(implicit s: Session) = {
@@ -63,9 +63,5 @@ T <: Table[C] with TableEx[C]] extends Crud[C, T] {
   self: TableQuery[T] ⇒
   override def update(obj: C)(implicit s: Session) = {
     super.update(obj.withDate(DateTime.now))
-  }
-
-  override def insert(obj: C)(implicit s: Session) = {
-    super.insert(obj)
   }
 }
