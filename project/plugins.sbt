@@ -1,2 +1,1 @@
-lazy val root = project.in(file(".")).dependsOn(tryp)
-lazy val tryp = ProjectRef(file("../../tryp-plugin"), "android")
+addSbtPlugin("tryp.sbt" % "android" % "1.3.23")
