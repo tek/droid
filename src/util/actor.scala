@@ -225,7 +225,7 @@ extends TrypActor[A]
     m match {
       case Back(result) ⇒
         ui { _.back() } onComplete { _ ⇒
-          result foreach { mainActor ! _ }
+          result foreach { mainActor ! Messages.Result(_) }
         }
       case Navigation(target) ⇒
         ui { _.navigate(target) }
