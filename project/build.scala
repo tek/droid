@@ -14,8 +14,6 @@ extends tryp.Placeholders
 
 object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
   DroidPlaceholders) {
-  lazy val platform = "android-21"
-
   override def globalSettings = super.globalSettings ++ Seq(
     lintEnabled in Android := false,
     incOptions := incOptions.value.withNameHashing(true)
