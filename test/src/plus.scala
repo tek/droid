@@ -2,6 +2,12 @@ package tryp.droid.test
 
 import tryp.droid._
 
+object MockData
+{
+  val email = "test@gmail.com"
+  val authToken = "authtoken"
+}
+
 class MockGPlus(implicit val context: Context)
 extends GPlus
 {
@@ -15,7 +21,7 @@ extends GPlusBase
   class MockAccount(implicit c: Context)
   extends Account(new MockGPlus)
   {
-    override def email = Some("test@gmail.com")
+    override def email = Some(MockData.email)
   }
 
   signedIn() = true
