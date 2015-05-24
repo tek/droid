@@ -12,18 +12,6 @@ with Util
 {
   val Env = tryp.droid.meta.Env
 
-  override def Log = {
-    if (Env.release) {
-      tryp.droid.meta.InternalLog
-    }
-    else if (Env.unittest) {
-      tryp.core.meta.StdoutLog
-    }
-    else {
-      tryp.droid.meta.DebugLog
-    }
-  }
-
   def log(message: String) = Log.d(message)
 
   val layouts = tryp.droid.res.Layouts

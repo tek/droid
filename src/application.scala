@@ -9,6 +9,10 @@ trait TrypApplication
     if ((getApplicationInfo.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
       Env.debug = true
     }
+    tryp.core.util.Logs.log =
+      if (Env.release) tryp.droid.meta.InternalLog
+      else if (Env.unittest) tryp.core.meta.StdoutLog
+      else tryp.droid.meta.DebugLog
     tryp.droid.meta.AndroidLog.tag = name
   }
 }
