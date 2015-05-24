@@ -67,9 +67,16 @@ extends Transitions
   // indicator. After completion, 'snack' is shown as a toast, if nonempty.
   def fabAsync[A, B](snack: Option[String] = None)(task: ⇒ B)
   (callback: (B) ⇒ Unit) = {
-    val f = Future { task } mapUi { callback }
-    val t = snack map { mkToast(_) }
-    ((fadeToProgress <~~ Snails.wait(f)) ~~ fadeToFab ~~ t).run
+    Future { task }
+  }
+
+  def fabAsyncF[A, B](snack: ⇒ Option[String] = None)(task: Future[B])
+  (callback: (B) ⇒ Unit) = {
+    task mapUi { b ⇒
+      callback(b)
+      snack map { mkToast(_) } getOrElse Ui.nop
+    }
+    ((fadeToProgress <~~ Snails.wait(task)) ~~ fadeToFab).run
   }
 
   private val fadeTime = 400L
