@@ -19,23 +19,29 @@ trait BackendSync
 {
   import PendingActionsSchema._
 
+  def pendingActionsFor(name: String)(implicit s: Session) = {
+    PendingActionSet.filter(_.model === name).firstOption
+  }
+
   def apply(schema: SyncSchemaBase)(implicit s: Session) =
   {
     import scala.concurrent.ExecutionContext.Implicits.global
     Future {
-      PendingActionSet.list foreach { set ⇒
-        schema.syncMetadata.tables.get(set.model) foreach { meta ⇒
-          val syncer = Syncer(meta.table, set)
-          syncer.send()
-          syncer.fetch()
+      schema.syncMetadata.tables.values.foreach { meta ⇒
+        pendingActionsFor(meta.pendingActionsKey) foreach { pending ⇒
+          val sender = Sender(meta.table, pending)
+          sender()
         }
+        val fetcher = Fetcher(meta.table)
+        fetcher()
       }
     }
   }
 
-  case class Syncer(table: SyncTableQueryBase, set: PendingActionSet)
-  (implicit s: Session)
+  trait Syncer
   {
+    def table: SyncTableQueryBase
+
     def errorWrap[A](action: ⇒ \/[String, String])(callback: (String) ⇒ Unit) {
       Try(action) match {
         case Success(\/-(result)) ⇒ callback(result)
@@ -47,8 +53,13 @@ trait BackendSync
     def error(e: Any) {
       Log.e(s"Error during sync request: $e")
     }
+  }
 
-    def send() {
+  case class Sender(table: SyncTableQueryBase, set: PendingActionSet)
+  (implicit s: Session)
+  extends Syncer
+  {
+    def apply() {
       additions()
       updates()
       deletions()
@@ -83,12 +94,16 @@ trait BackendSync
       }
     }
 
-    def fetch() {
-      errorWrap { rest.get(table.path) } { table.syncFromJson }
-    }
-
     def withJson[A](actions: Seq[Action[Long]]) = {
       actions.zip(table.jsonForIds(actions.targets))
+    }
+  }
+
+  case class Fetcher(table: SyncTableQueryBase)(implicit s: Session)
+  extends Syncer
+  {
+    def apply() {
+      errorWrap { rest.get(table.path) } { table.syncFromJson }
     }
   }
 
