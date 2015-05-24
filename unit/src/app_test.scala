@@ -3,6 +3,7 @@ package tryp.droid.test
 import org.scalatest._
 
 import tryp.droid._
+import tryp.core._
 
 abstract class TrypTest
 extends FeatureSpec
