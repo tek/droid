@@ -488,9 +488,10 @@ with AppPreferences
   def obtainToken() {
     fetchingPlusToken = true
     fetchPlusToken.future andThen {
-      case Success((account, plusToken)) ⇒
-        Log.i(s"Successfully obtained plus token: ${plusToken}")
-        authorizeToken(account, plusToken)
+      case Success((account, token)) ⇒
+        Log.i(s"Successfully obtained plus token: ${token}")
+        authorizeToken(account, token)
+        GoogleAuthUtil.clearToken(this, token)
       case Failure(ex: UserRecoverableAuthException) ⇒
         requestPermission(ex.getIntent)
       case Failure(ex) ⇒
