@@ -9,7 +9,7 @@ class Messages
   case class Filter(query: String)
   case class ToolbarTitle(title: String)
   case class ToolbarView(view: Fragment)
-  case class Add()
+  case object Add
   case class Navigation(target: NavigationTarget)
   case class Inject(name: String, value: Any)
   case class Back(result: Option[Any] = None)
