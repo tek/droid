@@ -161,6 +161,7 @@ with SyncCrud[A, B]
       case \/-(mappers) ⇒
         mappers foreach syncFromMapper
         deleteFromSync(mappers)
+        Log.d(s"Successfully synchronized db '${name}' from json")
       case -\/(error) ⇒
         Log.e(s"Error decoding json from sync: ${error}")
         Log.e(json)
