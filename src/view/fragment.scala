@@ -188,10 +188,10 @@ extends ActivityContexts
   }
 }
 
-trait RecyclerFragment
+trait RecyclerFragment[A <: RecyclerView.Adapter[_]]
 extends TrypFragment
 {
-  def adapter: RecyclerView.Adapter[_]
+  def adapter: A
 
   def recyclerTweaks: Tweak[RecyclerView]
 
@@ -201,4 +201,6 @@ extends TrypFragment
     w[RecyclerView] <~ recyclerAdapter(adapter) <~ recyclerTweaks <~
       recyclerView
   }
+
+  def update() { Ui(adapter.notifyDataSetChanged()).run }
 }

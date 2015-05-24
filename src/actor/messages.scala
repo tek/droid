@@ -18,6 +18,7 @@ class Messages
   case class Showcase()
   case class DataLoaded()
   case class Scrolled(view: ViewGroup, dy: Int)
+  case object Update
 }
 
 object Messages extends Messages

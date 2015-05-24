@@ -33,7 +33,7 @@ extends SimpleRecyclerAdapter[LogViewHolder, String]
 
 case class LogFragment()
 extends MainFragment
-with RecyclerFragment
+with RecyclerFragment[LogAdapter]
 {
   override val actors = Seq(LogActor.props)
 
