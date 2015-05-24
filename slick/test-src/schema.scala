@@ -64,7 +64,9 @@ extends ExtSchemaTest
   create models $checkModels
   add list associations $listAssoc
   add flat associations $flatAssoc
-  create pending actions $pendingAct
+  create pending actions for alphas $pendingAlpha
+  create pending actions for betas $pendingBeta
+  create pending actions for gammas $pendingGamma
   """
 
   import ExtTestSchema._
@@ -91,12 +93,18 @@ extends ExtSchemaTest
     }
   }
 
-  def pendingAct = {
-    import PendingActionsSchema.Addition
-    val (a, b, bId, c) = models
-    additions("alphas") === List(Addition(1, 1), Addition(2, 2)) &&
-      additions("betas") === List(Addition(1, 3)) &&
-      additions("gammas") === List(Addition(1, 4))
+  import PendingActionsSchema.Addition
+
+  def pendingAlpha = {
+    additions("alphas") === List(Addition(1, 1), Addition(2, 2))
+  }
+
+  def pendingBeta = {
+    additions("betas") === List(Addition(1, 3), Addition(2, 4))
+  }
+
+  def pendingGamma = {
+    additions("gammas") === List(Addition(1, 5), Addition(2, 6))
   }
 }
 
