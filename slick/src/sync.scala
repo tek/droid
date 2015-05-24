@@ -101,11 +101,11 @@ extends SchemaMacros(ct)
         }
         """,
         q"""
-        def applyMapper(id: Long, mapper: $mt, app: $tpe ⇒ Any)
+        def applyMapper(id: Long, mapper: $mt, app: $tpe ⇒ Option[$tpe])
         ($session) {
-          val obj = $term(..$fields, id = id)
-          app(obj)
-          ..$assocUpdates
+          app($term(..$fields, id = id)) foreach { obj ⇒
+            ..$assocUpdates
+          }
         }
         """,
         q"""
