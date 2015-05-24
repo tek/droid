@@ -8,7 +8,6 @@ import tryp.core.Annotation
 
 trait SchemaBase
 {
-  def tableMap: Map[String, db.TableMetadata]
   def metadata: db.SchemaMetadata
 }
 

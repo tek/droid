@@ -178,9 +178,7 @@ extends SchemaMacrosBase
       (t.tableName, q"slick.db.TableMetadata(${t.tableName}, ${t.query})")
     }
     q"""
-    val tables = List(..${data.unzip._2})
-    val tableMap = Map(..$data)
-    val metadata = slick.db.SchemaMetadata(tableMap)
+    val metadata = slick.db.SchemaMetadata(Map(..$data))
     """
   }
 
