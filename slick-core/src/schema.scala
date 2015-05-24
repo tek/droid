@@ -95,7 +95,12 @@ extends SchemaMacrosBase
                 if x.$myId === id && !x.$otherId.inSet(ids)
               } yield x
               removals.delete
-              val existing = (for { x ← $assocQuery } yield x.$otherId).list
+              val existing = (
+                for {
+                  x ← $assocQuery
+                  if x.$myId === id
+                } yield x.$otherId
+              ).list
               ids filter { i ⇒ !existing.contains(i) } foreach {
                 $add
               }
