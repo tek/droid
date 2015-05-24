@@ -1,5 +1,7 @@
 package tryp.droid
 
+import com.google.android.gms.maps.GoogleMap
+
 import android.transitions.everywhere.TransitionSet
 
 class Messages
@@ -19,6 +21,7 @@ class Messages
   case class DataLoaded()
   case class Scrolled(view: ViewGroup, dy: Int)
   case object Update
+  case class MapReady(map: GoogleMap)
 }
 
 object Messages extends Messages
