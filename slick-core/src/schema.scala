@@ -157,6 +157,7 @@ extends SchemaMacrosBase
       extends ${cls.queryType}(tag ⇒ new ${cls.tableType}(tag))
       with ${cls.queryBase}
       {
+        def name = ${cls.name}
         def path = ${cls.path}
         ..${cls.queryExtra}
       }

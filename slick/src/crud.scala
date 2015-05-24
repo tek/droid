@@ -56,11 +56,9 @@ extends CrudEx[A, B]
 
   def path: String
 
-  def pendingActions = PendingActionsSchema.PendingActionSet
-
-  def pending(implicit s: Session) = pendingActions.filter {
-    _.model === path }.firstOption.orElse {
-      pendingActions.insert(PendingActionSet(path))
+  def pending(implicit s: Session): Option[PendingActionSet] =
+    PendingActionSet.filter { _.model === path }.firstOption.orElse {
+      PendingActionSet.insert(PendingActionSet(path))
     }
 
   override def insert(obj: A)(implicit s: Session) = {
@@ -118,12 +116,10 @@ extends CrudEx[A, B]
 trait SyncTableQueryBase
 {
   def path: String
-
+  def pending(implicit s: Session): Option[PendingActionSet]
   def jsonForIds(ids: Iterable[Long])(implicit s: Session): Iterable[String]
-
   def setUuidFromJson(id: Long, json: String)(implicit s: Session)
   def syncFromJson(json: String)(implicit s: Session)
-
   def completeSync(a: Action[Long])(implicit s: Session)
   def completeDeletion(a: Deletion)(implicit s: Session)
   def uuidById(id: Long)(implicit s: Session): Option[Types#Uuid]
@@ -142,6 +138,8 @@ with SyncTableQueryBase
 with SyncCrud[A, B]
 {
   import PendingActionsSchema._
+
+  def name: String
 
   implicit def encodeJson(implicit s: Session): EncodeJson[A]
   implicit def mapperCodecJson(implicit s: Session): DecodeJson[C]

@@ -262,7 +262,18 @@ extends SchemaMacros(ct)
       q"import slick.db.PendingActionsSchema._",
       q"val pendingActions = PendingActionSet",
       q"val pendingMetadata = slick.db.PendingActionsSchema.metadata",
-      q"val syncMetadata = ${syncMetadata(classes)}"
+      q"val syncMetadata = ${syncMetadata(classes)}",
+      q"""
+      def initPending()($session) =
+        syncMetadata.tables mapValues { _.table.pending }
+      """,
+      q"""
+      def initDb()($session) = {
+        metadata.createMissingTables()
+        pendingMetadata.createMissingTables()
+        initPending()
+      }
+      """
     ) ++ backendMappers ++ jsonCodecs
   }
 
