@@ -17,6 +17,6 @@ with BeforeAll
     driverClassName = "org.sqlite.JDBC"
   )
 
-  def db = Database.forURL(dbInfo.url, null, null, null,
+  implicit val db = Database.forURL(dbInfo.url, null, null, null,
     dbInfo.driverClassName)
 }
