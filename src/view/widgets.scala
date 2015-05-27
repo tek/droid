@@ -40,7 +40,7 @@ extends Transitions
     val geom = rlp(↦, alignBottom(Id.header)) +
       margin(right = 16 dp,
         bottom = res.dimen("fab_margin_normal_minus").toInt)
-    val contentParams = rlp(parallax ? ↥ / below(Id.header))
+    val contentParams = rlp(parallax ? ↥ | below(Id.header))
     RL(rlp(↔, ↕))(
       content(contentView) <~ contentParams,
       header(RL(rlp(↔, ↕))(headerView) <~ bgCol("header")) <~ Id.header <~

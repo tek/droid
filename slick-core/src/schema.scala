@@ -1,5 +1,7 @@
 package slick
 
+import scalaz._, Scalaz._
+
 import scala.reflect.macros.whitebox.Context
 
 class Schema
@@ -29,7 +31,7 @@ extends SchemaMacrosBase
     def model = {
       val valdefs = cls.valDefs
       val defdefs = cls.foreignKeys.map { field ⇒
-        val first = TermName(field.option ? "firstOption" / "first")
+        val first = TermName(field.option ? "firstOption" | "first")
         List(
           q"""
           def ${field.load}($session) =

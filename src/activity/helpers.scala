@@ -109,7 +109,7 @@ with Transitions
   }
 
   def back() {
-    canGoBack ? goBack() / super.onBackPressed()
+    canGoBack ? goBack() | super.onBackPressed()
   }
 
   def goBack() {
@@ -259,7 +259,7 @@ extends MainView
   def toolbarTitle(title: String) {
     runUi {
       toolbar <~
-        T.title(title.isEmpty ? res.string("app_title") / title)
+        T.title(title.isEmpty ? res.string("app_title") | title)
     }
   }
 

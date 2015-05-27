@@ -161,7 +161,7 @@ class PreferencesFacade(val prefs: SharedPreferences)
   }
 
   def error(name: String, value: Any) {
-    val prefType = (value == null) ? "Null" / value.getClass
+    val prefType = (value == null) ? "Null" | value.className
     Log.e(s"Incompatible pref type ${prefType} for key '${name}'")
   }
 

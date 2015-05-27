@@ -197,7 +197,7 @@ with AkkaComponent
       parameters(name) = value
     }
     else {
-      val valStr = (value == null) ? "Null" / value.toString
+      val valStr = (value == null) ? "Null" | value.toString
       Log.e(s"Tried to update unregistered parameter '${name}' with value " +
         s"'${valStr}' in '${this.className}'")
     }

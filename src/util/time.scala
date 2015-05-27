@@ -7,7 +7,7 @@ import java.util.{Timer, TimerTask}
 
 case class Ticker(seconds: Rx[Double])(callback: ⇒ Unit)
 {
-  val millis = Rx { (((seconds() <= 0) ? 1.0 / seconds()) * 1000).toInt }
+  val millis = Rx { (((seconds() <= 0) ? 1.0 | seconds()) * 1000).toInt }
   val timer = new Timer
   var running = false
   var task: Option[TimerTask] = None

@@ -53,7 +53,7 @@ with tryp.droid.Preferences
     apiClient.disconnect()
   }
 
-  def locations = apiClient.isConnected ? apiClient
+  def locations = apiClient.isConnected option apiClient
 
   def lastLocation = {
     locations flatMap { client ⇒ Option(LocApi.getLastLocation(client)) }

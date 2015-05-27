@@ -197,7 +197,7 @@ trait Layout
 
   def frag(ctor: ⇒ Fragment, id: Id = Id.next, tag: String = "")
   (implicit a: Activity, handler: FragmentManagement) = {
-    val t = tag.isEmpty ? id.value.toString / tag
+    val t = tag.isEmpty ? id.value.toString | tag
     Ui(
       (new FrameLayout(a)) tap { fl ⇒
         fl.setId(id.value)

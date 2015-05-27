@@ -158,7 +158,7 @@ extends Annotation
     def column =
       q"def $colName = column[$colType]($sqlColId, ..$columnFlags)"
 
-    def default: Tree = option ? q"None" / q""
+    def default: Tree = option ? (q"None": Tree) | q""
 
     lazy val colName = name
 
@@ -195,7 +195,7 @@ extends Annotation
   extends AttrSpecBase
   with ReferenceSpec
   {
-    override def colType = option ? tq"Option[$keyType]" / keyType
+    override def colType = option ? tq"Option[$keyType]" | keyType
 
     def keyType = tq"Long"
 
@@ -392,7 +392,7 @@ extends Annotation
     override def extractorFields = super.extractorFields :+ idColumn
 
     override def modelExtra = m.body ++ {
-      timestamps ? List(withDate) / Nil
+      timestamps ?? List(withDate)
     }
 
     def withDate = {
@@ -407,18 +407,18 @@ extends Annotation
     def extraColumns: List[AttrSpecBase] = List(idColumn)
 
     def dateColumns = {
-      timestamps ? List(DateColSpec("created"), DateColSpec("updated")) / Nil
+      timestamps ? List(DateColSpec("created"), DateColSpec("updated")) | Nil
     }
 
     override def tableBases = List(tq"slick.db.TableEx[$tpe]")
 
     override def modelBases = List(
       Some(tq"slick.db.Model"),
-      timestamps ? tq"slick.db.Timestamps[$tpe]"
+      timestamps option tq"slick.db.Timestamps[$tpe]"
     ).flatten ++ bases
 
     override def crudBase = {
-      info.timestamps ? tq"slick.db.CrudEx" / tq"slick.db.Crud"
+      info.timestamps ? tq"slick.db.CrudEx" | tq"slick.db.Crud"
     }
   }
 

@@ -90,7 +90,7 @@ extends SimpleRecyclerAdapter[DrawerViewHolder, DrawerItem]
   }
 
   def bindNavTarget(holder: DrawerViewHolder, target: NavigationTarget) = {
-    val color = bgCol(navigation.isCurrent(target) ? "item_selected" / "item")
+    val color = bgCol(navigation.isCurrent(target) ? "item_selected" | "item")
     runUi(
       holder.text <~ txt.literal(target.title),
       holder.view <~ color <~ On.click {

@@ -13,15 +13,15 @@ case class ServiceProxy[A <: ServiceBase: ClassTag](
 )
 {
   def map[B](f: A ⇒ B) = {
-    (connected ? get) map(f)
+    (connected option get) map(f)
   }
 
   def flatMap[B](f: A ⇒ Option[B]) = {
-    (connected ? get) flatMap(f)
+    (connected option get) flatMap(f)
   }
 
   def foreach(f: A ⇒ Unit) = {
-    (connected ? get) foreach(f)
+    (connected option get) foreach(f)
   }
 
   def get = consumer.service[A](name)
