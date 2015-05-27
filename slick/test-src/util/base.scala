@@ -13,7 +13,7 @@ extends Specification
 with BeforeAll
 {
   implicit val dbInfo = slick.db.DBConnectionInfo(
-    url = s"jdbc:sqlite:slick/target/slick_test.db",
+    url = s"jdbc:sqlite:slick/target/slick_test_${this.className}.db",
     driverClassName = "org.sqlite.JDBC"
   )
 
