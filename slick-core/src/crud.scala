@@ -39,6 +39,9 @@ extends CrudCompat[C, T]
   def byIds(ids: Traversable[Long])(implicit s: Session) =
     self.filter(_.id inSet(ids)).list
 
+  def byIdEither(objId: Long)(implicit s: Session) =
+    byId(objId) map(_.right) getOrElse("Not found".left)
+
   def update(obj: C)(implicit s: Session) = {
     val q = for {
       row ← self if row.id === obj.id
