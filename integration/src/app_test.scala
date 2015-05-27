@@ -18,6 +18,7 @@ with Preferences
 with AppPreferences
 with BroadcastSend
 with HasActivity
+with TrypSpec
 {
   def view = null
   implicit def activity: A = getActivity
@@ -52,31 +53,19 @@ with HasActivity
     instr.waitForIdleSync
   }
 
-  def wait(predicate: ⇒ Boolean) = waitFor(5000)(predicate)
-
-  def waitFor(timeout: Int)(predicate: ⇒ Boolean) {
+  def waitFor(timeout: Long)(predicate: ⇒ Boolean) {
     solo.waitForCondition(new Condition {
       override def isSatisfied: Boolean = predicate
     }, timeout)
   }
 
-  def assertW(predicate: ⇒ Boolean) {
-    assertWFor(5000)(predicate)
-  }
-
-  def assertWFor(timeout: Int)(predicate: ⇒ Boolean) {
-    waitFor(timeout)(predicate)
-    assert(predicate)
-  }
+  def timeoutAssertion(isTrue: Boolean) = assert(isTrue)
 
   def enterText(text: String, id: Int = 0) {
     activity.viewOfType[EditText] foreach {
       solo.enterText(_, text)
     }
   }
-
-  def frag[A <: Fragment: ClassTag](names: String*) =
-    activity.findNestedFrag[A](names: _*)
 }
 
 trait TrypTestImplicits
