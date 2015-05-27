@@ -84,10 +84,12 @@ with AkkaAdapter
   }
 
   def updateVisibleData(newItems: Seq[B]) {
-    visibleItems = newItems
+    visibleItems = sort(newItems)
     notifyDataSetChanged
     dataUpdated()
   }
+
+  def sort(items: Seq[B]) = items
 
   def dataUpdated() {}
 
