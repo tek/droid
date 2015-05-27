@@ -16,8 +16,7 @@ object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
   DroidPlaceholders) {
   override def globalSettings = super.globalSettings ++ Seq(
     lintEnabled in Android := false,
-    incOptions := incOptions.value.withNameHashing(true),
-    skip in update := true
+    incOptions := incOptions.value.withNameHashing(true)
   )
 
   lazy val trypCore = RootProject(file("../core"))
