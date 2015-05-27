@@ -19,7 +19,7 @@ extends HasContext
   def theme(implicit ns: ResourceNamespace = GlobalResourceNamespace) =
     res.theme
 
-  def asyncTask[A, B](task: ⇒ B)(callback: (B) ⇒ Unit) = {
+  def asyncTask[A, B](task: ⇒ B)(callback: B ⇒ Unit) = {
     new android.os.AsyncTask[A, Unit, B] {
       override def doInBackground(args: A*) = task
       override def onPostExecute(result: B) { callback(result) }
