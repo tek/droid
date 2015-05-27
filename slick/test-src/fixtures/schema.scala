@@ -13,7 +13,7 @@ object SimpleTestSchema
 
   case class Alpha(name: String, flagger: Flag)
   case class Beta(name: String, alp: Alpha)
-  case class Gamma(name: String, bet: List[Beta])
+  case class Gamma(name: String, bets: List[Beta])
 }
 
 @SyncSchema()
@@ -29,5 +29,5 @@ extends schema.Timestamps
   case class Alpha(name: String, flog: Flag, num: Double)
   case class Beta(name: String, killed: Option[DateTime], alp: Alpha,
     alp2: Alpha)
-  case class Gamma(name: String, bet: List[Beta], bet2: List[Beta])
+  case class Gamma(name: String, bets: List[Beta], bet2s: List[Beta])
 }

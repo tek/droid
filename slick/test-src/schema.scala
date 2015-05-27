@@ -17,6 +17,7 @@ import slick.db._
 import org.specs2._
 import org.specs2.specification._
 
+
 abstract class ExtSchemaTest
 extends SlickTest
 {
@@ -82,7 +83,7 @@ extends ExtSchemaTest
     val (a, b, bId, c) = models
       c.addBet(bId)
       c.addBet2(bId)
-      c.bet must contain(b)
+      c.bets must contain(b)
     }
   }
 
