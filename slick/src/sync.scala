@@ -78,7 +78,7 @@ extends SchemaMacros(ct)
       val fields = att ++ fks
       val assocUpdates = assocs map { f ⇒
         q"""
-        obj.${f.replaceMany}(${f.query}.idsByUuids(mapper.${f.term}))
+        obj.${f.replace}(${f.query}.idsByUuids(mapper.${f.term}))
         """
       }
       List(
@@ -123,7 +123,7 @@ extends SchemaMacros(ct)
       val ident = TermName(s"${name}EncodeJson")
       val fks = foreignKeys map { a ⇒ (a.nameS, q"obj.${a.term}.uuid") }
       val ass = assocs map { a ⇒
-        (a.nameS, q"obj.${a.loadMany}.list.uuids")
+        (a.nameS, q"obj.${a.load}.list.uuids")
       }
       val att = attrs map { a ⇒ (a.nameS, q"obj.${a.term}") }
       val (names, values) = (fks ++ ass ++ att).unzip

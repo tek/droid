@@ -42,7 +42,7 @@ extends SchemaMacrosBase
         )
       } flatten
       val one2many = cls.assocs.map { f ⇒
-        val plur = f.name.up
+        val plur = f.name.u
         val assocQuery = q"${cls.assocQuery(f)}"
         val otherQuery = q"${f.query}"
         val model = cls.assocModel(f)
@@ -51,7 +51,7 @@ extends SchemaMacrosBase
         val add = f.singularTerm.prefix("add")
         Seq(
           q"""
-          def ${f.loadMany}: Query[${f.tableType}, ${f.actualType}, Seq] = for
+          def ${f.load}: Query[${f.tableType}, ${f.actualType}, Seq] = for
           {
             x ← $assocQuery
             if x.${cls.colId} === id
@@ -60,14 +60,14 @@ extends SchemaMacrosBase
           } yield y
           """,
           q"""
-          def ${f.term}($session) = ${f.loadMany}.list
+          def ${f.term}($session) = ${f.load}.list
           """,
           q"""
           def $add($otherId: Long)($session) =
             $assocQuery.insert($model(id, $otherId))
             """,
             q"""
-            def ${TermName("remove" + plur)}(ids: Traversable[Long])
+            def ${f.remove}(ids: Traversable[Long])
             ($session) = {
               val assoc = for {
                 x ← $assocQuery
@@ -77,7 +77,7 @@ extends SchemaMacrosBase
             }
             """,
             q"""
-            def ${TermName("delete" + plur)}(ids: Traversable[Long])
+            def ${f.delete}(ids: Traversable[Long])
             ($session) = {
               val other = for {
                 x ← $otherQuery
@@ -88,7 +88,7 @@ extends SchemaMacrosBase
             }
             """,
             q"""
-            def ${TermName("replace" + plur)}(ids: Traversable[Long])
+            def ${f.replace}(ids: Traversable[Long])
             ($session) = {
               val removals = for {
                 x ← $assocQuery

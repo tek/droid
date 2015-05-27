@@ -4,6 +4,10 @@ import scala.reflect.macros.whitebox.Context
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Set
 
+import scalaz._, Scalaz._
+import syntax.std.boolean._
+import syntax.std.option._
+
 import tryp.core.Annotation
 
 trait SchemaBase
@@ -41,14 +45,13 @@ extends Annotation
   }
 
   implicit class SlickStringOps(s: String) {
-    def plural = Helpers.plural(s)
     def decapitalize = Helpers.decapitalize(s)
     def singular = Helpers.singular(s)
-    def objectName = TermName(s.decapitalize.plural)
+    def objectName = TermName(s.decapitalize.plural(0))
     def u = s.capitalize
     def d = s.decapitalize
-    def dp = s.d.plural
-    def up = s.u.plural
+    def dp = s.d.plural(0)
+    def up = s.u.plural(0)
     def ds = s.d.singular
     def us = s.u.singular
     def columnId = TermName(s.colIdName)
@@ -136,9 +139,11 @@ extends Annotation
 
     lazy val load = name.prefix("load")
 
-    lazy val loadMany = name.prefixPlural("load")
+    lazy val remove = name.prefix("remove")
 
-    lazy val replaceMany = name.prefixPlural("replace")
+    lazy val delete = name.prefix("delete")
+
+    lazy val replace = name.prefix("replace")
 
     def sqlColId = name.snakeCase
 
@@ -283,7 +288,7 @@ extends Annotation
 
     def tableName = name.toLowerCase
 
-    def path = name.plural.toLowerCase
+    def path = name.plural(0).toLowerCase
 
     lazy val assocQuerys = assocs map { ass ⇒ assocName(ass) }
 
