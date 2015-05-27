@@ -27,7 +27,7 @@ extends SchemaMacrosBase
       implicit val info = BasicInfo(comp)
       val schema = SchemaSpec.parse(comp)
       val modelComps = info.models map { a ⇒ TermName(a.toString) }
-      val alphaType = AttrSpec.actualType(schema.models.head.name)
+      val alphaType = AttrSpec.actualType(schema.models.head.tpe)
       val gammaModel = schema.models.last
       val assocType = AttrSpec.actualType(gammaModel.params.head.tpt)
       val optAttr = gammaModel.params(1)
