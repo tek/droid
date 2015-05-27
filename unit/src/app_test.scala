@@ -18,9 +18,6 @@ with tryp.droid.HasActivity
   Env.unit = true
   Env.test = true
 
-  override protected def beforeAll() {
-  }
-
   def waitFor(timeout: Int)(pred: ⇒ Boolean) {
     val start = Time.millis
     while (!pred && Time.millis - start < timeout) {
