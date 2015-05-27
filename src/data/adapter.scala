@@ -85,7 +85,7 @@ with AkkaAdapter
 
   def updateVisibleData(newItems: Seq[B]) {
     visibleItems = sort(newItems)
-    notifyDataSetChanged
+    notifyDataSetChanged()
     dataUpdated()
   }
 
@@ -97,7 +97,7 @@ with AkkaAdapter
     new Filter {
       def publishResults(q: CharSequence, results: Filter.FilterResults) {
         results.values match {
-          case v: Seq[B] ⇒ updateVisibleData(v)
+          case v: Seq[B] ⇒ Ui(updateVisibleData(v)).run
           case v ⇒ {
             Log.e(s"Error casting filtering results in ${this.className}")
           }
