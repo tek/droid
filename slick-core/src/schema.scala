@@ -31,6 +31,7 @@ extends SchemaMacrosBase
     def model = {
       val valdefs = cls.valDefs
       val defdefs = cls.foreignKeys.map { field ⇒
+        // FIXME always Option because unsafe?
         val first = TermName(field.option ? "firstOption" | "first")
         List(
           q"""
@@ -53,8 +54,7 @@ extends SchemaMacrosBase
         val add = f.singularTerm.prefix("add")
         Seq(
           q"""
-          def ${f.load}: Query[${f.tableType}, ${f.actualType}, Seq] = for
-          {
+          def ${f.load}: Query[${f.tableType}, ${f.actualType}, Seq] = for {
             x ← $assocQuery
             if x.${cls.colId} === id
             y ← $otherQuery
@@ -65,11 +65,17 @@ extends SchemaMacrosBase
           def ${f.term}($session) = ${f.load}.list
           """,
           q"""
-          def $add($otherId: Long)($session) =
+          def ${f.loadIds}($session) = (for {
+            x ← $assocQuery
+            if x.${cls.colId} === id
+          } yield x.${f.assocQueryColId}).list
+          """,
+          q"""
+          def $add($otherId: $idType)($session) =
             $assocQuery.insert($model(id, $otherId))
             """,
             q"""
-            def ${f.remove}(ids: Traversable[Long])
+            def ${f.remove}(ids: Traversable[$idType])
             ($session) = {
               val assoc = for {
                 x ← $assocQuery
@@ -79,7 +85,7 @@ extends SchemaMacrosBase
             }
             """,
             q"""
-            def ${f.delete}(ids: Traversable[Long])
+            def ${f.delete}(ids: Traversable[$idType])
             ($session) = {
               val other = for {
                 x ← $otherQuery
@@ -90,7 +96,7 @@ extends SchemaMacrosBase
             }
             """,
             q"""
-            def ${f.replace}(ids: Traversable[Long])
+            def ${f.replace}(ids: Traversable[$idType])
             ($session) = {
               val removals = for {
                 x ← $assocQuery
@@ -197,6 +203,7 @@ extends SchemaMacrosBase
     import scala.slick.util.TupleMethods._
     import scala.slick.jdbc.JdbcBackend
     import scala.slick.driver.SQLiteDriver.simple._
+    import slick.db.ObjectIdMapper._
     import java.sql.Timestamp
     import com.github.nscala_time.time.Imports._
     """

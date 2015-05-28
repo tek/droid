@@ -2,10 +2,20 @@ package slick.db
 
 import com.github.nscala_time.time.Imports.DateTime
 
-trait Model
+trait HasObjectId
 {
-  def id: Long
+  def id: ObjectId
 }
+
+object HasObjectId
+{
+  implicit class `seq of HasObjectId`(seq: Seq[_ <: HasObjectId]) {
+    def ids = seq map(_.id)
+  }
+}
+
+trait Model
+extends HasObjectId
 
 object Model
 {
@@ -20,20 +30,3 @@ trait Timestamps[A]
   val updated: DateTime
   def withDate(u: DateTime): A
 }
-
-trait Uuids
-{
-  def uuid: Option[String]
-}
-
-object Uuids
-{
-  implicit class `seq of Uuids`(seq: Seq[_ <: Uuids]) {
-    def uuids = seq map(_.uuid)
-
-    def flatUuids = uuids flatten
-  }
-}
-
-trait Sync
-extends Uuids

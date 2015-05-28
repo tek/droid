@@ -39,9 +39,10 @@ extends tryp.AndroidDeps
     libraryDependencies ++= Seq(
       "com.typesafe.slick" %% "slick" % "2.+",
       "org.slf4j" % "slf4j-nop" % "1.+",
+      "org.mongodb" % "bson" % "2.+",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.specs2" %%  "specs2-core" % "3.6" % "test"
+      "org.specs2" %% "specs2-core" % "3.6" % "test"
     )
   )
 

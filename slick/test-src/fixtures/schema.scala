@@ -1,6 +1,6 @@
 package slick.test
 
-import slick.{Schema, SyncSchema, schema}
+import slick.{Schema, SyncSchema, Timestamps}
 
 @Schema()
 object SimpleTestSchema
@@ -18,7 +18,7 @@ object SimpleTestSchema
 
 @SyncSchema()
 object ExtTestSchema
-extends schema.Timestamps
+extends Timestamps
 {
   object Flag extends Enumeration {
     type Flag = Value

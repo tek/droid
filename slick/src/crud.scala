@@ -11,28 +11,30 @@ import com.github.nscala_time.time.Imports.DateTime
 
 import slick._
 
-trait Action[+A]
+import ObjectIdMapper._
+
+trait Action
+extends HasObjectId
 {
-  def id: Long
-  def target: A
+  def target: ObjectId
 }
 
 @Schema()
 object PendingActionsSchema
 {
-  case class Addition(target: Long)
-  extends Action[Long]
+  case class Addition(target: ObjectId)
+  extends Action
 
-  case class Update(target: Long)
-  extends Action[Long]
+  case class Update(target: ObjectId)
+  extends Action
 
-  case class Deletion(target: String)
-  extends Action[String]
+  case class Deletion(target: ObjectId)
+  extends Action
 
   case class PendingActionSet(model: String, additions: List[Addition],
     updates: List[Update], deletions: List[Deletion])
 
-  implicit class ActionSeq[A](seq: Iterable[Action[A]]) {
+  implicit class ActionSeq(seq: Iterable[Action]) {
     def targets = seq map { _.target }
   }
 }
@@ -41,9 +43,6 @@ import PendingActionsSchema._
 
 trait SyncTable[A <: Model with Sync]
 extends TableEx[A]
-{
-  def uuid: Column[Option[String]]
-}
 
 // FIXME Timestamps is not needed
 // but exists in CrudEx
@@ -90,43 +89,28 @@ extends CrudEx[A, B]
   override def delete(obj: A)(implicit s: Session) = {
     for {
       sets ← pending
-      uuid ← obj.uuid
-      a ← Deletion.insert(Deletion(uuid))
+      a ← Deletion.insert(Deletion(obj.id))
     } sets.addDeletion(a.id)
     super.delete(obj)
   }
 
-  override def deleteById(id: Long)(implicit s: Session) =
-    byId(id) foreach(delete)
-
-  def uuidById(id: Long)(implicit s: Session) =
-    byId(id) flatMap { _.uuid }
-
-  def idByUuid(uuid: String)(implicit s: Session) =
-    self.filter(_.uuid === uuid).firstOption map { _.id }
-
-  def idsByUuids(uuids: Iterable[String])(implicit s: Session) = {
-    val q = for {
-      o ← self if o.uuid inSet(uuids)
-    } yield o.id
-    q.list
-  }
+  override def deleteById(id: ObjectId)(implicit s: Session) =
+    byId(id) some delete none 0
 }
 
 trait SyncTableQueryBase
 {
   def path: String
   def pending(implicit s: Session): Option[PendingActionSet]
-  def jsonForIds(ids: Iterable[Long])(implicit s: Session): Iterable[String]
-  def setUuidFromJson(id: Long, json: String)(implicit s: Session)
+  def jsonForIds(ids: Iterable[ObjectId])
+  (implicit s: Session): Iterable[String]
   def syncFromJson(json: String)(implicit s: Session)
-  def completeSync(a: Action[Long])(implicit s: Session)
+  def completeSync(a: Action)(implicit s: Session)
   def completeDeletion(a: Deletion)(implicit s: Session)
-  def uuidById(id: Long)(implicit s: Session): Option[Types#Uuid]
 }
 
 trait BackendMapper[A <: Types#ExtModel[A]]
-extends Uuids
+extends HasObjectId
 
 abstract class SyncTableQuery[
 A <: Types#ExtModel[A],
@@ -144,17 +128,8 @@ with SyncCrud[A, B]
   implicit def encodeJson(implicit s: Session): EncodeJson[A]
   implicit def mapperCodecJson(implicit s: Session): DecodeJson[C]
 
-  def jsonForIds(ids: Iterable[Long])(implicit s: Session) =
+  def jsonForIds(ids: Iterable[ObjectId])(implicit s: Session) =
     byIds(ids) map { _.asJson.spaces2 }
-
-  def setUuidFromJson(id: Long, json: String)(implicit s: Session) {
-    json.decodeOption[C] foreach { mapper ⇒
-      val q = for {
-        o ← this if o.id === id
-      } yield o.uuid
-      q.update(mapper.uuid)
-    }
-  }
 
   def syncFromJson(json: String)(implicit s: Session) {
     json.decodeEither[List[C]] match {
@@ -169,19 +144,20 @@ with SyncCrud[A, B]
   }
 
   def deleteFromSync(mappers: List[C])(implicit s: Session) {
-    val present = for { o ← this } yield o.uuid
-    val deleted = present.buildColl[Set] &~ mappers.uuids.toSet
-    deleteByUuidsUnrecorded(deleted flatten)
+    val present = for { o ← this } yield o.id
+    val deleted = present.buildColl[Set] &~ mappers.ids.toSet
+    deleteByIdsUnrecorded(deleted)
   }
 
-  def deleteByUuidsUnrecorded(uuids: Traversable[String])(implicit s: Session)
+  def deleteByIdsUnrecorded(ids: Traversable[ObjectId])
+  (implicit s: Session)
   {
-    filter { _.uuid inSet(uuids) }.delete
+    filter { _.id inSet(ids) }.delete
   }
 
   def syncFromMapper(mapper: C)(implicit s: Session)
 
-  def completeSync(a: Action[Long])(implicit s: Session) = {
+  def completeSync(a: Action)(implicit s: Session) = {
     pending foreach { pa ⇒
       pa.deleteAdditions(List(a.id))
       pa.deleteUpdates(List(a.id))

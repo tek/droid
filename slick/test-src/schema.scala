@@ -30,20 +30,35 @@ extends SlickTest
     pendingMetadata.createMissingTables()
   }
 
+  val objectIds = scala.collection.mutable.Map[String, ObjectId]()
+
+  def oid(name: String) = objectIds.getOrElseUpdate(name, new ObjectId)
+
   def createModels = {
     db withSession { implicit s ⇒
       for {
-        a ← Alpha.insert(Alpha("alpha1", Flag.On, 4.0))
-        a2 ← Alpha.insert(Alpha("alpha2", Flag.On, 4.0))
-        b ← Beta.insert(Beta("beta1", None, a.id, a2.id))
-        b2 ← Beta.insert(Beta("beta2", Some(DateTime.now), a.id, a2.id))
-        c ← Gamma.insert(Gamma("gamma1"))
-        c2 ← Gamma.insert(Gamma("gamma2"))
+        a ← Alpha.insert(Alpha("alpha1", Flag.On, 4.0, oid("a1")))
+        a2 ← Alpha.insert(Alpha("alpha2", Flag.On, 4.0, oid("a2")))
+        b ← Beta.insert(Beta("beta1", None, a.id, a2.id, oid("b1")))
+        b2 ← Beta.insert(Beta("beta2", Some(DateTime.now), a.id, a2.id,
+          oid("b2")))
+        c ← Gamma.insert(Gamma("gamma1", oid("c1")))
+        c2 ← Gamma.insert(Gamma("gamma2", oid("c2")))
       } yield (a, b, b.id, c)
     }
   }
 
   lazy val models = createModels.get
+
+  def additionTargets(model: String) = {
+    db withSession { implicit s ⇒
+      val adds = for {
+        a ← pendingActions if a.model === model
+        add ← a.additions
+      } yield add.target
+      adds.list
+    }
+  }
 
   def additions(model: String) = {
     db withSession { implicit s ⇒
@@ -54,6 +69,10 @@ extends SlickTest
       adds.list
     }
   }
+
+  @DBSession def alphas = Alpha.list
+  @DBSession def betas = Beta.list
+  @DBSession def gammas = Gamma.list
 }
 
 class BasicExtSchemaTest
@@ -97,15 +116,15 @@ extends ExtSchemaTest
   import PendingActionsSchema.Addition
 
   def pendingAlpha = {
-    additions("alphas") === List(Addition(1, 1), Addition(2, 2))
+    additionTargets("alphas") === alphas.map(_.id)
   }
 
   def pendingBeta = {
-    additions("betas") === List(Addition(1, 3), Addition(2, 4))
+    additionTargets("betas") === betas.map(_.id)
   }
 
   def pendingGamma = {
-    additions("gammas") === List(Addition(1, 5), Addition(2, 6))
+    additionTargets("gammas") === gammas.map(_.id)
   }
 }
 
@@ -145,15 +164,15 @@ extends ExtSchemaTest
   }
 
   def alpha = {
-    additions("alphas") === List(Addition(2, 2))
+    additionTargets("alphas") === alphas.tail.map(_.id)
   }
 
   def beta = {
-    additions("betas") === List(Addition(1, 3), Addition(2, 4))
+    additionTargets("betas") === betas.map(_.id)
   }
 
   def gamma = {
-    additions("gammas") === List(Addition(1, 5), Addition(2, 6))
+    additionTargets("gammas") === gammas.map(_.id)
   }
 }
 
@@ -163,7 +182,6 @@ extends ExtSchemaTest
   def is = s2"""
   Sync of pending actions to a backend
 
-  apply uuids to multiple records in a table $alphaUuids
   apply names to multiple records in a table $alphaNames
   apply multiple changed foreign keys to a record $beta
   apply multiple changed associations to a record $gammaAssoc
@@ -185,17 +203,17 @@ extends ExtSchemaTest
     val (a, b, bId, c) = models
     db withSession { implicit s ⇒
       val a1 = AlphaMapper("response_alpha_1", Flag.Off, 5.0,
-        Some("uuid_alpha_1"))
+        oid("a1"))
       val a2 = AlphaMapper("response_alpha_2", Flag.Off, 5.0,
-        Some("uuid_alpha_2"))
-      val b1 = BetaMapper("response_beta_1", None, Some("uuid_beta_1"),
-        "uuid_alpha_2", "uuid_alpha_1")
-      val b2 = BetaMapper("response_beta_2", None, Some("uuid_beta_2"),
-        "uuid_alpha_2", "uuid_alpha_2")
-      val c = GammaMapper("response_gamma_1", Some("uuid_gamma_1"),
-        List("uuid_beta_1", "uuid_beta_2"), List())
-      val c2 = GammaMapper("response_gamma_2", Some("uuid_gamma_2"),
-        List(), List())
+        oid("a2"))
+      val b1 = BetaMapper("response_beta_1", None, oid("a2"), oid("a1"),
+        oid("b1"))
+      val b2 = BetaMapper("response_beta_2", None, oid("a2"), oid("a2"),
+        oid("b2"))
+      val c = GammaMapper("response_gamma_1", List(oid("b1"), oid("b2")),
+        List(), oid("c1"))
+      val c2 = GammaMapper("response_gamma_2", List(), List(),
+        oid("c2"))
       val responses =
         a1.js ::
         a2.js ::
@@ -218,24 +236,17 @@ extends ExtSchemaTest
     }
   }
 
-  def alphaUuids = {
-    db withSession { implicit s ⇒
-      val uuids = Alpha.list.flatUuids
-      uuids must_== List("uuid_alpha_1", "uuid_alpha_2")
-    }
-  }
-
   def alphaNames = {
     db withSession { implicit s ⇒
-      val uuids = Alpha.list.map(_.name)
-      uuids must_== List("response_alpha_1", "response_alpha_2")
+      val names = Alpha.list.map(_.name)
+      names must_== Set("response_alpha_1", "response_alpha_2")
     }
   }
 
   def beta = {
     db withSession { implicit s ⇒
       val ids = Beta.list.headOption map { b ⇒ (b.alpId, b.alp2Id) }
-      ids must beSome((2L, 1L))
+      ids must beSome((oid("a2"), oid("a1")))
     }
   }
 
@@ -244,7 +255,7 @@ extends ExtSchemaTest
       val betas = Gamma.list.headOption map {
         c ⇒ (c.loadBets.list, c.loadBet2s.list) } map {
         case (b1, b2) ⇒ (b1.ids, b2.ids) }
-      betas must beSome((Set(1, 2), Set()))
+      betas must beSome((Set(oid("b1"), oid("b2")), Set()))
     }
   }
 
@@ -262,7 +273,7 @@ extends ExtSchemaTest
 
   def deleteGamma = {
     db withSession { implicit s ⇒
-      Gamma.list.flatUuids must_== List("uuid_gamma_1")
+      Gamma.list.ids must_== List(oid("c1"))
     }
   }
 }

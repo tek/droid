@@ -7,42 +7,52 @@ import scalaz._, Scalaz._
 
 import com.github.nscala_time.time.Imports.DateTime
 
-trait TableEx[C <: Model] {
-  def id: Column[Long]
+object ObjectIdMapper
+{
+    implicit val objectIdMapper =
+      MappedColumnType.base[ObjectId, String](
+      { a ⇒ a.toString },
+      { a ⇒ new ObjectId(a) }
+    )
+}
+import ObjectIdMapper._
+
+trait TableEx[A <: Model] {
+  def id: Column[ObjectId]
 }
 
-trait CrudCompat[C, T <: Table[C]]
+trait CrudCompat[A, B <: Table[A]]
 {
-  self: TableQuery[T] ⇒
+  self: TableQuery[B] ⇒
 
-  def insert(obj: C)(implicit s: Session) = {
+  def insert(obj: A)(implicit s: Session) = {
     self += obj
     some(obj)
   }
 }
 
-trait Crud[C <: Model, T <: Table[C] with TableEx[C]]
-extends CrudCompat[C, T]
+trait Crud[A <: Model, B <: Table[A] with TableEx[A]]
+extends CrudCompat[A, B]
 {
-  self: TableQuery[T] ⇒
+  self: TableQuery[B] ⇒
 
-  def deleteById(id: Long)(implicit s: Session) {
+  def deleteById(id: ObjectId)(implicit s: Session) = {
     deleteId(id)
   }
 
-  def deleteId(objId: Long)(implicit s: Session) =
-    self.filter { _.id === objId }.delete
+  def deleteId(id: ObjectId)(implicit s: Session) =
+    self.filter { _.id === id }.delete
 
-  def byId(objId: Long)(implicit s: Session) =
-    self.filter(_.id === objId).firstOption
+  def byId(id: ObjectId)(implicit s: Session) =
+    self.filter(_.id === id).firstOption
 
-  def byIds(ids: Traversable[Long])(implicit s: Session) =
+  def byIds(ids: Traversable[ObjectId])(implicit s: Session) =
     self.filter(_.id inSet(ids)).list
 
-  def byIdEither(objId: Long)(implicit s: Session) =
-    byId(objId) map(_.right) getOrElse("Not found".left)
+  def byIdEither(id: ObjectId)(implicit s: Session) =
+    byId(id) map(_.right) getOrElse("Not found".left)
 
-  def update(obj: C)(implicit s: Session) = {
+  def update(obj: A)(implicit s: Session) = {
     val q = for {
       row ← self if row.id === obj.id
     } yield row
@@ -50,7 +60,7 @@ extends CrudCompat[C, T]
     Some(obj)
   }
 
-  override def insert(obj: C)(implicit s: Session) = {
+  override def insert(obj: A)(implicit s: Session) = {
     // returning is not supported in SQLDroid
     // val res = self returning (self.map(_.id)) insert (obj)
     super.insert(obj)
@@ -58,13 +68,16 @@ extends CrudCompat[C, T]
     q.list.headOption
   }
 
-  def delete(obj: C)(implicit s: Session) = deleteId(obj.id)
+  def delete(obj: A)(implicit s: Session) = deleteId(obj.id)
+
+  def idExists(id: ObjectId)(implicit s: Session) =
+    self.filter(_.id === id).exists.run
 }
 
-trait CrudEx[C <: Model with Timestamps[C],
-T <: Table[C] with TableEx[C]] extends Crud[C, T] {
-  self: TableQuery[T] ⇒
-  override def update(obj: C)(implicit s: Session) = {
+trait CrudEx[A <: Model with Timestamps[A],
+B <: Table[A] with TableEx[A]] extends Crud[A, B] {
+  self: TableQuery[B] ⇒
+  override def update(obj: A)(implicit s: Session) = {
     super.update(obj.withDate(DateTime.now))
   }
 }

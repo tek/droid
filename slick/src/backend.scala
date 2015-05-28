@@ -69,7 +69,6 @@ trait BackendSync
       withJson(set.additions) foreach {
         case (a @ Addition(target, _), data) ⇒
           errorWrap { rest.post(table.path, data) } { result ⇒
-            table.setUuidFromJson(target, result)
             table.completeSync(a)
           }
       }
@@ -78,23 +77,21 @@ trait BackendSync
     def updates() {
       withJson(set.updates) foreach {
         case (u @ Update(target, _), data) ⇒
-          table.uuidById(target) foreach { uuid ⇒
-            errorWrap { rest.put(s"${table.path}/${uuid}", data) } { _ ⇒
-              table.completeSync(u)
-            }
-          }
+          errorWrap { rest.put(s"${table.path}/${target}", data) } { _ ⇒
+            table.completeSync(u)
+        }
       }
     }
 
     def deletions() {
       set.deletions foreach { d ⇒
-        errorWrap { rest.delete(table.path, d.target) } { _ ⇒
+        errorWrap { rest.delete(table.path, d.target.toString) } { _ ⇒
           table.completeDeletion(d)
         }
       }
     }
 
-    def withJson[A](actions: Seq[Action[Long]]) = {
+    def withJson(actions: Seq[Action]) = {
       actions.zip(table.jsonForIds(actions.targets))
     }
   }

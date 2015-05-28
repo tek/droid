@@ -22,26 +22,16 @@ extends SchemaMacros(ct)
 {
   import c.universe._
 
-  case class UuidColSpec()
-  extends AttrSpecBase
-  {
-    def name = TermName("uuid")
-
-    def tpt = tq"Option[String]"
-  }
-
   class SyncModelOps(m: ModelSpec)
   extends ModelOps(m)
   {
-    lazy val uuidColumn = UuidColSpec()
+    val idType = tq"ObjectId"
 
-    lazy val mapperFields = attrs ++ (uuidColumn :: foreignKeys) ++ assocs
+    lazy val mapperFields = attrs ++ foreignKeys ++ assocs :+ idColumn
 
     lazy val mapperFieldStrings = mapperFields.map(_.name.toString)
 
-    def attrsWithUuid = attrs :+ uuidColumn
-
-    override def extraColumns = uuidColumn :: super.extraColumns
+    def attrsWithId = attrs ++ foreignKeys :+ idColumn
 
     override def modelBases = super.modelBases :+ tq"slick.db.Sync"
 
@@ -66,53 +56,40 @@ extends SchemaMacros(ct)
 
     def handleMapper = {
       val mt = mapperType
-      val att = attrsWithUuid map { f ⇒ q"${f.term} = mapper.${f.term}" }
-      val fks = foreignKeys map { f ⇒
-        q"""
-        ${f.colName} =
-          ${f.query}.idByUuid(mapper.${f.term}) getOrElse {
-          uuidError(mapper, ${f.nameS}, Some(mapper.${f.term}))
-        }
-        """
-      }
-      val fields = att ++ fks
+      val fields = attrsWithId map { f ⇒ q"${f.colName} = mapper.${f.term}" }
       val assocUpdates = assocs map { f ⇒
-        q"""
-        obj.${f.replace}(${f.query}.idsByUuids(mapper.${f.term}))
-        """
+        q"obj.${f.replace}(mapper.${f.term})"
       }
       List(
         q"""
         def syncFromMapper(mapper: $mt)($session) {
-          mapper.uuid.flatMap(idByUuid) map {
-            id ⇒ updateFromMapper(id, mapper) } getOrElse {
-            createFromMapper(mapper)
-          }
+          if (idExists(mapper.id)) updateFromMapper(mapper)
+          else createFromMapper(mapper)
         }
         """,
         q"""
-        def updateFromMapper(id: Long, mapper: $mt)($session) {
-          applyMapper(id, mapper, updateUnrecorded)
+        def updateFromMapper(mapper: $mt)($session) {
+          applyMapper(mapper, updateUnrecorded)
         }
         """,
         q"""
         def createFromMapper(mapper: $mt)($session) {
-          applyMapper(0, mapper, insertUnrecorded)
+          applyMapper(mapper, insertUnrecorded)
         }
         """,
         q"""
-        def applyMapper(id: Long, mapper: $mt, app: $tpe ⇒ Option[$tpe])
+        def applyMapper(mapper: $mt, app: $tpe ⇒ Option[$tpe])
         ($session) {
-          app($term(..$fields, id = id)) foreach { obj ⇒
+          app($term(..$fields)) foreach { obj ⇒
             ..$assocUpdates
           }
         }
         """,
         q"""
-        def uuidError(mapper: $mt, attr: String, uuid: Option[String]) = {
+        def objectIdError(mapper: $mt, attr: String, objectId: Option[String]) = {
           throw new Exception(
-            s"Invalid uuid found in mapper $$mapper for attr $$attr:" +
-              uuid.getOrElse("none")
+            s"Invalid objectId found in mapper $$mapper for attr $$attr:" +
+              objectId.getOrElse("none")
           )
         }
         """
@@ -121,9 +98,9 @@ extends SchemaMacros(ct)
 
     def encodeJson = {
       val ident = TermName(s"${name}EncodeJson")
-      val fks = foreignKeys map { a ⇒ (a.nameS, q"obj.${a.term}.uuid") }
+      val fks = foreignKeys map { a ⇒ (a.nameS, q"obj.${a.colId}") }
       val ass = assocs map { a ⇒
-        (a.nameS, q"obj.${a.load}.list.uuids")
+        (a.nameS, q"obj.${a.load}.list.ids")
       }
       val att = attrs map { a ⇒ (a.nameS, q"obj.${a.term}") }
       val (names, values) = (fks ++ ass ++ att).unzip
@@ -243,6 +220,27 @@ extends SchemaMacros(ct)
     """
   }
 
+  def objectIdCodecJson = {
+    val error = q""" "Error parsing json for ObjectId: " """
+    val decoder =
+      q"""
+      {
+        c ⇒ c.focus.string match {
+          case Some(s) ⇒
+              DecodeResult.ok(new $idType(s))
+          case None ⇒
+            DecodeResult.fail($error + "Invalid input '$${c.focus}'",
+              c.history)
+        }
+      }
+      """
+    q"""
+    implicit val objectIdCodecJson: CodecJson[$idType] = CodecJson(
+      (id: $idType) ⇒ jString(id.toString), $decoder
+    )
+    """
+  }
+
   override def dateTime = {
     super.dateTime ++ Seq(dateTimeCodecJson)
   }
@@ -251,7 +249,7 @@ extends SchemaMacros(ct)
     List(
       q"import argonaut._",
       q"import Argonaut._",
-      q"import slick.db.Uuids._"
+      q"import slick.db.HasObjectId._"
     )
   }
 
@@ -274,7 +272,7 @@ extends SchemaMacros(ct)
         initPending()
       }
       """
-    ) ++ backendMappers ++ jsonCodecs
+    ) ++ backendMappers ++ Seq(objectIdCodecJson) ++ jsonCodecs
   }
 
   def syncMetadata(classes: List[ModelSpec]) = {

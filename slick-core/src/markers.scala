@@ -1,11 +1,3 @@
-package slick.schema
-
-import slick.db._
+package slick
 
 trait Timestamps
-
-trait Part
-
-trait Uuids
-
-trait Sync

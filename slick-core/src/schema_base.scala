@@ -20,6 +20,8 @@ extends Annotation
 {
   import c.universe._
 
+  val idType = tq"slick.db.ObjectId"
+
   val session = q"implicit val s: Session"
 
   def dateTime = {
@@ -34,7 +36,7 @@ extends Annotation
     )
   }
 
-  val reservedNames = List("id", "created", "updated", "uuid")
+  val reservedNames = List("id", "created", "updated")
 
   def sqlColName(name: String): String = {
     name.toCharArray().zipWithIndex map {
@@ -69,6 +71,7 @@ extends Annotation
 
   implicit class `TermName extensions`(name: TermName) {
     def prefix(s: String) = TermName(s"${s}${name.u}")
+    def suffix(s: String) = TermName(s"${name.u}${s}")
     def prefixPlural(s: String) = TermName(s"${s}${name.up}")
     def capitalize = name.toString.capitalize
     def snakeCase = name.toString.snakeCase
@@ -137,6 +140,8 @@ extends Annotation
 
     lazy val term = name
 
+    lazy val loadIds = name.suffix("Ids")
+
     lazy val load = name.prefix("load")
 
     lazy val remove = name.prefix("remove")
@@ -197,7 +202,7 @@ extends Annotation
   {
     override def colType = option ? tq"Option[$keyType]" | keyType
 
-    def keyType = tq"Long"
+    def keyType = idType
 
     override lazy val colName = colId
 
@@ -211,7 +216,7 @@ extends Annotation
 
     def fkDef = q"def $name = foreignKey($sqlFk, $colId, $query)(_.id)"
 
-    override def mapperParam = q"val ${term}: String"
+    override def mapperParam = q"val ${term}: ${keyType}"
   }
 
   case class AssociationSpec(name: TermName, tpt: Tree,
@@ -219,10 +224,12 @@ extends Annotation
   extends AttrSpecBase
   with ReferenceSpec
   {
+    def keyType = idType
+
     override def column =
       throw new Exception("AssociationSpec can't become column")
 
-    override def mapperParam = q"val ${term}: Seq[String]"
+    override def mapperParam = q"val ${term}: Seq[$keyType]"
 
     def tableType = TypeName(actualType.toString + "Table")
   }
@@ -232,11 +239,11 @@ extends Annotation
   {
     def name = TermName("id")
 
-    def tpt = tq"Long"
+    def tpt = idType
 
-    override def default = q"0"
+    override def default = q"new ${idType}"
 
-    override def columnFlags = List(q"O.PrimaryKey", q"O.AutoInc")
+    override def columnFlags = List(q"O.PrimaryKey")
   }
 
   case class DateColSpec(desc: String)
