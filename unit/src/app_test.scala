@@ -29,8 +29,7 @@ with TrypSpec
   def waitFor(timeout: Long)(pred: ⇒ Boolean) {
     val start = Time.millis
     while (!pred && Time.millis - start < timeout) {
-      Robolectric.runUiThreadTasksIncludingDelayedTasks()
-      Thread.sleep(200L)
+      sync()
     }
   }
 
@@ -58,10 +57,16 @@ extends Matchers
     }
   }
 
+  def sync() = {
+    Thread.sleep(100L)
+    Robolectric.runUiThreadTasksIncludingDelayedTasks()
+    Thread.sleep(100L)
+  }
+
   implicit class SearchableExt(target: Searchable) {
     def recycler = {
       target.viewOfType[RecyclerView] tap { r ⇒
-        Robolectric.runUiThreadTasksIncludingDelayedTasks()
+        sync()
         r.measure(0, 0)
         r.layout(0, 0, 100, 10000)
       }
