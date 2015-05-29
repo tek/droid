@@ -8,6 +8,7 @@ trait ObjectIdAdapter
 
   object ObjectId
   {
+    def apply() = new ObjectId
     def apply(s: String) = new ObjectId(s)
   }
 }
