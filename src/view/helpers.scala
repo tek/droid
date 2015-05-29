@@ -3,7 +3,7 @@ package tryp.droid
 import scala.language.dynamics
 import scala.reflect.runtime.universe._
 import scala.collection.convert.wrapAll._
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.concurrent.Await
 
 import scalaz._
@@ -451,20 +451,22 @@ extends Basic
   def alarmManager = systemService[AlarmManager](Context.ALARM_SERVICE)
 
   def scheduleRepeatingWakeAlarm[A <: WakefulBroadcastReceiver: ClassTag]
-  (interval: Long) =
+  (interval: Duration, requestCode: Int) =
   {
     alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-      SystemClock.elapsedRealtime() + 3000, interval * 1000, alarmIntent[A])
+      SystemClock.elapsedRealtime() + 3.seconds.toMillis, interval.toMillis,
+      alarmIntent[A](requestCode))
   }
 
-  def cancelAlarm[A <: WakefulBroadcastReceiver: ClassTag] {
-    alarmManager.cancel(alarmIntent[A])
+  def cancelAlarm[A <: WakefulBroadcastReceiver: ClassTag](requestCode: Int) {
+    alarmManager.cancel(alarmIntent[A](requestCode))
   }
 
-  def alarmIntent[A <: WakefulBroadcastReceiver: ClassTag] = {
+  def alarmIntent[A <: WakefulBroadcastReceiver: ClassTag](requestCode: Int) =
+  {
     val intent = new Intent(context, implicitly[ClassTag[A]].runtimeClass)
     intent.putExtra(Keys.intentSource, Values.wakeAlarm)
-    PendingIntent.getBroadcast(context, 0, intent,
+    PendingIntent.getBroadcast(context, requestCode, intent,
       PendingIntent.FLAG_UPDATE_CURRENT)
   }
 
