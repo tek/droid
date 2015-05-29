@@ -1,10 +1,17 @@
 package slick.db
 
+import scala.slick.driver.SQLiteDriver.simple._
+
 import com.github.nscala_time.time.Imports.DateTime
+
+object DbTypes
+{
+  type IdType = ObjectId
+}
 
 trait HasObjectId
 {
-  def id: ObjectId
+  def id: DbTypes.IdType
 }
 
 object HasObjectId

@@ -14,6 +14,8 @@ import tryp.droid.res.{Layouts,LayoutAdapter,PrefixResourceNamespace}
 import tryp.droid.Macroid._
 import tryp.droid.tweaks.Recycler._
 
+import slick.db.{ObjectId, DbTypes}
+
 trait FragmentBase
 extends Fragment
 with Broadcast
@@ -145,21 +147,23 @@ extends MainFragment
   }
 
   private def setupData() {
-    val id = getArguments.getLong(Keys.dataId, 0)
-    if (model.isEmpty)
-      if (id <= 0)
-        Log.e(s"No dataId in arguments to show fragment '${name}'")
-      else
-        initData(id)
+    val stored = getArguments.getString(Keys.dataId, "")
+    if (model.isEmpty) {
+      Try(ObjectId(stored)) match {
+        case Success(id) ⇒ initData(id)
+        case Failure(_) ⇒ 
+          Log.e(s"No dataId in arguments to show fragment '${name}'")
+      }
+    }
   }
 
   var model: Option[A] = None
 
-  private def initData(id: Long) {
+  private def initData(id: DbTypes.IdType) {
     Future { model = fetchData(id) } map(Unit ⇒ update())
   }
 
-  def fetchData(id: Long): Option[A]
+  def fetchData(id: DbTypes.IdType): Option[A]
 
   def update() {
     model foreach { updateData(_).run }
