@@ -271,6 +271,12 @@ extends SchemaMacros(ct)
         pendingMetadata.createMissingTables()
         initPending()
       }
+      """,
+      q"""
+      def dropDb()($session) = {
+        metadata.dropAll()
+        pendingMetadata.dropAll()
+      }
       """
     ) ++ backendMappers ++ Seq(objectIdCodecJson) ++ jsonCodecs
   }
