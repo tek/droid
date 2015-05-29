@@ -72,8 +72,8 @@ extends Matchers
       }
     }
 
-    def nonEmptyRecycler = {
-      assertW { recycler exists { _.getChildCount > 0 } }
+    def nonEmptyRecycler(count: Long) = {
+      assertW { recycler exists { _.getChildCount == count } }
       recycler
     }
   }
