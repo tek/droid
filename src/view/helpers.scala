@@ -451,22 +451,23 @@ extends Basic
   def alarmManager = systemService[AlarmManager](Context.ALARM_SERVICE)
 
   def scheduleRepeatingWakeAlarm[A <: WakefulBroadcastReceiver: ClassTag]
-  (interval: Duration, requestCode: Int) =
+  (interval: Duration, name: String) =
   {
     alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-      SystemClock.elapsedRealtime() + 3.seconds.toMillis, interval.toMillis,
-      alarmIntent[A](requestCode))
+      SystemClock.elapsedRealtime() + 10.seconds.toMillis, interval.toMillis,
+      alarmIntent[A](name))
   }
 
-  def cancelAlarm[A <: WakefulBroadcastReceiver: ClassTag](requestCode: Int) {
-    alarmManager.cancel(alarmIntent[A](requestCode))
+  def cancelAlarm[A <: WakefulBroadcastReceiver: ClassTag](name: String) {
+    alarmManager.cancel(alarmIntent[A](name))
   }
 
-  def alarmIntent[A <: WakefulBroadcastReceiver: ClassTag](requestCode: Int) =
+  def alarmIntent[A <: WakefulBroadcastReceiver: ClassTag](name: String) =
   {
     val intent = new Intent(context, implicitly[ClassTag[A]].runtimeClass)
     intent.putExtra(Keys.intentSource, Values.wakeAlarm)
-    PendingIntent.getBroadcast(context, requestCode, intent,
+    intent.putExtra(Keys.alarmPurpose, name)
+    PendingIntent.getBroadcast(context, name.hashCode, intent,
       PendingIntent.FLAG_UPDATE_CURRENT)
   }
 
