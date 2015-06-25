@@ -6,17 +6,14 @@ object DroidDeps
 extends tryp.AndroidDeps
 {
   override def deps = super.deps ++ Map(
+    "root" → root,
     "slick-core" → slickCore,
     "slick" → slick
   )
 
-  override def common = Seq(
-    resolvers ++= Seq(
-      "Scalaz Bintray Repo" at "https://dl.bintray.com/scalaz/releases",
-      "jcenter" at "http://jcenter.bintray.com"
-    ),
+  def root = Seq(
+    resolvers += Resolver.jcenterRepo,
     libraryDependencies ++= Seq(
-      "org.scalaz" %% "scalaz-concurrent" % "7.1.+",
       aar("com.android.support" % "appcompat-v7" % "21.+"),
       aar("com.android.support" % "palette-v7" % "21.+"),
       aar("com.android.support" % "recyclerview-v7" % "21.+"),
