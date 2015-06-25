@@ -9,7 +9,7 @@ import macroid.contrib.TextTweaks._
 import tryp.droid.tweaks.Recycler._
 import tryp.droid.res._
 import tryp.droid.Macroid._
-import tryp.droid.meta.DebugLog
+import tryp.droid.meta.InternalLog
 
 case class LogViewHolder(view: View, text: Slot[TextView])
 extends RecyclerView.ViewHolder(view)
@@ -41,12 +41,12 @@ with RecyclerFragment[LogAdapter]
 
   override def onStart() {
     super.onStart
-    DebugLog.actor = Some(selectActor("Log"))
+    InternalLog.actor = Some(selectActor("Log"))
     runUi(updateLog())
   }
 
   def updateLog() = {
-    adapter.updateItems(DebugLog.buffer)
+    adapter.updateItems(InternalLog.buffer)
     Thread.sleep(100)
     recyclerView <~ scrollTop
   }

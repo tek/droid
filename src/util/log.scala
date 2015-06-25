@@ -44,13 +44,9 @@ trait InternalLog
 extends LogInterface
 {
 
-  var buffer = Buffer[String]()
-
-  var actor: Option[ActorSelection] = None
-
   def log(message: String) {
-    buffer += tryp.core.Time.nowHms + " -- " + message
-    actor foreach { _ ! Messages.Log(message) }
+    InternalLog.buffer += tryp.core.Time.nowHms + " -- " + message
+    InternalLog.actor foreach { _ ! Messages.Log(message) }
   }
 
   abstract override def d(message: String) = {
@@ -83,6 +79,10 @@ object InternalLog
 extends LogBase
 with InternalLog
 {
+  var buffer = Buffer[String]()
+
+  var actor: Option[ActorSelection] = None
+
   override def d(m: String) = super.d(m)
   override def i(m: String) = super.i(m)
   override def w(m: String) = super.w(m)
