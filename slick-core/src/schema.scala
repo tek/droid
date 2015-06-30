@@ -73,48 +73,48 @@ extends SchemaMacrosBase
           q"""
           def $add($otherId: $idType)($session) =
             $assocQuery.insert($model(id, $otherId))
-            """,
-            q"""
-            def ${f.remove}(ids: Traversable[$idType])
-            ($session) = {
-              val assoc = for {
+          """,
+          q"""
+          def ${f.remove}(ids: Traversable[$idType])
+          ($session) = {
+            val assoc = for {
+              x ← $assocQuery
+              if x.$myId === id && x.$otherId.inSet(ids)
+            } yield x
+            assoc.delete
+          }
+          """,
+          q"""
+          def ${f.delete}(ids: Traversable[$idType])
+          ($session) = {
+            val other = for {
+              x ← $otherQuery
+              if x.id.inSet(ids)
+            } yield x
+            other.delete
+            ${TermName("remove" + plur)}(ids)
+          }
+          """,
+          q"""
+          def ${f.replace}(ids: Traversable[$idType])
+          ($session) = {
+            val removals = for {
+              x ← $assocQuery
+              if x.$myId === id && !x.$otherId.inSet(ids)
+            } yield x
+            removals.delete
+            val existing = (
+              for {
                 x ← $assocQuery
-                if x.$myId === id && x.$otherId.inSet(ids)
-              } yield x
-              assoc.delete
+                if x.$myId === id
+              } yield x.$otherId
+            ).list
+            ids filter { i ⇒ !existing.contains(i) } foreach {
+              $add
             }
-            """,
-            q"""
-            def ${f.delete}(ids: Traversable[$idType])
-            ($session) = {
-              val other = for {
-                x ← $otherQuery
-                if x.id.inSet(ids)
-              } yield x
-              other.delete
-              ${TermName("remove" + plur)}(ids)
-            }
-            """,
-            q"""
-            def ${f.replace}(ids: Traversable[$idType])
-            ($session) = {
-              val removals = for {
-                x ← $assocQuery
-                if x.$myId === id && !x.$otherId.inSet(ids)
-              } yield x
-              removals.delete
-              val existing = (
-                for {
-                  x ← $assocQuery
-                  if x.$myId === id
-                } yield x.$otherId
-              ).list
-              ids filter { i ⇒ !existing.contains(i) } foreach {
-                $add
-              }
-            }
-            """
-          )
+          }
+          """
+        )
       }.flatten
       q"""
       case class ${cls.tpe}(..$valdefs)
