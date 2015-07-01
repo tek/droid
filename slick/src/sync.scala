@@ -98,12 +98,11 @@ extends SchemaMacros(ct)
 
     def encodeJson = {
       val ident = TermName(s"${name}EncodeJson")
-      val fks = foreignKeys map { a ⇒ (a.nameS, q"obj.${a.colId}") }
       val ass = assocs map { a ⇒
-        (a.nameS, q"obj.${a.load}.list.ids")
+        (a.nameS, q"obj.${a.ids}")
       }
-      val att = attrs map { a ⇒ (a.nameS, q"obj.${a.term}") }
-      val (names, values) = (fks ++ ass ++ att).unzip
+      val att = attrsWithId map { a ⇒ (a.nameS, q"obj.${a.colName}") }
+      val (names, values) = (ass ++ att).unzip
       val encoder = TermName(s"jencode${values.length}L")
       q"""
       implicit def $ident ($session) =
