@@ -140,9 +140,9 @@ extends Annotation
 
     lazy val term = name
 
-    lazy val loadIds = name.suffix("Ids")
+    lazy val ids = TermName(name.suffix("Ids").d)
 
-    lazy val load = name.prefix("load")
+    lazy val attrQuery = TermName(name.suffix("Query").d)
 
     lazy val remove = name.prefix("remove")
 

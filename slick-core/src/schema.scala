@@ -35,12 +35,12 @@ extends SchemaMacrosBase
         val first = TermName(field.option ? "firstOption" | "first")
         List(
           q"""
-          def ${field.load}($session) =
+          def ${field.attrQuery}($session) =
             ${field.query}.filter { _.id === ${field.colId} }
           """,
           q"""
           def ${field.term}($session) =
-            ${field.load}.$first
+            ${field.attrQuery}.$first
           """
         )
       } flatten
@@ -54,7 +54,7 @@ extends SchemaMacrosBase
         val add = f.singularTerm.prefix("add")
         Seq(
           q"""
-          def ${f.load}: Query[${f.tableType}, ${f.actualType}, Seq] = for {
+          def ${f.attrQuery}: Query[${f.tableType}, ${f.actualType}, Seq] = for {
             x ← $assocQuery
             if x.${cls.colId} === id
             y ← $otherQuery
@@ -62,10 +62,10 @@ extends SchemaMacrosBase
           } yield y
           """,
           q"""
-          def ${f.term}($session) = ${f.load}.list
+          def ${f.term}($session) = ${f.attrQuery}.list
           """,
           q"""
-          def ${f.loadIds}($session) = (for {
+          def ${f.ids}($session) = (for {
             x ← $assocQuery
             if x.${cls.colId} === id
           } yield x.${f.assocQueryColId}).list
