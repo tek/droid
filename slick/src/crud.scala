@@ -33,6 +33,14 @@ object PendingActionsSchema
 
   case class PendingActionSet(model: String, additions: List[Addition],
     updates: List[Update], deletions: List[Deletion])
+    {
+      def updatesWithoutAdditions(implicit s: Session) = {
+        def add = additions.targets.toSeq
+        updates filterNot { u ⇒
+          add.contains(u.target)
+        }
+      }
+    }
 
   implicit class ActionSeq(seq: Iterable[Action]) {
     def targets = seq map { _.target }

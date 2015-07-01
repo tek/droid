@@ -69,9 +69,18 @@ trait BackendSync
   extends Syncer
   {
     def apply() {
-      additions()
       updates()
+      additions()
       deletions()
+    }
+
+    def updates() {
+      withJson(set.updatesWithoutAdditions) foreach {
+        case (u @ Update(target, _), data) ⇒
+          errorWrap { rest.put(s"${table.path}/${target}", data) } { _ ⇒
+            table.completeSync(u)
+        }
+      }
     }
 
     def additions() {
@@ -80,15 +89,6 @@ trait BackendSync
           errorWrap { rest.post(table.path, data) } { result ⇒
             table.completeSync(a)
           }
-      }
-    }
-
-    def updates() {
-      withJson(set.updates) foreach {
-        case (u @ Update(target, _), data) ⇒
-          errorWrap { rest.put(s"${table.path}/${target}", data) } { _ ⇒
-            table.completeSync(u)
-        }
       }
     }
 
