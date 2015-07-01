@@ -1,5 +1,8 @@
 package tryp.droid.debug
 
+object `package`
+extends tryp.droid.util.TrypDroidGlobals
+
 trait DebugApplication
 extends android.app.Application
 {
