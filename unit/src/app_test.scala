@@ -59,7 +59,7 @@ extends Matchers
 
   def sync() = {
     Thread.sleep(100L)
-    Robolectric.runUiThreadTasksIncludingDelayedTasks()
+    Robolectric.flushForegroundThreadScheduler()
     Thread.sleep(100L)
   }
 
