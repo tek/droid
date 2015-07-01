@@ -400,7 +400,9 @@ extends Annotation
 
     override def modelExtra = m.body ++ {
       timestamps ?? List(withDate)
-    }
+    } :+ updatedHook
+
+    def updatedHook = q"def updatedHook()($session) = ()"
 
     def withDate = {
       val fields = nonDateFields map { _.paramName }

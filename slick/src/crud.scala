@@ -71,11 +71,15 @@ extends CrudEx[A, B]
   }
 
   override def update(obj: A)(implicit s: Session) = {
+    recordUpdate(obj.id)
+    super.update(obj)
+  }
+
+  def recordUpdate(id: ObjectId)(implicit s: Session) = {
     for {
       sets ← pending
-      a ← Update.insert(Update(obj.id))
+      a ← Update.insert(Update(id))
     } sets.addUpdate(a.id)
-    super.update(obj)
   }
 
   def insertUnrecorded(obj: A)(implicit s: Session) = {

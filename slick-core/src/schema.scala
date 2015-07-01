@@ -71,12 +71,15 @@ extends SchemaMacrosBase
           } yield x.${f.assocQueryColId}).list
           """,
           q"""
-          def $add($otherId: $idType)($session) =
+          def $add($otherId: $idType)($session) = {
+            updatedHook()
             $assocQuery.insert($model(id, $otherId))
+          }
           """,
           q"""
           def ${f.remove}(ids: Traversable[$idType])
           ($session) = {
+            updatedHook()
             val assoc = for {
               x ← $assocQuery
               if x.$myId === id && x.$otherId.inSet(ids)
@@ -87,6 +90,7 @@ extends SchemaMacrosBase
           q"""
           def ${f.delete}(ids: Traversable[$idType])
           ($session) = {
+            updatedHook()
             val other = for {
               x ← $otherQuery
               if x.id.inSet(ids)
@@ -98,6 +102,7 @@ extends SchemaMacrosBase
           q"""
           def ${f.replace}(ids: Traversable[$idType])
           ($session) = {
+            updatedHook()
             val removals = for {
               x ← $assocQuery
               if x.$myId === id && !x.$otherId.inSet(ids)

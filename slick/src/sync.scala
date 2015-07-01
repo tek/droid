@@ -137,6 +137,12 @@ extends SchemaMacros(ct)
     lazy val mapperTerm = TermName(mapper)
 
     lazy val mapperParams = mapperFields map { _.mapperParam }
+
+    override def updatedHook = q"""
+    def updatedHook()($session) = {
+      $term.recordUpdate(id)
+    }
+    """
   }
 
   class SyncAssocOps(a: AssocSpec)
