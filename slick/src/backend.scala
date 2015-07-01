@@ -57,9 +57,12 @@ trait BackendSync
     }
 
     def error(e: Any) {
-      Log.e(s"Error during sync request: $e")
+      Log.e(
+        s"Error during sync request in ${this.className} for ${table.path}: $e"
+      )
     }
   }
+
 
   case class Sender(table: SyncTableQueryBase, set: PendingActionSet)
   (implicit s: Session)
