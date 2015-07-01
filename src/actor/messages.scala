@@ -22,6 +22,7 @@ class Messages
   case class Scrolled(view: ViewGroup, dy: Int)
   case object Update
   case class MapReady(map: GoogleMap)
+  case class AuthBackend()
 }
 
 object Messages extends Messages

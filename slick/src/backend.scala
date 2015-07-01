@@ -15,6 +15,9 @@ trait RestClient
   def get(path: String, body: String = "{}"): \/[String, String]
 }
 
+case class AuthError(msg: String)
+extends java.lang.Exception
+
 trait BackendSync
 {
   import PendingActionsSchema._
@@ -46,6 +49,7 @@ trait BackendSync
       Try(action) match {
         case Success(\/-(result)) ⇒ callback(result)
         case Success(-\/(err)) ⇒ error(err)
+        case Failure(e @ AuthError(_)) ⇒ throw e
         case Failure(err) ⇒ error(err)
       }
     }
