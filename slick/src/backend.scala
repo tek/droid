@@ -30,14 +30,16 @@ trait BackendSync
   {
     import scala.concurrent.ExecutionContext.Implicits.global
     Future {
-      schema.syncMetadata.tables.values.foreach { meta ⇒
-        pendingActionsFor(meta.pendingActionsKey) foreach { pending ⇒
-          val sender = Sender(meta.table, pending)
-          sender()
+      schema.syncMetadata.tables.values
+        .filterNot { a ⇒ exclude.contains(a.table.path) }
+        .foreach { meta ⇒
+          pendingActionsFor(meta.pendingActionsKey) foreach { pending ⇒
+            val sender = Sender(meta.table, pending)
+            sender()
+          }
+          val fetcher = Fetcher(meta.table)
+          fetcher()
         }
-        val fetcher = Fetcher(meta.table)
-        fetcher()
-      }
     }
   }
 
@@ -109,4 +111,6 @@ trait BackendSync
   }
 
   def rest: RestClient
+
+  def exclude: List[String] = List()
 }
