@@ -6,9 +6,7 @@ object DroidDeps
 extends tryp.AndroidDeps
 {
   override def deps = super.deps ++ Map(
-    "root" → root,
-    "slick-core" → slickCore,
-    "slick" → slick
+    "root" → root
   )
 
   def root = Seq(
@@ -32,22 +30,5 @@ extends tryp.AndroidDeps
     )
   )
 
-  lazy val slickCore = Seq(
-    libraryDependencies ++= Seq(
-      "com.typesafe.slick" %% "slick" % "2.+",
-      "org.slf4j" % "slf4j-nop" % "1.+",
-      "org.mongodb" % "bson" % "2.+",
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.specs2" %% "specs2-core" % "3.6" % "test"
-    )
-  )
-
-  lazy val slick = Seq(
-    libraryDependencies ++= Seq(
-      "io.argonaut" %% "argonaut" % "6.+",
-      "org.specs2" %%  "specs2-core" % "3.6" % "test",
-      "org.xerial" % "sqlite-jdbc" % "3.+" % "test"
-    )
   )
 }

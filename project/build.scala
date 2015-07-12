@@ -22,22 +22,11 @@ object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
   lazy val pulsar = RootProject(file("../core"))
 
 
-  lazy val slickCore = p("slick-core")
-    .paradise()
-    .antSrc
-    .export
-    .dep(pulsar)
 
-  lazy val slick = p("slick")
-    .paradise()
-    .antSrc
-    .export
-    .dep(slickCore)
 
   lazy val root = p("root")
     .path(".")
     .aar
-    .transitive
     .settings(android.Plugin.androidCommands ++ Seq(
       name := "droid",
       description := "Common tryp stuff",
@@ -52,7 +41,7 @@ object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
         "-P:wartremover:traverser:macroid.warts.CheckUi"
       )
     ))
-    .dep(slick, slickCore)
+    .transitive()
 
   lazy val test = p("test")
     .aar
