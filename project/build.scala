@@ -21,8 +21,6 @@ object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
 
   lazy val pulsar = RootProject(file("../core"))
 
-  lazy val macros = p("macros")
-    .aar()
 
   lazy val slickCore = p("slick-core")
     .paradise()
@@ -54,7 +52,7 @@ object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
         "-P:wartremover:traverser:macroid.warts.CheckUi"
       )
     ))
-    .dep(macros, pulsar, slick, slickCore)
+    .dep(slick, slickCore)
 
   lazy val test = p("test")
     .aar
