@@ -19,14 +19,17 @@ object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
     incOptions := incOptions.value.withNameHashing(true)
   )
 
-  lazy val pulsar = RootProject(file("../core"))
+  lazy val common = Seq(
+    name := s"droid-${name.value}"
+  )
 
-
-
-
-  lazy val root = p("root")
-    .path(".")
+  def default(name: String) = pb(name)
+    .antSrc
+    .paradise()
+    .settings(common)
     .aar
+
+  lazy val core = default("core")
     .settings(android.Plugin.androidCommands ++ Seq(
       name := "droid",
       description := "Common tryp stuff",
@@ -43,19 +46,15 @@ object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
     ))
     .transitive()
 
-  lazy val test = p("test")
-    .aar
-    .dep(root)
+  lazy val test = default("test")
+    .dep(core)
 
-  lazy val unit = p("unit")
-    .aar
+  lazy val unit = default("unit")
     .dep(test)
 
-  lazy val debug = p("debug")
-    .aar
-    .dep(root)
+  lazy val debug = default("debug")
+    .dep(core)
 
-  lazy val integration = p("integration")
-    .aar
+  lazy val integration = default("integration")
     .dep(test)
 }
