@@ -12,7 +12,7 @@ import com.robotium.solo._
 
 import tryp.droid._
 
-class TrypTest[A <: Activity](cls: Class[A])
+class TrypTest[A <: TrypActivity](cls: Class[A])
 extends ActivityInstrumentationTestCase2[A](cls)
 with Preferences
 with AppPreferences
@@ -34,7 +34,7 @@ with TrypSpec
     solo
   }
 
-  def pre() {  }
+  def pre() { }
 
   override def tearDown {
     solo.finalize
@@ -53,7 +53,7 @@ with TrypSpec
     instr.waitForIdleSync
   }
 
-  def waitFor(timeout: Long)(predicate: ⇒ Boolean) {
+  def waitFor(timeout: Int)(predicate: ⇒ Boolean) {
     solo.waitForCondition(new Condition {
       override def isSatisfied: Boolean = predicate
     }, timeout)

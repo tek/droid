@@ -6,7 +6,7 @@ trait TrypSpec
 {
   def activity: TrypActivity
 
-  def waitFor(timeout: Long)(pred: ⇒ Boolean)
+  def waitFor(timeout: Int)(pred: ⇒ Boolean)
 
   def wait(pred: ⇒ Boolean) {
     waitFor(5000)(pred)
@@ -16,7 +16,7 @@ trait TrypSpec
     assertWFor(5000)(predicate)
   }
 
-  def assertWFor(timeout: Long)(predicate: ⇒ Boolean) {
+  def assertWFor(timeout: Int)(predicate: ⇒ Boolean) {
     waitFor(timeout)(predicate)
     timeoutAssertion(predicate)
   }
