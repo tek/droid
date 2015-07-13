@@ -6,15 +6,15 @@ object DroidDeps
 extends tryp.AndroidDeps
 {
   override def deps = super.deps ++ Map(
-    "root" → root
+    "core" → core
   )
 
-  override def resolvers = Map(
-    "root" → Seq(Resolver.jcenterRepo)
+  override def resolvers = super.resolvers ++ Map(
+    "core" → Seq(Resolver.jcenterRepo)
   )
 
-  def root = ids(
-    dd("tryp" %% "pulsar-core" % "+", "tek/pulsar", "core"),
+  def core = ids(
+    dd("tryp" %% "pulsar-slick" % "+", "tek/pulsar", "slick"),
     aar("com.android.support" % "appcompat-v7" % "21.+"),
     aar("com.android.support" % "palette-v7" % "21.+"),
     aar("com.android.support" % "recyclerview-v7" % "21.+"),
