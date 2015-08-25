@@ -12,49 +12,32 @@ extends tryp.Proguard
 object DroidPlaceholders
 extends tryp.Placeholders
 
-object DroidBuild extends tryp.AndroidBuild(DroidDeps, DroidProguard,
-  DroidPlaceholders) {
+object DroidBuild
+extends tryp.AndroidBuild(DroidDeps, DroidProguard, DroidPlaceholders)
+{
   override def globalSettings = super.globalSettings ++ Seq(
     lintEnabled in Android := false,
-    incOptions := incOptions.value.withNameHashing(true)
+    incOptions := incOptions.value.withNameHashing(true),
+    organization := "tryp"
   )
 
-  lazy val common = Seq(
-    name := s"droid-${name.value}"
-  )
+  override val prefix = Some("droid")
 
-  def default(name: String) = pb(name)
-    .antSrc
-    .paradise()
-    .settings(common)
-    .aar
+  def ddp(name: String) = tdp(name).aar
 
-  lazy val core = default("core")
-    .settings(android.Plugin.androidCommands ++ Seq(
-      name := "droid",
-      description := "Common tryp stuff",
-      organization := "tryp",
-      addCompilerPlugin("org.brianmckenna" %% "wartremover" % "0.10"),
-      scalacOptions in (Compile, compile) ++= (
-        (dependencyClasspath in Compile).value.files.map(
-          "-P:wartremover:cp:" + _.toURI.toURL
-        )
-      ),
-      scalacOptions in (Compile, compile) ++= Seq(
-        "-P:wartremover:traverser:macroid.warts.CheckUi"
-      )
-    ))
+  lazy val core = ddp("core")
+    .settingsV(description := "Common tryp stuff")
     .transitive()
 
-  lazy val test = default("test")
+  lazy val test = ddp("test")
     .dep(core)
 
-  lazy val unit = default("unit")
+  lazy val unit = ddp("unit")
     .dep(test)
 
-  lazy val debug = default("debug")
+  lazy val debug = ddp("debug")
     .dep(core)
 
-  lazy val integration = default("integration")
+  lazy val integration = ddp("integration")
     .dep(test)
 }
