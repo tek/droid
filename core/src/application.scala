@@ -1,9 +1,12 @@
 package tryp.droid
 
+import com.typesafe.config.ConfigFactory
+
+import akka.actor.ActorSystem
+
 import android.content.pm.ApplicationInfo
 
-trait TrypApplication
-{ self: android.app.Application ⇒
+trait TrypApplication { self: android.app.Application ⇒
 
   def createTrypApp(name: String) {
     if ((getApplicationInfo.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
@@ -14,6 +17,8 @@ trait TrypApplication
       else if (Env.unittest) tryp.meta.StdoutLog
       else tryp.droid.meta.DebugLog
     tryp.droid.meta.AndroidLog.tag = name
+    Akka._system = Some(ActorSystem("tryp", ConfigFactory.load(getClassLoader),
+      getClassLoader))
   }
 }
 

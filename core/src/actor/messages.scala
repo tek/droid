@@ -23,6 +23,10 @@ class Messages
   case object Update
   case class MapReady(map: GoogleMap)
   case class AuthBackend()
+  case class BackendAuthFailed()
+  case class Toast(id: String)
+  case class StartAsyncTask(f: Future[_])
+  case class CompleteAsyncTask(f: Future[_])
 }
 
 object Messages extends Messages

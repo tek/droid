@@ -2,13 +2,19 @@ package tryp.droid
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import com.typesafe.config.ConfigFactory
-
 import akka.actor.{ ActorSelection, ActorSystem, Actor, Props }
 
 import tryp.droid.util.CallbackMixin
 
-trait AkkaComponent {
+object Akka
+{
+  private [droid] var _system: Option[ActorSystem] = None
+
+  def system = _system.getOrElse { sys.error("actor system not initialized") }
+}
+
+trait AkkaComponent
+{
 
   def actor(props: Props): ActorSelection = {
     selectActor(props.actorName)
@@ -18,7 +24,9 @@ trait AkkaComponent {
     actorSystem.actorSelection(s"/user/${name}")
   }
 
-  def actorSystem: ActorSystem
+  def actorSystem = Akka.system
+
+  def core = selectActor("core")
 }
 
 trait AkkaClient extends AkkaComponent
@@ -32,10 +40,6 @@ trait AkkaClient extends AkkaComponent
         throw new java.lang.Exception(s"No Akkativity access in ${this}")
     }
   }
-
-  def actorSystem = akkativity.actorSystem
-
-  def core = selectActor("core")
 
   def mainActor = actor(MainActor.props)
 
@@ -61,13 +65,6 @@ extends AkkaComponent
 with CallbackMixin
 { self: Activity
   with HasActivity ⇒
-
-  lazy val actorSystemName = res.string("app_handle").trim
-
-  lazy val actorSystem = ActorSystem(
-    actorSystemName,
-    ConfigFactory.load(getApplication.getClassLoader),
-    getApplication.getClassLoader)
 
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
@@ -134,10 +131,6 @@ with AkkaComponent
   import TrypActor._
 
   var attachedUi: Option[A] = None
-
-  lazy val core = context.system.actorSelection("/user/core")
-
-  def actorSystem = context.system
 
   def mainActor = actor(MainActor.props)
 
@@ -233,6 +226,8 @@ extends TrypActor[A]
         ui { _.addTransitions(sets) }
       case ShowDetails(data) ⇒
         ui(_.showDetails(data))
+      case Toast(id) ⇒
+        ui(_.toast(id))
       case a ⇒ unhandled(a)
     }
   }

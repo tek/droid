@@ -25,6 +25,10 @@ extends TrypActor[MainFragment]
       ui { _.scrolled(view, dy) }
     case Messages.Result(data: Any) ⇒
       lastResult = Some(data)
+    case Messages.StartAsyncTask(task: Future[_]) ⇒
+      ui { _.startAsyncTask() }
+    case Messages.CompleteAsyncTask(task: Future[_]) ⇒
+      ui { _.completeAsyncTask() }
     case AttachUi(_) ⇒
       lastResult foreach { r ⇒
         ui { _.result(r) }

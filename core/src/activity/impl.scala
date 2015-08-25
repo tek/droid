@@ -16,6 +16,7 @@ with MainView
 with FragmentManagement
 with Akkativity
 with HasNavigation
+with Snackbars
 {
   override implicit def activity = this
 

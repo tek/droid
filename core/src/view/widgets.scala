@@ -61,22 +61,23 @@ extends Transitions
       On.click { Ui(fabClick()) }
   }
 
-  def fabClick() {  }
+  def fabClick() { }
 
-  // Runs 'task' in a future while changing the fab to a circular progress
-  // indicator. After completion, 'snack' is shown as a toast, if nonempty.
-  def fabAsync[A, B](snack: Option[String] = None)(task: ⇒ B)
-  (callback: (B) ⇒ Unit) = {
-    Future { task }
+  // Runs 'task' while changing the fab to a circular progress indicator. After
+  // completion, 'snack' is shown as a toast, if nonempty.
+  def fabAsync[A, B](snack: ⇒ Option[String] = None)(task: Future[B]) = {
+    mainActor ! Messages.StartAsyncTask(task)
+    task
+      .andThen { case _ ⇒ mainActor ! Messages.CompleteAsyncTask(task) }
+      .mapUi { a ⇒ snack map(mkToast) getOrElse(Ui.nop) }
   }
 
-  def fabAsyncF[A, B](snack: ⇒ Option[String] = None)(task: Future[B])
-  (callback: (B) ⇒ Unit) = {
-    task mapUi { b ⇒
-      callback(b)
-      snack map { mkToast(_) } getOrElse Ui.nop
-    }
-    ((fadeToProgress <~~ Snails.wait(task)) ~~ fadeToFab).run
+  def startAsyncTask() {
+    fadeToProgress.run
+  }
+
+  def completeAsyncTask() {
+    fadeToFab.run
   }
 
   private val fadeTime = 400L
