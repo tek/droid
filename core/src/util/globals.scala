@@ -7,7 +7,7 @@ with AndroidExt
 }
 
 trait GlobalsBase
-extends tryp.core.meta.Globals
+extends tryp.meta.Globals
 with Util
 {
   val Env = tryp.droid.meta.Env

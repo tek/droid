@@ -6,8 +6,8 @@ import akka.actor.ActorSelection
 
 import tryp.droid.Messages
 
-import tryp.core.util._
-import tryp.core.meta._
+import tryp.util._
+import tryp.meta._
 
 trait AndroidLog
 extends LogInterface
