@@ -26,19 +26,13 @@ with TrypSpec
   Env.unit = true
   Env.test = true
 
-  def waitFor(timeout: Long)(pred: ⇒ Boolean) {
-    val start = Time.millis
-    while (!pred && Time.millis - start < timeout) {
-      sync()
-    }
-  }
-
   def timeoutAssertion(isTrue: Boolean) = assert(isTrue,
     "Timeout waiting for predicate")
 }
 
 trait TrypTestExt
 extends Matchers
+with TrivialImplTestHelpers
 { this: TrypSpec ⇒
 
   implicit class `Option with assertion`[A: ClassTag](o: Option[A]) {
@@ -56,6 +50,8 @@ extends Matchers
       o map f
     }
   }
+
+  override def sleepCycle() = sync()
 
   def sync() = {
     Thread.sleep(100L)

@@ -6,7 +6,8 @@ object DroidDeps
 extends tryp.AndroidDeps
 {
   override def deps = super.deps ++ Map(
-    "core" → core
+    "core" → core,
+    "test" → test
   )
 
   override def resolvers = super.resolvers ++ Map(
@@ -15,6 +16,7 @@ extends tryp.AndroidDeps
 
   def core = ids(
     dd("tryp" %% "pulsar-slick" % "+", "tek/pulsar", "slick"),
+    dd("tryp" %% "pulsar-core" % "+", "tek/pulsar", "core"),
     aar("com.android.support" % "appcompat-v7" % "21.+"),
     aar("com.android.support" % "palette-v7" % "21.+"),
     aar("com.android.support" % "recyclerview-v7" % "21.+"),
@@ -29,5 +31,9 @@ extends tryp.AndroidDeps
     "com.melnykov" % "floatingactionbutton" % "1.+",
     "com.android.support" % "support-v13" % "21.+",
     "com.makeramen" % "roundedimageview" % "2.+"
+  )
+
+  def test = ids(
+    dd("tryp" %% "pulsar-test" % "+", "tek/pulsar", "test")
   )
 }
