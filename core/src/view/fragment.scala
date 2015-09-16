@@ -1,6 +1,6 @@
 package tryp.droid
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scalaz._, Scalaz._
 
 import android.widget._
 import android.transitions.everywhere.TransitionSet
@@ -10,7 +10,7 @@ import macroid.FullDsl._
 import macroid.FragmentBuilder
 
 import tryp.droid.util.OS
-import tryp.droid.res.{Layouts,LayoutAdapter,PrefixResourceNamespace}
+import tryp.droid.res.{PrefixResourceNamespace}
 import tryp.droid.Macroid._
 import tryp.droid.tweaks.Recycler._
 
@@ -28,8 +28,6 @@ with Transitions
   def title = name
 
   def layoutRes: Option[Int] = None
-
-  def layoutName: Option[String] = None
 
   implicit def resourceNamespace = PrefixResourceNamespace(name.snakeCase)
 
@@ -73,23 +71,17 @@ abstract class TrypFragment
 extends Fragment
 with FragmentBase
 {
-  override def onCreateView(
-    inflater: LayoutInflater, container: ViewGroup, state: Bundle
-  ): View =
-  {
-    layoutRes map { inflater.inflate(_, container, false) } getOrElse {
-      Ui.get(layout(state) <~ uiRoot)
-    }
+  override def onCreateView
+  (inflater: LayoutInflater, container: ViewGroup, state: Bundle) = {
+    Ui.get(layout(state) <~ uiRoot)
   }
 
-  def layout(state: Bundle) = macroidLayout(state)
+  def layout(state: Bundle): Ui[ViewGroup]
 
-  def macroidLayout(state: Bundle): Ui[ViewGroup] = {
-    layoutAdapter map { _.layout } getOrElse { Layouts.dummy }
-  }
-
-  lazy val layoutAdapter: Option[LayoutAdapter] = {
-    Layouts.get(layoutName)
+  def resLayout(inflater: LayoutInflater, container: ViewGroup) = {
+    layoutRes
+      .some { id ⇒ Ui(inflater.inflate(id, container, false)) }
+      .none { RL()() }
   }
 }
 
@@ -199,7 +191,7 @@ extends TrypFragment
 
   val recyclerView = slut[RecyclerView]
 
-  override def layout(state: Bundle) = {
+  def layout(state: Bundle) = {
     w[RecyclerView] <~ recyclerAdapter(adapter) <~ recyclerTweaks <~
       recyclerView
   }

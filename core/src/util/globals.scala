@@ -7,8 +7,6 @@ with ToActionMacroidOps
 
 trait Basic
 {
-  val layouts = tryp.droid.res.Layouts
-
   val Id = tryp.droid.util.Id
 
   val Tag = tryp.droid.util.Tag
