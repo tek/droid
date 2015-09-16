@@ -9,7 +9,6 @@ extends tryp.droid.ApplicationI
   self: android.app.Application ⇒
 
   abstract override def onCreate() {
-    p("droid debug Application")
     Try(super.onCreate()) recover {
       case e: java.lang.NoClassDefFoundError ⇒ throw ProguardCacheError(e)
       case e: java.lang.NoSuchMethodError ⇒ throw ProguardCacheError(e)

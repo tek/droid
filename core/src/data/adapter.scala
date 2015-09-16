@@ -79,9 +79,7 @@ with AkkaAdapter
     applyFilter
   }
 
-  def applyFilter = {
-    Ui(getFilter.filter(currentFilter))
-  }
+  def applyFilter = Ui(getFilter.filter(currentFilter))
 
   def updateVisibleData(newItems: Seq[B]) {
     visibleItems = sort(newItems)

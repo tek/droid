@@ -24,7 +24,7 @@ extends tryp.AndroidDeps
     "com.google.android.gms" % "play-services-maps" % "6.+",
     "com.google.android.gms" % "play-services-location" % "6.+",
     "com.google.android.gms" % "play-services-plus" % "6.+",
-    dd(aar("org.macroid" %% "macroid-core" % "+"), "macroid/macroid", "core"),
+    ad(aar("org.macroid" %% "macroid-core" % "+"), "macroid/macroid", "core"),
     "com.typesafe.akka" %% "akka-actor" % "2.3.+",
     "com.scalarx" %% "scalarx" % "0.+",
     "com.github.andkulikov" % "transitions-everywhere" % "1.+",

@@ -144,18 +144,8 @@ trait Searchable {
 }
 
 trait ActivityContexts {
-
-  implicit def wrapper(implicit activity: Activity) = ContextWrapper(activity)
-
-  implicit def activityAppContext(implicit activity: Activity) =
-    AppContext(activity.getApplicationContext)
-
-  implicit def activityManagerContext[M, F](implicit fragmentApi:
-    FragmentApi[F, M, Activity], activity: Activity) =
-      FragmentManagerContext[F, M](fragmentApi.activityManager(activity))
-
-  implicit def activityActivityContext(implicit activity: Activity) =
-    ActivityContext(activity)
+  implicit def toActivityContextWrapper(implicit activity: Activity) =
+    ContextWrapper(activity)
 }
 
 trait HasActivity
