@@ -1,7 +1,5 @@
 package tryp.droid.meta
 
-import scala.collection.mutable.Buffer
-
 import akka.actor.ActorSelection
 
 import tryp.droid.Messages

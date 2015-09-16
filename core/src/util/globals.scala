@@ -1,19 +1,12 @@
-package tryp.droid.util
+package tryp.droid.meta
 
 trait Util
 extends AkkaExt
 with AndroidExt
+with ToActionMacroidOps
+
+trait Basic
 {
-}
-
-trait GlobalsBase
-extends tryp.meta.Globals
-with Util
-{
-  val Env = tryp.droid.meta.Env
-
-  def log(message: String) = Log.d(message)
-
   val layouts = tryp.droid.res.Layouts
 
   val Id = tryp.droid.util.Id
@@ -40,11 +33,18 @@ with Util
 
   def GPlus: tryp.droid.GPlusBase = tryp.droid.Classes.plus
 
-  type Model = slick.db.Model
+  val AndroidLog = tryp.droid.meta.AndroidLog
 }
 
+trait GlobalsBase
+extends tryp.slick.sync.meta.GlobalsBase
+with Util
+with Basic
+
 trait Globals
-extends GlobalsBase
+extends tryp.slick.sync.meta.Globals
+with Util
+with Basic
 {
   type Activity = android.app.Activity
   type View = android.view.View

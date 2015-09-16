@@ -1,11 +1,12 @@
 package tryp {
-  package object droid extends tryp.droid.util.TrypDroidGlobals
+  package object droid extends tryp.droid.meta.TrypDroidGlobals
   package droid {
-    package object helpers extends tryp.droid.util.TrypDroidGlobals
-    package object activity extends tryp.droid.util.TrypDroidGlobals
-    package object view extends tryp.droid.util.TrypDroidGlobals
-    package object service extends tryp.droid.util.TrypDroidGlobals
-    package object res extends tryp.droid.util.TrypDroidGlobals
-    package object tweaks extends tryp.droid.util.TrypDroidGlobals
+    package object meta extends tryp.slick.sync.meta.Globals
+    package object helpers extends tryp.droid.meta.TrypDroidGlobals
+    package object activity extends tryp.droid.meta.TrypDroidGlobals
+    package object view extends tryp.droid.meta.TrypDroidGlobals
+    package object service extends tryp.droid.meta.TrypDroidGlobals
+    package object res extends tryp.droid.meta.TrypDroidGlobals
+    package object tweaks extends tryp.droid.meta.TrypDroidGlobals
   }
 }

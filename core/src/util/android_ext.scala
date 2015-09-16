@@ -1,4 +1,4 @@
-package tryp.droid.util
+package tryp.droid.meta
 
 import scala.math.min
 
@@ -8,7 +8,7 @@ import android.graphics.drawable.Drawable
 import android.view.{View,ViewGroup}
 import android.app.{Fragment,Activity}
 
-import tryp.droid.meta.Env
+import tryp.droid.util._
 
 trait AndroidExt {
   implicit class ViewGroupExt(vg: ViewGroup) {
@@ -96,10 +96,10 @@ trait AndroidExt {
     }
 
     def preselectValue(interval: String) = {
-      if (Env.release && interval == "minute") {
+      if (TrypEnv.release && interval == "minute") {
         10
       }
-      else if (Env.debug && interval == "second") {
+      else if (TrypEnv.debug && interval == "second") {
         1
       }
       else {

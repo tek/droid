@@ -3,7 +3,7 @@ package tryp.droid.test
 import tryp.droid._
 
 trait TrypSpec
-extends tryp.core.TestHelpers
+extends tryp.TestHelpers
 {
   def activity: TrypActivity
 

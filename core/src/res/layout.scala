@@ -72,7 +72,7 @@ extends ActivityContexts
     name flatMap { layouts.get(_) } map {
       try { _.create }
       catch {
-        case e: Exception ⇒ if (Env.debug) {
+        case e: Exception ⇒ if (TrypEnv.debug) {
           throw e
         }
         null

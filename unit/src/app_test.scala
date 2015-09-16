@@ -10,27 +10,24 @@ import org.scalatest._
 import matchers._
 
 import tryp.droid._
-import tryp.core._
+import tryp._
 
-abstract class TrypTest
+trait TrypUnitSpec
 extends FeatureSpec
 with RobolectricSuite
 with Matchers
 with BeforeAndAfterEach
 with BeforeAndAfterAll
 with LoneElement
-with TrypTestExt
+with TrypSpecExt
 with tryp.droid.HasContext
 with TrypSpec
 {
-  Env.unit = true
-  Env.test = true
-
   def timeoutAssertion(isTrue: Boolean) = assert(isTrue,
     "Timeout waiting for predicate")
 }
 
-trait TrypTestExt
+trait TrypSpecExt
 extends Matchers
 with TrivialImplTestHelpers
 { this: TrypSpec ⇒

@@ -1,7 +1,5 @@
 package tryp.droid.meta
 
-import tryp.droid.Log
-
 object Debug {
   def rescued[A](callback: ⇒ A): A = {
     try {

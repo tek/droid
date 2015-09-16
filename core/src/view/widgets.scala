@@ -6,8 +6,8 @@ import android.widget._
 
 import com.melnykov.fab.FloatingActionButton
 
-import macroid.FullDsl._
-import macroid.Snails
+import macroid._
+import FullDsl._
 
 import tryp.droid.Macroid._
 import tryp.droid.{Macroid ⇒ T}
@@ -98,7 +98,7 @@ extends Transitions
 
   def changeFabVisibility(snail: Snail[View]) {
     changingFabVisibility = true
-    runUi((fab <~~ snail) ~~ Ui {
+    Ui.run((fab <~~ snail) ~~ Ui {
       changingFabVisibility = false
       syncFabVisibility()
     })
@@ -122,7 +122,7 @@ extends Transitions
   }
 
   def updateFabPosition() {
-    runUi(fab <~ translateY(-scrollHeight))
+    Ui.run(fab <~ translateY(-scrollHeight))
     syncFabVisibility()
   }
 
@@ -131,6 +131,6 @@ extends Transitions
   def scrolled(view: ViewGroup, height: Int) {
     scrollHeight = height
     updateFabPosition()
-    runUi(header <~ parallaxScroll(height))
+    Ui.run(header <~ parallaxScroll(height))
   }
 }

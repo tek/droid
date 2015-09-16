@@ -75,7 +75,7 @@ with CallbackMixin
         Log.e(msg)
       }
       case e: Exception ⇒ {
-        if (!Env.release) {
+        if (!TrypEnv.release) {
           throw e
         }
       }

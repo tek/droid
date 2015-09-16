@@ -6,6 +6,7 @@ import scala.concurrent.ExecutionContext
 import android.widget._
 import android.view.Gravity
 
+import macroid._
 import macroid.FullDsl._
 
 import android.transitions.everywhere._
@@ -195,7 +196,7 @@ class Widgets(implicit a: Activity)
 
   def text(transName: String = "widget",
     transition: Transition = new TransitionSet, duration: Long = 300)
-  (implicit a: macroid.ActivityContext) =
+  (implicit a: macroid.ContextWrapper) =
   {
     widget(w[TextView], transName, transition, duration)
   }

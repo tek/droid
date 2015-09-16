@@ -110,7 +110,7 @@ extends res.ResourcesAccess
       signInTask = Some(new GPlusSignIn(t ⇒ signInComplete(true)))
       signInTask foreach { _.connect() }
     } recover {
-      case e if Env.debug ⇒ throw e
+      case e if TrypEnv.debug ⇒ throw e
     }
   }
 
@@ -118,7 +118,7 @@ extends res.ResourcesAccess
     Try {
       (new GPlusSignOut).connect()
     } recover {
-      case e if Env.debug ⇒ throw e
+      case e if TrypEnv.debug ⇒ throw e
     }
   }
 

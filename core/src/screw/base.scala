@@ -8,7 +8,9 @@ import scala.language.higherKinds
 import macroid.util.Effector
 
 case class Screw[-A](f: A ⇒ Unit) {
-  def apply(w: A) = f(w)
+  def apply(w: A) = {
+    f(w)
+  }
 
   def +[A1 <: A](that: Screw[A1]): Screw[A1] = Screw { x ⇒
     this(x)
@@ -16,7 +18,7 @@ case class Screw[-A](f: A ⇒ Unit) {
   }
 }
 
-@implicitNotFound("Don't know how to screw ${A} with ${B}. " + 
+@implicitNotFound("Don't know how to screw ${A} with ${B}. " +
   "Try importing an instance of CanScrew[${A}, ${B}, ...].")
 trait CanScrew[A, B, C] {
   def screw(i: A, s: B): C
@@ -26,7 +28,7 @@ object CanScrew {
   implicit def `screw Any with Screw`[A, B <: Screw[A]] =
     new CanScrew[A, B, A] {
       def screw(item: A, scrw: B) = {
-        item tap { scrw(_) }
+        item tap(scrw.apply)
       }
     }
 
@@ -34,7 +36,10 @@ object CanScrew {
   (implicit effector: Effector[F], canScrew: CanScrew[W, T, R]) =
     new CanScrew[F[W], T, F[W]] {
       def screw(f: F[W], t: T) = {
-        effector.foreach(f)(w ⇒ canScrew.screw(w, t))
+        effector.foreach(f) { w ⇒
+          canScrew.screw(w, t)
+          Ui.nop
+        }
         f
       }
     }

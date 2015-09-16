@@ -2,23 +2,14 @@ import sbt._
 import sbt.Keys._
 import android.Keys._
 
-object DroidProguard
-extends tryp.Proguard
-{
-  override lazy val cache = Seq()
-  override lazy val options = Seq()
-}
-
-object DroidPlaceholders
-extends tryp.Placeholders
-
 object DroidBuild
-extends tryp.AndroidBuild(DroidDeps, DroidProguard, DroidPlaceholders)
+extends tryp.AndroidBuild(deps = DroidDeps)
 {
   override def globalSettings = super.globalSettings ++ Seq(
+    typedResources in Android := false,
     lintEnabled in Android := false,
-    incOptions := incOptions.value.withNameHashing(true),
-    organization := "tryp"
+    organization := "tryp",
+    scalacOptions += "-target:jvm-1.7"
   )
 
   override val prefix = Some("droid")

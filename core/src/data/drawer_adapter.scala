@@ -4,7 +4,8 @@ import android.widget._
 import android.support.v7.widget.RecyclerView
 import android.graphics.{Color,PorterDuff}
 
-import macroid.FullDsl._
+import macroid._
+import FullDsl._
 import macroid.contrib.TextTweaks.{medium, bold}
 
 import akka.actor.ActorSelection
@@ -37,7 +38,7 @@ class DrawerAdapter(navigation: Navigation)
 extends SimpleRecyclerAdapter[DrawerViewHolder, DrawerItem]
 {
   setHasStableIds(true)
-  updateItems(navigation.drawerItems)
+  updateItems(navigation.drawerItems).run
 
   implicit val ns = PrefixResourceNamespace("drawer")
 
@@ -60,7 +61,7 @@ extends SimpleRecyclerAdapter[DrawerViewHolder, DrawerItem]
     val layout = clickFrame(
       w[TextView] <~ whore(text) <~ padding(all = 16 dp) <~ medium <~ ↔
     ) <~ ↔
-    NavViewHolder(getUi(layout), text)
+    NavViewHolder(Ui.get(layout), text)
   }
 
   def gPlusHolder = {
@@ -79,7 +80,7 @@ extends SimpleRecyclerAdapter[DrawerViewHolder, DrawerItem]
         imageBorderColor("header_photo") <~
         rlp(Width(photoSize), Height(photoSize), ↥, ↤) <~ margin(all = 16 dp)
     )
-    GPlusHeaderHolder(getUi(layout), name, email, avatar)
+    GPlusHeaderHolder(Ui.get(layout), name, email, avatar)
   }
 
   def onBindViewHolder(holder: DrawerViewHolder, position: Int) {
@@ -90,8 +91,9 @@ extends SimpleRecyclerAdapter[DrawerViewHolder, DrawerItem]
   }
 
   def bindNavTarget(holder: DrawerViewHolder, target: NavigationTarget) = {
+    val ct = implicitly[macroid.CanTweak[View, Tweak[View], View]]
     val color = bgCol(navigation.isCurrent(target) ? "item_selected" | "item")
-    runUi(
+    Ui.run(
       holder.text <~ txt.literal(target.title),
       holder.view <~ color <~ On.click {
         Ui(core ! Messages.Navigation(target))
@@ -106,12 +108,12 @@ extends SimpleRecyclerAdapter[DrawerViewHolder, DrawerItem]
           account.withCover { cover ⇒
             cover.setColorFilter(Color.argb(80, 0, 0, 0),
               PorterDuff.Mode.DARKEN)
-            runUi(view <~ bg(cover))
+            Ui.run(view <~ bg(cover))
           }
           account.withPhoto { photo ⇒
-            runUi(avatar <~ imageDrawableC(photo))
+            Ui.run(avatar <~ imageDrawableC(photo))
           }
-          runUi(
+          Ui.run(
             name <~ account.name.map { n ⇒ txt.literal(n) },
             email <~ account.email.map { n ⇒ txt.literal(n) }
           )

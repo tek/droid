@@ -1,33 +1,75 @@
 package tryp.droid
 
+import java.io.File
+
 import com.typesafe.config.ConfigFactory
 
 import akka.actor.ActorSystem
 
 import android.content.pm.ApplicationInfo
 
-trait TrypApplication { self: android.app.Application ⇒
+import tryp.slick.DroidDbInfo
 
-  def createTrypApp(name: String) {
-    if ((getApplicationInfo.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
-      Env.debug = true
-    }
+trait ApplicationI
+{ self: android.app.Application ⇒
+
+  def onCreate()
+  protected def attachBaseContext(base: Context)
+}
+
+trait TrypApplication
+extends HasContext
+with ApplicationI
+{ self: android.app.Application ⇒
+
+  val useDb = true
+
+  def setupDbInfo(name: String) = {
+    val dbPath = new File(context.getFilesDir, s"$name.db")
+    DbMeta.setDbInfo(DroidDbInfo(dbPath.toString))
+  }
+
+  def isDebug = {
+    (getApplicationInfo.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0
+  }
+
+  def setupEnv() = {
+    if (isDebug) setEnv(tryp.meta.DebugEnv)
+  }
+
+  def setupLog(name: String) = {
     tryp.util.Logs.log =
-      if (Env.release) tryp.droid.meta.InternalLog
-      else if (Env.unittest) tryp.meta.StdoutLog
+      if (TrypEnv.release) tryp.droid.meta.InternalLog
+      else if (TrypEnv.unittest) tryp.meta.StdoutLog
       else tryp.droid.meta.DebugLog
     tryp.droid.meta.AndroidLog.tag = name
-    Akka._system = Some(ActorSystem("tryp", ConfigFactory.load(getClassLoader),
+  }
+
+  def setupAkka(name: String) = {
+    Akka._system = Some(ActorSystem(name, ConfigFactory.load(getClassLoader),
       getClassLoader))
+  }
+
+  def createTrypApp(name: String) {
+    setupEnv()
+    setupLog(name)
+    setupAkka(name)
+    if (useDb) setupDbInfo(name)
   }
 }
 
-class Application
-extends android.app.Application
-with TrypApplication
+trait Application
+extends TrypApplication
 {
-  def onCreate(name: String = "tryp") {
-    super.onCreate()
+  self: android.app.Application ⇒
+
+  def context = getApplicationContext
+
+  def name: String
+
+  abstract override def onCreate() {
+    AndroidLog.d("droid Application")
     createTrypApp(name)
+    super.onCreate()
   }
 }

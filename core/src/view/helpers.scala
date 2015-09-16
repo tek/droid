@@ -18,7 +18,7 @@ import android.app.{FragmentManager,FragmentTransaction,AlarmManager}
 import android.support.v4.content.WakefulBroadcastReceiver
 import android.os.{Vibrator,SystemClock}
 
-import macroid.{FragmentManagerContext,ActivityContext,AppContext}
+import macroid._
 import macroid.support.FragmentApi
 
 import tryp.droid.util._
@@ -79,7 +79,7 @@ trait Searchable {
     entry.findViewById(res.id(name)) match {
       case v: View ⇒ Option(v)
       case null ⇒ {
-        if (Env.release) {
+        if (TrypEnv.release) {
           None
         }
         else {
@@ -144,6 +144,8 @@ trait Searchable {
 }
 
 trait ActivityContexts {
+
+  implicit def wrapper(implicit activity: Activity) = ContextWrapper(activity)
 
   implicit def activityAppContext(implicit activity: Activity) =
     AppContext(activity.getApplicationContext)
@@ -431,7 +433,7 @@ extends HasActivity
     val v = LL()(
       w[TextView] <~ txt.content(resName)
     )
-    runUi {
+    Ui.run {
       mToast(v) <~ fry
     }
   }

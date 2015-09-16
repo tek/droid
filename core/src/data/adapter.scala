@@ -74,13 +74,13 @@ with AkkaAdapter
 
   var currentFilter = ""
 
-  def filter(constraint: String) {
+  def filter(constraint: String) = {
     currentFilter = constraint
-    applyFilter()
+    applyFilter
   }
 
-  def applyFilter() {
-    Ui(getFilter.filter(currentFilter)).run
+  def applyFilter = {
+    Ui(getFilter.filter(currentFilter))
   }
 
   def updateVisibleData(newItems: Seq[B]) {
@@ -125,8 +125,8 @@ extends RecyclerAdapter[A, B]
 
   def items = simpleItems
 
-  def updateItems(newItems: Seq[B]) {
+  def updateItems(newItems: Seq[B]) = {
     simpleItems = newItems.toBuffer
-    applyFilter()
+    applyFilter
   }
 }

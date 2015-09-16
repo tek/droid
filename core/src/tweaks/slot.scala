@@ -2,8 +2,7 @@ package tryp.droid.tweaks
 
 import scala.concurrent.ExecutionContext
 
-import macroid.CanTweak
-import macroid.FullDsl._
+import macroid._
 
 import tryp.droid.WidgetBase
 
@@ -25,6 +24,10 @@ trait Slots
 
     def map[B](f: A ⇒ B) = {
       target map f
+    }
+
+    def some[B](f: A ⇒ B) = {
+      target some(f)
     }
   }
 

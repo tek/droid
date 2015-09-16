@@ -22,12 +22,12 @@ extends SimpleRecyclerAdapter[LogViewHolder, String]
   def onCreateViewHolder(parent: ViewGroup, viewType: Int) = {
     val text = slut[TextView]
     val layout = w[TextView] <~ whore(text) <~ padding(all = 8 dp) <~ ↔
-    new LogViewHolder(getUi(layout), text)
+    new LogViewHolder(Ui.get(layout), text)
   }
 
   def onBindViewHolder(holder: LogViewHolder, position: Int) {
     val item = items(position)
-    runUi(holder.text <~ txt.literal(item))
+    Ui.run(holder.text <~ txt.literal(item))
   }
 }
 
@@ -42,7 +42,7 @@ with RecyclerFragment[LogAdapter]
   override def onStart() {
     super.onStart
     InternalLog.actor = Some(selectActor("Log"))
-    runUi(updateLog())
+    Ui.run(updateLog())
   }
 
   def updateLog() = {

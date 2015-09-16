@@ -14,8 +14,6 @@ import tryp.droid.res.{Layouts,LayoutAdapter,PrefixResourceNamespace}
 import tryp.droid.Macroid._
 import tryp.droid.tweaks.Recycler._
 
-import slick.db.ObjectId
-
 trait FragmentBase
 extends Fragment
 with Broadcast
@@ -80,7 +78,7 @@ with FragmentBase
   ): View =
   {
     layoutRes map { inflater.inflate(_, container, false) } getOrElse {
-      getUi(layout(state) <~ uiRoot)
+      Ui.get(layout(state) <~ uiRoot)
     }
   }
 
@@ -151,7 +149,7 @@ extends MainFragment
     if (model.isEmpty) {
       Try(ObjectId(stored)) match {
         case Success(id) ⇒ initData(id)
-        case Failure(_) ⇒ 
+        case Failure(_) ⇒
           Log.e(s"No dataId in arguments to show fragment '${name}'")
       }
     }

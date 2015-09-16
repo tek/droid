@@ -1,11 +1,7 @@
 package tryp.droid.meta
 
-object Env
-{
-  var test = false
-  var unit = false
-  var debug = false
+trait DroidEnv
+extends tryp.meta.Env
 
-  def release = !(test || debug)
-  def unittest = test && unit
-}
+object DroidEnv
+extends DroidEnv

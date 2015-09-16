@@ -73,7 +73,7 @@ with Transitions
   }
 
   def initView = {
-    setContentView(getUi(mainLayout))
+    setContentView(Ui.get(mainLayout))
   }
 
   def mainLayout = contentLayout
@@ -231,7 +231,7 @@ extends MainView
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
     toolbar foreach setSupportActionBar
-    runUi(toolbar <~ T.navButtonListener(navButtonClick()))
+    Ui.run(toolbar <~ T.navButtonListener(navButtonClick()))
   }
 
   val toolbar = slut[Toolbar]
@@ -257,7 +257,7 @@ extends MainView
   def belowToolbarLayout: Ui[View] = contentLayout
 
   def toolbarTitle(title: String) {
-    runUi {
+    Ui.run {
       toolbar <~
         T.title(title.isEmpty ? res.string("app_title") | title)
     }
@@ -334,7 +334,7 @@ extends MainView
     navigate(target)
   }
 
-  override def loadShowFragment[A <: slick.db.Model: ClassTag]
+  override def loadShowFragment[A <: Model: ClassTag]
   (model: A, ctor: () ⇒ ShowFragment[A]) {
     val target = new ShowNavigationTarget("Details", ctor, model)
     navigate(target)

@@ -11,6 +11,8 @@ object Akka
   private [droid] var _system: Option[ActorSystem] = None
 
   def system = _system.getOrElse { sys.error("actor system not initialized") }
+
+  implicit def ec: EC = system.dispatcher
 }
 
 trait AkkaComponent
@@ -25,6 +27,8 @@ trait AkkaComponent
   }
 
   def actorSystem = Akka.system
+
+  implicit def ec = Akka.ec
 
   def core = selectActor("core")
 }

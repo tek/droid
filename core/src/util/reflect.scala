@@ -2,6 +2,7 @@ package tryp.droid.util
 
 import scala.reflect.ClassTag
 
+// FIXME toss
 object Reflect
 {
   implicit class `Any with reflectable fields`(obj: Any) {

@@ -91,9 +91,11 @@ trait Layout
     (width, height, rules)
   }
 
+  // robolectric chokes on the Rule class due to two $ in the name
   def relative(params: Any*) = {
     val (width, height, rules) = extractRlParams(params: _*)
-    lp[RuleRelativeLayout](width.value, height.value, rules: _*)
+    if (TrypEnv.unit) Tweak[View] { _ ⇒ () }
+    else lp[RuleRelativeLayout](width.value, height.value, rules: _*)
   }
 
   def rlp(params: Any*) = relative(params: _*)
@@ -208,7 +210,7 @@ trait Layout
 
   import tryp.droid.ShowFragment
 
-  def showFrag[A <: slick.db.Model: ClassTag](model: A, ctor: () ⇒ ShowFragment[A],
+  def showFrag[A <: Model: ClassTag](model: A, ctor: () ⇒ ShowFragment[A],
     id: Id = Id.next)
   (implicit a: Activity, fm: FragmentManagement) =
   {
