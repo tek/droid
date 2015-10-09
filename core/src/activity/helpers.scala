@@ -26,6 +26,7 @@ import tryp.droid._
 import tryp.droid.util.CallbackMixin
 import Macroid._
 import Screws._
+import tryp.slick.sync.SyncModel
 
 trait ActivityBase
 extends Activity
@@ -86,7 +87,7 @@ with Transitions
     loadView(frag(fragment, Id.content))
   }
 
-  def loadShowFragment[A <: Model: ClassTag]
+  def loadShowFragment[A <: SyncModel: ClassTag]
   (model: A, ctor: () ⇒ ShowFragment[A]) {
     loadView(showFrag(model, ctor, Id.content))
   }
@@ -120,7 +121,7 @@ with Transitions
 
   lazy val mainActor = createActor(MainActor.props)._2
 
-  def showDetails(data: Model) {  }
+  def showDetails(data: Model) {}
 }
 
 abstract trait ManagePreferences
@@ -334,7 +335,7 @@ extends MainView
     navigate(target)
   }
 
-  override def loadShowFragment[A <: Model: ClassTag]
+  override def loadShowFragment[A <: SyncModel: ClassTag]
   (model: A, ctor: () ⇒ ShowFragment[A]) {
     val target = new ShowNavigationTarget("Details", ctor, model)
     navigate(target)

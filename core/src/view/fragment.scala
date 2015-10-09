@@ -1,6 +1,6 @@
 package tryp.droid
 
-import scalaz._, Scalaz._
+import argonaut._, Argonaut._
 
 import android.widget._
 import android.transitions.everywhere.TransitionSet
@@ -13,6 +13,7 @@ import tryp.droid.util.OS
 import tryp.droid.res.{PrefixResourceNamespace}
 import tryp.droid.Macroid._
 import tryp.droid.tweaks.Recycler._
+import tryp.slick.sync.SyncModel
 
 trait FragmentBase
 extends Fragment
@@ -124,61 +125,31 @@ with Fab
   def dataLoaded() {}
 
   def result(data: Any) {
-    Log.w(s"Unhandled result in ${this.className}: ${data}")
+    Log.w(s"Unhandled result in ${this.className}: $data")
   }
 }
 
 abstract class ShowFragment[A <: Model]
-extends MainFragment
+extends StatefulFragment
 {
-  override def onCreate(state: Bundle) {
-    super.onCreate(state)
-    setupData()
-  }
-
-  private def setupData() {
-    val stored = getArguments.getString(Keys.dataId, "")
-    if (model.isEmpty) {
-      Try(ObjectId(stored)) match {
-        case Success(id) ⇒ initData(id)
-        case Failure(_) ⇒
-          Log.e(s"No dataId in arguments to show fragment '${name}'")
-      }
-    }
-  }
-
-  var model: Option[A] = None
-
-  private def initData(id: ObjectId) {
-    Future { model = fetchData(id) } map(Unit ⇒ update())
-  }
-
-  def fetchData(id: ObjectId): Option[A]
-
-  def update() {
-    model foreach { updateData(_).run }
-    fetchDetails()
-  }
-
-  def fetchDetails() {}
-
-  def updateData(m: A): Ui[Any]
+  override type I <: ShowImpl[A]
 
   override def onViewStateRestored(state: Bundle) {
     super.onViewStateRestored(state)
-    update()
+    // impl.send(Update)
+    // update()
   }
 }
 
 object ShowFragment
 extends ActivityContexts
 {
-  def apply[A <: Model](model: A)(ctor: ⇒ ShowFragment[A])
+  def apply[A <: SyncModel](model: A)(ctor: ⇒ ShowFragment[A])
   (implicit a: Activity) = {
     val inst = ctor
-    inst.model = Some(model)
     FragmentBuilder(Ui(inst), new Bundle)
-      .pass(Keys.dataId → model.id).factory.get
+      .pass(Keys.dataId → model.id, Keys.model → model.simpleJson.spaces2)
+      .factory.get
   }
 }
 

@@ -1,6 +1,8 @@
 package tryp.droid
 
 import tweaks.Layout.{frag,showFrag}
+import tryp.slick.sync.SyncModel
+
 
 sealed trait DrawerItem
 {
@@ -15,7 +17,7 @@ extends DrawerItem
     frag(fragment(), id, title)
 }
 
-class ShowNavigationTarget[A <: Model: ClassTag](title: String,
+class ShowNavigationTarget[A <: SyncModel: ClassTag](title: String,
   fragment: () ⇒ ShowFragment[A], model: A)
 extends NavigationTarget(title, fragment)
 {

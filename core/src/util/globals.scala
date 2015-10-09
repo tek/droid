@@ -4,6 +4,7 @@ trait Util
 extends AkkaExt
 with AndroidExt
 with ToActionMacroidOps
+with tryp.droid.BundleExt
 
 trait Basic
 {

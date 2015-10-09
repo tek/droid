@@ -3,6 +3,7 @@ package tryp.droid
 class Keys
 {
   val dataId = "tryp.droid.data_id"
+  val model = "tryp.droid.model"
   val intentAction = "tryp.droid.action"
   val intentSource = "tryp.droid.source"
   val alarmPurpose = "tryp.droid.purpose"

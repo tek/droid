@@ -21,6 +21,7 @@ import tryp.droid.ActivityContexts
 import tryp.droid.res.Resources
 import tryp.droid.Macroid._
 import tryp.droid.{FragmentManagement, MainFragment}
+import tryp.slick.sync.SyncModel
 
 trait Layout
 {
@@ -210,11 +211,11 @@ trait Layout
 
   import tryp.droid.ShowFragment
 
-  def showFrag[A <: Model: ClassTag](model: A, ctor: () ⇒ ShowFragment[A],
-    id: Id = Id.next)
+  def showFrag[A <: SyncModel: ClassTag]
+  (model: A, ctor: () ⇒ ShowFragment[A], id: Id = Id.next)
   (implicit a: Activity, fm: FragmentManagement) =
   {
-    frag(ShowFragment(model)(ctor()), id, implicitly[ClassTag[A]].className)
+    frag(ShowFragment(model)(ctor()), id, className[A])
   }
 
   import android.view.ViewGroup.LayoutParams._
