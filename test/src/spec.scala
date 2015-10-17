@@ -1,9 +1,9 @@
-package tryp.droid.test
+package tryp
+package droid
+package test
 
-import tryp.droid._
-
-trait TrypSpec
-extends tryp.TestHelpers
+trait TrypDroidSpec
+extends TestHelpers
 {
   def activity: TrypActivity
 
