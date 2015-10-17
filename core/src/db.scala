@@ -2,8 +2,6 @@ package tryp.droid
 
 import concurrent.duration._
 
-import tryp.slick.DbInfo
-
 import akka.util.Timeout
 
 object DbMeta

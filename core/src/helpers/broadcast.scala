@@ -7,7 +7,6 @@ import android.support.v4.content.LocalBroadcastManager
 
 import tryp.droid.util.CallbackMixin
 import tryp.droid.util.Params
-import tryp.droid.util.bundle.AndroidExt._
 
 class BroadcastReceiver(client: BroadcastReceive)
 extends android.content.BroadcastReceiver
