@@ -7,7 +7,8 @@ extends tryp.AndroidDeps
 {
   override def deps = super.deps ++ Map(
     "core" → core,
-    "test" → test
+    "test" → test,
+    "unit" → unit
   )
 
   override def resolvers = super.resolvers ++ Map(
@@ -35,5 +36,9 @@ extends tryp.AndroidDeps
 
   def test = ids(
     dd("tryp" %% "pulsar-test" % "+", "tek/pulsar", "test")
+  )
+
+  override def unit = super.unit ++ ids(
+    dd("tryp" %% "pulsar-unit-core" % "+", "tek/pulsar", "unit-core"),
   )
 }
