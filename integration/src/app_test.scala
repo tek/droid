@@ -1,4 +1,6 @@
-package tryp.droid.test
+package tryp
+package droid
+package test
 
 import scala.reflect.classTag
 
@@ -10,15 +12,13 @@ import junit.framework.Assert._
 
 import com.robotium.solo._
 
-import tryp.droid._
-
-class TrypTest[A <: TrypActivity](cls: Class[A])
+class TrypIntegrationSpec[A <: TrypActivity](cls: Class[A])
 extends ActivityInstrumentationTestCase2[A](cls)
 with Preferences
 with AppPreferences
 with BroadcastSend
 with HasActivity
-with TrypSpec
+with TrypDroidSpec
 {
   def view = null
   implicit def activity: A = getActivity
@@ -59,7 +59,7 @@ with TrypSpec
     }, timeout)
   }
 
-  def timeoutAssertion(isTrue: Boolean) = assert(isTrue)
+  def assertion(isTrue: Boolean, msg: ⇒ String) = assert(isTrue, msg)
 
   def enterText(text: String, id: Int = 0) {
     activity.viewOfType[EditText] foreach {
@@ -67,28 +67,3 @@ with TrypSpec
     }
   }
 }
-
-trait TrypTestImplicits
-{
-  implicit class `Option with assertion`[A: ClassTag](o: Option[A]) {
-    assertTrue(s"Option of type ${classTag[A].className} is empty", o.nonEmpty)
-
-    def foreachA(f: A ⇒ Unit) {
-      o foreach f
-    }
-
-    def flatMapA[B](f: A ⇒ Option[B]) = {
-      o flatMap f
-    }
-
-    def mapA[B](f: A ⇒ B) = {
-      o map f
-    }
-
-    def getA = {
-      o getOrElse { sys.error("unreachable") }
-    }
-  }
-}
-
-object TrypTest extends TrypTestImplicits
