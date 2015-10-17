@@ -482,8 +482,12 @@ with AppPreferences
 
   lazy val authTokenState = Rx { (authToken(), GPlus.signedIn()) }
 
+  def autoFetchAuthToken = true
+
   lazy val authTokenObserver = Obs(authTokenState) {
-    if (authToken() == "" && !fetchingPlusToken) obtainToken()
+    if (autoFetchAuthToken && authToken() == "" && !fetchingPlusToken) {
+      obtainToken()
+    }
   }
 
   def obtainToken() {
