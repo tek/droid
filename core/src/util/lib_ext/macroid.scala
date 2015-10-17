@@ -25,4 +25,11 @@ trait MacroidExt
         w
       }
     }
+
+  implicit class UiOps[A](u: Ui[A]) {
+    def thenDb(action: AnyAction[_])(implicit dbi: tryp.slick.DbInfo, ec: EC) =
+    {
+      u map(_ ⇒ action.! recover { case e ⇒ Log.e(e); e })
+    }
+  }
 }
