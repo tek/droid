@@ -419,10 +419,16 @@ extends HasActivity
 
   private implicit val ns = PrefixResourceNamespace("snackbar")
 
-  def snackbar(resName: String) {
-    val v = LL()(
-      w[TextView] <~ txt.content(resName)
-    )
+  def snackbar(resName: String) = {
+    snackbarImpl(txt.content(resName))
+  }
+
+  def snackbarLiteral(message: String) = {
+    snackbarImpl(txt.literal(message))
+  }
+
+  def snackbarImpl(message: Tweak[TextView]) = {
+    val v = LL()(w[TextView] <~ message)
     Ui.run {
       mToast(v) <~ fry
     }
