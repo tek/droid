@@ -1,4 +1,7 @@
-package tryp.droid
+package tryp
+package droid
+
+import scalaz._, Scalaz._
 
 import argonaut._, Argonaut._
 
@@ -9,11 +12,12 @@ import android.support.v7.widget.RecyclerView
 import macroid.FullDsl._
 import macroid.FragmentBuilder
 
-import tryp.droid.util.OS
-import tryp.droid.res.{PrefixResourceNamespace}
-import tryp.droid.Macroid._
-import tryp.droid.tweaks.Recycler._
-import tryp.slick.sync.SyncModel
+import util.OS
+import res.{PrefixResourceNamespace}
+import Macroid._
+import tweaks.Recycler._
+import slick.sync.SyncModel
+import ViewEvents._
 
 trait FragmentBase
 extends Fragment
@@ -66,6 +70,8 @@ with Transitions
       onViewStateRestored(state)
     }
   }
+
+  def arguments = Option(getArguments) some(_.toMap) none(Map())
 }
 
 abstract class TrypFragment
@@ -90,9 +96,8 @@ case class CannotGoBack()
 extends java.lang.RuntimeException
 
 abstract class MainFragment
-extends TrypFragment
+extends Fab
 with AppPreferences
-with Fab
 {
   implicit val mainFrag: FragmentManagement = this
 
@@ -130,14 +135,15 @@ with Fab
 }
 
 abstract class ShowFragment[A <: Model]
-extends StatefulFragment
+extends MainFragment
 {
-  override type I <: ShowImpl[A]
+  val showImpl: ShowStateImpl[A]
+
+  override def impls = showImpl :: super.impls
 
   override def onViewStateRestored(state: Bundle) {
     super.onViewStateRestored(state)
-    // impl.send(Update)
-    // update()
+    send(Update)
   }
 }
 

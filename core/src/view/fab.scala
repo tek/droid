@@ -1,6 +1,10 @@
-package tryp.droid
+package tryp
+package droid
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import concurrent._
+import duration.Duration
+
+import scalaz._, Scalaz._, concurrent._
 
 import android.widget._
 
@@ -9,13 +13,12 @@ import com.melnykov.fab.FloatingActionButton
 import macroid._
 import FullDsl._
 
-import tryp.droid.Macroid._
-import tryp.droid.{Macroid ⇒ T}
+import Macroid._
 
-trait Fab
-extends Transitions
-{ self: MainFragment ⇒
-
+abstract class Fab
+extends AsyncTasks
+with Transitions
+{
   import CommonWidgets._
 
   val progress = slut[ProgressBar]
@@ -65,20 +68,22 @@ extends Transitions
 
   // Runs 'task' while changing the fab to a circular progress indicator. After
   // completion, 'snack' is shown as a toast, if nonempty.
-  def fabAsync[A, B](snack: ⇒ Option[String] = None)(task: Future[B]) = {
-    mainActor ! Messages.StartAsyncTask(task)
-    task
-      .andThen { case _ ⇒ mainActor ! Messages.CompleteAsyncTask(task) }
-      .mapUi { a ⇒ snack map(mkToast) getOrElse(Ui.nop) }
+  // TODO queue into Process
+  def fabAsyncF[A, B]
+  (success: ⇒ Option[String] = None, failure: ⇒ Option[String] = None)
+  (f: Future[B]) = {
+    fabAsync(success, failure)(Task(Await.result(f, Duration.Inf)))
   }
 
-  def startAsyncTask() {
-    fadeToProgress.run
+  def fabAsync[A, B]
+  (success: ⇒ Option[String] = None, failure: ⇒ Option[String] = None)
+  (task: Task[B]) = {
+    send(AsyncTask(task, success, failure))
   }
 
-  def completeAsyncTask() {
-    fadeToFab.run
-  }
+  override def switchToAsyncUi = fadeToProgress
+
+  override def switchToIdleUi = fadeToFab
 
   private val fadeTime = 400L
 

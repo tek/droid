@@ -1,6 +1,8 @@
 package tryp
 package droid
 
+import concurrent.duration._
+
 import argonaut._, Argonaut._
 
 import scalaz._, Scalaz._
@@ -8,9 +10,11 @@ import stream._
 import Process._
 import scalaz.concurrent.Task
 
+import shapeless.syntax.std.tuple._
+
 object ViewEvents
 {
-  sealed trait BasicState
+  trait BasicState
   case object Pristine extends BasicState
   case object Initialized extends BasicState
   case object Initializing extends BasicState
@@ -20,126 +24,327 @@ object ViewEvents
   extends Message
   case object Resume extends Message
   case object Update extends Message
+  case class LogError(msg: String) extends Message
+  case class LogFatal(error: Throwable) extends Message
+  case object Done extends Message
+  case object NopMessage extends Message
+  case class UnknownResult[A](result: A) extends Message
+  case class Toast(msg: Option[String]) extends Message
 
   trait Data
   case object NoData extends Data
 
-  case class ViewFsm(state: BasicState = Pristine, data: Data = NoData)
+  case class Zthulhu(state: BasicState = Pristine, data: Data = NoData)
 
-  type AppEffect = Either3[AnyUi, DbAction, Message]
+  // TODO type class Operation that converts to Task[Result]
+  type Result = ValidationNel[Message, Message]
+  type AppEffect = Task[Result]
 
-  type ViewTransitionResult = (ViewFsm, List[AppEffect])
+  type ViewTransitionResult = (Zthulhu, List[AppEffect])
 
-  type ViewTransition = PartialFunction[ViewFsm, ViewTransitionResult]
+  type ViewTransition = PartialFunction[Zthulhu, ViewTransitionResult]
 
-  type ViewTransitions = Message ⇒ ViewTransition
+  type ViewTransitions = PartialFunction[Message, ViewTransition]
 
   type ViewEffects[A[_]] = List[AppEffect] ⇒ A[Unit]
 
-  def scanSplitW[A, B, C](z: B)(f: (A, B) ⇒ (B, C)): stream.Writer1[C, A, B] =
+  val Nop = Task.now(NopMessage.successNel)
+
+  def scanSplitW[A, B, C]
+  (z: B)
+  (f: PartialFunction[A, PartialFunction[B, (B, C)]])
+  : stream.Writer1[C, A, B] =
     receive1 { (a: A) ⇒
-      val (next, effect) = f(a, z)
-      Process.emitO(z) ++ Process.emitW(effect) ++ scanSplitW(next)(f)
+      f.lift(a)
+        .flatMap(_.lift(z))
+        .some { case (next, effect) ⇒
+          Process.emitO(z) ++ Process.emitW(effect) ++ scanSplitW(next)(f)
+        }
+        .none(scanSplitW(z)(f))
     }
 
-  implicit class ProcessToViewFsm[A[_]](source: Process[A, Message])
+  implicit class ProcessToZthulhu[A[_]](source: Process[A, Message])
   {
     def viewFsm(transition: ViewTransitions, effect: ViewEffects[A]) = {
-      (source |> scanSplitW(ViewFsm())(Function.uncurried(transition)))
+      (source |> scanSplitW(Zthulhu())(transition))
         .observeW(sink.lift(effect))
         .stripW
-    }
-  }
-
-  implicit def amendViewFsmWithEmptyEffects
-  (f: ViewFsm): ViewTransitionResult =
-    (f, Nil)
-
-  implicit class ViewFsmOps(f: ViewFsm)
-  {
-    def <<[A >: AnyUi with DbAction with Message](effects: A*) = {
-      (f, effects.toList collect {
-        case u: AnyUi ⇒ Left3(u)
-        case a: DbAction ⇒ Middle3(a)
-        case m: Message ⇒ Right3(m)
-      })
     }
   }
 }
 import ViewEvents._
 
-abstract class StatefulFragment
-extends MainFragment
-with DbAccess
+trait ToMessage[A]
 {
-  type I <: Impl
+  def message(a: A): Message
+  def error(a: A): Message
+}
 
-  implicit def ctx = AndroidActivityUiContext.default
-
-  val impl: I
-
-  override def onCreate(saved: Bundle) {
-    super.onCreate(saved)
-    impl.runFsm()
-    impl.send(Create(getArguments.toMap, Option(saved)))
-  }
-
-  override def onResume() {
-    super.onResume()
-    impl.send(Resume)
+trait ToMessageLPI
+{
+  implicit def anyToMessage[A] = new ToMessage[A] {
+    def message(a: A) = UnknownResult(a)
+    def error(a: A) = LogError(a.toString)
   }
 }
 
-abstract class Impl(implicit ec: EC, db: tryp.slick.DbInfo, ctx: tryp.UiContext[_])
+object ToMessage
+extends ToMessageLPI
 {
-  val S = ViewFsm
+  implicit def messageToMessage = new ToMessage[Message] {
+    def message(a: Message) = a
+    def error(a: Message) = a
+  }
+}
+
+object ToMessageSyntax
+{
+  implicit class ToMessageOps[A](a: A)(implicit tm: ToMessage[A]) {
+    def toErrorMessage = tm.error(a)
+    def toMessage = tm.message(a)
+  }
+}
+import ToMessageSyntax._
+
+// TODO add UiAction implicits
+trait ViewEventsImplicits
+{
+  type ToAppEffect[A] = A ⇒ AppEffect
+
+  implicit class ZthulhuOps(f: Zthulhu)
+  {
+    def <<(e: AppEffect) = (f, Nil) << e
+    def <<[A: ToAppEffect](e: Option[A]) = (f, Nil) << e
+  }
+
+  implicit class ViewTransitionResultOps(r: ViewTransitionResult)
+  {
+    def <<(e: AppEffect) = (r.head, r.last :+ e)
+    def <<[A: ToAppEffect](e: Option[A]) = {
+      e some(ef ⇒ (r.head, r.last :+ (ef: AppEffect))) none(r)
+    }
+  }
+
+  implicit def amendZthulhuWithEmptyEffects
+  (f: Zthulhu): ViewTransitionResult =
+    (f, Nil)
+
+  implicit def uiToTask(ui: Ui[Result]): Task[Result] =
+    Task.suspend(ui.run.task)
+
+  implicit def anyUiToTask(ui: Ui[_])(implicit ec: EC): Task[Result] =
+    Task.suspend {
+      ui.run.map(_.toMessage.successNel[Message]).task
+    }
+
+  implicit def actionToTask(action: AnyAction[Result])
+  (implicit dbi: DbInfo, ec: EC): Task[Result] = action.task
+
+  implicit def anyActionToTask[E: ToMessage, A: ToMessage]
+  (action: AnyAction[ValidationNel[E, A]])
+  (implicit dbi: DbInfo, ec: EC): Task[Result] = {
+    action.map(_.bimap(_.map(e ⇒ e.toErrorMessage), _.toMessage))
+      .task
+  }
+
+  implicit def liftMessage[A <: Message](m: A): Task[Result] =
+    Task.now(m.successNel[Message])
+
+  def debug[A]: Sink[Task, A] = sink.lift { (a: A) ⇒ Task(Log.i(a)) }
+
+  def infraResult[A](desc: String)(res: \/[Throwable, A]) = {
+    res match {
+      case -\/(e) ⇒ Log.e(s"failed to $desc: $e")
+      case _ ⇒
+    }
+  }
+
+  implicit class ViewProcessOps[+O](proc: Process[Task, O])
+  {
+    def debug1[A] = proc |> await1[O] to debug[O]
+
+    def !! = proc.runLog.run
+  }
+
+  implicit class ViewTaskOps[A](task: Task[A])
+  {
+    def infraRun(desc: String) = infraResult(desc)(task.attemptRun)
+  }
+}
+
+object ViewEventsImplicits
+extends ViewEventsImplicits
+
+abstract class StateImpl
+(implicit ec: EC, db: tryp.slick.DbInfo, ctx: tryp.UiContext[_])
+extends ToUiOps
+with ViewEventsImplicits
+{
+  val S = Zthulhu
 
   val transitions: ViewTransitions
 
   private[this] val messages = async.unboundedQueue[Message]
 
-  private[this] val quit = async.signalUnset[Boolean]
+  private[this] val running = async.signalOf(false)
+
+  private[this] val quit = async.signalOf(false)
+
+  private[this] val term = async.signalOf(false)
+
+  private[this] val idle: Process[Task, Boolean] =
+    messages.size.continuous map(_ == 0)
 
   // TODO log results
-  private[this] def unsafePerformIo(effects: List[AppEffect]) = {
+  private[this] def unsafePerformIO(effects: List[AppEffect]) = {
     Task[Unit] {
-      effects collect {
-        case Left3(ui) ⇒ new UiOps(ui).attemptUi
-        case Middle3(action) ⇒ action.asTry.!!
-        case Right3(message) ⇒ send(message)
+      p(s"performing io for ${effects.length} tasks")
+      val next = effects
+        .map(_.attemptRun)
+        .flatMap {
+          case \/-(m) ⇒
+            p(s"task succeeded with $m")
+            m fold(_.toList, List(_))
+          case -\/(t) ⇒
+            p(s"task failed with $t")
+            List(LogFatal(t))
+        }
+      next match {
+        case head :: tail ⇒ sendAll(NonEmptyList(head, tail: _*))
+        case Nil ⇒
       }
     }
   }
 
-  private[this] lazy val fsmProc: Process[Task, ViewFsm] = {
-    messages.dequeue.viewFsm(transitions, unsafePerformIo)
+  private[this] lazy val fsmProc: Process[Task, Zthulhu] = {
+    running.set(true).infraRun("set sig running")
+    term.discrete
+      .merge(idle.when(quit.discrete))
+      .wye(messages.dequeue)(wye.interrupt)
+      .viewFsm(transitions, unsafePerformIO)
   }
 
-  private[this] lazy val fsmTask = {
-    fsmProc.run.runAsync {
-      case _ ⇒ ()
+  private[this] lazy val fsmTask = fsmProc.runLog
+
+  def runFsm() = fsmTask.runAsync {
+    case a ⇒
+      running.set(false).infraRun("unset sig running")
+      Log.i(s"FSM terminated: $a")
+  }
+
+  def send(msg: Message) = {
+    sendAll(msg.wrapNel)
+  }
+
+  def sendAll(msgs: NonEmptyList[Message]) = {
+    Log.d(s"sending $msgs to $description")
+    messages.enqueueAll(msgs.toList).attemptRun.swap.foreach { e ⇒
+      Log.e(s"failed to enqueue state messages: $e")
     }
   }
 
-  def runFsm() = fsmTask
+  // kill the state machine
+  // the 'term' signal is woven into the main process using the wye combinator
+  // 'interrupt', which listens asynchronously and terminates instantly
+  def kill() = {
+    messages.kill.attemptRunFor(5 seconds)
+  }
 
-  def send(msg: Message) = {
-    hl
-    p(s"sending $msg")
-    messages.enqueueOne(msg).run
+  // gracefully shut down the state maching
+  // the 'quit' signal uses the deterministic tee combinator 'until', which is
+  // only emitted when the 'idle' signal is true
+  // 'idle' is set when no actions are resent in unsafePerformIO
+  // *> combines the two Task instances via Apply.apply2
+  // roughly equivalent to a flatMap(_ ⇒ b)
+  def join() = {
+    Log.d(s"terminating $this")
+    quit.set(true) *> finished.run attemptRunFor(20 seconds)
+  }
+
+  def finished = running.continuous.exists(!_)
+
+  private[this] def size = messages.size.continuous
+
+  private[this] def waitingTasks = size.take(1).!!.headOption.getOrElse(0)
+
+  def description = this.className
+
+  override def toString = s"$description ($waitingTasks waiting)"
+}
+
+abstract class StatefulFragment
+extends TrypFragment
+with DbAccess
+with ViewEventsImplicits
+{
+  implicit def ctx = AndroidActivityUiContext.default
+
+  val logImpl = new StateImpl
+  {
+    override def description = "log state"
+
+    def logError(msg: String): ViewTransition = {
+      case s ⇒
+        Log.e(msg)
+        s
+    }
+
+    def logInfo(msg: String): ViewTransition = {
+      case s ⇒
+        Log.i(msg)
+        s
+    }
+
+    val transitions: ViewTransitions = {
+      case LogError(msg) ⇒ logError(msg.toString)
+      case LogFatal(msg) ⇒ logError(msg.toString)
+      case UnknownResult(msg) ⇒ logInfo(msg.toString)
+    }
+  }
+
+  def impls: List[StateImpl] = logImpl :: Nil
+
+  def send(msg: Message) = impls foreach(_.send(msg))
+
+  val ! = send _
+
+  // TODO impl log level
+  override def onCreate(saved: Bundle) {
+    super.onCreate(saved)
+    impls foreach(_.runFsm())
+    // logImpl ! LogLevel(LogLevel.DEBUG)
+    send(Create(arguments, Option(saved)))
+  }
+
+  override def onResume() {
+    super.onResume()
+    send(Resume)
+  }
+
+  def killState() {
+    impls foreach(_.kill())
+  }
+
+  def joinState() {
+    impls foreach(_.join())
   }
 }
 
 import UiActionTypes._
 
-abstract class ShowImpl[A <: Model: DecodeJson]
+abstract class ShowStateImpl[A <: Model: DecodeJson]
 (implicit ec: EC, db: tryp.slick.DbInfo, ctx: tryp.UiContext[_])
-extends Impl
+extends StateImpl
 {
   case class Model(model: A)
-  extends BasicState
+  extends Data
+
+  case class SetModel(model: A)
+  extends Message
 
   def name: String
+
+  override def description = s"state for show $name"
 
   def setupData(args: Map[String, String]) = {
     def errmsg(item: String) = {
@@ -158,39 +363,34 @@ extends Impl
             fetchData(a) nelM(s"fetchData failed for $a")
           }
       }
-      .vmap(updateData)
-  }
-
-  private def initData(id: ObjectId) = {
-    // Future { model = fetchData(id) } map(Unit ⇒ update())
+      .vmap(SetModel.apply)
   }
 
   def fetchData(id: ObjectId): AnyAction[Option[A]]
 
-  def update() = {
-    // model foreach { updateData(_).run }
-    fetchDetails()
-  }
+  def fetchDetails(m: A): AppEffect = Nop
 
-  def fetchDetails() {}
-
-  def updateData(m: A): Ui[Any]
+  def updateData(m: A): AppEffect
 
   def create(args: Map[String, String], state: Option[Bundle])
   : ViewTransition = {
     case S(Pristine, data) ⇒
-      p("initializing")
       S(Initializing, data) << setupData(args)
-    case S(Initializing, data) ⇒
-      S(Initialized, data) << Update
-    case s @ S(Initialized, data) ⇒
-      s
   }
 
   val resume: ViewTransition = {
     case s @ S(_, _) ⇒
-      p("resuming")
       s
+  }
+
+  def model(m: A): ViewTransition = {
+    case S(Initializing, data) ⇒
+      S(Initialized, Model(m)) << Update
+  }
+
+  def update: ViewTransition = {
+    case s @ S(Initialized, Model(m)) ⇒
+      s << updateData(m) << fetchDetails(m)
   }
 
   val catchall: ViewTransition = {
@@ -202,6 +402,8 @@ extends Impl
   val transitions: ViewTransitions = {
     case Create(args, state) ⇒ create(args, state)
     case Resume ⇒ resume
+    case Update ⇒ update
+    case SetModel(m) ⇒ model(m)
     case _ ⇒ catchall
   }
 }
