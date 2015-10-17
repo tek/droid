@@ -4,7 +4,6 @@ import scalaz._, Scalaz._
 
 import macroid._
 
-import tryp.slick.DbInfo
 import tryp.UiContext
 
 class ActionMacroidOps[A](a: AnyAction[A])
@@ -64,6 +63,19 @@ object AndroidActivityUiContext
     new DefaultAndroidActivityUiContext[A]
 }
 
+trait AndroidFragmentUiContext[A]
+extends AndroidActivityUiContext[A]
+
+class DefaultAndroidFragmentUiContext[A](
+  implicit val fragment: TrypFragment)
+extends DefaultAndroidActivityUiContext[A]()(fragment.activity)
+
+object AndroidFragmentUiContext
+{
+  implicit def default[A](implicit fragment: TrypFragment) =
+    new DefaultAndroidFragmentUiContext[A]
+}
+
 class UiOps[A](ui: Ui[A])
 (implicit ctx: UiContext[_], ec: EC)
 {
@@ -87,8 +99,8 @@ class UiOps[A](ui: Ui[A])
 
 trait ToUiOps
 {
-  implicit def ToUiOps[A: UiContext](a: Ui[A])
-  (implicit ec: EC, info: DbInfo) = {
+  implicit def ToUiOps[A](a: Ui[A])
+  (implicit ctx: UiContext[_], ec: EC, info: DbInfo) = {
     new UiOps(a)
   }
 }
