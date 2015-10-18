@@ -72,7 +72,7 @@ with Transitions
   def fabAsyncF[A, B]
   (success: ⇒ Option[String] = None, failure: ⇒ Option[String] = None)
   (f: Future[B]) = {
-    fabAsync(success, failure)(Task(Await.result(f, Duration.Inf)))
+    fabAsync(success, failure)(f.task)
   }
 
   def fabAsync[A, B]

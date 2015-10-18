@@ -6,13 +6,13 @@ import concurrent.duration._
 import argonaut._, Argonaut._
 
 import scalaz._, Scalaz._
+import concurrent.{Task, Actor}
 import stream._
 import Process._
-import scalaz.concurrent.Task
 
 import shapeless.syntax.std.tuple._
 
-object ViewEvents
+object ViewState
 {
   trait BasicState
   case object Pristine extends BasicState
@@ -20,21 +20,52 @@ object ViewEvents
   case object Initializing extends BasicState
 
   trait Message
+  {
+    def toResult = this.successNel[Message]
+  }
+
   case class Create(args: Map[String, String], state: Option[Bundle])
   extends Message
   case object Resume extends Message
   case object Update extends Message
-  case class LogError(msg: String) extends Message
-  case class LogFatal(error: Throwable) extends Message
+  trait Loggable extends Message
+  case class LogError(msg: String) extends Loggable
   case object Done extends Message
   case object NopMessage extends Message
-  case class UnknownResult[A](result: A) extends Message
-  case class Toast(msg: Option[String]) extends Message
+  case class Toast(msg: String) extends Message
+  case class ForkedResult(reason: String) extends Message
+
+  case class LogFatal(description: String, error: Throwable)
+  extends Loggable
+  {
+    lazy val message = Error.withTrace(s"exception while $description", error)
+  }
+
+  case class UnknownResult[A: Show](result: A)
+  extends Loggable
+  {
+    def showResult = result.show
+  }
+
+  trait MessageInstances
+  {
+    implicit val messageShow = new Show[Message] {
+      override def show(msg: Message) = {
+        msg match {
+          case res @ UnknownResult(result) ⇒
+            Cord(s"${res.className}(${res.showResult})")
+          case _ ⇒
+            msg.toString
+        }
+      }
+    }
+  }
+
+  object Message
+  extends MessageInstances
 
   trait Data
   case object NoData extends Data
-
-  case class Zthulhu(state: BasicState = Pristine, data: Data = NoData)
 
   // TODO type class Operation that converts to Task[Result]
   type Result = ValidationNel[Message, Message]
@@ -50,29 +81,10 @@ object ViewEvents
 
   val Nop = Task.now(NopMessage.successNel)
 
-  def scanSplitW[A, B, C]
-  (z: B)
-  (f: PartialFunction[A, PartialFunction[B, (B, C)]])
-  : stream.Writer1[C, A, B] =
-    receive1 { (a: A) ⇒
-      f.lift(a)
-        .flatMap(_.lift(z))
-        .some { case (next, effect) ⇒
-          Process.emitO(z) ++ Process.emitW(effect) ++ scanSplitW(next)(f)
-        }
-        .none(scanSplitW(z)(f))
-    }
-
-  implicit class ProcessToZthulhu[A[_]](source: Process[A, Message])
-  {
-    def viewFsm(transition: ViewTransitions, effect: ViewEffects[A]) = {
-      (source |> scanSplitW(Zthulhu())(transition))
-        .observeW(sink.lift(effect))
-        .stripW
-    }
-  }
+  type Broadcaster = Actor[NonEmptyList[Message]]
 }
-import ViewEvents._
+import ViewState._
+import Message._
 
 trait ToMessage[A]
 {
@@ -80,20 +92,37 @@ trait ToMessage[A]
   def error(a: A): Message
 }
 
-trait ToMessageLPI
+trait ToMessageInstances0
 {
   implicit def anyToMessage[A] = new ToMessage[A] {
+    def message(a: A) = {
+      UnknownResult(a.toString)
+    }
+    def error(a: A) = LogError(a.toString)
+  }
+}
+
+trait ToMessageInstances
+extends ToMessageInstances0
+{
+  implicit def showableToMessage[A: Show] = new ToMessage[A] {
     def message(a: A) = UnknownResult(a)
     def error(a: A) = LogError(a.toString)
   }
 }
 
 object ToMessage
-extends ToMessageLPI
+extends ToMessageInstances
 {
-  implicit def messageToMessage = new ToMessage[Message] {
-    def message(a: Message) = a
-    def error(a: Message) = a
+  implicit def messageToMessage[A <: Message] = new ToMessage[A] {
+    def message(a: A) = a
+    def error(a: A) = a
+  }
+
+  implicit def futureToMessage[A] = new ToMessage[ScalaFuture[A]] {
+    private[this] def fail = sys.error("Tried to convert future to message")
+    def message(f: Future[A]) = fail
+    def error(f: Future[A]) = fail
   }
 }
 
@@ -107,34 +136,25 @@ object ToMessageSyntax
 import ToMessageSyntax._
 
 // TODO add UiAction implicits
-trait ViewEventsImplicits
+trait ViewStateImplicits
 {
-  type ToAppEffect[A] = A ⇒ AppEffect
-
-  implicit class ZthulhuOps(f: Zthulhu)
-  {
-    def <<(e: AppEffect) = (f, Nil) << e
-    def <<[A: ToAppEffect](e: Option[A]) = (f, Nil) << e
-  }
-
-  implicit class ViewTransitionResultOps(r: ViewTransitionResult)
-  {
-    def <<(e: AppEffect) = (r.head, r.last :+ e)
-    def <<[A: ToAppEffect](e: Option[A]) = {
-      e some(ef ⇒ (r.head, r.last :+ (ef: AppEffect))) none(r)
-    }
-  }
-
-  implicit def amendZthulhuWithEmptyEffects
-  (f: Zthulhu): ViewTransitionResult =
-    (f, Nil)
-
+  // implicit conversions to Task[Result]
+  // from Ui, DBIOAction, Message
   implicit def uiToTask(ui: Ui[Result]): Task[Result] =
     Task.suspend(ui.run.task)
 
-  implicit def anyUiToTask(ui: Ui[_])(implicit ec: EC): Task[Result] =
+  // TODO really block the machine while the Ui is running?
+  implicit def anyUiToTask[A: ToMessage](ui: Ui[A])
+  (implicit ec: EC): Task[Result] =
     Task.suspend {
-      ui.run.map(_.toMessage.successNel[Message]).task
+      (ui.run: Future[A]).map(_.toMessage.toResult).task
+    }
+
+  implicit def snailToTask[A](ui: Ui[ScalaFuture[A]])
+  (implicit ec: EC): Task[Result] =
+    Task {
+      ui.run
+      ForkedResult("Snail").toResult
     }
 
   implicit def actionToTask(action: AnyAction[Result])
@@ -172,13 +192,89 @@ trait ViewEventsImplicits
   }
 }
 
-object ViewEventsImplicits
-extends ViewEventsImplicits
+object ViewStateImplicits
+extends ViewStateImplicits
+
+import ViewStateImplicits._
+
+case class Zthulhu(state: BasicState = Pristine, data: Data = NoData)
+
+object Zthulhu
+{
+  /* @param z current state machine
+   * @param f A ⇒ B ⇒ (B, C), transforms a message into a state transition
+   * function.
+   * the state of type B is transitioned into a new state of type B and a
+   * set of effects that has type C.
+   * first, receive one item of type A representing a Message
+   * if f is defined at that item and the transition function is defined for
+   * the current state z, the result of that transition is calculated
+   * if successful, the state z is emitted as output, the effects returned from
+   * the transition function are emitted as log and the current state z is
+   * replaced by the return value of the transition function
+   * in any case, the new or old state is used to recurse
+   *
+   */
+  def scanSplitW[A, B, C]
+  (z: B)
+  (f: PartialFunction[A, PartialFunction[B, (B, C)]])
+  (error: Throwable ⇒ Maybe[C])
+  : stream.Writer1[C, A, B] = {
+    receive1 { (a: A) ⇒
+      val (effect, newState) = Try(f lift(a) flatMap(_.lift(z))) match {
+        case Success(Some((newState, effect))) ⇒ effect.just → newState.just
+        case Success(None) ⇒ Empty[C]() → Empty[B]()
+        case Failure(t) ⇒ error(t) → Empty[B]()
+      }
+      val o = newState.map(Process.emitO) | Process.halt
+      val w = effect.map(Process.emitW) | Process.halt
+      o ++ w ++ scanSplitW(newState | z)(f)(error)
+    }
+  }
+
+  def fatalTransition(t: Throwable): Maybe[List[AppEffect]] = {
+    List(LogFatal("transitioning state", t): AppEffect).just
+  }
+
+  implicit class ProcessToZthulhu[A[_]](source: Process[A, Message])
+  {
+    def viewFsm(transition: ViewTransitions, effect: ViewEffects[A]) = {
+      (source |> scanSplitW(Zthulhu())(transition)(fatalTransition))
+        .observeW(sink.lift(effect))
+        .stripW
+    }
+  }
+
+  type ToAppEffect[A] = A ⇒ AppEffect
+
+  implicit class ZthulhuOps(f: Zthulhu)
+  {
+    def <<(e: AppEffect) = (f, Nil) << e
+    def <<(e: Option[AppEffect]) = (f, Nil) << e
+    def <<[A: ToAppEffect](e: Option[A]) = (f, Nil) << e
+  }
+
+  implicit class ViewTransitionResultOps(r: ViewTransitionResult)
+  {
+    def <<(e: AppEffect) = (r.head, r.last :+ e)
+    def <<(e: Option[AppEffect]): ViewTransitionResult = e some(r.<<) none(r)
+    def <<[A: ToAppEffect](e: Option[A]): ViewTransitionResult = {
+      r << (e map(a ⇒ (a: AppEffect)))
+    }
+  }
+
+  implicit def amendZthulhuWithEmptyEffects
+  (f: Zthulhu): ViewTransitionResult =
+    (f, Nil)
+}
+
+import Zthulhu._
 
 abstract class StateImpl
-(implicit ec: EC, db: tryp.slick.DbInfo, ctx: tryp.UiContext[_])
+(implicit ec: EC, db: tryp.slick.DbInfo, ctx: tryp.UiContext[_],
+  broadcast: Broadcaster)
 extends ToUiOps
-with ViewEventsImplicits
+with ViewStateImplicits
 {
   val S = Zthulhu
 
@@ -198,19 +294,18 @@ with ViewEventsImplicits
   // TODO log results
   private[this] def unsafePerformIO(effects: List[AppEffect]) = {
     Task[Unit] {
-      p(s"performing io for ${effects.length} tasks")
+      Log.i(s"performing io for ${effects.length} tasks")
       val next = effects
         .map(_.attemptRun)
         .flatMap {
           case \/-(m) ⇒
-            p(s"task succeeded with $m")
+            Log.d(s"task succeeded with ${m.show}")
             m fold(_.toList, List(_))
           case -\/(t) ⇒
-            p(s"task failed with $t")
-            List(LogFatal(t))
+            List(LogFatal("performing io", t))
         }
       next match {
-        case head :: tail ⇒ sendAll(NonEmptyList(head, tail: _*))
+        case head :: tail ⇒ broadcast ! NonEmptyList(head, tail: _*)
         case Nil ⇒
       }
     }
@@ -237,7 +332,7 @@ with ViewEventsImplicits
   }
 
   def sendAll(msgs: NonEmptyList[Message]) = {
-    Log.d(s"sending $msgs to $description")
+    Log.i(s"sending ${msgs.show} to $description")
     messages.enqueueAll(msgs.toList).attemptRun.swap.foreach { e ⇒
       Log.e(s"failed to enqueue state messages: $e")
     }
@@ -275,9 +370,11 @@ with ViewEventsImplicits
 abstract class StatefulFragment
 extends TrypFragment
 with DbAccess
-with ViewEventsImplicits
+with ViewStateImplicits
 {
   implicit def ctx = AndroidActivityUiContext.default
+
+  implicit def broadcast = new Broadcaster(sendAll)
 
   val logImpl = new StateImpl
   {
@@ -297,14 +394,17 @@ with ViewEventsImplicits
 
     val transitions: ViewTransitions = {
       case LogError(msg) ⇒ logError(msg.toString)
-      case LogFatal(msg) ⇒ logError(msg.toString)
+      case m @ LogFatal(_, _) ⇒ logError(m.message)
       case UnknownResult(msg) ⇒ logInfo(msg.toString)
+      case m: Loggable ⇒ logInfo(m.toString)
     }
   }
 
   def impls: List[StateImpl] = logImpl :: Nil
 
   def send(msg: Message) = impls foreach(_.send(msg))
+
+  def sendAll(msgs: NonEmptyList[Message]) = msgs foreach(send)
 
   val ! = send _
 
@@ -333,7 +433,8 @@ with ViewEventsImplicits
 import UiActionTypes._
 
 abstract class ShowStateImpl[A <: Model: DecodeJson]
-(implicit ec: EC, db: tryp.slick.DbInfo, ctx: tryp.UiContext[_])
+(implicit ec: EC, db: tryp.slick.DbInfo, ctx: tryp.UiContext[_],
+  broadcast: Broadcaster)
 extends StateImpl
 {
   case class Model(model: A)

@@ -17,7 +17,7 @@ import res.{PrefixResourceNamespace}
 import Macroid._
 import tweaks.Recycler._
 import slick.sync.SyncModel
-import ViewEvents._
+import ViewState._
 
 trait FragmentBase
 extends Fragment

@@ -5,17 +5,29 @@ import scalaz._, Scalaz._, concurrent._
 abstract class AsyncTasks
 extends StatefulFragment
 {
-  import ViewEvents._
+  import ViewState._
 
   case class AsyncTask(task: Task[_], success: Option[String],
     failure: Option[String])
   extends Message
   {
-    def done = TaskDone(task)
+    def done = AsyncTaskDone(task)
   }
 
-  case class TaskDone(task: Task[_])
+  case class AsyncTaskDone(task: Task[_])
   extends Message
+
+  case class AsyncTaskSuccess(result: Any, toast: Option[String])
+  extends Message
+
+  case class AsyncTaskFailure(error: Throwable, toast: Option[String])
+  extends Message
+
+  case class AsyncTaskResult(msg: Any)
+  extends Loggable
+  {
+    override def toString = s"async task finished with '$msg'"
+  }
 
   case class FabData(running: Seq[Task[_]])
   extends Data
@@ -37,7 +49,8 @@ extends StatefulFragment
       val optFade = if (fade) switchToAsyncUi.some else none
       val t = Task {
         msg.task.attemptRun
-          .fold(_ ⇒ Toast(msg.failure), _ ⇒ Toast(msg.success))
+          .fold(f ⇒ AsyncTaskFailure(f, msg.failure),
+            s ⇒ AsyncTaskSuccess(s, msg.success))
           .successNel[Message]
       }
       S(Running, FabData(data.running :+ msg.task)) << optFade << t << msg.done
@@ -50,13 +63,22 @@ extends StatefulFragment
         execTask(msg, f, false)
     }
 
-    def taskDone(msg: TaskDone): ViewTransition = {
+    def taskDone(msg: AsyncTaskDone): ViewTransition = {
       case S(Running, FabData(tasks)) ⇒
         val remaining = tasks filterNot(_ == msg.task)
         if (remaining.isEmpty)
           S(Idle, FabData(Nil)) << switchToIdleUi
         else
           S(Running, FabData(remaining))
+    }
+
+    def taskSuccess(msg: AsyncTaskSuccess): ViewTransition = {
+      case s ⇒ s << AsyncTaskResult(msg.result) << msg.toast.map(Toast(_))
+    }
+
+    def taskFail(msg: AsyncTaskFailure): ViewTransition = {
+      case s ⇒ s << LogFatal("executing async task", msg.error) <<
+        msg.toast.map(Toast(_))
     }
 
     val create: ViewTransition = {
@@ -66,11 +88,13 @@ extends StatefulFragment
     val transitions: ViewTransitions = {
       case Create(_, _) ⇒ create
       case m: AsyncTask ⇒ startTask(m)
-      case m: TaskDone ⇒ taskDone(m)
+      case m: AsyncTaskDone ⇒ taskDone(m)
+      case m: AsyncTaskSuccess ⇒ taskSuccess(m)
+      case m: AsyncTaskFailure ⇒ taskFail(m)
     }
   }
 
-  def switchToAsyncUi: Ui[_] = Ui.nop
+  def switchToAsyncUi: AppEffect = Ui.nop
 
-  def switchToIdleUi: Ui[_] = Ui.nop
+  def switchToIdleUi: AppEffect = Ui.nop
 }
