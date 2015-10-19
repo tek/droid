@@ -1,10 +1,10 @@
-package tryp.droid
+package tryp
 
 import com.google.android.gms.common._
 import com.google.android.gms.common.api._
 
 trait PlayServices
-extends tryp.droid.Basic
+extends tryp.Basic
 {
   class ConnectionCallbacks(owner: PlayServices)
   extends GoogleApiClient.OnConnectionFailedListener

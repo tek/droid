@@ -1,5 +1,4 @@
 package tryp
-package droid
 
 import concurrent.duration._
 
@@ -443,8 +442,9 @@ with Stateful
 trait StatefulActivity
 extends TrypActivity
 with Stateful
+with HasActivity
 {
-  val uiCtx = AndroidActivityUiContext.default[Unit]
+  override implicit val uiCtx = AndroidActivityUiContext.default[Unit](this)
 
   // TODO impl log level
   override def onCreate(saved: Bundle) {

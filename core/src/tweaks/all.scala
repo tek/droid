@@ -1,4 +1,4 @@
-package tryp.droid.tweaks
+package tryp.tweaks
 
 trait All
 extends Layout

@@ -1,10 +1,10 @@
-package tryp.droid.tweaks
+package tryp.tweaks
 
 import scala.concurrent.ExecutionContext
 
 import macroid._
 
-import tryp.droid.WidgetBase
+import tryp.WidgetBase
 
 trait Slots
 {

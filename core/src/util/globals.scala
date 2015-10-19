@@ -3,17 +3,17 @@ package tryp.droid.meta
 trait Util
 extends AkkaExt
 with AndroidExt
-with tryp.droid.BundleExt
+with ToBundleOps
 
 trait Forward
 {
-  val Id = tryp.droid.util.Id
+  val Id = tryp.util.Id
 
-  val Tag = tryp.droid.util.Tag
+  val Tag = tryp.util.Tag
 
-  val TrypKeys = tryp.droid.Keys
+  val TrypKeys = tryp.Keys
 
-  type Id = tryp.droid.util.Id
+  type Id = tryp.util.Id
 
   type Context = android.content.Context
   type Bundle = android.os.Bundle
@@ -38,7 +38,7 @@ trait Types
 
 trait Basic
 {
-  def GPlus: tryp.droid.GPlusBase = tryp.droid.Classes.plus
+  def GPlus: tryp.GPlusBase = tryp.Classes.plus
 }
 
 trait GlobalsBase
@@ -64,10 +64,10 @@ with Types
 trait TrypDroidGlobals
 extends Globals
 {
-  def Fragments = tryp.droid.Classes.fragments
+  def Fragments = tryp.Classes.fragments
 }
 
 trait TrypDroid
-extends tryp.droid.ToActionMacroidOps
-with tryp.droid.ToUiOps
-with tryp.droid.ToUiValidationNelActionOps
+extends tryp.ToActionMacroidOps
+with tryp.ToUiOps
+with tryp.ToUiValidationNelActionOps

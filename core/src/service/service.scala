@@ -1,4 +1,4 @@
-package tryp.droid
+package tryp
 
 import android.app.Service
 import android.os.{Binder,IBinder}
@@ -16,8 +16,8 @@ trait ServiceStubs
 abstract class ServiceBase
 extends Service
 with ServiceStubs
-with tryp.droid.Basic
-with tryp.droid.Broadcast
+with tryp.Basic
+with tryp.Broadcast
 {
   var running = false
 

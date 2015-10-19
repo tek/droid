@@ -2,7 +2,7 @@ package tryp.droid.meta
 
 import akka.actor.ActorSelection
 
-import tryp.droid.Messages
+import tryp.Messages
 
 import tryp.util._
 import tryp.meta._

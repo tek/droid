@@ -1,4 +1,4 @@
-package tryp.droid
+package tryp
 
 import scala.collection.mutable.{Set ⇒ MSet}
 import scala.concurrent.ExecutionContext
@@ -13,8 +13,8 @@ import android.transitions.everywhere._
 
 import com.melnykov.fab.FloatingActionButton
 
-import tryp.droid.Macroid._
-import tryp.droid.view.ParallaxHeader
+import tryp.Macroid._
+import tryp.view.ParallaxHeader
 
 class WidgetBase[A <: View](transName: String)
 {

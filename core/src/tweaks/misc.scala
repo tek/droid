@@ -1,4 +1,4 @@
-package tryp.droid.tweaks
+package tryp.tweaks
 
 import java.net.URL
 
@@ -28,9 +28,9 @@ import akka.actor.ActorSelection
 
 import com.melnykov.fab.FloatingActionButton
 
-import tryp.droid.res.{Resources,_}
-import tryp.droid.view.{TrypTextView,DividerItemDecoration,ParallaxHeader}
-import tryp.droid.Messages
+import tryp.res.{Resources,_}
+import tryp.view.{TrypTextView,DividerItemDecoration,ParallaxHeader}
+import tryp.Messages
 
 trait Text
 extends ResourcesAccess
@@ -331,7 +331,7 @@ extends ResourcesAccess
 
   def close(edge: Int = Gravity.LEFT) = t { _.closeDrawer(edge) }
 
-  import tryp.droid.{Screw,CanScrew}
+  import tryp.{Screw,CanScrew}
 
   def sync = Screw[Toggle] { _.syncState }
 

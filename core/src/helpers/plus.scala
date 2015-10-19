@@ -1,4 +1,4 @@
-package tryp.droid
+package tryp
 
 import concurrent.ExecutionContext.Implicits.global
 

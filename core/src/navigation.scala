@@ -1,4 +1,4 @@
-package tryp.droid
+package tryp
 
 import tweaks.Layout.{frag,showFrag}
 import tryp.slick.sync.SyncModel

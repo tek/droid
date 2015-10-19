@@ -1,4 +1,4 @@
-package tryp.droid.tweaks
+package tryp.tweaks
 
 import scala.collection.mutable.ListBuffer
 
@@ -17,10 +17,10 @@ import macroid.FullDsl._
 import macroid.contrib.Layouts._
 import RuleRelativeLayout.Rule
 
-import tryp.droid.ActivityContexts
-import tryp.droid.res.Resources
-import tryp.droid.Macroid._
-import tryp.droid.{FragmentManagement, MainFragment}
+import tryp.ActivityContexts
+import tryp.res.Resources
+import tryp.Macroid._
+import tryp.{FragmentManagement, MainFragment}
 import tryp.slick.sync.SyncModel
 
 trait Layout
@@ -209,7 +209,7 @@ trait Layout
     )
   }
 
-  import tryp.droid.ShowFragment
+  import tryp.ShowFragment
 
   def showFrag[A <: SyncModel: ClassTag]
   (model: A, ctor: () ⇒ ShowFragment[A], id: Id = Id.next)

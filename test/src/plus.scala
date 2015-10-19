@@ -1,6 +1,4 @@
-package tryp.droid.test
-
-import tryp.droid._
+package tryp.test
 
 object MockData
 {

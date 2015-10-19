@@ -1,7 +1,7 @@
-package tryp.droid.test
+package tryp.test
 
 trait TrypTestActivity
-extends tryp.droid.TrypActivity
+extends tryp.TrypActivity
 { self: Activity ⇒
 
   def setPref(key: String, value: Any) {

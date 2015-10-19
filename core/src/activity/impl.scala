@@ -1,10 +1,8 @@
-package tryp.droid
+package tryp
 
 import android.support.v7.app.ActionBarActivity
 
 import macroid.Contexts
-
-import tryp.droid.activity._
 
 import Macroid._
 

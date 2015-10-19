@@ -1,14 +1,14 @@
-package tryp.droid
+package tryp
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import akka.actor.{ ActorSelection, ActorSystem, Actor, Props }
 
-import tryp.droid.util.CallbackMixin
+import util.CallbackMixin
 
 object Akka
 {
-  private [droid] var _system: Option[ActorSystem] = None
+  private [tryp] var _system: Option[ActorSystem] = None
 
   def system = _system.getOrElse { sys.error("actor system not initialized") }
 
@@ -106,7 +106,7 @@ trait AkkaFragment
 extends AkkaClient
 with CallbackMixin
 { self: Fragment
-  with tryp.droid.FragmentBase ⇒
+  with tryp.FragmentBase ⇒
 
   abstract override def onStart() {
     attach()

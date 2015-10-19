@@ -1,12 +1,11 @@
-package tryp.droid
+package tryp
 
 import scala.collection.mutable.ListBuffer
 
 import android.content.IntentFilter
 import android.support.v4.content.LocalBroadcastManager
 
-import tryp.droid.util.CallbackMixin
-import tryp.droid.util.Params
+import tryp.util.CallbackMixin
 
 class BroadcastReceiver(client: BroadcastReceive)
 extends android.content.BroadcastReceiver
@@ -55,30 +54,13 @@ with CallbackMixin
 
   private def unregister = broadcastManager.unregisterReceiver(receiver)
 
+  def handleBroadcast(action: String, extras: Params) = {
+
+  }
+
   def broadcastReceived(intent: Intent) {
-    val extras = intent.getExtras
-    try {
-      import tryp.droid.util.Sender._
-      if (extras != null) {
-        this.sendParams(intent.getAction, extras.toParams)
-      } else {
-        this.send(intent.getAction)
-      }
-    } catch {
-      case e: NoSuchMethodException ⇒ {
-        var msg = (s"Invalid broadcast received in ${getClass.getName}: " +
-          s"'${intent.getAction}'")
-        if (extras != null) {
-          msg = msg + s" with params ${extras.toParams.params.mkString(", ")}"
-        }
-        Log.e(msg)
-      }
-      case e: Exception ⇒ {
-        if (!TrypEnv.release) {
-          throw e
-        }
-      }
-    }
+    val extras = Option(intent.getExtras) some(_.toParams) none(Params())
+    handleBroadcast(intent.getAction, extras)
   }
 }
 

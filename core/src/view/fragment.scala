@@ -1,5 +1,4 @@
 package tryp
-package droid
 
 import scalaz._, Scalaz._
 

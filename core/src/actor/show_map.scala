@@ -1,4 +1,4 @@
-package tryp.droid
+package tryp
 
 import com.google.android.gms.maps.GoogleMap
 

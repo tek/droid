@@ -1,4 +1,4 @@
-package tryp.droid
+package tryp
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

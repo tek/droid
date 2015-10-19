@@ -1,4 +1,4 @@
-package tryp.droid.util
+package tryp
 
 case class Params(params: Map[String, String] = Map())
 {

@@ -1,5 +1,4 @@
 package tryp
-package droid
 package test
 
 import reflect.classTag

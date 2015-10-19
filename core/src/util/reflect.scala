@@ -1,4 +1,4 @@
-package tryp.droid.util
+package tryp.util
 
 import scala.reflect.ClassTag
 

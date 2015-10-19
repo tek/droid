@@ -1,4 +1,4 @@
-package tryp.droid.view
+package tryp.view
 
 import android.content.res.TypedArray
 import android.graphics.Canvas

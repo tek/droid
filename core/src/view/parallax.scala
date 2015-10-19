@@ -1,12 +1,10 @@
-package tryp.droid.view
+package tryp.view
 
 import android.graphics.{Canvas,Rect}
 
-import tryp.droid._
-
 class ParallaxHeader(val context: Context)
 extends RelativeLayout(context)
-with AppPreferences
+with tryp.AppPreferences
 {
   val scrollFactor = appPrefs.float("parallax_scroll_factor", 0.2f)
   var scroll = 0.0f

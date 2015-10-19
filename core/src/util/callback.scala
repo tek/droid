@@ -1,4 +1,4 @@
-package tryp.droid.util
+package tryp.util
 
 import android.content.Context
 import android.os.Bundle
