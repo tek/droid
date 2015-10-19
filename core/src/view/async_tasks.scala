@@ -2,8 +2,8 @@ package tryp.droid
 
 import scalaz._, Scalaz._, concurrent._
 
-abstract class AsyncTasks
-extends StatefulFragment
+trait AsyncTasks
+extends Stateful
 {
   import ViewState._
 
@@ -29,7 +29,7 @@ extends StatefulFragment
     override def toString = s"async task finished with '$msg'"
   }
 
-  case class FabData(running: Seq[Task[_]])
+  case class AsyncTasksData(running: Seq[Task[_]])
   extends Data
 
   case object Idle
@@ -44,7 +44,7 @@ extends StatefulFragment
   {
     override def description = "fab state"
 
-    private[this] def execTask(msg: AsyncTask, data: FabData, fade: Boolean) =
+    private[this] def execTask(msg: AsyncTask, data: AsyncTasksData, fade: Boolean) =
     {
       val optFade = if (fade) switchToAsyncUi.some else none
       val t = Task {
@@ -53,23 +53,23 @@ extends StatefulFragment
             s ⇒ AsyncTaskSuccess(s, msg.success))
           .successNel[Message]
       }
-      S(Running, FabData(data.running :+ msg.task)) << optFade << t << msg.done
+      S(Running, AsyncTasksData(data.running :+ msg.task)) << optFade << t << msg.done
     }
 
     def startTask(msg: AsyncTask): ViewTransition = {
-      case S(Idle, f @ FabData(_)) ⇒
+      case S(Idle, f @ AsyncTasksData(_)) ⇒
         execTask(msg, f, true)
-      case S(Running, f @ FabData(_)) ⇒
+      case S(Running, f @ AsyncTasksData(_)) ⇒
         execTask(msg, f, false)
     }
 
     def taskDone(msg: AsyncTaskDone): ViewTransition = {
-      case S(Running, FabData(tasks)) ⇒
+      case S(Running, AsyncTasksData(tasks)) ⇒
         val remaining = tasks filterNot(_ == msg.task)
         if (remaining.isEmpty)
-          S(Idle, FabData(Nil)) << switchToIdleUi
+          S(Idle, AsyncTasksData(Nil)) << switchToIdleUi
         else
-          S(Running, FabData(remaining))
+          S(Running, AsyncTasksData(remaining))
     }
 
     def taskSuccess(msg: AsyncTaskSuccess): ViewTransition = {
@@ -82,7 +82,7 @@ extends StatefulFragment
     }
 
     val create: ViewTransition = {
-      case S(Pristine, _) ⇒ S(Idle, FabData(Nil))
+      case S(Pristine, _) ⇒ S(Idle, AsyncTasksData(Nil))
     }
 
     val transitions: ViewTransitions = {

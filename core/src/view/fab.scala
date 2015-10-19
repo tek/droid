@@ -15,7 +15,7 @@ import FullDsl._
 
 import Macroid._
 
-abstract class Fab
+trait Fab
 extends AsyncTasks
 with Transitions
 {

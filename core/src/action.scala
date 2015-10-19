@@ -52,6 +52,8 @@ with Snackbars
     Log.d(s"handling failure in activity: $e")
     snackbarLiteral(e.map(_.show).toList.mkString("\n"))
   }
+
+  implicit val activity: Activity
 }
 
 class DefaultAndroidActivityUiContext[A](implicit val activity: Activity)
@@ -59,20 +61,22 @@ extends AndroidActivityUiContext[A]
 
 object AndroidActivityUiContext
 {
-  implicit def default[A](implicit activity: Activity) =
+  def default[A](implicit activity: Activity) =
     new DefaultAndroidActivityUiContext[A]
 }
 
 trait AndroidFragmentUiContext[A]
 extends AndroidActivityUiContext[A]
 
-class DefaultAndroidFragmentUiContext[A](
-  implicit val fragment: TrypFragment)
-extends DefaultAndroidActivityUiContext[A]()(fragment.activity)
+class DefaultAndroidFragmentUiContext[A](implicit fragment: TrypFragment)
+extends AndroidFragmentUiContext[A]
+{
+  val activity = fragment.activity
+}
 
 object AndroidFragmentUiContext
 {
-  implicit def default[A](implicit fragment: TrypFragment) =
+  def default[A](implicit fragment: TrypFragment) =
     new DefaultAndroidFragmentUiContext[A]
 }
 

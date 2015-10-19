@@ -294,7 +294,7 @@ with ViewStateImplicits
   // TODO log results
   private[this] def unsafePerformIO(effects: List[AppEffect]) = {
     Task[Unit] {
-      Log.i(s"performing io for ${effects.length} tasks")
+      Log.d(s"performing io for ${effects.length} tasks")
       val next = effects
         .map(_.attemptRun)
         .flatMap {
@@ -332,7 +332,7 @@ with ViewStateImplicits
   }
 
   def sendAll(msgs: NonEmptyList[Message]) = {
-    Log.i(s"sending ${msgs.show} to $description")
+    Log.d(s"sending ${msgs.show} to $description")
     messages.enqueueAll(msgs.toList).attemptRun.swap.foreach { e ⇒
       Log.e(s"failed to enqueue state messages: $e")
     }
@@ -367,14 +367,13 @@ with ViewStateImplicits
   override def toString = s"$description ($waitingTasks waiting)"
 }
 
-abstract class StatefulFragment
-extends TrypFragment
-with DbAccess
+trait Stateful
+extends DbAccess
 with ViewStateImplicits
 {
-  implicit def ctx = AndroidActivityUiContext.default
+  implicit val uiCtx: AndroidUiContext[Unit]
 
-  implicit def broadcast = new Broadcaster(sendAll)
+  implicit val broadcast: Broadcaster = new Broadcaster(sendAll)
 
   val logImpl = new StateImpl
   {
@@ -402,16 +401,35 @@ with ViewStateImplicits
 
   def impls: List[StateImpl] = logImpl :: Nil
 
-  def send(msg: Message) = impls foreach(_.send(msg))
+  def allImpls[A](f: StateImpl ⇒ A) = impls map(f)
+
+  def send(msg: Message) = allImpls(_.send(msg))
 
   def sendAll(msgs: NonEmptyList[Message]) = msgs foreach(send)
 
   val ! = send _
 
+  def runState() = allImpls(_.runFsm())
+
+  def killState() {
+    allImpls(_.kill())
+  }
+
+  def joinState() {
+    allImpls(_.join())
+  }
+}
+
+abstract class StatefulFragment
+extends TrypFragment
+with Stateful
+{
+  override implicit val uiCtx: AndroidUiContext[Unit] = AndroidFragmentUiContext.default[Unit](this)
+
   // TODO impl log level
   override def onCreate(saved: Bundle) {
     super.onCreate(saved)
-    impls foreach(_.runFsm())
+    runState()
     // logImpl ! LogLevel(LogLevel.DEBUG)
     send(Create(arguments, Option(saved)))
   }
@@ -420,13 +438,25 @@ with ViewStateImplicits
     super.onResume()
     send(Resume)
   }
+}
 
-  def killState() {
-    impls foreach(_.kill())
+trait StatefulActivity
+extends TrypActivity
+with Stateful
+{
+  val uiCtx = AndroidActivityUiContext.default[Unit]
+
+  // TODO impl log level
+  override def onCreate(saved: Bundle) {
+    super.onCreate(saved)
+    runState()
+    // logImpl ! LogLevel(LogLevel.DEBUG)
+    send(Create(Map(), Option(saved)))
   }
 
-  def joinState() {
-    impls foreach(_.join())
+  override def onResume() {
+    super.onResume()
+    send(Resume)
   }
 }
 

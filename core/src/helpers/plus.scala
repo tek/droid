@@ -90,8 +90,8 @@ extends res.ResourcesAccess
     def email = plus.email
   }
 
-  type PlusCallback[A] = (Account) ⇒ A
-  type PlusJob = (GPlus) ⇒ Unit
+  type PlusCallback[A] = Account ⇒ A
+  type PlusJob = GPlus ⇒ Unit
 
   val scheduled: Buffer[PlusJob] = Buffer()
 

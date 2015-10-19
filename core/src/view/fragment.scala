@@ -96,7 +96,8 @@ case class CannotGoBack()
 extends java.lang.RuntimeException
 
 abstract class MainFragment
-extends Fab
+extends StatefulFragment
+with Fab
 with AppPreferences
 {
   implicit val mainFrag: FragmentManagement = this
