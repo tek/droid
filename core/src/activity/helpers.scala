@@ -3,6 +3,8 @@ package tryp.droid.activity
 import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import scalaz._, Scalaz._, concurrent._
+
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.view.{MenuItem,Gravity}
@@ -464,15 +466,50 @@ with DrawerLayout.DrawerListener
   }
 }
 
+import ViewState._
+
+trait GPlusImpl
+extends StateImpl
+{
+  case object Fetching extends BasicState
+
+  case object Auth extends Message
+
+  def auth: ViewTransition = {
+    case s ⇒ s
+  }
+
+  def create: ViewTransition = {
+    case S(Pristine, data) ⇒
+      S(Initialized, data) << autoFetchAuthToken.option(fetchToken)
+  }
+
+  val transitions: ViewTransitions = {
+    case Create(_, _) ⇒ create
+    case Auth ⇒ auth
+  }
+
+  def fetchToken = Nop
+
+  def authorizeToken: AppEffect
+
+  def autoFetchAuthToken = true
+}
+
 trait GPlusIntegration
 extends ActivityBase
 with AppPreferences
+with StatefulActivity
 { self: Akkativity ⇒
 
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
     authTokenObserver
   }
+
+  val gPlusImpl: GPlusImpl
+
+  override def impls = gPlusImpl :: super.impls
 
   var fetchingPlusToken = false
 
@@ -494,13 +531,13 @@ with AppPreferences
     fetchingPlusToken = true
     fetchPlusToken.future andThen {
       case Success((account, token)) ⇒
-        Log.i(s"Successfully obtained plus token: ${token}")
+        Log.i(s"Successfully obtained plus token: $token")
         authorizeToken(account, token)
         GoogleAuthUtil.clearToken(this, token)
       case Failure(ex: UserRecoverableAuthException) ⇒
         requestPermission(ex.getIntent)
       case Failure(ex) ⇒
-        Log.e(s"Google Plus auth token request failed: ${ex}")
+        Log.e(s"Google Plus auth token request failed: $ex")
     } onComplete { _ ⇒ fetchingPlusToken = false }
   }
 
