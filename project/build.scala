@@ -17,11 +17,11 @@ extends tryp.AndroidBuild(deps = DroidDeps)
     .transitive
     .dep()
 
-  lazy val test = aar("test") << core
+  lazy val test = aar("test") <<< core
 
-  lazy val unit = aar("unit") << test
+  lazy val unit = aar("unit") <<< test
 
-  lazy val debug = aar("debug") << core
+  lazy val debug = aar("debug") <<< core
 
-  lazy val integration = aar("integration") << test
+  lazy val integration = aar("integration") <<< test
 }
