@@ -6,8 +6,6 @@ import android.app.Service
 import android.content.{ServiceConnection,ComponentName}
 import android.os.IBinder
 
-import tryp.util.CallbackMixin
-
 case class ServiceProxy[A <: ServiceBase: ClassTag](
   consumer: ServiceConsumer, name: String
 )

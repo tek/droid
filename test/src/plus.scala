@@ -1,4 +1,7 @@
-package tryp.test
+package tryp
+package test
+
+import scalaz._, Scalaz._, concurrent._
 
 object MockData
 {
@@ -9,6 +12,8 @@ object MockData
 class MockGPlus(implicit val context: Context)
 extends GPlus
 {
+  override def connect() { }
+
   def apiConnected(data: Bundle) {
   }
 }
@@ -25,14 +30,29 @@ extends GPlusBase
   signedIn() = true
 
   override def apply[A](callback: PlusCallback[A])(implicit a: Activity) = {
-    import concurrent.ExecutionContext.Implicits.global
-    val promise = Promise[A]()
-    Future {
-      Try(callback(new MockAccount)) match {
-        case Success(result) ⇒ promise success result
-        case Failure(error) ⇒ promise failure error
-      }
+    val promise = Promise[\/[String, A]]()
+    Task(callback(new MockAccount)) runAsync {
+      case \/-(result) ⇒ promise success result
+      case -\/(error) ⇒ promise failure error
     }
     promise
+  }
+}
+
+trait AuthStateMock
+extends StatefulActivity
+with AuthIntegration
+{ act: TrypActivity ⇒
+
+  override val gPlusImpl = new AuthImpl {
+    def activity = act
+
+    override def plusToken(email: String) = "mock_plus_token"
+
+    override def clearPlusToken(token: String) = ViewState.Nop
+
+    override def authorizePlusToken(account: String, plusToken: String) = {
+      AuthMessages.BackendAuthorized(MockData.authToken).success
+    }
   }
 }

@@ -95,7 +95,8 @@ case class CannotGoBack()
 extends java.lang.RuntimeException
 
 abstract class MainFragment
-extends StatefulFragment
+extends TrypFragment
+with StatefulFragment
 with Fab
 with AppPreferences
 {

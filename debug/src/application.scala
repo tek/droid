@@ -1,7 +1,7 @@
 package tryp.debug
 
 object `package`
-extends tryp.meta.TrypDroidGlobals
+extends tryp.droid.meta.TrypDroidGlobals
 
 trait DebugApplication
 extends tryp.ApplicationI

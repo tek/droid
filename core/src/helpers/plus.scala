@@ -2,6 +2,8 @@ package tryp
 
 import concurrent.ExecutionContext.Implicits.global
 
+import scalaz.{Plus ⇒ _, _}, Scalaz._, concurrent._
+
 import java.net.URL
 
 import android.graphics.drawable.Drawable
@@ -61,7 +63,7 @@ extends GPlusTask(callback)
 class GPlusBase
 extends res.ResourcesAccess
 {
-  class Account(plus: GPlus)(implicit val context: Context)
+  case class Account(plus: GPlus)(implicit val context: Context)
   extends Basic
   {
     def photoUrl = plus.photo map { c ⇒ new URL(c.getUrl) }
@@ -90,7 +92,7 @@ extends res.ResourcesAccess
     def email = plus.email
   }
 
-  type PlusCallback[A] = Account ⇒ A
+  type PlusCallback[A] = Account ⇒ \/[String, A]
   type PlusJob = GPlus ⇒ Unit
 
   val scheduled: Buffer[PlusJob] = Buffer()
@@ -131,14 +133,15 @@ extends res.ResourcesAccess
     }
   }
 
+  // TODO use Process, signal instead of promise
+  // state machine that accumulates Process instances for jobs, until plus is
+  // logged in, then set signal to fire processes
   def apply[A](callback: PlusCallback[A])(implicit a: Activity) = {
-    val promise = Promise[A]()
+    val promise = Promise[\/[String, A]]()
     val job: PlusJob = { plus ⇒
-      Future {
-        Try(callback(new Account(plus))) match {
-          case Success(result) ⇒ promise success result
-          case Failure(error) ⇒ promise failure error
-        }
+      Task { callback(new Account(plus)) } runAsync {
+        case -\/(err) ⇒ promise.failure(err)
+        case \/-(res) ⇒ promise.success(res)
       }
     }
     if (signedIn()) {
@@ -159,6 +162,6 @@ extends res.ResourcesAccess
 object GPlusBase
 extends GPlusBase
 {
-  val RC_SIGN_IN = 0
-  val RC_TOKEN_FAIL = 1
+  val RC_SIGN_IN = 1
+  val RC_TOKEN_FETCH = 2
 }

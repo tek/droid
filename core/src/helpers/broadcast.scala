@@ -5,8 +5,6 @@ import scala.collection.mutable.ListBuffer
 import android.content.IntentFilter
 import android.support.v4.content.LocalBroadcastManager
 
-import tryp.util.CallbackMixin
-
 class BroadcastReceiver(client: BroadcastReceive)
 extends android.content.BroadcastReceiver
 {

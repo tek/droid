@@ -1,12 +1,13 @@
-package tryp.unit
+package tryp
+package unit
 
-import tryp.slick.TestFileDbInfo
+import slick.TestFileDbInfo
 
 trait UnitTestApplication
-{ self: tryp.Application ⇒
+{ self: Application ⇒
 
   override def setupEnv() = {
-    tryp.setEnv(tryp.meta.UnitTestEnv)
+    setEnv(meta.UnitTestEnv)
   }
 
   override def setupDbInfo(name: String) = {

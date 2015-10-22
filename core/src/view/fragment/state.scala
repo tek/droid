@@ -27,12 +27,18 @@ object ViewState
   extends Message
   case object Resume extends Message
   case object Update extends Message
-  trait Loggable extends Message
-  case class LogError(msg: String) extends Loggable
   case object Done extends Message
   case object NopMessage extends Message
-  case class Toast(msg: String) extends Message
+  case class Toast(id: String) extends Message
   case class ForkedResult(reason: String) extends Message
+
+  trait Loggable extends Message
+
+  case class LogError(description: String, msg: String)
+  extends Loggable
+  {
+    lazy val message = s"error while $description: $msg"
+  }
 
   case class LogFatal(description: String, error: Throwable)
   extends Loggable
@@ -44,6 +50,16 @@ object ViewState
   extends Loggable
   {
     def showResult = result.show
+  }
+
+  case class EffectSuccessful(description: String)
+  extends Loggable
+  {
+    lazy val message = s"successful effect: $description"
+  }
+
+  def stateEffect(description: String)(effect: ⇒ Unit) = {
+    Task(effect) map(_ ⇒ EffectSuccessful(description).success)
   }
 
   trait MessageInstances
@@ -97,7 +113,7 @@ trait ToMessageInstances0
     def message(a: A) = {
       UnknownResult(a.toString)
     }
-    def error(a: A) = LogError(a.toString)
+    def error(a: A) = LogError("running unknown task", a.toString)
   }
 }
 
@@ -106,7 +122,7 @@ extends ToMessageInstances0
 {
   implicit def showableToMessage[A: Show] = new ToMessage[A] {
     def message(a: A) = UnknownResult(a)
-    def error(a: A) = LogError(a.toString)
+    def error(a: A) = LogError("running unknown task", a.toString)
   }
 }
 
@@ -137,6 +153,11 @@ import ToMessageSyntax._
 // TODO add UiAction implicits
 trait ViewStateImplicits
 {
+  implicit def validationNelToResult[E: ToMessage, A: ToMessage]
+  (v: ValidationNel[A, E]): Result = {
+    v.bimap(_.map(e ⇒ e.toErrorMessage), _.toMessage)
+  }
+
   // implicit conversions to Task[Result]
   // from Ui, DBIOAction, Message
   implicit def uiToTask(ui: Ui[Result]): Task[Result] =
@@ -162,12 +183,18 @@ trait ViewStateImplicits
   implicit def anyActionToTask[E: ToMessage, A: ToMessage]
   (action: AnyAction[ValidationNel[E, A]])
   (implicit dbi: DbInfo, ec: EC): Task[Result] = {
-    action.map(_.bimap(_.map(e ⇒ e.toErrorMessage), _.toMessage))
+    action.map(a ⇒ a: Result)
       .task
   }
 
-  implicit def liftMessage[A <: Message](m: A): Task[Result] =
-    Task.now(m.successNel[Message])
+  implicit def liftResult(r: Result): AppEffect = Task.now(r)
+
+  implicit def liftMessage[A <: Message](m: A): Result =
+    m.successNel[Message]
+
+  implicit def messageToAppEffect[A <: Message](m: A): AppEffect = {
+    (m: Result): AppEffect
+  }
 
   def debug[A]: Sink[Task, A] = sink.lift { (a: A) ⇒ Task(Log.i(a)) }
 
@@ -217,13 +244,13 @@ object Zthulhu
   def scanSplitW[A, B, C]
   (z: B)
   (f: PartialFunction[A, PartialFunction[B, (B, C)]])
-  (error: Throwable ⇒ Maybe[C])
+  (error: (B, A, Throwable) ⇒ Maybe[C])
   : stream.Writer1[C, A, B] = {
     receive1 { (a: A) ⇒
       val (effect, newState) = Try(f lift(a) flatMap(_.lift(z))) match {
         case Success(Some((newState, effect))) ⇒ effect.just → newState.just
         case Success(None) ⇒ Empty[C]() → Empty[B]()
-        case Failure(t) ⇒ error(t) → Empty[B]()
+        case Failure(t) ⇒ error(z, a, t) → Empty[B]()
       }
       val o = newState.map(Process.emitO) | Process.halt
       val w = effect.map(Process.emitW) | Process.halt
@@ -231,8 +258,9 @@ object Zthulhu
     }
   }
 
-  def fatalTransition(t: Throwable): Maybe[List[AppEffect]] = {
-    List(LogFatal("transitioning state", t): AppEffect).just
+  def fatalTransition(state: Zthulhu, cause: Message, t: Throwable)
+  : Maybe[List[AppEffect]] = {
+    List(LogFatal(s"transitioning $state for $cause", t): AppEffect).just
   }
 
   implicit class ProcessToZthulhu[A[_]](source: Process[A, Message])
@@ -250,6 +278,7 @@ object Zthulhu
   {
     def <<(e: AppEffect) = (f, Nil) << e
     def <<(e: Option[AppEffect]) = (f, Nil) << e
+    def <<[A: ToAppEffect](e: A) = (f, Nil) << e
     def <<[A: ToAppEffect](e: Option[A]) = (f, Nil) << e
   }
 
@@ -257,6 +286,9 @@ object Zthulhu
   {
     def <<(e: AppEffect) = (r.head, r.last :+ e)
     def <<(e: Option[AppEffect]): ViewTransitionResult = e some(r.<<) none(r)
+    def <<[A: ToAppEffect](e: A): ViewTransitionResult = {
+      r << (e: AppEffect)
+    }
     def <<[A: ToAppEffect](e: Option[A]): ViewTransitionResult = {
       r << (e map(a ⇒ (a: AppEffect)))
     }
@@ -270,7 +302,7 @@ object Zthulhu
 import Zthulhu._
 
 abstract class StateImpl
-(implicit ec: EC, db: tryp.slick.DbInfo, ctx: tryp.UiContext[_],
+(implicit ec: EC, db: tryp.slick.DbInfo, ctx: AndroidUiContext,
   broadcast: Broadcaster)
 extends ToUiOps
 with ViewStateImplicits
@@ -370,7 +402,7 @@ trait Stateful
 extends DbAccess
 with ViewStateImplicits
 {
-  implicit val uiCtx: AndroidUiContext[Unit]
+  implicit def uiCtx: AndroidUiContext
 
   implicit val broadcast: Broadcaster = new Broadcaster(sendAll)
 
@@ -391,9 +423,10 @@ with ViewStateImplicits
     }
 
     val transitions: ViewTransitions = {
-      case LogError(msg) ⇒ logError(msg.toString)
-      case m @ LogFatal(_, _) ⇒ logError(m.message)
+      case m: LogError ⇒ logError(m.message)
+      case m: LogFatal ⇒ logError(m.message)
       case UnknownResult(msg) ⇒ logInfo(msg.toString)
+      case m: EffectSuccessful ⇒ logInfo(m.message)
       case m: Loggable ⇒ logInfo(m.toString)
     }
   }
@@ -419,21 +452,44 @@ with ViewStateImplicits
   }
 }
 
-abstract class StatefulFragment
-extends TrypFragment
-with Stateful
+trait StatefulHasActivity
+extends Stateful
+with HasActivity
 {
-  override implicit val uiCtx: AndroidUiContext[Unit] = AndroidFragmentUiContext.default[Unit](this)
+  implicit def uiCtx: AndroidUiContext = AndroidActivityUiContext.default
+
+  protected val activityImpl = new StateImpl
+  {
+    override def description = "activity access state"
+
+    def toast(id: String): ViewTransition = {
+      case s ⇒
+        s << uiCtx.notify(id)
+    }
+
+    val transitions: ViewTransitions = {
+      case Toast(id) ⇒ toast(id)
+    }
+  }
+}
+
+trait StatefulFragment
+extends StatefulHasActivity
+with CallbackMixin
+{
+  self: TrypFragment ⇒
+
+  override implicit def uiCtx = AndroidFragmentUiContext.default(self)
 
   // TODO impl log level
-  override def onCreate(saved: Bundle) {
+  abstract override def onCreate(saved: Bundle) {
     super.onCreate(saved)
     runState()
     // logImpl ! LogLevel(LogLevel.DEBUG)
-    send(Create(arguments, Option(saved)))
+    send(Create(self.arguments, Option(saved)))
   }
 
-  override def onResume() {
+  abstract override def onResume() {
     super.onResume()
     send(Resume)
   }
@@ -441,11 +497,8 @@ with Stateful
 
 trait StatefulActivity
 extends TrypActivity
-with Stateful
-with HasActivity
+with StatefulHasActivity
 {
-  override implicit val uiCtx = AndroidActivityUiContext.default[Unit](this)
-
   // TODO impl log level
   override def onCreate(saved: Bundle) {
     super.onCreate(saved)
@@ -463,7 +516,7 @@ with HasActivity
 import UiActionTypes._
 
 abstract class ShowStateImpl[A <: Model: DecodeJson]
-(implicit ec: EC, db: tryp.slick.DbInfo, ctx: tryp.UiContext[_],
+(implicit ec: EC, db: tryp.slick.DbInfo, ctx: AndroidUiContext,
   broadcast: Broadcaster)
 extends StateImpl
 {
@@ -524,17 +577,10 @@ extends StateImpl
       s << updateData(m) << fetchDetails(m)
   }
 
-  val catchall: ViewTransition = {
-    case s ⇒
-      p("catchall")
-      s
-  }
-
   val transitions: ViewTransitions = {
     case Create(args, state) ⇒ create(args, state)
     case Resume ⇒ resume
     case Update ⇒ update
     case SetModel(m) ⇒ model(m)
-    case _ ⇒ catchall
   }
 }

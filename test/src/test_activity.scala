@@ -1,8 +1,10 @@
-package tryp.test
+package tryp
+package test
 
 trait TrypTestActivity
-extends tryp.TrypActivity
-{ self: Activity ⇒
+extends TrypActivity
+with AuthStateMock
+{ act: Akkativity ⇒
 
   def setPref(key: String, value: Any) {
     prefs.set(key, value)

@@ -4,8 +4,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import akka.actor.{ ActorSelection, ActorSystem, Actor, Props }
 
-import util.CallbackMixin
-
 object Akka
 {
   private [tryp] var _system: Option[ActorSystem] = None

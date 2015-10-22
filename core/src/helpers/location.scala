@@ -115,7 +115,7 @@ with tryp.Preferences
 
 trait Locations
 extends LocationsConcern
-with tryp.util.CallbackMixin
+with CallbackMixin
 {
   abstract override def onStart() {
     super.onStart()

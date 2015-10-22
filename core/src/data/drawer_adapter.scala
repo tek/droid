@@ -1,5 +1,7 @@
 package tryp
 
+import scalaz._, Scalaz._
+
 import android.widget._
 import android.support.v7.widget.RecyclerView
 import android.graphics.{Color,PorterDuff}
@@ -116,7 +118,7 @@ extends SimpleRecyclerAdapter[DrawerViewHolder, DrawerItem]
           Ui.run(
             name <~ account.name.map { n ⇒ txt.literal(n) },
             email <~ account.email.map { n ⇒ txt.literal(n) }
-          )
+          ).right
         }
       case _ ⇒ throw new java.lang.RuntimeException(
           s"Invalid view holder for GPlusHeader: ${holder.className}")

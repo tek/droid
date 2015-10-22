@@ -20,7 +20,6 @@ import macroid.FullDsl._
 
 import rx._
 
-import tryp.util.CallbackMixin
 import Macroid._
 import Screws._
 import tryp.slick.sync.SyncModel

@@ -28,22 +28,12 @@ object UiActionTypes
 }
 import UiActionTypes._
 
-trait AndroidUiContext[A]
-extends UiContext[A]
+trait AndroidUiContext
+extends UiContext[Ui]
 with HasContext
-{
-}
 
-class DefaultAndroidUiContext[A](implicit val context: Context)
-extends AndroidUiContext[A]
-
-object AndroidUiContext
-{
-  def default[A](implicit c: Context) = new DefaultAndroidUiContext[A]
-}
-
-trait AndroidActivityUiContext[A]
-extends AndroidUiContext[A]
+trait AndroidActivityUiContext
+extends AndroidUiContext
 with Snackbars
 {
   override def failure[E: Show](e: NonEmptyList[E]) = {
@@ -51,35 +41,33 @@ with Snackbars
     snackbarLiteral(e.map(_.show).toList.mkString("\n"))
   }
 
-  implicit val activity: Activity
+  override def notify(id: String) = mkToast(id)
 }
 
-class DefaultAndroidActivityUiContext[A](implicit val activity: Activity)
-extends AndroidActivityUiContext[A]
+class DefaultAndroidActivityUiContext(implicit val activity: Activity)
+extends AndroidActivityUiContext
 
 object AndroidActivityUiContext
 {
-  def default[A](implicit activity: Activity) =
-    new DefaultAndroidActivityUiContext[A]
+  def default(implicit a: Activity) = new DefaultAndroidActivityUiContext
 }
 
-trait AndroidFragmentUiContext[A]
-extends AndroidActivityUiContext[A]
+trait AndroidFragmentUiContext
+extends AndroidActivityUiContext
 
-class DefaultAndroidFragmentUiContext[A](implicit fragment: TrypFragment)
-extends AndroidFragmentUiContext[A]
+class DefaultAndroidFragmentUiContext(implicit fragment: Fragment)
+extends AndroidFragmentUiContext
 {
   val activity = fragment.activity
 }
 
 object AndroidFragmentUiContext
 {
-  def default[A](implicit fragment: TrypFragment) =
-    new DefaultAndroidFragmentUiContext[A]
+  def default(implicit f: Fragment) = new DefaultAndroidFragmentUiContext
 }
 
 class UiOps[A](ui: Ui[A])
-(implicit ctx: UiContext[_], ec: EC)
+(implicit ctx: AndroidUiContext, ec: EC)
 {
   def attemptUi = {
     Log.d(s"running the Ui")
@@ -102,7 +90,7 @@ class UiOps[A](ui: Ui[A])
 trait ToUiOps
 {
   implicit def ToUiOps[A](a: Ui[A])
-  (implicit ctx: UiContext[_], ec: EC, info: DbInfo) = {
+  (implicit ctx: AndroidUiContext, ec: EC, info: DbInfo) = {
     new UiOps(a)
   }
 }
@@ -111,7 +99,7 @@ trait ToUiOps
 // at the end of the universe, send written items to generic log, may be
 // snackbars, stdout or android etc.
 class UiValidationNelActionOps[E: Show, A](a: UiAction[E, A])
-(implicit ctx: UiContext[A], ec: EC, info: DbInfo)
+(implicit ctx: AndroidUiContext, ec: EC, info: DbInfo)
 extends ToUiOps
 {
   def attemptUi: Unit = {
@@ -135,9 +123,9 @@ extends ToUiOps
 
 trait ToUiValidationNelActionOps
 {
-  implicit def ToUiValidationNelActionOps[E: Show, A: UiContext]
+  implicit def ToUiValidationNelActionOps[E: Show, A]
   (a: UiAction[E, A])
-  (implicit ec: EC, info: DbInfo) = {
+  (implicit ec: EC, info: DbInfo, ctx: AndroidUiContext) = {
     new UiValidationNelActionOps(a)
   }
 }

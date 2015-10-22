@@ -1,7 +1,4 @@
-package tryp.util
-
-import android.content.Context
-import android.os.Bundle
+package tryp
 
 abstract trait CallbackMixin {
   implicit def context: Context
