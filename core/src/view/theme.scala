@@ -1,10 +1,10 @@
-package tryp.view
+package tryp.droid.view
 
 import android.content.res.{TypedArray,ColorStateList}
 import android.graphics.drawable.Drawable
 
 class Theme(implicit val context: Context)
-extends tryp.Basic
+extends tryp.droid.Basic
 {
 
   def drawable(name: String): Drawable = {

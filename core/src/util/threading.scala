@@ -1,6 +1,6 @@
-package tryp.util
+package tryp.droid.util
 
-import tryp.Log
+import tryp.droid.Log
 
 object Threading
 {

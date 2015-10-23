@@ -1,4 +1,4 @@
-package tryp
+package tryp.droid
 
 import scalaz._, Scalaz._, concurrent._
 

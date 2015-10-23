@@ -1,4 +1,4 @@
-package tryp
+package tryp.droid
 
 import android.app.PendingIntent
 import android.location.Location
@@ -12,9 +12,9 @@ import com.google.android.gms.common.api._
 case class GeofenceData(id: String, lat: Double, long: Double)
 
 trait LocationsConcern
-extends tryp.Basic
+extends tryp.droid.Basic
 with LocationListener
-with tryp.Preferences
+with tryp.droid.Preferences
 {
   class LocationCallbacks(owner: LocationsConcern)
   extends GoogleApiClient.OnConnectionFailedListener

@@ -1,4 +1,4 @@
-package tryp
+package tryp.droid.activity
 
 import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -20,6 +20,8 @@ import macroid.FullDsl._
 
 import rx._
 
+import tryp.droid._
+import tryp.droid.util.CallbackMixin
 import Macroid._
 import Screws._
 import tryp.slick.sync.SyncModel
@@ -223,7 +225,7 @@ extends MainView
   with FragmentManagement
   with Akkativity ⇒
 
-    import tryp.tweaks.{Toolbar ⇒ T}
+    import tryp.droid.tweaks.{Toolbar ⇒ T}
 
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
@@ -346,7 +348,7 @@ with DrawerLayout.DrawerListener
   with FragmentManagement
   with Akkativity ⇒
 
-  import tryp.tweaks.{Toolbar ⇒ T, Drawer ⇒ D}
+  import tryp.droid.tweaks.{Toolbar ⇒ T, Drawer ⇒ D}
 
   override def initView {
     super.initView

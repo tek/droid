@@ -1,4 +1,4 @@
-package tryp
+package tryp.droid
 
 import scala.collection.convert.wrapAll._
 

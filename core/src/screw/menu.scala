@@ -1,11 +1,11 @@
-package tryp
+package tryp.droid
 
 import android.view.MenuItem
 
-import tryp.res._
+import tryp.droid.res._
 
 trait MenuScrews
-extends tryp.res.ResourcesAccess
+extends tryp.droid.res.ResourcesAccess
 {
   protected case class Menu(implicit c: Context, ns: ResourceNamespace)
   {

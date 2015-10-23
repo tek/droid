@@ -1,4 +1,4 @@
-package tryp
+package tryp.droid
 
 abstract trait CallbackMixin {
   implicit def context: Context

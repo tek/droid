@@ -1,4 +1,4 @@
-package tryp
+package tryp.droid
 
 import scala.language.dynamics
 import scala.reflect.runtime.universe._
@@ -21,8 +21,8 @@ import android.os.{Vibrator,SystemClock}
 import macroid._
 import macroid.support.FragmentApi
 
-import tryp.util._
-import tryp.res._
+import tryp.droid.util._
+import tryp.droid.res._
 
 trait Searchable {
 
@@ -247,7 +247,7 @@ extends DialogInterface.OnClickListener
 
 class ConfirmDialog(message: String, callback: () ⇒ Unit)
 extends DialogFragment
-with tryp.Basic
+with tryp.droid.Basic
 {
   def context = getActivity
 
@@ -414,7 +414,7 @@ with Searchable
 trait Snackbars
 extends HasActivity
 {
-  import tryp.Macroid._
+  import tryp.droid.Macroid._
   import macroid.FullDsl.{toast ⇒ mToast,_}
 
   private implicit val ns = PrefixResourceNamespace("snackbar")

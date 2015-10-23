@@ -1,7 +1,7 @@
-package tryp
+package tryp.droid
 
-import tryp.util.Threading
-import tryp.res._
+import tryp.droid.util.Threading
+import tryp.droid.res._
 
 trait HasContext
 {

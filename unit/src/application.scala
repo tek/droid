@@ -1,4 +1,4 @@
-package tryp
+package tryp.droid
 package unit
 
 import slick.TestFileDbInfo

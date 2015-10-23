@@ -1,4 +1,4 @@
-package tryp.res
+package tryp.droid.res
 
 import android.content.res.{Resources ⇒ AResources}
 
@@ -7,14 +7,14 @@ extends java.lang.RuntimeException(msg)
 
 case class Resources(implicit val context: Context,
   ns: ResourceNamespace = GlobalResourceNamespace)
-extends tryp.Preferences
-with tryp.AppPreferences
+extends tryp.droid.Preferences
+with tryp.droid.AppPreferences
 {
   type IdTypes = Int with String with Id
 
   private val global = GlobalResourceNamespace
 
-  lazy val theme = new tryp.view.Theme
+  lazy val theme = new tryp.droid.view.Theme
 
   def id[A >: IdTypes](input: A, defType: String = "id"): Int = {
     val res = input match {

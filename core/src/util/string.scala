@@ -1,4 +1,4 @@
-package tryp.util
+package tryp.droid.util
 
 object Strings {
   def camel2mixed(culprit: String) = {

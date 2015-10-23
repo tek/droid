@@ -1,4 +1,4 @@
-package tryp
+package tryp.droid
 
 import scalaz._, Scalaz._
 
@@ -14,8 +14,8 @@ import akka.actor.ActorSelection
 
 import com.makeramen.roundedimageview.RoundedImageView
 
-import tryp.Macroid._
-import tryp.res.PrefixResourceNamespace
+import tryp.droid.Macroid._
+import tryp.droid.res.PrefixResourceNamespace
 
 sealed abstract class DrawerViewHolder(v: View)
 extends RecyclerView.ViewHolder(v)

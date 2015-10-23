@@ -1,4 +1,4 @@
-package tryp.meta
+package tryp.droid.meta
 
 trait DroidEnv
 extends tryp.meta.Env

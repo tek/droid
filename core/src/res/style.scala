@@ -1,4 +1,4 @@
-package tryp.res
+package tryp.droid.res
 
 abstract class Style
 {

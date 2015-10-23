@@ -1,7 +1,7 @@
-package tryp
+package tryp.droid
 
 trait Macroid
-extends tryp.tweaks.All
+extends tryp.droid.tweaks.All
 with MacroidExt
 {
 }

@@ -1,8 +1,10 @@
-package tryp
+package tryp.droid
 
 import scalaz._, Scalaz._
 
 import macroid._
+
+import tryp.UiContext
 
 class ActionMacroidOps[A](a: AnyAction[A])
 {

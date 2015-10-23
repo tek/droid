@@ -1,3 +1,3 @@
-package tryp {
-  package object test extends droid.meta.Globals
+package tryp.droid {
+  package object test extends meta.Globals
 }

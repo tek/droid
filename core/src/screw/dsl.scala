@@ -1,4 +1,4 @@
-package tryp
+package tryp.droid
 
 object Screws
 extends Screwing

@@ -1,4 +1,4 @@
-package tryp
+package tryp.droid
 
 import com.google.android.gms.maps.{MapFragment ⇒ AMapFragment,_}
 
@@ -6,7 +6,7 @@ import macroid.Contexts
 
 case class MapFragment()
 extends AMapFragment
-with tryp.FragmentBase
+with tryp.droid.FragmentBase
 with Contexts[android.app.Fragment]
 with OnMapReadyCallback
 {

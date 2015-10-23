@@ -1,13 +1,13 @@
-package tryp
+package tryp.droid
 
 import android.support.v7.widget.RecyclerView
 
 import macroid.FullDsl._
 import macroid.contrib.TextTweaks._
 
-import tryp.tweaks.Recycler._
-import tryp.res._
-import tryp.Macroid._
+import tryp.droid.tweaks.Recycler._
+import tryp.droid.res._
+import tryp.droid.Macroid._
 
 class DrawerFragment
 extends TrypFragment

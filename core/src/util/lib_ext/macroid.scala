@@ -1,4 +1,4 @@
-package tryp
+package tryp.droid
 
 import macroid.{FragmentManagerContext, ContextWrapper, CanTweak}
 import macroid.FullDsl._

@@ -8,8 +8,7 @@ import android.graphics.drawable.Drawable
 import android.view.{View,ViewGroup}
 import android.app.{Fragment,Activity}
 
-import tryp.util._
-import tryp.Params
+import tryp.droid.util._
 
 trait AndroidExt {
   implicit class ViewGroupExt(vg: ViewGroup) {
@@ -19,8 +18,8 @@ trait AndroidExt {
   }
 
   implicit class ViewExt(val view: View)
-  extends tryp.Basic
-  with tryp.Searchable
+  extends tryp.droid.Basic
+  with tryp.droid.Searchable
   {
     def context = view.getContext
 
@@ -110,9 +109,9 @@ trait AndroidExt {
   }
 
   implicit class `Fragment extensions`(f: Fragment)
-  extends tryp.Basic
-  with tryp.Searchable
-  with tryp.FragmentManagement
+  extends tryp.droid.Basic
+  with tryp.droid.Searchable
+  with tryp.droid.FragmentManagement
   {
     def view = f.getView
     def activity = f.getActivity
@@ -120,9 +119,9 @@ trait AndroidExt {
   }
 
   implicit class `Activity extensions`(a: Activity)
-  extends tryp.Basic
-  with tryp.Searchable
-  with tryp.FragmentManagement
+  extends tryp.droid.Basic
+  with tryp.droid.Searchable
+  with tryp.droid.FragmentManagement
   {
     override def context = a
     def view = a.getWindow.getDecorView.getRootView
