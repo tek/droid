@@ -4,8 +4,6 @@ import scala.concurrent.duration._
 
 import akka.actor._
 
-import activity.Drawer
-
 case object DrawerOpened
 case class DrawerClosed(callback: () ⇒ Unit)
 case class DrawerNavigated(callback: () ⇒ Unit)

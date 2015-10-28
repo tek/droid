@@ -1,4 +1,4 @@
-package tryp.droid.activity
+package tryp.droid
 
 import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -21,7 +21,6 @@ import macroid.FullDsl._
 import rx._
 
 import tryp.droid._
-import tryp.droid.util.CallbackMixin
 import Macroid._
 import Screws._
 import tryp.slick.sync.SyncModel

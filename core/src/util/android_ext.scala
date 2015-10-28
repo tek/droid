@@ -1,12 +1,11 @@
-package tryp.droid.meta
+package tryp.droid
+package meta
 
 import scala.math.min
 
 import android.widget.{NumberPicker,EditText}
 import android.text.InputType
 import android.graphics.drawable.Drawable
-import android.view.{View,ViewGroup}
-import android.app.{Fragment,Activity}
 
 import tryp.droid.util._
 
