@@ -56,6 +56,8 @@ trait Layout
   {
     def apply[A: Numeric](value: A) =
       new Height(implicitly[Numeric[A]].toInt(value))
+
+    def wrap = Height(WRAP_CONTENT)
   }
 
   implicit def num2width[A: Numeric](value: A): Width = Width(value)
@@ -114,6 +116,9 @@ trait Layout
     Int = Gravity.START): Tweak[View] = {
     lp[FrameLayout](width.value, height.value, gravity)
   }
+
+  def toolbarLp(width: Width, height: Height, grav: Int) =
+    lp[AToolbar](width.value, height.value, grav)
 
   def vlp(width: Width = WRAP_CONTENT, height: Height = WRAP_CONTENT) = {
     lp[ViewGroup](width.value, height.value)

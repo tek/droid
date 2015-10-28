@@ -244,7 +244,7 @@ extends TrypActivityActor[A]
   override def receiveBasic(m: Any) = {
     m match {
       case ToolbarTitle(title) ⇒
-        ui { _.toolbarTitle(title) }
+        withUi(_.toolbarTitle(title))
       case ToolbarView(view) ⇒
         ui { _.toolbarView(view) }
       case a ⇒ super.receiveBasic(a)

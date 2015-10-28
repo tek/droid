@@ -3,6 +3,7 @@ package droid
 
 import android.support.v7.app.ActionBarActivity
 import android.support.v7.widget.Toolbar
+import android.view.Gravity
 
 import macroid.FullDsl._
 
@@ -32,21 +33,18 @@ extends MainView
   }
 
   def toolbarLayout = {
-    l[Toolbar](l[FrameLayout]() <~ Id.toolbar) <~
-      ↔ <~
+    l[Toolbar](l[FrameLayout]() <~ Id.toolbar <~ ↔) <~
       whore(toolbar) <~
       bgCol("toolbar") <~
       T.minHeight(theme.dimension("actionBarSize").toInt) <~
-      T.titleColor("toolbar_text")
+      T.titleColor("toolbar_text") <~
+      toolbarLp(↔, Height.wrap, Gravity.RIGHT)
   }
 
   def belowToolbarLayout: Ui[View] = contentLayout
 
-  def toolbarTitle(title: String) {
-    Ui.run {
-      toolbar <~
-        T.title(title.isEmpty ? res.string("app_title") | title)
-    }
+  def toolbarTitle(title: String) = {
+    toolbar <~ T.title(title.isEmpty ? res.string("app_title") | title)
   }
 
   def toolbarView(view: Fragment) {
