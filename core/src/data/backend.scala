@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 import concurrent.ExecutionContext.Implicits.global
 import concurrent.duration._
 
-import com.squareup.okhttp._
+import com.squareup.okhttp.{Request ⇒ OkRequest, _}
 
 import scalaz._, Scalaz._
 
@@ -20,37 +20,56 @@ import res.ResourcesAccess
 import slick.sync._
 import SyncResult._
 
+object Backend
+{
+  lazy val client = (new OkHttpClient) tap { c ⇒
+      c.setConnectTimeout(10, TimeUnit.SECONDS)
+      c.setWriteTimeout(10, TimeUnit.SECONDS)
+      c.setReadTimeout(30, TimeUnit.SECONDS)
+  }
+}
+
 class Backend(implicit c: Context)
 extends ResourcesAccess
 {
   def token = res.appPrefs.string("backend_token")
 
-  def baseUrl = res.string("backend_base_url")
+  def host = res.string("backend_host")
 
-  def client = (new OkHttpClient) tap { c ⇒
-      c.setConnectTimeout(10, TimeUnit.SECONDS)
-      c.setWriteTimeout(10, TimeUnit.SECONDS)
-      c.setReadTimeout(30, TimeUnit.SECONDS)
-  }
+  def port = res.integer("backend_port")
+
+  def scheme = res.string("backend_scheme")
 
   val mediaTypeJson = MediaType.parse("application/json")
 
-  def request(path: String)
-  (method: Request.Builder ⇒ Request.Builder) = {
-    authenticated { () ⇒ uncheckedRequest(path)(method) }
+  def request(req: Request)
+  (method: OkRequest.Builder ⇒ OkRequest.Builder) = {
+    authenticated { () ⇒ uncheckedRequest(req)(method) }
   }
 
-  def uncheckedRequest(path: String)
-  (method: Request.Builder ⇒ Request.Builder) = {
+  def urlBuilder = (new HttpUrl.Builder)
+      .scheme(scheme)
+      .host(host)
+      .port(port)
+
+  def uncheckedRequest(req: Request)
+  (method: OkRequest.Builder ⇒ OkRequest.Builder) = {
     val token = this.token
-    val builder = (new Request.Builder)
-      .url(s"$baseUrl/user$path")
+    val basic = urlBuilder.addPathSegment("user")
+    val withParams = req.params.foldLeft(basic) {
+      case (builder, (k, v)) ⇒ builder addQueryParameter(k, v)
+    }
+    val withPath = req.segments.foldLeft(withParams) {
+      (builder, seg) ⇒ builder addPathSegment(seg)
+    }
+    val builder = (new OkRequest.Builder)
+      .url(withPath.build)
       .header("access-token", token())
     call(method(builder).build)
   }
 
-  def call(request: Request) = {
-    val response = client.newCall(request).execute()
+  def call(request: OkRequest) = {
+    val response = Backend.client.newCall(request).execute()
     if (response.isSuccessful) response.body.string.right
     else {
       val message = Option(response.message) getOrElse "No message"
@@ -61,8 +80,8 @@ extends ResourcesAccess
   def authorizePlusToken(account: String, plusToken: String) = {
     val json = ("id" := account) ->: ("token" := plusToken) ->: jEmptyObject
     val body = RequestBody.create(mediaTypeJson, json.spaces2)
-    val request = (new Request.Builder)
-      .url(s"${baseUrl}/token")
+    val request = (new OkRequest.Builder)
+      .url(urlBuilder.addPathSegment("token").build)
       .post(body)
       .build
     call(request) match {
@@ -77,7 +96,7 @@ extends ResourcesAccess
   }
 
   def ping() = {
-    uncheckedRequest("/ping")(identity) match {
+    uncheckedRequest(Request.at("ping"))(identity) match {
       case \/-(_) ⇒ true
       case -\/(error) ⇒
         Log.e(s"Not authenticated at backend: $error (token: ${token()})")
@@ -93,25 +112,25 @@ extends ResourcesAccess
 
 class BackendRestClient(implicit c: Context)
 extends Backend
-with tryp.slick.sync.RestClient
+with RestClient
 {
-  def jsonRequest(path: String, json: String)
-  (method: Request.Builder ⇒ RequestBody ⇒ Request.Builder) = {
-    val body = RequestBody.create(mediaTypeJson, json)
-    request(path)(r ⇒ method(r)(body))
+  def jsonRequest(req: Request)
+  (method: OkRequest.Builder ⇒ RequestBody ⇒ OkRequest.Builder) = {
+    val body = RequestBody.create(mediaTypeJson, req.body getOrElse("{}"))
+    request(req)(r ⇒ method(r)(body))
   }
 
-  def post(path: String, json: String = "{}") =
-    jsonRequest(path, json) { _.post _ }
+  def post(req: Request) =
+    jsonRequest(req) { _.post _ }
 
-  def put(path: String, json: String = "{}") =
-    jsonRequest(path, json) { _.put _ }
+  def put(req: Request) =
+    jsonRequest(req) { _.put _ }
 
-  def get(path: String, json: String = "{}") =
-    request(path)(identity)
+  def get(req: Request) =
+    request(req)(identity)
 
-  def delete(path: String, json: String = "{}") =
-    jsonRequest(path, json) { _.delete _ }
+  def delete(req: Request) =
+    jsonRequest(req) { _.delete _ }
 }
 
 trait BackendAccess
@@ -127,10 +146,11 @@ extends DbAccess
           val errmsg = s"not authed with backend: $error"
           implicit val timeout = akka.util.Timeout(10 seconds)
           val next = DBIO.from(self.core ? message)
-          messages match {
+          messages.toList match {
             case head :: tail ⇒
               tryBackend(next andThen(callback))(head, tail)
-            case Nil ⇒ next andThen(errmsg.syncFail)
+            case Nil ⇒
+              next andThen("fatal".syncFail(errmsg, false).wrapDbioSeq)
           }
       }
   }
