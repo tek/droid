@@ -9,7 +9,7 @@ import macroid.Snails
 import akka.actor.ActorSelection
 import akka.pattern.ask
 
-import Macroid._
+import tweaks.Slot
 
 case class SimpleModelViewHolder(view: View, root: Slot[RelativeLayout],
   name: Slot[TextView], delete: Slot[ImageButton])

@@ -1,8 +1,6 @@
 package tryp.droid
 
 import tweaks.Layout.{frag,showFrag}
-import tryp.slick.sync.SyncModel
-
 
 sealed trait DrawerItem
 {

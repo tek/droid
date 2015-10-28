@@ -7,6 +7,7 @@ abstract class ListAdapter(implicit val activity: Activity)
 extends BaseAdapter
 with tryp.droid.Confirm
 with ActivityContexts
+with Macroid
 {
   def items: Seq[AnyRef]
 
@@ -63,6 +64,7 @@ with ActivityContexts
 with tryp.droid.HasActivity
 with Filterable
 with AkkaAdapter
+with Macroid
 {
   def items: Seq[B]
 

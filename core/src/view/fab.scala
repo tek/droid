@@ -13,11 +13,10 @@ import com.melnykov.fab.FloatingActionButton
 import macroid._
 import FullDsl._
 
-import Macroid._
-
 trait Fab
 extends AsyncTasks
 with Transitions
+with Macroid
 {
   import CommonWidgets._
 

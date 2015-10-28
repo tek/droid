@@ -21,7 +21,6 @@ import tryp.droid.ActivityContexts
 import tryp.droid.res.Resources
 import tryp.droid.Macroid._
 import tryp.droid.{FragmentManagement, MainFragment}
-import tryp.slick.sync.SyncModel
 
 trait Layout
 {

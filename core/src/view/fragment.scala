@@ -14,9 +14,7 @@ import macroid.FragmentBuilder
 
 import util.OS
 import res.{PrefixResourceNamespace}
-import Macroid._
 import tweaks.Recycler._
-import slick.sync.SyncModel
 import ViewState._
 
 trait FragmentBase
@@ -27,6 +25,8 @@ with TrypActivityAccess
 with AkkaFragment
 with Snackbars
 with Transitions
+with Macroid
+with Screws
 {
   val name = fragmentClassName(getClass)
 

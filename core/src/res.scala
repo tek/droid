@@ -131,11 +131,14 @@ extends ResourceNamespace
 }
 
 trait ResourcesAccess {
-  protected def res(implicit c: Context,
+  def res(implicit c: Context,
     ns: ResourceNamespace = GlobalResourceNamespace) = Resources()
 
-  protected def theme(implicit c: Context,
+  def theme(implicit c: Context,
     ns: ResourceNamespace = GlobalResourceNamespace) = {
     res.theme
   }
 }
+
+object ResourcesAccess
+extends ResourcesAccess

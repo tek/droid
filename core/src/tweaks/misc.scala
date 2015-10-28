@@ -33,8 +33,9 @@ import tryp.droid.view.{TrypTextView,DividerItemDecoration,ParallaxHeader}
 import tryp.droid.Messages
 
 trait Text
-extends ResourcesAccess
 {
+  import ResourcesAccess._
+
   case class Text(
     implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
   )
@@ -86,6 +87,8 @@ extends ResourcesAccess
 trait Misc
 extends Text
 {
+  import ResourcesAccess._
+
   def imageRes(name: String)(implicit c: Context) = {
     Tweak[ImageView](_.setImageResource(res.drawableId(name)))
   }
@@ -122,7 +125,7 @@ extends Text
     Tweak[View](_.setBackgroundColor(col))
   }
 
-  def cardBackgroundColor(color: String)(implicit c: Context) = 
+  def cardBackgroundColor(color: String)(implicit c: Context) =
     Tweak[CardView](_.setCardBackgroundColor(res.c(color, Some("bg"))))
 
   def checked(state: Boolean) = {

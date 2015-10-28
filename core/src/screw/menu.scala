@@ -5,9 +5,9 @@ import android.view.MenuItem
 import tryp.droid.res._
 
 trait MenuScrews
-extends tryp.droid.res.ResourcesAccess
 {
   protected case class Menu(implicit c: Context, ns: ResourceNamespace)
+  extends tryp.droid.res.ResourcesAccess
   {
     val always = MenuItem.SHOW_AS_ACTION_ALWAYS
     val collapse = MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW
@@ -15,9 +15,9 @@ extends tryp.droid.res.ResourcesAccess
     val never = MenuItem.SHOW_AS_ACTION_NEVER
     val withText = MenuItem.SHOW_AS_ACTION_WITH_TEXT
 
-    def icon(name: String) = Screw[MenuItem] { _.setIcon(theme.drawable(name)) }
+    def icon(name: String) = Screw[MenuItem](_.setIcon(theme.drawable(name)))
 
-    def show(flags: Int) = Screw[MenuItem] { _.setShowAsAction(flags) }
+    def show(flags: Int) = Screw[MenuItem](_.setShowAsAction(flags))
 
     def id(i: Id) = Screw[MenuItem] { m ⇒
       val intent = new Intent

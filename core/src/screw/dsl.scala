@@ -1,5 +1,8 @@
 package tryp.droid
 
-object Screws
+trait Screws
 extends Screwing
 with MenuScrews
+
+object Screws
+extends Screws

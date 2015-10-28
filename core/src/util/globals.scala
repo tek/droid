@@ -1,11 +1,13 @@
-package tryp.droid.meta
+package tryp
+package droid.meta
 
 trait Util
 extends AkkaExt
 with AndroidExt
-with tryp.droid.BundleExt
+with droid.BundleExt
 
 trait Forward
+extends slick.sync.Exports
 {
   val Id = tryp.droid.util.Id
 
@@ -42,7 +44,7 @@ trait Basic
 }
 
 trait GlobalsBase
-extends tryp.slick.sync.meta.GlobalsBase
+extends slick.sync.meta.GlobalsBase
 with Util
 with Basic
 with Forward
@@ -68,6 +70,6 @@ extends Globals
 }
 
 trait TrypDroid
-extends tryp.droid.ToActionMacroidOps
-with tryp.droid.ToUiOps
-with tryp.droid.ToUiValidationNelActionOps
+extends droid.ToActionMacroidOps
+with droid.ToUiOps
+with droid.ToUiValidationNelActionOps

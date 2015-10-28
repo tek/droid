@@ -80,6 +80,7 @@ case class FragmentTransition()
 
 trait Transitions
 extends HasActivity
+with Macroid
 {
   val uiRoot = slut[ViewGroup]
 
