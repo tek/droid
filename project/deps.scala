@@ -15,9 +15,11 @@ extends tryp.AndroidDeps
     "core" → Seq(Resolver.jcenterRepo)
   )
 
+  def pulsar(pro: String) =
+    dd("tryp" %% s"pulsar-$pro" % "+", "tek/pulsar", pro)
+
   def core = ids(
-    dd("tryp" %% "pulsar-slick" % "+", "tek/pulsar", "slick"),
-    dd("tryp" %% "pulsar-core" % "+", "tek/pulsar", "core"),
+    pulsar("slick"),
     aar("com.android.support" % "appcompat-v7" % "21.+"),
     aar("com.android.support" % "palette-v7" % "21.+"),
     aar("com.android.support" % "recyclerview-v7" % "21.+"),
@@ -36,10 +38,11 @@ extends tryp.AndroidDeps
   )
 
   def test = ids(
-    dd("tryp" %% "pulsar-test" % "+", "tek/pulsar", "test")
+    pulsar("test")
   )
 
   override def unit = super.unit ++ ids(
-    dd("tryp" %% "pulsar-unit-core" % "+", "tek/pulsar", "unit-core"),
+    dd("com.geteit" %% "robotest" % "0.13-SNAPSHOT", "tek/robotest"),
+    pulsar("unit-slick")
   )
 }
