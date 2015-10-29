@@ -37,7 +37,7 @@ object Id extends IdGen(1000)
 
   implicit def `Widget is tweakable with Id`[W <: View] =
     new CanTweak[W, Id, W] {
-      def tweak(w: W, i: Id) = Ui { twId(i.value)(w); w }
+      def tweak(w: W, i: Id) = Ui { w.setId(i.value); w }
     }
 }
 
