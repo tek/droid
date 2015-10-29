@@ -62,7 +62,7 @@ with Macroid
     val text = slut[TextView]
     val layout = clickFrame(
       w[TextView] <~ whore(text) <~ padding(all = 16 dp) <~ medium <~ ↔
-    ) <~ ↔
+    ) <~ flp(↔, ↕)
     NavViewHolder(Ui.get(layout), text)
   }
 
