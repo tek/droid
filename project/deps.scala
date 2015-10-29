@@ -28,10 +28,10 @@ extends tryp.AndroidDeps
     aar("com.android.support" % "palette-v7" % "21.+"),
     aar("com.android.support" % "recyclerview-v7" % "21.+"),
     aar("com.android.support" % "cardview-v7" % "21.+"),
-    ad(aar("org.macroid" %% "macroid-core" % "+"), "macroid/macroid", "core"),
     "com.google.android.gms" % "play-services-maps" % "+",
     "com.google.android.gms" % "play-services-location" % "+",
     "com.google.android.gms" % "play-services-plus" % "+",
+    ad(aar("org.macroid" %% "macroid" % "2.0.0-M4"), "macroid/macroid", "core").no,
     "com.typesafe.akka" %% "akka-actor" % "2.3.+",
     "com.scalarx" %% "scalarx" % "0.+",
     "com.github.andkulikov" % "transitions-everywhere" % "1.+",
@@ -42,11 +42,6 @@ extends tryp.AndroidDeps
   )
 
   def test = ids(
-    pulsar("test")
-  )
-
-  override def unit = super.unit ++ ids(
-    dd("com.geteit" %% "robotest" % "0.13-SNAPSHOT", "tek/robotest"),
     pulsar("unit-slick")
   )
 }
