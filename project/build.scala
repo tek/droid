@@ -5,11 +5,6 @@ import android.Keys._
 object DroidBuild
 extends tryp.AndroidBuild(deps = DroidDeps)
 {
-  override def adefaults = super.adefaults ++ Seq(
-    typedResources in Android := false,
-    lintEnabled in Android := false
-  )
-
   override val prefix = Some("droid")
 
   lazy val core = aar("core")
