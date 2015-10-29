@@ -6,7 +6,7 @@ import macroid.FullDsl._
 import macroid.contrib.TextTweaks._
 
 import tryp.droid.tweaks.Recycler._
-import tryp.droid.res._
+import tryp.droid._
 import tryp.droid.Macroid._
 
 class DrawerFragment

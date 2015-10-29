@@ -1,7 +1,6 @@
 package tryp.droid
 
 import scala.language.dynamics
-import scala.reflect.runtime.universe._
 import scala.collection.convert.wrapAll._
 import scala.concurrent.duration._
 import scala.concurrent.Await
@@ -21,8 +20,7 @@ import android.os.{Vibrator,SystemClock}
 import macroid._
 import macroid.support.FragmentApi
 
-import tryp.droid.util._
-import tryp.droid.res._
+import util._
 
 trait Searchable {
 

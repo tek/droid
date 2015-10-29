@@ -13,7 +13,6 @@ import macroid.FullDsl._
 import macroid.FragmentBuilder
 
 import util.OS
-import res.{PrefixResourceNamespace}
 import tweaks.Recycler._
 import ViewState._
 

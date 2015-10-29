@@ -1,4 +1,4 @@
-package tryp.droid.res
+package tryp.droid
 
 import android.content.res.{Resources ⇒ AResources}
 

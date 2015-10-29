@@ -16,7 +16,6 @@ import akka.pattern.ask
 
 import _root_.slick.dbio.DBIO
 
-import res.ResourcesAccess
 import slick.sync._
 import SyncResult._
 

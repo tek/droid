@@ -61,7 +61,7 @@ extends GPlusTask(callback)
 }
 
 class GPlusBase
-extends res.ResourcesAccess
+extends ResourcesAccess
 {
   case class Account(plus: GPlus)(implicit val context: Context)
   extends Basic

@@ -14,8 +14,7 @@ import akka.actor.ActorSelection
 
 import com.makeramen.roundedimageview.RoundedImageView
 
-import tryp.droid.Macroid._
-import tryp.droid.res.PrefixResourceNamespace
+import tweaks.Slot
 
 sealed abstract class DrawerViewHolder(v: View)
 extends RecyclerView.ViewHolder(v)
@@ -38,6 +37,7 @@ extends DrawerViewHolder(view)
 class DrawerAdapter(navigation: Navigation)
 (implicit activity: Activity)
 extends SimpleRecyclerAdapter[DrawerViewHolder, DrawerItem]
+with Macroid
 {
   setHasStableIds(true)
   updateItems(navigation.drawerItems).run

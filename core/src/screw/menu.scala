@@ -7,7 +7,7 @@ import tryp.droid.res._
 trait MenuScrews
 {
   protected case class Menu(implicit c: Context, ns: ResourceNamespace)
-  extends tryp.droid.res.ResourcesAccess
+  extends tryp.droid.ResourcesAccess
   {
     val always = MenuItem.SHOW_AS_ACTION_ALWAYS
     val collapse = MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW
