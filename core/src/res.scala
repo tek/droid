@@ -7,8 +7,8 @@ extends java.lang.RuntimeException(msg)
 
 case class Resources(implicit val context: Context,
   ns: ResourceNamespace = GlobalResourceNamespace)
-extends tryp.droid.Preferences
-with tryp.droid.AppPreferences
+extends Preferences
+with AppPreferences
 {
   type IdTypes = Int with String with Id
 
@@ -130,8 +130,9 @@ extends ResourceNamespace
   override def toString = "global"
 }
 
-trait ResourcesAccess {
-  def res(implicit c: Context,
+trait ResourcesAccess
+{
+  implicit def res(implicit c: Context,
     ns: ResourceNamespace = GlobalResourceNamespace) = Resources()
 
   def theme(implicit c: Context,

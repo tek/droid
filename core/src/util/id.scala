@@ -1,12 +1,9 @@
-package tryp.droid.util
+package tryp.droid
 
 import scala.language.dynamics
-import scala.collection.mutable.{Map ⇒ MMap}
 
-import android.view.View
-
-import macroid.FullDsl.{id ⇒ twId,_}
-import macroid.{Tweak,CanTweak,Ui}
+import macroid.FullDsl._
+import macroid.CanTweak
 
 case class Id(value: Int, tag: String)
 

@@ -9,13 +9,7 @@ with droid.BundleExt
 trait Forward
 extends slick.sync.Exports
 {
-  val Id = tryp.droid.util.Id
-
-  val Tag = tryp.droid.util.Tag
-
   val TrypKeys = tryp.droid.Keys
-
-  type Id = tryp.droid.util.Id
 
   type Context = android.content.Context
   type Bundle = android.os.Bundle
@@ -30,7 +24,6 @@ extends slick.sync.Exports
 
   val Ui = macroid.Ui
   val Tweak = macroid.Tweak
-  val AndroidLog = tryp.droid.meta.AndroidLog
 }
 
 trait Types
@@ -47,8 +40,11 @@ trait GlobalsBase
 extends slick.sync.meta.GlobalsBase
 with Util
 with Basic
-with Forward
 with Types
+
+trait Implicits
+extends ViewInstances
+with ToViewOps
 
 trait Globals
 extends tryp.slick.sync.meta.Globals
@@ -56,11 +52,14 @@ with Util
 with Basic
 with Forward
 with Types
+with Implicits
 {
   type Activity = android.app.Activity
   type View = android.view.View
   type ViewGroup = android.view.ViewGroup
   type LayoutInflater = android.view.LayoutInflater
+
+  val AndroidLog = tryp.droid.meta.AndroidLog
 }
 
 trait TrypDroidGlobals

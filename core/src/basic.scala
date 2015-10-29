@@ -10,14 +10,9 @@ trait HasContext
 
 trait Basic
 extends HasContext
+with ResourcesAccess
 {
   type IdTypes = Int with String with Id
-
-  def res(implicit ns: ResourceNamespace = GlobalResourceNamespace) =
-    Resources()
-
-  def theme(implicit ns: ResourceNamespace = GlobalResourceNamespace) =
-    res.theme
 
   def asyncTask[A, B](task: ⇒ B)(callback: B ⇒ Unit) = {
     new android.os.AsyncTask[A, Unit, B] {

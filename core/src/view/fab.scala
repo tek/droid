@@ -22,10 +22,6 @@ with Macroid
 
   val progress = slut[ProgressBar]
 
-  // Create a wrapper layout containing:
-  // * a floating action button, showing 'icon' and dispatching touch to
-  //   'onClick'
-  // * the View created by the second block arg.
   def fabCorner(icon: String)(contentView: ⇒ Ui[View]) =
   {
     val geom = rlp(↧, ↦) + margin(right = 16 dp, bottom = 48 dp)

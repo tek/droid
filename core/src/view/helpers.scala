@@ -22,8 +22,9 @@ import macroid.support.FragmentApi
 
 import util._
 
-trait Searchable {
-
+trait Searchable
+extends Basic
+{
   trait ProxyBase {
     def extractView(args: Any*): Option[View] = {
       args.lift(0) flatMap {
@@ -67,8 +68,6 @@ trait Searchable {
   def view: View
 
   def searcher: CanFindView = view
-
-  def res(implicit ns: ResourceNamespace = GlobalResourceNamespace): Resources
 
   def find[A >: Basic#IdTypes](
     name: A, root: Option[View] = None
@@ -245,9 +244,9 @@ extends DialogInterface.OnClickListener
 
 class ConfirmDialog(message: String, callback: () ⇒ Unit)
 extends DialogFragment
-with tryp.droid.Basic
+with Basic
 {
-  def context = getActivity
+  override implicit def context: Context = getActivity
 
   override def onCreateDialog(state: Bundle): Dialog = {
     val builder = new AlertDialog.Builder(context)

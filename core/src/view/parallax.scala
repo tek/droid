@@ -4,10 +4,13 @@ import android.graphics.{Canvas,Rect}
 
 import tryp.droid._
 
-class ParallaxHeader(val context: Context)
-extends RelativeLayout(context)
+class ParallaxHeader(c: Context)
+extends RelativeLayout(c)
 with AppPreferences
+with HasContext
 {
+  implicit def context = c
+
   val scrollFactor = appPrefs.float("parallax_scroll_factor", 0.2f)
   var scroll = 0.0f
   def offset = scroll * scrollFactor()

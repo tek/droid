@@ -2,8 +2,6 @@ package tryp.droid
 
 import android.view.MenuItem
 
-import tryp.droid.res._
-
 trait MenuScrews
 {
   protected case class Menu(implicit c: Context, ns: ResourceNamespace)

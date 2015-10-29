@@ -17,10 +17,8 @@ import macroid.FullDsl._
 import macroid.contrib.Layouts._
 import RuleRelativeLayout.Rule
 
-import tryp.droid.ActivityContexts
-import tryp.droid.Resources
-import tryp.droid.Macroid._
-import tryp.droid.{FragmentManagement, MainFragment}
+import tryp.droid._
+import Macroid._
 
 trait Layout
 {
