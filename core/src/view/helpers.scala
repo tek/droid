@@ -76,12 +76,11 @@ extends Basic
     entry.findViewById(res.id(name)) match {
       case v: View ⇒ Option(v)
       case null ⇒ {
-        if (TrypEnv.release) {
-          None
-        }
+        if (TrypEnv.release) None
         else {
-          val msg = s"Couldn't find a view with id '${name}'! " +
-          s"Current views: ${Id.ids}"
+          val msg = s"Couldn't find a view with id '$name'! " +
+          s"Current views: ${Id.ids}\n" +
+          s"tree:\n" + viewTree.drawTree
           throw new ClassCastException(msg)
         }
       }
@@ -128,10 +127,12 @@ extends Basic
     Try(find(name)) isSuccess
   }
 
-  def viewTree: Seq[Any] = {
+  def viewTree: Tree[View] = {
     view match {
-      case layout: ViewGroup ⇒ layout.children map { _.viewTree }
-      case v ⇒ Seq(v)
+      case vg: ViewGroup ⇒
+        (vg: View).node(vg.children map(_.viewTree): _*)
+      case v ⇒
+        v.leaf
     }
   }
 
