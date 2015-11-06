@@ -15,8 +15,9 @@ extends tryp.AndroidDeps
     "core" → Seq(Resolver.jcenterRepo)
   )
 
-  def pulsar(pro: String) =
+  def pulsar(pro: String) = {
     dd("tryp" %% s"pulsar-$pro" % "+", "tek/pulsar", pro)
+  }
 
   def core = ids(
     pulsar("slick"),

@@ -10,7 +10,6 @@ extends tryp.AndroidBuild(deps = DroidDeps)
   lazy val core = aar("core")
     .settingsV(description := "Common tryp stuff")
     .transitive
-    .dep()
 
   lazy val test = aar("test") <<< core
 
