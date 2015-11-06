@@ -27,6 +27,7 @@ class Messages
   case class Toast(id: String)
   case class StartAsyncTask(f: Future[_])
   case class CompleteAsyncTask(f: Future[_])
+  case class DrawerClick(action: ViewState.Message)
 }
 
 object Messages extends Messages

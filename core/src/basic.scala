@@ -6,6 +6,8 @@ import tryp.droid._
 trait HasContext
 {
   implicit def context: Context
+
+  implicit lazy val settings = implicitly[Settings]
 }
 
 trait Basic
@@ -37,6 +39,13 @@ with ResourcesAccess
   }
 }
 
-trait TrypActivityAccess {
-  def trypActivity: Option[TrypActivity]
+trait TrypActivityAccess
+extends HasActivity
+{
+  def trypActivity = {
+    activity match {
+      case a: TrypActivity ⇒ Option[TrypActivity](a)
+      case _ ⇒ None
+    }
+  }
 }

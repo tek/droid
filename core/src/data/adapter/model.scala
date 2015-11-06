@@ -17,7 +17,7 @@ extends RecyclerView.ViewHolder(view)
 
 class SimpleModelAdapter[A <: NamedModel: ClassTag]
 (dao: Dao[A])
-(implicit activity: Activity, ec: EC)
+(implicit activity: Activity)
 extends SimpleRecyclerAdapter[SimpleModelViewHolder, A]
 with DbProfile
 {

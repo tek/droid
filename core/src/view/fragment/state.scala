@@ -32,6 +32,7 @@ object ViewState
   case object NopMessage extends Message
   case class Toast(id: String) extends Message
   case class ForkedResult(reason: String) extends Message
+  case object Debug extends Message
 
   trait Loggable extends Message
 
@@ -303,7 +304,7 @@ object Zthulhu
 import Zthulhu._
 
 abstract class StateImpl
-(implicit ec: EC, db: tryp.slick.DbInfo, ctx: AndroidUiContext,
+(implicit val ec: EC, db: tryp.slick.DbInfo, ctx: AndroidUiContext,
   broadcast: Broadcaster)
 extends ToUiOps
 with ViewStateImplicits
@@ -407,7 +408,7 @@ with ViewStateImplicits
 
   implicit val broadcast: Broadcaster = new Broadcaster(sendAll)
 
-  val logImpl = new StateImpl
+  lazy val logImpl = new StateImpl
   {
     override def description = "log state"
 
@@ -459,7 +460,9 @@ with HasActivity
 {
   implicit def uiCtx: AndroidUiContext = AndroidActivityUiContext.default
 
-  protected val activityImpl = new StateImpl
+  override def impls = activityImpl :: super.impls
+
+  protected lazy val activityImpl = new StateImpl
   {
     override def description = "activity access state"
 

@@ -16,11 +16,14 @@ object DbMeta
 }
 
 trait DbAccess
-extends AkkaComponent
 {
   implicit def dbInfo = DbMeta.dbInfo
 
   implicit val timeout = Timeout(5 seconds)
+
+  implicit def ec: EC
+
+  lazy val api = dbInfo.profile.api
 }
 
 trait DbProfile

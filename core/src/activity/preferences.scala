@@ -47,7 +47,7 @@ with Preferences
     prefs.unregisterListener(this)
   }
 
-  def settings() {
+  def toSettings() {
     loadFragment(Classes.fragments.settings())
   }
 

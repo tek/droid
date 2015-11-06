@@ -40,7 +40,7 @@ extends SimpleRecyclerAdapter[DrawerViewHolder, DrawerItem]
 with Macroid
 {
   setHasStableIds(true)
-  updateItems(navigation.drawerItems).run
+  updateItems(navigation.drawerItems.toList).run
 
   implicit val ns = PrefixResourceNamespace("drawer")
 
@@ -48,6 +48,7 @@ with Macroid
     items(position) match {
       case t: NavigationTarget ⇒ 0
       case h: GPlusHeader ⇒ 1
+      case b: DrawerButton ⇒ 2
     }
   }
 
@@ -89,6 +90,7 @@ with Macroid
     items(position) match {
       case t: NavigationTarget ⇒ bindNavTarget(holder, t)
       case h: GPlusHeader ⇒ bindGPlusHeader(holder, h)
+      case b: DrawerButton ⇒ bindButton(holder, b)
     }
   }
 
@@ -123,5 +125,15 @@ with Macroid
       case _ ⇒ throw new java.lang.RuntimeException(
           s"Invalid view holder for GPlusHeader: ${holder.className}")
     }
+  }
+
+  def bindButton(holder: DrawerViewHolder, button: DrawerButton) = {
+    val color = bgCol("item")
+    Ui.run(
+      holder.text <~ txt.literal(button.title),
+      holder.view <~ color <~ On.click {
+        Ui(core ! Messages.DrawerClick(button.action))
+      }
+    )
   }
 }

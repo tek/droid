@@ -13,13 +13,23 @@ trait ServiceStubs
   def onResume() = ()
 }
 
+trait ServiceCommon
+extends HasContext
+{
+  implicit val comm = DummyCommunicator()
+
+  implicit def ec = scala.concurrent.ExecutionContext.Implicits.global
+}
+
 abstract class ServiceBase
 extends Service
 with ServiceStubs
-with tryp.droid.Basic
-with tryp.droid.Broadcast
+with Basic
+with ServiceCommon
 {
   var running = false
+
+  def context = this
 
   class TrypBinder extends Binder {
     def getService() = ServiceBase.this
@@ -49,13 +59,12 @@ with tryp.droid.Broadcast
     onStop
   }
 
-  override def onCreate(state: Bundle) = ()
+  override def onCreate() = ()
   override def onStart = super.onStart
   override def onStop() = super.onStop()
   override def onResume = super.onResume
   override def onPause = super.onPause
 
-  override implicit def context = this
   def init
   def handleIntent(intent: Intent)
 }

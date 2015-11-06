@@ -1,16 +1,13 @@
 package tryp.droid
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import com.typesafe.config.ConfigFactory
 
 import akka.actor.{ ActorSelection, ActorSystem, Actor, Props }
 
 object Akka
 {
-  private [droid] var _system: Option[ActorSystem] = None
-
-  def system = _system.getOrElse { sys.error("actor system not initialized") }
-
-  implicit def ec: EC = system.dispatcher
+  def newSystem(name: String, loader: ClassLoader) = 
+    ActorSystem(name, ConfigFactory.load(loader), loader)
 }
 
 trait AkkaComponent
@@ -24,9 +21,9 @@ trait AkkaComponent
     actorSystem.actorSelection(s"/user/${name}")
   }
 
-  def actorSystem = Akka.system
+  def actorSystem: ActorSystem
 
-  implicit def ec = Akka.ec
+  implicit def ec = actorSystem.dispatcher
 
   def core = selectActor("core")
 }
@@ -37,10 +34,17 @@ trait AkkaClient extends AkkaComponent
 
   def akkativity = {
     activity match {
-      case a: Akkativity ⇒ a
+      case a: Akkativity ⇒ Some(a)
       case _ ⇒
-        throw new java.lang.Exception(s"No Akkativity access in ${this}")
+        Log.e(s"No Akkativity access in $this")
+        None
     }
+  }
+
+  def actorSystem = {
+    akkativity
+      .some(_.actorSystem)
+      .none(Akka.newSystem("dummy", activity.getClassLoader))
   }
 
   def mainActor = actor(MainActor.props)
@@ -83,14 +87,15 @@ with CallbackMixin
     super.onStop
   }
 
+  lazy val actorSystem = Akka.newSystem("tryp", getClassLoader)
+
   lazy val mainActors = Map(createActors: _*)
 
   def createActors = actorsProps map(createActor)
 
   def createActor(props: Props) = {
     val name = props.actorName
-    val a = actorSystem.actorOf(props, name)
-    (name → a)
+    name → actorSystem.actorOf(props, name)
   }
 
   lazy val coreActor = actorSystem.actorOf(coreActorProps, "core")
@@ -131,6 +136,8 @@ extends Actor
 with AkkaComponent
 {
   import TrypActor._
+
+  def actorSystem = context.system
 
   var attachedUi: Option[A] = None
 
@@ -210,7 +217,7 @@ extends AkkaClient
 {
 }
 
-abstract class TrypActivityActor[A <: TrypActivity: ClassTag]
+abstract class TrypActivityActor[A <: StatefulActivity: ClassTag]
 extends TrypActor[A]
 {
   import Messages._
@@ -235,7 +242,8 @@ extends TrypActor[A]
   }
 }
 
-abstract class TrypDrawerActivityActor[A <: TrypDrawerActivity: ClassTag]
+abstract class TrypDrawerActivityActor
+[A <: StatefulActivity with TrypDrawerActivity: ClassTag]
 extends TrypActivityActor[A]
 {
   import Messages._
@@ -247,6 +255,8 @@ extends TrypActivityActor[A]
         withUi(_.toolbarTitle(title))
       case ToolbarView(view) ⇒
         ui { _.toolbarView(view) }
+      case DrawerClick(action) ⇒
+        ui(_.drawerClick(action))
       case a ⇒ super.receiveBasic(a)
     }
   }

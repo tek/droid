@@ -149,6 +149,7 @@ trait ActivityContexts {
 trait HasActivity
 extends Basic
 with ActivityContexts
+with HasComm
 {
   implicit def activity: Activity
 
@@ -179,6 +180,13 @@ with ActivityContexts
             s"'${view.className}'")
         }
       }
+    }
+  }
+
+  implicit lazy val comm = {
+    activity match {
+      case a: Akkativity ⇒ AkkativityCommunicator(a)
+      case _ ⇒ DummyCommunicator()
     }
   }
 }

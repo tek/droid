@@ -11,12 +11,16 @@ extends tryp.droid.Basic
   with GoogleApiClient.ConnectionCallbacks
   {
     def onConnected(data: Bundle) {
+      Log.i("Google Api connected")
       owner.apiConnected(data)
     }
 
     def onConnectionFailed(connectionResult: ConnectionResult) {
-      Log.e("Google Api connection failed")
-      owner.apiConnectionFailed(connectionResult)
+      if (!connectionResult.isSuccess) {
+        val err = connectionResult.getErrorCode
+        Log.e(s"Google Api connection failed: $err")
+        owner.apiConnectionFailed(connectionResult)
+      }
     }
 
     def onConnectionSuspended(cause: Int) {

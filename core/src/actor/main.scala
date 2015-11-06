@@ -1,7 +1,5 @@
 package tryp.droid
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 import akka.actor.Props
 
 class MainActor

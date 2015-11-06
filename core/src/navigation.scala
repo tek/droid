@@ -1,5 +1,9 @@
 package tryp.droid
 
+import scalaz._, Scalaz._
+
+import rx._
+
 import tweaks.Layout.{frag,showFrag}
 
 sealed trait DrawerItem
@@ -23,25 +27,29 @@ extends NavigationTarget(title, fragment)
     showFrag(model, fragment, id)
 }
 
-class Navigation(initial: NavigationTarget*)
+case class Navigation(drawerItems: NonEmptyList[DrawerItem])
 {
-  val targets: Buffer[NavigationTarget] = initial.toBuffer
+  val current: Var[Maybe[NavigationTarget]] = Var(Maybe.Empty())
 
-  def drawerItems: List[DrawerItem] = targets.toList
-
-  var current: Option[NavigationTarget] = None
-
-  def isCurrent(target: NavigationTarget) = current.contains(target)
-
-  def ++=(addition: Seq[NavigationTarget]) = {
-    targets ++= addition
-    this
+  lazy val targets = drawerItems.toList collect {
+    case n: NavigationTarget ⇒ n
   }
+
+  def isCurrent(target: NavigationTarget) = current().exists(_ == target)
+
+  def ++(add: NonEmptyList[DrawerItem]) =
+    copy(drawerItems = drawerItems append add)
+
+  def to(target: NavigationTarget) = current() = target.just
 }
 
 object Navigation
 {
-  def apply(initial: NavigationTarget*) = new Navigation(initial: _*)
+  def simple(first: DrawerItem, items: DrawerItem*) =
+    Navigation(NonEmptyList(first, items: _*))
+
+  def gplus(items: DrawerItem*) =
+    Navigation.simple(GPlusHeader(), items: _*)
 }
 
 case class GPlusHeader()
@@ -50,13 +58,5 @@ extends DrawerItem
   def title = "GPlus"
 }
 
-class GPlusNavigation(initial: NavigationTarget*)
-extends Navigation(initial: _*)
-{
-    override def drawerItems = GPlusHeader() :: super.drawerItems
-}
-
-object GPlusNavigation
-{
-  def apply(initial: NavigationTarget*) = new GPlusNavigation(initial: _*)
-}
+case class DrawerButton(title: String, action: ViewState.Message)
+extends DrawerItem

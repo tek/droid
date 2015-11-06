@@ -39,4 +39,5 @@ abstract class TrypDrawerActivity
 extends TrypDefaultActivity
 with Drawer
 {
+  self: Stateful ⇒
 }

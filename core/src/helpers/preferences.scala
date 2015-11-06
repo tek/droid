@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import android.preference.PreferenceManager
 
 import rx._
+import rx.ops._
 
 class PreferencesFacade(val prefs: SharedPreferences)
 {
@@ -17,7 +18,7 @@ class PreferencesFacade(val prefs: SharedPreferences)
 
   object PrefCaches
   {
-    type Cache[A] = MMap[String, Var[A]]
+    type Cache[A] = MMap[String, (Var[A], Obs)]
 
     implicit val cacheString: Cache[String] = MMap()
 
@@ -64,7 +65,7 @@ class PreferencesFacade(val prefs: SharedPreferences)
       def getter = (key: String, default: Long) ⇒ {
         val s = prefs.getString(key, default.toString)
         Try { s.toLong } getOrElse {
-          Log.e(s"Failed to convert pref '${key}' to Long: ${s}")
+          Log.e(s"Failed to convert pref '$key' to Long: $s")
           default
         }
       }
@@ -90,13 +91,20 @@ class PreferencesFacade(val prefs: SharedPreferences)
       reader: PrefReader[A]) =
     {
       val key = mkKey(name)
-      cache.getOrElseUpdate(key, Var(reader(key, default)))
+      cache.getOrElseUpdate(key, adapt(key, reader(key, default)))._1
     }
 
-    def invalidate[A](name: String)(implicit cache: Cache[A],
-      reader: PrefReader[A]) {
+    private def adapt[A](key: String, value: A) = {
+      val v = Var(value)
+      v → Obs(v, skipInitial = true)(set(key, v(), false))
+    }
+
+    def invalidate[A](name: String)
+    (implicit cache: Cache[A], reader: PrefReader[A]) {
       val key = mkKey(name)
-      cache.get(key) foreach { v ⇒ v() = reader(key) }
+      cache.get(key) foreach { case (v, o) ⇒
+        v() = reader(key)
+      }
     }
   }
 
@@ -127,7 +135,7 @@ class PreferencesFacade(val prefs: SharedPreferences)
     editor.commit
   }
 
-  def set(name: String, value: Any) {
+  def set(name: String, value: Any, invalidate: Boolean = true) {
     val key = mkKey(name)
     value match {
       case b: Boolean ⇒ edit(_.putBoolean(key, b))
@@ -139,7 +147,7 @@ class PreferencesFacade(val prefs: SharedPreferences)
       case s: Set[_] ⇒ setSet(key, s)
       case _ ⇒ error(key, value)
     }
-    change(name, value)
+    if (invalidate) change(name, value)
   }
 
   private def setSet(name: String, value: Set[_]) {
@@ -213,4 +221,38 @@ extends HasContext
       android.content.Context.MODE_PRIVATE)
 
   def appPrefs = PrefFacades("app", applicationPrefs)
+}
+
+trait Settings
+{
+  def user: PreferencesFacade
+
+  def app: PreferencesFacade
+}
+
+case class DefaultSettings()(implicit context: Context)
+extends Settings
+{ sett ⇒
+
+  private lazy val userPrefs = new Preferences {
+    def context = sett.context
+  }
+
+  private lazy val appPrefs = new AppPreferences {
+    def context = sett.context
+  }
+
+  lazy val user = userPrefs.prefs
+
+  lazy val app = appPrefs.appPrefs
+}
+
+object Settings
+{
+  implicit def defaultSettings(implicit context: Context) = DefaultSettings()
+}
+
+trait HasSettings
+{
+  implicit def settings: Settings
 }

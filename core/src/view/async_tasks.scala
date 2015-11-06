@@ -40,7 +40,7 @@ extends Stateful
 
   override def impls = fabImpl :: super.impls
 
-  val fabImpl = new StateImpl
+  lazy val fabImpl = new StateImpl
   {
     override def description = "fab state"
 

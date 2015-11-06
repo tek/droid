@@ -26,6 +26,7 @@ with Snackbars
 with Transitions
 with Macroid
 with Screws
+with DbAccess
 {
   val name = fragmentClassName(getClass)
 
@@ -48,13 +49,6 @@ with Screws
 
   override def view = getView
 
-  def trypActivity = {
-    activity match {
-      case a: TrypActivity ⇒ Option[TrypActivity](a)
-      case _ ⇒ None
-    }
-  }
-
   override def fragmentManager = getChildFragmentManager
 
   abstract override def onViewStateRestored(state: Bundle) {
@@ -73,7 +67,7 @@ with Screws
   def arguments = Option(getArguments) some(_.toMap) none(Map())
 }
 
-abstract class TrypFragment
+trait TrypFragment
 extends Fragment
 with FragmentBase
 {
@@ -138,7 +132,7 @@ with AppPreferences
 abstract class ShowFragment[A <: Model]
 extends MainFragment
 {
-  val showImpl: ShowStateImpl[A]
+  def showImpl: ShowStateImpl[A]
 
   override def impls = showImpl :: super.impls
 

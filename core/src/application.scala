@@ -2,10 +2,6 @@ package tryp.droid
 
 import java.io.File
 
-import com.typesafe.config.ConfigFactory
-
-import akka.actor.ActorSystem
-
 import android.content.pm.ApplicationInfo
 
 import tryp.slick.DroidDbInfo
@@ -45,15 +41,9 @@ with ApplicationI
     tryp.droid.meta.AndroidLog.tag = name
   }
 
-  def setupAkka(name: String) = {
-    Akka._system = Some(ActorSystem(name, ConfigFactory.load(getClassLoader),
-      getClassLoader))
-  }
-
   def createTrypApp(name: String) {
     setupEnv()
     setupLog(name)
-    setupAkka(name)
     if (useDb) setupDbInfo(name)
   }
 }

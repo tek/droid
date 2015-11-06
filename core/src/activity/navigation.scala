@@ -1,12 +1,13 @@
 package tryp
 package droid
 
+// TODO state machine
 trait HasNavigation
 extends MainView
 { self: FragmentManagement
   with Akkativity ⇒
 
-  val navigation: Navigation
+  def navigation: Navigation
 
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
@@ -23,7 +24,7 @@ extends MainView
   }
 
   def navigate(target: NavigationTarget) {
-    if (!navigation.current.contains(target)) {
+    if (!navigation.isCurrent(target)) {
       if (!tryPopHome(target)) history = target :: history
       loadNavTarget(target)
     }
@@ -31,7 +32,7 @@ extends MainView
 
   def loadNavTarget(target: NavigationTarget) {
     ui { loadView(target.create(Id.content)) }
-    navigation.current = Some(target)
+    navigation.to(target)
     navigated(target)
   }
 

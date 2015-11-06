@@ -5,7 +5,7 @@ import android.content.res.{Resources ⇒ AResources}
 case class InvalidResource(msg: String)
 extends java.lang.RuntimeException(msg)
 
-case class Resources(implicit val context: Context,
+class Resources(implicit val context: Context,
   ns: ResourceNamespace = GlobalResourceNamespace)
 extends Preferences
 with AppPreferences
@@ -37,6 +37,8 @@ with AppPreferences
 
   def color[A >: IdTypes](_id: A) = res(_id, "color") { _.getColor _ }
 
+  def bool[A >: IdTypes](_id: A) = res(_id, "bool") { _.getBoolean _ }
+
   def i(name: String, suffix: Option[String] = None) = {
     namespaced(name, suffix, integer)
   }
@@ -51,6 +53,10 @@ with AppPreferences
 
   def c(name: String, suffix: Option[String] = None) = {
     namespaced(name, suffix, theme.color)
+  }
+
+  def b(name: String, suffix: Option[String] = None) = {
+    namespaced(name, suffix, bool)
   }
 
   def namespaced[A](
@@ -133,7 +139,7 @@ extends ResourceNamespace
 trait ResourcesAccess
 {
   implicit def res(implicit c: Context,
-    ns: ResourceNamespace = GlobalResourceNamespace) = Resources()
+    ns: ResourceNamespace = GlobalResourceNamespace) = new Resources()
 
   def theme(implicit c: Context,
     ns: ResourceNamespace = GlobalResourceNamespace) = {

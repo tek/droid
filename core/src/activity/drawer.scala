@@ -13,7 +13,8 @@ with HasNavigation
 with DrawerLayout.DrawerListener
 { self: ActionBarActivity
   with FragmentManagement
-  with Akkativity ⇒
+  with Akkativity
+  with Stateful ⇒
 
   import tryp.droid.tweaks.{Toolbar ⇒ T, Drawer ⇒ D}
 
@@ -105,13 +106,13 @@ with DrawerLayout.DrawerListener
   }
 
   override def navButtonClick() = {
-    if (drawerOpen) {
-      closeDrawer.run
-    }
-    else if (!super.navButtonClick()) {
-      openDrawer.run
-    }
+    if (drawerOpen) closeDrawer.run
+    else if (!super.navButtonClick()) openDrawer.run
     true
+  }
+
+  def closeIfOpen() = {
+    if (drawerOpen) closeDrawer.run
   }
 
   override def navigate(target: NavigationTarget) {
@@ -126,5 +127,10 @@ with DrawerLayout.DrawerListener
 
   override def navigated(target: NavigationTarget) {
     drawerActor ! Messages.Navigation(target)
+  }
+
+  def drawerClick(action: ViewState.Message) = {
+    closeIfOpen()
+    send(action)
   }
 }

@@ -3,7 +3,6 @@ package droid
 
 import java.util.concurrent.TimeUnit
 
-import concurrent.ExecutionContext.Implicits.global
 import concurrent.duration._
 
 import com.squareup.okhttp.{Request ⇒ OkRequest, _}
@@ -28,16 +27,28 @@ object Backend
   }
 }
 
-class Backend(implicit c: Context)
-extends ResourcesAccess
+class Backend(implicit prefs: Settings, res: Resources)
 {
-  def token = res.appPrefs.string("backend_token")
+  def token = prefs.app.string("backend_token")
 
-  def host = res.string("backend_host")
+  lazy val host = {
+    val pref = prefs.user.string("host")()
+    if (pref.isEmpty) res.string("backend_host")
+    else pref
+  }
 
-  def port = res.integer("backend_port")
+  lazy val port = {
+    val pref = prefs.user.int("port")().toInt
+    if (pref == 0) res.integer("backend_port")
+    else pref
+  }
 
-  def scheme = res.string("backend_scheme")
+  lazy val scheme = {
+    if (prefs.user.bool("tls", res.bool("backend_tls"))()) "https"
+    else "http"
+  }
+
+  def baseUrl = s"$scheme://$host:$port"
 
   val mediaTypeJson = MediaType.parse("application/json")
 
@@ -109,7 +120,7 @@ extends ResourcesAccess
   }
 }
 
-class BackendRestClient(implicit c: Context)
+class BackendRestClient(implicit prefs: Settings, res: Resources)
 extends Backend
 with RestClient
 {
@@ -134,9 +145,8 @@ with RestClient
 
 trait BackendAccess
 extends DbAccess
+with HasComm
 {
-  self: HasContext ⇒
-
   def tryBackend(callback: ResultsAction)
   (message: Any, messages: Any*): ResultsAction = {
     callback
@@ -144,7 +154,7 @@ extends DbAccess
         case AuthError(error) ⇒
           val errmsg = s"not authed with backend: $error"
           implicit val timeout = akka.util.Timeout(10 seconds)
-          val next = DBIO.from(self.core ? message)
+          val next = DBIO.from(comm.core ? message)
           messages.toList match {
             case head :: tail ⇒
               tryBackend(next andThen(callback))(head, tail)
@@ -160,10 +170,9 @@ extends DbAccess
   }
 }
 
-abstract class DroidBackendSync(syncExclude: List[String])
+class DroidBackendSync(syncExclude: List[String])
+(implicit val comm: Communicator, val ec: EC)
 extends BackendAccess
-with HasContext
-with DbAccess
 {
   def process(schema: SyncSchema)
   (implicit ec: EC, rest: RestClient): ResultsAction = {

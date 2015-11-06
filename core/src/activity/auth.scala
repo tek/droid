@@ -1,7 +1,5 @@
 package tryp.droid
 
-import concurrent.ExecutionContext.Implicits.global
-
 import scalaz._, Scalaz._, concurrent._
 import scalaz.syntax.std.all._
 
@@ -68,7 +66,8 @@ with HasActivity
 
   def reset: ViewTransition = {
     case _ ⇒
-      S(Unauthed, NoData)
+      S(Unauthed, NoData) <<
+        stateEffect("clear backend auth token") { backendToken() = "" }
   }
 
   def fetch: ViewTransition = {
@@ -162,7 +161,9 @@ with HasActivity
     if (success) send(Fetch)
   }
 
-  def backendTokenValid = !backendToken().isEmpty
+  def backendTokenValid = {
+    !backendToken().isEmpty
+  }
 }
 
 trait AuthIntegration
@@ -171,7 +172,7 @@ with AppPreferences
 with StatefulActivity
 { act: Akkativity ⇒
 
-  val gPlusImpl = new AuthImpl {
+  def gPlusImpl = new AuthImpl {
     def activity = act
   }
 
@@ -179,6 +180,7 @@ with StatefulActivity
 
   override def onActivityResult(requestCode: Int, responseCode: Int,
     intent: Intent) = {
+    Log.i(s"activity result: request $requestCode, response $responseCode")
     val ok = responseCode == android.app.Activity.RESULT_OK
     if (requestCode == GPlusBase.RC_SIGN_IN)
       GPlus.signInComplete(ok)

@@ -1,7 +1,5 @@
 package tryp.droid
 
-import concurrent.ExecutionContext.Implicits.global
-
 import scalaz.{Plus ⇒ _, _}, Scalaz._, concurrent._
 
 import java.net.URL
@@ -53,10 +51,7 @@ class GPlusSignIn(callback: GPlusTask ⇒ Unit)(implicit val act: Activity)
 extends GPlusTask(callback)
 {
   override def apiConnectionFailed(connectionResult: ConnectionResult) {
-    act.startIntentSenderForResult(
-      connectionResult.getResolution().getIntentSender(), GPlusBase.RC_SIGN_IN,
-      null, 0, 0, 0
-    )
+    connectionResult.startResolutionForResult(act, GPlusBase.RC_SIGN_IN)
   }
 }
 

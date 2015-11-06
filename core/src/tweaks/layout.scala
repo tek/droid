@@ -129,10 +129,10 @@ trait Layout
   def foreground(res: Drawable) = Tweak[FrameLayout](_.setForeground(res))
 
   def selectableFg(implicit c: Context) =
-    foreground(Resources().theme.drawable("selectableItemBackground"))
+    foreground(new Resources().theme.drawable("selectableItemBackground"))
 
   def selectable(implicit c: Context) =
-    bg(Resources().theme.drawable("selectableItemBackground"))
+    bg(new Resources().theme.drawable("selectableItemBackground"))
 
   def elevation(dist: Float) = Tweak[CardView](_.setCardElevation(dist))
 
