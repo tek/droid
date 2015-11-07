@@ -1,6 +1,5 @@
 package tryp
 package droid
-package meta
 
 import scalaz._, Scalaz._, effect.IO
 
@@ -28,16 +27,16 @@ final class ViewOps[A <: View: ClassTag](v: A)
     SimpleViewMetadata(v.className)
   }
 
-  def storeMeta(name: String) = {
+  def storeMeta(meta: ViewMetadata) = {
     IO {
-      v.setTag(metaKey, SimpleViewMetadata(name))
+      v.setTag(metaKey, meta)
     }
   }
 }
 
 trait ToViewOps
 {
-  implicit def toViewOps(v: View)(implicit res: Resources) = new ViewOps(v)
+  implicit def ToViewOps(v: View)(implicit res: Resources) = new ViewOps(v)
 }
 
 trait ViewInstances

@@ -220,6 +220,12 @@ extends Text
     Tweak[RoundedImageView] {
     _.setBorderColor(res.c(name, Some("border_color")))
   }
+
+  def meta(data: ViewMetadata)(implicit r: Resources) =
+    Tweak[View](_.storeMeta(data).unsafePerformIO)
+
+  def metaName(name: String)(implicit r: Resources) =
+    meta(SimpleViewMetadata(name))
 }
 
 object Misc extends Misc
