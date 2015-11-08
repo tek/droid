@@ -43,8 +43,8 @@ with Basic
 with Types
 
 trait Implicits
-extends ViewInstances
-with ToViewOps
+extends droid.ViewInstances
+with droid.ToViewOps
 
 trait Globals
 extends tryp.slick.sync.meta.Globals

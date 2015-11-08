@@ -6,9 +6,11 @@ import scalaz._, Scalaz._, effect.IO
 trait ViewMetadata
 {
   def desc: String
+
+  def extra: Params
 }
 
-case class SimpleViewMetadata(desc: String)
+case class SimpleViewMetadata(desc: String, extra: Params = Map())
 extends ViewMetadata
 
 final class ViewOps[A <: View: ClassTag](v: A)
@@ -34,6 +36,23 @@ final class ViewOps[A <: View: ClassTag](v: A)
   }
 }
 
+trait LayoutMetadata
+extends ViewMetadata
+
+object LayoutMetadata
+{
+  def lin(implicit res: Resources) = LinearLayoutMetadata("vertical", None)
+}
+
+case class LinearLayoutMetadata(dir: String, detail: Option[String],
+  extra: Params = Map())
+extends LayoutMetadata
+{
+  def suf = detail some(s ⇒ s": $s") none("")
+
+  def desc = s"$dir linear$suf"
+}
+
 trait ToViewOps
 {
   implicit def ToViewOps(v: View)(implicit res: Resources) = new ViewOps(v)
@@ -51,3 +70,6 @@ extends ToViewOps
       }
     }
 }
+
+object ViewInstances
+extends ViewInstances

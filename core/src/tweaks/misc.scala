@@ -34,11 +34,8 @@ import tryp.droid.Messages
 
 trait Text
 {
-  import ResourcesAccess._
-
-  case class Text(
-    implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
-  )
+  case class Text(implicit c: Context, res: Resources,
+    ns: ResourceNamespace = GlobalResourceNamespace)
   {
     def ellipsize(lines: Int = 1) = Tweak[TextView] { v ⇒
       if (lines > 0) v.setMaxLines(lines)
@@ -79,16 +76,14 @@ trait Text
     }
   }
 
-  def txt(
-    implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
-  ) = Text()
+  def txt(implicit c: Context, res: Resources,
+    ns: ResourceNamespace = GlobalResourceNamespace) = Text()
 }
 
 trait Misc
 extends Text
+with ResourcesAccess
 {
-  import ResourcesAccess._
-
   def imageRes(name: String)(implicit c: Context) = {
     Tweak[ImageView](_.setImageResource(res.drawableId(name)))
   }

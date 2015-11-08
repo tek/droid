@@ -186,8 +186,9 @@ trait Layout
   extends ActivityContexts
   {
     def apply(tweaks: Tweak[LinearLayout]*)(children: Ui[View]*)(
-      implicit a: Activity) = {
-      l[LinearLayout](children: _*) <~ tweakSum(tweaks: _*)
+      implicit a: Activity, r: Resources) = {
+      l[LinearLayout](children: _*) <~ Macroid.meta(LayoutMetadata.lin) <~
+        tweakSum(tweaks: _*)
     }
   }
 
