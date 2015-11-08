@@ -18,8 +18,6 @@ with TrypDroidSpec
 
   lazy val activity = activityCtrl.setup().get()
 
-  implicit def ec = scala.concurrent.ExecutionContext.Implicits.global
-
   override def assertion(isTrue: ⇒ Boolean, message: ⇒ String) =
     assert(isTrue, message)
 }

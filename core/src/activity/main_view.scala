@@ -3,14 +3,26 @@ package droid
 
 import macroid.FullDsl._
 
+import ViewState._
+import MainViewMessages._
+
 trait MainView
 extends ActivityBase
 with Transitions
+with Stateful
 {
-  self: FragmentManagement
+  mainView: FragmentManagement
   with Akkativity ⇒
 
-  implicit val fm: FragmentManagement = self
+  val content = slut[FrameLayout]
+
+  lazy val mainViewImpl = new MainViewImpl {
+    override def nativeBack() = mainView.nativeBack()
+  }
+
+  override def impls = mainViewImpl :: super.impls
+
+  implicit val fm: FragmentManagement = mainView
 
   def setContentView(v: View)
 
@@ -27,21 +39,17 @@ with Transitions
   def mainLayout = contentLayout
 
   def contentLayout: Ui[ViewGroup] = {
-    attachRoot(FL(bgCol("main"))(l[FrameLayout]() <~ Id.content))
+    attachRoot(FL(bgCol("main"), metaName("root frame"))(
+      l[FrameLayout]() <~ content <~ Id.content <~ metaName("content frame")))
   }
 
   def loadFragment(fragment: Fragment) = {
-    loadView(frag(fragment, Id.content))
+    send(LoadUi(frag(fragment, Id.content)))
   }
 
   def loadShowFragment[A <: SyncModel: ClassTag]
   (model: A, ctor: () ⇒ ShowFragment[A]) {
-    loadView(showFrag(model, ctor, Id.content))
-  }
-
-  def loadView(view: Ui[View]) {
-    transition(view)
-    contentLoaded()
+    send(LoadUi(showFrag(model, ctor, Id.content)))
   }
 
   def contentLoaded() {}
@@ -57,11 +65,11 @@ with Transitions
   }
 
   def back() {
-    canGoBack ? goBack() | super.onBackPressed()
+    send(Back)
   }
 
-  def goBack() {
-    popBackStackSync
+  def nativeBack() {
+    super.onBackPressed()
   }
 
   def canGoBack = backStackNonEmpty

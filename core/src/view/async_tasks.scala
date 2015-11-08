@@ -26,7 +26,9 @@ extends Stateful
   case class AsyncTaskResult(msg: Any)
   extends Loggable
   {
-    override def toString = s"async task finished with '$msg'"
+    def message = s"async task finished with '$msg'"
+
+    override def toString = message
   }
 
   case class AsyncTasksData(running: Seq[Task[_]])

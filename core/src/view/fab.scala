@@ -22,13 +22,12 @@ with Macroid
 
   val progress = slut[ProgressBar]
 
-  def fabCorner(icon: String)(contentView: ⇒ Ui[View]) =
-  {
+  def fabCorner(icon: String)(contentView: ⇒ Ui[View]) = {
     val geom = rlp(↧, ↦) + margin(right = 16 dp, bottom = 48 dp)
-    RL(rlp(↔, ↕))(
-      content(contentView),
-      progressUi <~ geom,
-      fabUi(icon) <~ geom
+    RL(rlp(↔, ↕), metaName("fab corner container"))(
+      content(contentView) <~ metaName("content view"),
+      progressUi <~ geom <~ metaName("progress indicator"),
+      fabUi(icon) <~ geom <~ metaName("fab")
     )
   }
 
@@ -39,12 +38,15 @@ with Macroid
       margin(right = 16 dp,
         bottom = res.dimen("fab_margin_normal_minus").toInt)
     val contentParams = rlp(parallax ? ↥ | below(Id.header))
-    RL(rlp(↔, ↕))(
-      content(contentView) <~ contentParams,
-      header(RL(rlp(↔, ↕))(headerView) <~ bgCol("header")) <~ Id.header <~
-        rlp(↥, ↔, Height(headerHeight)),
-      progressUi <~ geom,
-      fabUi(icon) <~ geom
+    RL(rlp(↔, ↕), metaName("fab corner container"))(
+      content(contentView) <~ contentParams <~ metaName("content view"),
+      header(
+        RL(rlp(↔, ↕))(
+          headerView <~ metaName("fab header")
+        ) <~ bgCol("header") <~ metaName("fab header container")
+      ) <~ Id.header <~ rlp(↥, ↔, Height(headerHeight)),
+      progressUi <~ geom <~ metaName("progress indicator"),
+      fabUi(icon) <~ geom <~ metaName("fab")
     )
   }
 

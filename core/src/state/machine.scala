@@ -3,8 +3,6 @@ package droid
 
 import concurrent.duration._
 
-import argonaut._, Argonaut._
-
 import scalaz._, Scalaz._
 import concurrent.{Task, Actor}
 import stream._
@@ -33,8 +31,13 @@ object ViewState
   case class Toast(id: String) extends Message
   case class ForkedResult(reason: String) extends Message
   case object Debug extends Message
+  case class UiTask(ui: Ui[Result], timeout: Duration = 30 seconds)
+  extends Message
 
   trait Loggable extends Message
+  {
+    def message: String
+  }
 
   case class LogError(description: String, msg: String)
   extends Loggable
@@ -48,10 +51,13 @@ object ViewState
     lazy val message = Error.withTrace(s"exception while $description", error)
   }
 
+  case class LogInfo(message: String)
+  extends Loggable
+
   case class UnknownResult[A: Show](result: A)
   extends Loggable
   {
-    def showResult = result.show
+    def message = result.show.toString
   }
 
   case class EffectSuccessful(description: String)
@@ -70,7 +76,7 @@ object ViewState
       override def show(msg: Message) = {
         msg match {
           case res @ UnknownResult(result) ⇒
-            Cord(s"${res.className}(${res.showResult})")
+            Cord(s"${res.className}(${res.message})")
           case _ ⇒
             msg.toString
         }
@@ -163,14 +169,12 @@ trait ViewStateImplicits
   // implicit conversions to Task[Result]
   // from Ui, DBIOAction, Message
   implicit def uiToTask(ui: Ui[Result]): Task[Result] =
-    Task.suspend(ui.run.task)
+    Task(UiTask(ui))
 
   // TODO really block the machine while the Ui is running?
   implicit def anyUiToTask[A: ToMessage](ui: Ui[A])
   (implicit ec: EC): Task[Result] =
-    Task.suspend {
-      (ui.run: Future[A]).map(_.toMessage.toResult).task
-    }
+    uiToTask(ui map(_.toMessage))
 
   implicit def snailToTask[A](ui: Ui[ScalaFuture[A]])
   (implicit ec: EC): Task[Result] =
@@ -187,6 +191,13 @@ trait ViewStateImplicits
   (implicit dbi: DbInfo, ec: EC): Task[Result] = {
     action.map(a ⇒ a: Result)
       .task
+  }
+
+  implicit def tryToTask[A: ToMessage](t: Try[A]): AppEffect = {
+    t match {
+      case Success(a) ⇒ a.toMessage
+      case Failure(e) ⇒ LogFatal("evaluating try", e)
+    }
   }
 
   implicit def liftResult(r: Result): AppEffect = Task.now(r)
@@ -304,7 +315,7 @@ object Zthulhu
 import Zthulhu._
 
 abstract class StateImpl
-(implicit val ec: EC, db: tryp.slick.DbInfo, ctx: AndroidUiContext,
+(implicit val ec: EC, db: tryp.slick.DbInfo, val ctx: AndroidUiContext,
   broadcast: Broadcaster)
 extends ToUiOps
 with ViewStateImplicits
@@ -338,7 +349,10 @@ with ViewStateImplicits
             List(LogFatal("performing io", t))
         }
       next match {
-        case head :: tail ⇒ broadcast ! NonEmptyList(head, tail: _*)
+        case head :: tail ⇒
+          val msgs = NonEmptyList(head, tail: _*)
+          Log.d(s"broadcasting ${msgs.show}")
+          broadcast ! msgs
         case Nil ⇒
       }
     }
@@ -365,7 +379,6 @@ with ViewStateImplicits
   }
 
   def sendAll(msgs: NonEmptyList[Message]) = {
-    Log.d(s"sending ${msgs.show} to $description")
     messages.enqueueAll(msgs.toList).attemptRun.swap.foreach { e ⇒
       Log.e(s"failed to enqueue state messages: $e")
     }
@@ -398,193 +411,4 @@ with ViewStateImplicits
   def description = this.className
 
   override def toString = s"$description ($waitingTasks waiting)"
-}
-
-trait Stateful
-extends DbAccess
-with ViewStateImplicits
-{
-  implicit def uiCtx: AndroidUiContext
-
-  implicit val broadcast: Broadcaster = new Broadcaster(sendAll)
-
-  lazy val logImpl = new StateImpl
-  {
-    override def description = "log state"
-
-    def logError(msg: String): ViewTransition = {
-      case s ⇒
-        Log.e(msg)
-        s
-    }
-
-    def logInfo(msg: String): ViewTransition = {
-      case s ⇒
-        Log.i(msg)
-        s
-    }
-
-    val transitions: ViewTransitions = {
-      case m: LogError ⇒ logError(m.message)
-      case m: LogFatal ⇒ logError(m.message)
-      case UnknownResult(msg) ⇒ logInfo(msg.toString)
-      case m: EffectSuccessful ⇒ logInfo(m.message)
-      case m: Loggable ⇒ logInfo(m.toString)
-    }
-  }
-
-  def impls: List[StateImpl] = logImpl :: Nil
-
-  def allImpls[A](f: StateImpl ⇒ A) = impls map(f)
-
-  def send(msg: Message) = allImpls(_.send(msg))
-
-  def sendAll(msgs: NonEmptyList[Message]) = msgs foreach(send)
-
-  val ! = send _
-
-  def runState() = allImpls(_.runFsm())
-
-  def killState() {
-    allImpls(_.kill())
-  }
-
-  def joinState() {
-    allImpls(_.join())
-  }
-}
-
-trait StatefulHasActivity
-extends Stateful
-with HasActivity
-{
-  implicit def uiCtx: AndroidUiContext = AndroidActivityUiContext.default
-
-  override def impls = activityImpl :: super.impls
-
-  protected lazy val activityImpl = new StateImpl
-  {
-    override def description = "activity access state"
-
-    def toast(id: String): ViewTransition = {
-      case s ⇒
-        s << uiCtx.notify(id)
-    }
-
-    val transitions: ViewTransitions = {
-      case Toast(id) ⇒ toast(id)
-    }
-  }
-}
-
-trait StatefulFragment
-extends StatefulHasActivity
-with CallbackMixin
-{
-  self: TrypFragment ⇒
-
-  override implicit def uiCtx = AndroidFragmentUiContext.default(self)
-
-  // TODO impl log level
-  abstract override def onCreate(saved: Bundle) {
-    super.onCreate(saved)
-    runState()
-    // logImpl ! LogLevel(LogLevel.DEBUG)
-    send(Create(self.arguments, Option(saved)))
-  }
-
-  abstract override def onResume() {
-    super.onResume()
-    send(Resume)
-  }
-}
-
-trait StatefulActivity
-extends TrypActivity
-with StatefulHasActivity
-{
-  // TODO impl log level
-  override def onCreate(saved: Bundle) {
-    super.onCreate(saved)
-    runState()
-    // logImpl ! LogLevel(LogLevel.DEBUG)
-    send(Create(Map(), Option(saved)))
-  }
-
-  override def onResume() {
-    super.onResume()
-    send(Resume)
-  }
-}
-
-import UiActionTypes._
-
-abstract class ShowStateImpl[A <: Model: DecodeJson]
-(implicit ec: EC, db: tryp.slick.DbInfo, ctx: AndroidUiContext,
-  broadcast: Broadcaster)
-extends StateImpl
-{
-  case class Model(model: A)
-  extends Data
-
-  case class SetModel(model: A)
-  extends Message
-
-  def name: String
-
-  override def description = s"state for show $name"
-
-  def setupData(args: Map[String, String]) = {
-    def errmsg(item: String) = {
-      s"No valid $item passed to show impl for '$name'"
-    }
-    args.get(Keys.model)
-      .flatMap(_.decodeOption[A])
-      .toDbioSuccess
-      .nelM(errmsg("model"))
-      .orElse {
-        args.get(Keys.dataId)
-          .flatMap(id ⇒ Try(ObjectId(id)).toOption)
-          .toDbioSuccess
-          .nelM(errmsg("dataId"))
-          .nelFlatMap { a ⇒
-            fetchData(a) nelM(s"fetchData failed for $a")
-          }
-      }
-      .vmap(SetModel.apply)
-  }
-
-  def fetchData(id: ObjectId): AnyAction[Option[A]]
-
-  def fetchDetails(m: A): AppEffect = Nop
-
-  def updateData(m: A): AppEffect
-
-  def create(args: Map[String, String], state: Option[Bundle])
-  : ViewTransition = {
-    case S(Pristine, data) ⇒
-      S(Initializing, data) << setupData(args)
-  }
-
-  val resume: ViewTransition = {
-    case s @ S(_, _) ⇒
-      s
-  }
-
-  def model(m: A): ViewTransition = {
-    case S(Initializing, data) ⇒
-      S(Initialized, Model(m)) << Update
-  }
-
-  def update: ViewTransition = {
-    case s @ S(Initialized, Model(m)) ⇒
-      s << updateData(m) << fetchDetails(m)
-  }
-
-  val transitions: ViewTransitions = {
-    case Create(args, state) ⇒ create(args, state)
-    case Resume ⇒ resume
-    case Update ⇒ update
-    case SetModel(m) ⇒ model(m)
-  }
 }

@@ -6,6 +6,14 @@ import macroid._
 
 import tryp.UiContext
 
+case class FragmentBuilder(ctor: () ⇒ Fragment, id: Id,
+  tagO: Option[String] = None)
+  {
+    def apply() = ctor()
+
+    def tag = tagO | id.value.toString
+  }
+
 class ActionMacroidOps[A](a: AnyAction[A])
 {
   def uiBlocking(implicit dbInfo: DbInfo, ec: EC) = {
@@ -32,18 +40,62 @@ import UiActionTypes._
 
 trait AndroidUiContext
 extends UiContext[Ui]
-with HasContext
-
-trait AndroidActivityUiContext
-extends AndroidUiContext
-with Snackbars
 {
+  def loadFragment(fragment: FragmentBuilder): Ui[Fragment]
+
+  def transitionFragment(fragment: FragmentBuilder): Ui[String]
+
+  def showViewTree(view: View): String
+}
+
+trait AndroidHasActivityUiContext
+extends AndroidUiContext
+with ResourcesAccess
+with Snackbars
+with FragmentManagement
+with Transitions
+with TrypActivityAccess
+with HasSettings
+{
+  def loadFragment(fragment: FragmentBuilder) = {
+    Ui {
+      fragment() tap { inst ⇒
+        replaceFragment(fragment.id, inst, false, fragment.tag, false)
+      }
+    }
+  }
+
+  def transitionFragment(fragment: FragmentBuilder) = {
+    settings.app.bool("view_transitions", true)().fold(trypActivity, None)
+      .some { a ⇒
+        Ui[String] {
+          implicit val handler: FragmentManagement = a
+          val ui = Macroid.frag(fragment(), fragment.id, fragment.tag)
+          a.transition(ui)
+          "Transition successful"
+        }
+      }
+      .none(loadFragment(fragment) map(_ ⇒ "Cannot transition fragment"))
+  }
+
   override def failure[E: Show](e: NonEmptyList[E]) = {
     Log.d(s"handling failure in activity: $e")
     snackbarLiteral(e.map(_.show).toList.mkString("\n"))
   }
 
   override def notify(id: String) = mkToast(id)
+
+  def showViewTree(view: View): String = {
+    view.viewTree.drawTree
+  }
+}
+
+trait AndroidActivityUiContext
+extends AndroidHasActivityUiContext
+{
+  def getFragmentManager = activity.getFragmentManager
+
+  def view = activity.view
 }
 
 class DefaultAndroidActivityUiContext(implicit val activity: Activity)
@@ -55,9 +107,16 @@ object AndroidActivityUiContext
 }
 
 trait AndroidFragmentUiContext
-extends AndroidActivityUiContext
+extends AndroidHasActivityUiContext
+{
+  val fragment: Fragment
 
-class DefaultAndroidFragmentUiContext(implicit fragment: Fragment)
+  def getFragmentManager = fragment.getChildFragmentManager
+
+  def view = activity.view
+}
+
+class DefaultAndroidFragmentUiContext(implicit val fragment: Fragment)
 extends AndroidFragmentUiContext
 {
   val activity = fragment.activity

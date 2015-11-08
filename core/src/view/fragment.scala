@@ -10,7 +10,6 @@ import android.transitions.everywhere.TransitionSet
 import android.support.v7.widget.RecyclerView
 
 import macroid.FullDsl._
-import macroid.FragmentBuilder
 
 import util.OS
 import tweaks.Recycler._
@@ -27,6 +26,7 @@ with Transitions
 with Macroid
 with Screws
 with DbAccess
+with ResourcesAccess
 {
   val name = fragmentClassName(getClass)
 
@@ -71,6 +71,7 @@ trait TrypFragment
 extends Fragment
 with FragmentBase
 {
+
   override def onCreateView
   (inflater: LayoutInflater, container: ViewGroup, state: Bundle) = {
     Ui.get(layout(state) <~ uiRoot)
@@ -94,8 +95,6 @@ with StatefulFragment
 with Fab
 with AppPreferences
 {
-  implicit val mainFrag: FragmentManagement = this
-
   override def onStart() {
     super.onStart()
     mainActor ! TrypActor.AttachUi(this)
@@ -148,7 +147,7 @@ extends ActivityContexts
   def apply[A <: SyncModel](model: A)(ctor: ⇒ ShowFragment[A])
   (implicit a: Activity) = {
     val inst = ctor
-    FragmentBuilder(Ui(inst), new Bundle)
+    macroid.FragmentBuilder(Ui(inst), new Bundle)
       .pass(Keys.dataId → model.id, Keys.model → model.simpleJson.spaces2)
       .factory.get
   }

@@ -86,6 +86,6 @@ with Preferences
   }
 
   def popSettings {
-    goBack
+    back()
   }
 }

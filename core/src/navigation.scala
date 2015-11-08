@@ -41,6 +41,8 @@ case class Navigation(drawerItems: NonEmptyList[DrawerItem])
     copy(drawerItems = drawerItems append add)
 
   def to(target: NavigationTarget) = current() = target.just
+
+  def apply(i: Int) = targets lift(i)
 }
 
 object Navigation

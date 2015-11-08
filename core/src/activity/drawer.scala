@@ -115,7 +115,7 @@ with DrawerLayout.DrawerListener
     if (drawerOpen) closeDrawer.run
   }
 
-  override def navigate(target: NavigationTarget) {
+  override def navigate(target: NavigationTarget) = {
     if (drawerOpen) {
       state ! DrawerNavigated { () ⇒ super.navigate(target) }
       closeDrawer.run

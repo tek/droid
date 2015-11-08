@@ -1,38 +1,34 @@
 package tryp
 package droid
 
-// TODO state machine
+import ViewState._
+
+import NavMessages._
+
 trait HasNavigation
 extends MainView
+with Stateful
 { self: FragmentManagement
   with Akkativity ⇒
 
   def navigation: Navigation
 
-  abstract override def onCreate(state: Bundle) {
-    super.onCreate(state)
-    resumeNavigation()
+  lazy val navImpl = new NavImpl {
   }
 
-  def resumeNavigation() {
-    if (history.isEmpty) navigateIndex(0)
-    else history.lastOption foreach(loadNavTarget)
+  override def impls = navImpl :: super.impls
+
+  abstract override def onCreate(state: Bundle) {
+    send(SetNav(navigation))
+    super.onCreate(state)
   }
 
   def navigateIndex(index: Int) {
-    navigation.targets.lift(index) foreach(navigate)
-  }
-
-  def navigate(target: NavigationTarget) {
-    if (!navigation.isCurrent(target)) {
-      if (!tryPopHome(target)) history = target :: history
-      loadNavTarget(target)
-    }
+    send(Index(index))
   }
 
   def loadNavTarget(target: NavigationTarget) {
-    ui { loadView(target.create(Id.content)) }
-    navigation.to(target)
+    send(MainViewMessages.LoadUi(target.create(Id.content)))
     navigated(target)
   }
 
@@ -49,14 +45,15 @@ extends MainView
 
   var history: List[NavigationTarget] = List()
 
-  override def goBack() {
-    history = history.tail
-    history.headOption foreach(loadNavTarget)
+  override def back() {
+    send(Back)
   }
 
-  override def canGoBack = history.length > 1
-
   def navigated(target: NavigationTarget) {
+  }
+
+  def navigate(target: NavigationTarget): Unit = {
+    send(Target(target))
   }
 
   def loadFragment(name: String, ctor: () ⇒ Fragment) {
