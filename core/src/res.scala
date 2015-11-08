@@ -138,10 +138,10 @@ extends ResourceNamespace
 
 trait ResourcesAccess
 {
-  implicit def res(implicit c: Context,
+  implicit protected def res(implicit c: Context,
     ns: ResourceNamespace = GlobalResourceNamespace) = new Resources()
 
-  def theme(implicit c: Context,
+  protected def theme(implicit c: Context,
     ns: ResourceNamespace = GlobalResourceNamespace) = {
     res.theme
   }
