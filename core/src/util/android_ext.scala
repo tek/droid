@@ -27,21 +27,6 @@ trait AndroidExt {
         def onClick(v: View) = callback(v)
       })
     }
-
-    def params: Params = view.getTag match {
-      case p: Params ⇒ p
-      case m: Map[_, _] ⇒ Params.fromErasedMap(m)
-      case _ ⇒ Params()
-    }
-
-    def setBackgroundCompat(drawable: Drawable) {
-      if (OS.hasViewSetBackground) {
-        view.setBackground(drawable)
-      }
-      else {
-        view.setBackgroundDrawable(drawable)
-      }
-    }
   }
 
   // TODO subclass NumberPicker

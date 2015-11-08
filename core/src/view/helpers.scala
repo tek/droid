@@ -340,7 +340,7 @@ with Searchable
 
   def moveFragment[A >: Basic#IdTypes](name: A, fragment: Fragment,
     backStack: Boolean, tag: String, check: Boolean = true)
-  (move: (FragmentTransaction) ⇒ Unit)
+  (move: FragmentTransaction ⇒ Unit)
   {
     checkFrame(name, check) {
       val trans = fragmentManager.beginTransaction

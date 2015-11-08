@@ -56,7 +56,7 @@ with CallbackMixin
   }
 
   def broadcastReceived(intent: Intent) {
-    val extras = Option(intent.getExtras) some(_.toParams) none(Params())
+    val extras = Option(intent.getExtras) some(_.toMap) none(Params())
     handleBroadcast(intent.getAction, extras)
   }
 }
@@ -64,12 +64,10 @@ with CallbackMixin
 trait BroadcastSend
 extends BroadcastBase
 {
-  protected def broadcast(message: String, payload: Params = null)
+  protected def broadcast(message: String, payload: Option[Params] = None)
   {
     val intent = new Intent(message)
-    if (payload != null) {
-      for((k, v) <- payload.params) { intent.putExtra(k, v) }
-    }
+    payload foreach { _ foreach { case (k, v) ⇒ intent.putExtra(k, v) } }
     broadcastManager.sendBroadcast(intent)
   }
 }
