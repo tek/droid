@@ -34,12 +34,12 @@ extends tryp.AndroidDeps
     "com.google.android.gms" % "play-services-plus" % "+",
     ad(aar("org.macroid" %% "macroid" % "2.0.0-M4"), "macroid/macroid", "core").no,
     "com.typesafe.akka" %% "akka-actor" % "2.3.+",
-    "com.scalarx" %% "scalarx" % "0.+",
-    "com.github.andkulikov" % "transitions-everywhere" % "1.+",
-    "com.melnykov" % "floatingactionbutton" % "1.+",
+    "com.scalarx" %% "scalarx" % "+",
+    "com.github.andkulikov" % "transitions-everywhere" % "+",
+    "com.melnykov" % "floatingactionbutton" % "+",
     "com.android.support" % "support-v13" % "21.+",
-    "com.makeramen" % "roundedimageview" % "2.+",
-    "com.squareup.okhttp" % "okhttp" % "2.+"
+    "com.makeramen" % "roundedimageview" % "+",
+    "com.squareup.okhttp" % "okhttp" % "+"
   )
 
   def test = ids(
