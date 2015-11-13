@@ -6,7 +6,7 @@ import akka.actor.{ ActorSelection, ActorSystem, Actor, Props }
 
 object Akka
 {
-  def newSystem(name: String, loader: ClassLoader) = 
+  def newSystem(name: String, loader: ClassLoader) =
     ActorSystem(name, ConfigFactory.load(loader), loader)
 }
 

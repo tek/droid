@@ -44,7 +44,7 @@ extends StatefulActivity
 with AuthIntegration
 { act: TrypActivity ⇒
 
-  override val gPlusImpl = new AuthImpl {
+  override lazy val gPlusImpl = new AuthImpl {
     def activity = act
 
     override def plusToken(email: String) = "mock_plus_token"
