@@ -183,7 +183,7 @@ class Widgets(implicit a: Activity)
   def move = {
     new TransitionSet {
       val cb = new ChangeBounds
-      cb.setReparent(true)
+      // cb.setReparent(true)
       addTransition(cb)
       addTransition(new ChangeTransform)
       addTransition(new ChangeClipBounds)

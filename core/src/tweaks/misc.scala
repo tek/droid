@@ -167,7 +167,7 @@ with ResourcesAccess
 
   def bgres(resid: Int) = Tweak[View](_.setBackgroundResource(resid))
 
-  def bg(drawable: Drawable) = Tweak[View](_.setBackgroundDrawable(drawable))
+  def bg(drawable: Drawable) = Tweak[View](_.setBackground(drawable))
 
   def bg(color: Int) = Tweak[View](_.setBackgroundColor(color))
 
