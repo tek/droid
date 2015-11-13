@@ -34,9 +34,9 @@ with ApplicationI
   }
 
   def setupLog(name: String) = {
-    tryp.util.Logs.log =
+    tryp.meta.Logs.log =
       if (TrypEnv.release) tryp.droid.meta.InternalLog
-      else if (TrypEnv.unittest) tryp.meta.StdoutLog
+      else if (TrypEnv.unittest) tryp.StdoutLog
       else tryp.droid.meta.DebugLog
     tryp.droid.meta.AndroidLog.tag = name
   }

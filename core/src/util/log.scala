@@ -1,10 +1,10 @@
-package tryp.droid.meta
+package tryp
+package droid.meta
 
 import akka.actor.ActorSelection
 
 import tryp.droid.Messages
 
-import tryp.util._
 import tryp.meta._
 
 trait AndroidLog

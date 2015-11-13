@@ -3,7 +3,7 @@ package tryp.droid.meta
 import akka.actor._
 
 trait AkkaExt
-extends tryp.util.MetadataExt
+extends tryp.meta.MetadataExt
 {
   implicit class `Option of ActorSelection`[A <: ActorSelection](a: Option[A])
   {
