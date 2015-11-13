@@ -7,6 +7,7 @@ import scala.reflect.classTag
 import android.app.Instrumentation
 import android.test.ActivityInstrumentationTestCase2
 import android.widget._
+import android.support.v7.widget.RecyclerView
 
 import junit.framework.Assert._
 
@@ -27,30 +28,33 @@ with TrypDroidSpec
 
   override def setUp() {
     super.setUp()
+    pre()
     prefs.clear()
     appPrefs.clear()
-    pre()
     setActivityInitialTouchMode(false)
     solo
+    post()
   }
 
   def pre() { }
 
-  override def tearDown {
-    solo.finalize
-    activity.finish
-    super.tearDown
+  def post() { }
+
+  override def tearDown() {
+    solo.finalize()
+    activity.finish()
+    super.tearDown()
   }
 
-  def stopActivity {
-    activity.finish
-    idleSync
-    setActivity(null)
+  def stopActivity() {
+    activity.finish()
+    idleSync()
+    // setActivity(null)
   }
 
-  def idleSync {
+  def idleSync() {
     activity
-    instr.waitForIdleSync
+    instr.waitForIdleSync()
   }
 
   def waitFor(timeout: Int)(predicate: ⇒ Boolean) {
@@ -59,11 +63,30 @@ with TrypDroidSpec
     }, timeout)
   }
 
-  def assertion(isTrue: Boolean, msg: ⇒ String) = assert(isTrue, msg)
+  def assertion(isTrue: ⇒ Boolean, msg: ⇒ String) = assert(isTrue, msg)
 
   def enterText(text: String, id: Int = 0) {
     activity.viewOfType[EditText] foreach {
       solo.enterText(_, text)
+    }
+  }
+
+  implicit class SearchableExt(target: Searchable) {
+    def recycler = {
+      target.viewOfType[RecyclerView] effect { r ⇒
+        idleSync()
+        r.measure(0, 0)
+        r.layout(0, 0, 100, 10000)
+      }
+    }
+
+    def nonEmptyRecycler(count: Long) = {
+      assertWM {
+        recycler
+          .map(r ⇒ s"recycler childcount ${r.getChildCount} != $count")
+          .getOrElse("recycler doesn't exist")
+      } { recycler exists { _.getChildCount == count } }
+      recycler
     }
   }
 }
