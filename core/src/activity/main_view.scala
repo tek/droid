@@ -17,6 +17,8 @@ with Stateful
   val content = slut[FrameLayout]
 
   lazy val mainViewImpl = new MainViewImpl {
+    def handle = "mainview"
+    override def description = "main view state"
     override def nativeBack() = mainView.nativeBack()
   }
 

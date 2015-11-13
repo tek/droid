@@ -408,7 +408,9 @@ with ViewStateImplicits
 
   private[this] def waitingTasks = size.take(1).!!.headOption.getOrElse(0)
 
-  def description = this.className
+  def description = s"$handle state"
+
+  def handle: String
 
   override def toString = s"$description ($waitingTasks waiting)"
 }

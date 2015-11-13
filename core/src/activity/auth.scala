@@ -37,7 +37,7 @@ trait AuthImpl
 extends StateImpl
 with HasActivity
 {
-  override def description = "gplus state"
+  override def handle = "gplus"
 
   case object Fetching extends BasicState
   case object Authing extends BasicState
@@ -172,7 +172,7 @@ with AppPreferences
 with StatefulActivity
 { act: Akkativity ⇒
 
-  def gPlusImpl = new AuthImpl {
+  lazy val gPlusImpl = new AuthImpl {
     def activity = act
   }
 

@@ -14,6 +14,7 @@ with Stateful
   def navigation: Navigation
 
   lazy val navImpl = new NavImpl {
+    def handle = "nav"
   }
 
   override def impls = navImpl :: super.impls

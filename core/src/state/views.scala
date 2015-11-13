@@ -18,7 +18,7 @@ with ViewStateImplicits
 
   lazy val logImpl = new StateImpl
   {
-    override def description = "log state"
+    def handle = "log"
 
     def logError(msg: String): ViewTransition = {
       case s ⇒
@@ -44,7 +44,7 @@ with ViewStateImplicits
 
   lazy val uiImpl = new StateImpl
   {
-    override def description = "ui state"
+    def handle = "ui"
 
     val transitions: ViewTransitions = {
       case UiTask(ui, timeout) ⇒ {
@@ -86,6 +86,8 @@ with HasActivity
   protected lazy val activityImpl = new StateImpl
   {
     override def description = "activity access state"
+
+    def handle = "activity"
 
     def toast(id: String): ViewTransition = {
       case s ⇒
