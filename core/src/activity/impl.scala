@@ -23,6 +23,8 @@ with Snackbars
   override def searcher = this
 
   override def defaultTheme = res.string("pref_theme_default")
+
+  implicit def ec = scala.concurrent.ExecutionContext.Implicits.global
 }
 
 abstract class TrypDefaultActivity

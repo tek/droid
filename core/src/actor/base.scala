@@ -23,8 +23,6 @@ trait AkkaComponent
 
   def actorSystem: ActorSystem
 
-  implicit def ec = actorSystem.dispatcher
-
   def core = selectActor("core")
 }
 
@@ -64,6 +62,8 @@ trait AkkaClient extends AkkaComponent
       selectActor(p.actorName) ! msg
     }
   }
+
+  implicit def ec = actorSystem.dispatcher
 }
 
 trait Akkativity
@@ -138,6 +138,8 @@ with AkkaComponent
   import TrypActor._
 
   def actorSystem = context.system
+
+  implicit def ec = actorSystem.dispatcher
 
   var attachedUi: Option[A] = None
 
