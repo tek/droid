@@ -54,6 +54,12 @@ object ViewState
   case class LogInfo(message: String)
   extends Loggable
 
+  case class LogVerbose(message: String)
+  extends Loggable
+
+  case class LogDebug(message: String)
+  extends Loggable
+
   case class UnknownResult[A: Show](result: A)
   extends Loggable
   {
@@ -160,6 +166,7 @@ import ToMessageSyntax._
 
 // TODO add UiAction implicits
 trait ViewStateImplicits
+extends Logging
 {
   implicit def validationNelToResult[E: ToMessage, A: ToMessage]
   (v: ValidationNel[A, E]): Result = {
@@ -209,19 +216,16 @@ trait ViewStateImplicits
     (m: Result): AppEffect
   }
 
-  def debug[A]: Sink[Task, A] = sink.lift { (a: A) ⇒ Task(Log.i(a)) }
-
   def infraResult[A](desc: String)(res: \/[Throwable, A]) = {
     res match {
-      case -\/(e) ⇒ Log.e(s"failed to $desc: $e")
+      case -\/(e) ⇒ log.error(s"failed to $desc: $e")
       case _ ⇒
     }
   }
 
   implicit class ViewProcessOps[+O](proc: Process[Task, O])
   {
-    def debug1[A] = proc |> await1[O] to debug[O]
-
+    // TODO don't log in production?
     def !! = proc.runLog.run
   }
 
@@ -319,6 +323,7 @@ abstract class StateImpl
   broadcast: Broadcaster)
 extends ToUiOps
 with ViewStateImplicits
+with Logging
 {
   val S = Zthulhu
 
@@ -335,23 +340,22 @@ with ViewStateImplicits
   private[this] val idle: Process[Task, Boolean] =
     messages.size.continuous map(_ == 0)
 
-  // TODO log results
   private[this] def unsafePerformIO(effects: List[AppEffect]) = {
     Task[Unit] {
-      Log.d(s"performing io for ${effects.length} tasks")
+      log.trace(s"performing io for ${effects.length} tasks")
       val next = effects
         .map(_.attemptRun)
         .flatMap {
           case \/-(m) ⇒
-            Log.d(s"task succeeded with ${m.show}")
-            m fold(_.toList, List(_))
+            log.debug(s"task succeeded with ${m.show}")
+            m.fold(_.toList, List(_))
           case -\/(t) ⇒
             List(LogFatal("performing io", t))
         }
       next match {
         case head :: tail ⇒
           val msgs = NonEmptyList(head, tail: _*)
-          Log.d(s"broadcasting ${msgs.show}")
+          log.trace(s"broadcasting ${msgs.show}")
           broadcast ! msgs
         case Nil ⇒
       }
@@ -371,7 +375,7 @@ with ViewStateImplicits
   def runFsm() = fsmTask.runAsync {
     case a ⇒
       running.set(false).infraRun("unset sig running")
-      Log.i(s"FSM terminated: $a")
+      log.info(s"FSM terminated: $a")
   }
 
   def send(msg: Message) = {
@@ -380,7 +384,7 @@ with ViewStateImplicits
 
   def sendAll(msgs: NonEmptyList[Message]) = {
     messages.enqueueAll(msgs.toList).attemptRun.swap.foreach { e ⇒
-      Log.e(s"failed to enqueue state messages: $e")
+      log.error(s"failed to enqueue state messages: $e")
     }
   }
 
@@ -398,7 +402,7 @@ with ViewStateImplicits
   // *> combines the two Task instances via Apply.apply2
   // roughly equivalent to a flatMap(_ ⇒ b)
   def join() = {
-    Log.d(s"terminating $this")
+    log.trace(s"terminating $this")
     quit.set(true) *> finished.run attemptRunFor(20 seconds)
   }
 
@@ -413,4 +417,6 @@ with ViewStateImplicits
   def handle: String
 
   override def toString = s"$description ($waitingTasks waiting)"
+
+  override val loggerName = s"state.$handle".some
 }

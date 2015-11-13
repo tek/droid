@@ -1,4 +1,5 @@
-package tryp.droid
+package tryp
+package droid
 
 import tryp.droid.util.Threading
 import tryp.droid._
@@ -13,6 +14,7 @@ trait HasContext
 trait Basic
 extends HasContext
 with ResourcesAccess
+with Logging
 {
   type IdTypes = Int with String with Id
 
