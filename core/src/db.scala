@@ -1,4 +1,5 @@
-package tryp.droid
+package tryp
+package droid
 
 import concurrent.duration._
 
@@ -16,6 +17,7 @@ object DbMeta
 }
 
 trait DbAccess
+extends Logging
 {
   implicit def dbInfo = DbMeta.dbInfo
 
