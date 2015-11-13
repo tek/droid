@@ -8,11 +8,12 @@ extends tryp.AndroidDeps
   override def deps = super.deps ++ Map(
     "core" → core,
     "test" → test,
-    "unit" → unit
+    "unit" → unit,
+    "integration" → integration
   )
 
   override def resolvers = super.resolvers ++ Map(
-    "core" → Seq(Resolver.jcenterRepo)
+    "core" → List(Resolver.jcenterRepo)
   )
 
   def pulsar(pro: String) = {
@@ -43,6 +44,13 @@ extends tryp.AndroidDeps
   )
 
   def test = ids(
-    pulsar("unit-slick")
+    pulsar("slick")
+  )
+
+  override def integration = super.integration ++ ids(
+    "org.scalatest" %% "scalatest" % "2.2.+",
+    "junit" % "junit" % "4.12" % "provided",
+    "com.android.support.test" % "runner" % "+" exclude("junit", "junit"),
+    "com.android.support" % "multidex-instrumentation" % "+"
   )
 }

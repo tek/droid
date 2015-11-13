@@ -5,7 +5,7 @@ import android.Keys._
 object DroidBuild
 extends tryp.AndroidBuild(deps = DroidDeps)
 {
-  override val prefix = Some("droid")
+  override val title = Some("droid")
 
   lazy val core = aar("core")
     .settingsV(description := "Common tryp stuff")
