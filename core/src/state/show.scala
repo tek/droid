@@ -19,13 +19,13 @@ extends StateImpl
   case class SetModel(model: A)
   extends Message
 
-  def name: String
+  override def description = s"state for show $handle"
 
-  override def description = s"state for show $name"
+  override val loggerName = s"state.show.$handle".some
 
   def setupData(args: Map[String, String]) = {
     def errmsg(item: String) = {
-      s"No valid $item passed to show impl for '$name'"
+      s"No valid $item passed to show impl for '$handle'"
     }
     args.get(Keys.model)
       .flatMap(_.decodeOption[A])
