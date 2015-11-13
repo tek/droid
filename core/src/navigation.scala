@@ -42,6 +42,8 @@ case class Navigation(drawerItems: NonEmptyList[DrawerItem])
 
   def to(target: NavigationTarget) = current() = target.just
 
+  def toIndex(i: Int) = current() = targets.lift(i).toMaybe
+
   def apply(i: Int) = targets lift(i)
 }
 
