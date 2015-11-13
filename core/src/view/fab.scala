@@ -13,12 +13,23 @@ import com.melnykov.fab.FloatingActionButton
 import macroid._
 import FullDsl._
 
+import AsyncTaskStateData._
+
 trait Fab
-extends AsyncTasks
+extends Stateful
 with Transitions
 with Macroid
-{
+{ fabView ⇒
+
   import CommonWidgets._
+
+  lazy val asyncImpl = new AsyncTasksImpl {
+    def handle = "fab"
+    override def switchToAsyncUi = fabView.fadeToProgress
+    override def switchToIdleUi = fabView.fadeToFab
+  }
+
+  override def impls = asyncImpl :: super.impls
 
   val progress = slut[ProgressBar]
 
@@ -77,10 +88,6 @@ with Macroid
   (task: Task[B]) = {
     send(AsyncTask(task, success, failure))
   }
-
-  override def switchToAsyncUi = fadeToProgress
-
-  override def switchToIdleUi = fadeToFab
 
   private val fadeTime = 400L
 
