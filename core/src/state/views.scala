@@ -22,13 +22,13 @@ with ViewStateImplicits
 
     def logError(msg: String): ViewTransition = {
       case s ⇒
-        Log.e(msg)
+        log.error(msg)
         s
     }
 
     def logInfo(msg: String): ViewTransition = {
       case s ⇒
-        Log.i(msg)
+        log.info(msg)
         s
     }
 
