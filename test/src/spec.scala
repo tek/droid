@@ -3,7 +3,7 @@ package droid
 package test
 
 trait TrypDroidSpec
-extends slick.TestHelpers
+extends TestHelpers
 {
   def activity: TrypActivity
 
