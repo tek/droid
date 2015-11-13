@@ -455,10 +455,11 @@ extends Basic
   def alarmManager = systemService[AlarmManager](Context.ALARM_SERVICE)
 
   def scheduleRepeatingWakeAlarm[A <: WakefulBroadcastReceiver: ClassTag]
-  (interval: Duration, name: String) =
+  (interval: Duration, name: String, initial: Option[Duration] = None) =
   {
+    val initialInterval = (initial | 10.seconds).toMillis
     alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-      SystemClock.elapsedRealtime() + 10.seconds.toMillis, interval.toMillis,
+      SystemClock.elapsedRealtime() + initialInterval, interval.toMillis,
       alarmIntent[A](name))
   }
 
