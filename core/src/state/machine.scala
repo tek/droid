@@ -34,6 +34,12 @@ object ViewState
   case class UiTask(ui: Ui[Result], timeout: Duration = 30 seconds)
   extends Message
 
+  trait InternalMessage
+  extends Message
+
+  case class SetInitialState(state: BasicState)
+  extends InternalMessage
+
   trait Loggable extends Message
   {
     def message: String
@@ -105,6 +111,9 @@ object ViewState
   type ViewTransition = PartialFunction[Zthulhu, ViewTransitionResult]
 
   type ViewTransitions = PartialFunction[Message, ViewTransition]
+
+  type TransitionsSelection =
+    Message ⇒ PartialFunction[Message, ViewTransition]
 
   type ViewEffects[A[_]] = List[AppEffect] ⇒ A[Unit]
 
@@ -221,6 +230,13 @@ extends Logging
     // TODO don't log in production?
     def !! = proc.runLog.run
   }
+
+  implicit final class TaskOps[A](task: Task[A])
+  {
+    def effect: AppEffect = {
+      task map(r ⇒ liftMessage(EffectSuccessful(r.toString)))
+    }
+  }
 }
 
 object ViewStateImplicits
@@ -248,11 +264,11 @@ object Zthulhu
    */
   def scanSplitW[A, B, C]
   (z: B)
-  (f: PartialFunction[A, PartialFunction[B, (B, C)]])
+  (f: A ⇒ PartialFunction[A, PartialFunction[B, (B, C)]])
   (error: (B, A, Throwable) ⇒ Maybe[C])
   : stream.Writer1[C, A, B] = {
     receive1 { (a: A) ⇒
-      val (effect, newState) = Try(f lift(a) flatMap(_.lift(z))) match {
+      val (effect, newState) = Try(f(a) lift(a) flatMap(_.lift(z))) match {
         case Success(Some((newState, effect))) ⇒ effect.just → newState.just
         case Success(None) ⇒ Empty[C]() → Empty[B]()
         case Failure(t) ⇒ error(z, a, t) → Empty[B]()
@@ -270,7 +286,7 @@ object Zthulhu
 
   implicit class ProcessToZthulhu[A[_]](source: Process[A, Message])
   {
-    def viewFsm(transition: ViewTransitions, effect: ViewEffects[A]) = {
+    def viewFsm(transition: TransitionsSelection, effect: ViewEffects[A]) = {
       (source |> scanSplitW(Zthulhu())(transition)(fatalTransition))
         .observeW(sink.lift(effect))
         .stripW
@@ -352,20 +368,28 @@ with Logging
     sendAll(msgs)
   }
 
+  protected val transitionsSelection: Message ⇒ ViewTransitions = {
+    case m: InternalMessage ⇒ internalMessage
+    case m: Message ⇒ transitions
+  }
+
   private[this] lazy val fsmProc: Process[Task, Zthulhu] = {
     running.set(true).infraRun("set sig running")
     term.discrete
       .merge(idle.when(quit.discrete))
       .wye(messages.dequeue)(wye.interrupt)
-      .viewFsm(transitions, unsafePerformIO)
+      .viewFsm(transitionsSelection, unsafePerformIO)
   }
 
   private[this] lazy val fsmTask = fsmProc.runLog
 
-  def runFsm() = fsmTask.runAsync {
-    case a ⇒
-      running.set(false).infraRun("unset sig running")
-      log.info(s"FSM terminated: $a")
+  def runFsm(initial: BasicState = Pristine) = {
+    fsmTask.runAsync {
+      case a ⇒
+        running.set(false).infraRun("unset sig running")
+        log.info(s"FSM terminated: $a")
+    }
+    send(SetInitialState(initial))
   }
 
   def send(msg: Message) = {
@@ -409,6 +433,15 @@ with Logging
   override def toString = s"$description ($waitingTasks waiting)"
 
   override val loggerName = s"state.$handle".some
+
+  lazy val internalMessage: ViewTransitions = {
+    case SetInitialState(s) ⇒ setInitialState(s)
+  }
+
+  def setInitialState(s: BasicState): ViewTransition = {
+    case S(Pristine, d) ⇒ S(s, d)
+  }
+}
 
 abstract class DroidState
 (implicit val ec: EC, db: tryp.slick.DbInfo, val ctx: AndroidUiContext,
