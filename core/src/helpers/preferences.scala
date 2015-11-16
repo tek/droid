@@ -145,6 +145,7 @@ class PreferencesFacade(val prefs: SharedPreferences)
       case l: Long ⇒ edit(_.putString(key, l.toString))
       case h: java.util.HashSet[_] ⇒ setSet(key, h.toSet)
       case s: Set[_] ⇒ setSet(key, s)
+      case t: TraversableOnce[_] ⇒ setSet(key, t.toSet)
       case _ ⇒ error(key, value)
     }
     if (invalidate) change(name, value)
@@ -164,6 +165,7 @@ class PreferencesFacade(val prefs: SharedPreferences)
       case f: Float ⇒ PrefCache.invalidate[Float](name)
       case h: java.util.HashSet[_] ⇒ PrefCache.invalidate[Set[String]](name)
       case s: Set[_] ⇒ PrefCache.invalidate[Set[String]](name)
+      case t: TraversableOnce[_] ⇒ PrefCache.invalidate[Set[String]](name)
       case _ ⇒ error(name, value)
     }
   }
