@@ -34,7 +34,7 @@ case class GPlusTask(callback: GPlusTask ⇒ Unit)
 (implicit val context: Context)
 extends GPlus
 {
-  def apiConnected(data: Bundle) {
+  override def apiConnected(data: Bundle) {
     callback(this)
   }
 }
@@ -42,7 +42,7 @@ extends GPlus
 class GPlusSignOut(implicit val context: Context)
 extends GPlus
 {
-  def apiConnected(data: Bundle) {
+  override def apiConnected(data: Bundle) {
     Plus.AccountApi.clearDefaultAccount(apiClient)
   }
 }
@@ -105,7 +105,7 @@ extends ResourcesAccess
   private def signInImpl()(implicit act: Activity) {
     Try {
       signInTask = Some(new GPlusSignIn(t ⇒ signInComplete(true)))
-      signInTask foreach { _.connect() }
+      signInTask foreach { _.send(PlayServices.Connect) }
     } recover {
       case e if TrypEnv.debug ⇒ throw e
     }
@@ -113,7 +113,7 @@ extends ResourcesAccess
 
   def signOut()(implicit c: Context) {
     Try {
-      (new GPlusSignOut).connect()
+      (new GPlusSignOut).send(PlayServices.Connect)
     } recover {
       case e if TrypEnv.debug ⇒ throw e
     }
@@ -150,7 +150,7 @@ extends ResourcesAccess
   }
 
   def withAccount(job: PlusJob)(implicit c: Context) {
-    GPlusTask(job).connect()
+    GPlusTask(job).send(PlayServices.Connect)
   }
 }
 

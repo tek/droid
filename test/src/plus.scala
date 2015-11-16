@@ -3,6 +3,9 @@ package test
 
 import scalaz._, Scalaz._, concurrent._
 
+import ViewState._
+import PlayServices._
+
 object MockData
 {
   val email = "test@gmail.com"
@@ -12,9 +15,12 @@ object MockData
 class MockGPlus(implicit val context: Context)
 extends GPlus
 {
-  override def connect() { }
+  override def connect: ViewTransition = {
+    case S(Disconnected, d) ⇒ S(Connected, d)
+  }
 
-  def apiConnected(data: Bundle) {
+
+  override def apiConnected(data: Bundle) {
   }
 }
 
