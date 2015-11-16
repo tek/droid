@@ -42,7 +42,7 @@ object AsyncTaskStateData
 import AsyncTaskStateData._
 
 trait AsyncTasksImpl
-extends StateImpl
+extends DroidState
 {
   private[this] def execTask(msg: AsyncTask, data: AsyncTasksData, fade: Boolean) =
   {

@@ -34,7 +34,7 @@ object AuthMessages
 import AuthMessages._
 
 trait AuthImpl
-extends StateImpl
+extends DroidState
 with HasActivity
 {
   override def handle = "gplus"

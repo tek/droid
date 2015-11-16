@@ -318,9 +318,7 @@ object Zthulhu
 
 import Zthulhu._
 
-abstract class StateImpl
-(implicit val ec: EC, db: tryp.slick.DbInfo, val ctx: AndroidUiContext,
-  broadcast: Broadcaster)
+trait StateImpl
 extends ToUiOps
 with ViewStateImplicits
 with Logging
@@ -356,10 +354,14 @@ with Logging
         case head :: tail ⇒
           val msgs = NonEmptyList(head, tail: _*)
           log.trace(s"broadcasting ${msgs.show}")
-          broadcast ! msgs
+          dispatchResults(msgs)
         case Nil ⇒
       }
     }
+  }
+
+  def dispatchResults(msgs: NonEmptyList[Message]) = {
+    sendAll(msgs)
   }
 
   private[this] lazy val fsmProc: Process[Task, Zthulhu] = {
@@ -419,4 +421,11 @@ with Logging
   override def toString = s"$description ($waitingTasks waiting)"
 
   override val loggerName = s"state.$handle".some
+
+abstract class DroidState
+(implicit val ec: EC, db: tryp.slick.DbInfo, val ctx: AndroidUiContext,
+  broadcast: Broadcaster)
+extends StateImpl
+{
+  override def dispatchResults(msgs: NonEmptyList[Message]) = broadcast ! msgs
 }

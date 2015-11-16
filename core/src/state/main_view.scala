@@ -27,7 +27,7 @@ object MainViewMessages
 import MainViewMessages._
 
 trait MainViewImpl
-extends StateImpl
+extends DroidState
 {
   override def description = "main view state"
 
