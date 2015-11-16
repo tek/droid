@@ -216,22 +216,10 @@ extends Logging
     (m: Result): AppEffect
   }
 
-  def infraResult[A](desc: String)(res: \/[Throwable, A]) = {
-    res match {
-      case -\/(e) ⇒ log.error(s"failed to $desc: $e")
-      case _ ⇒
-    }
-  }
-
   implicit class ViewProcessOps[+O](proc: Process[Task, O])
   {
     // TODO don't log in production?
     def !! = proc.runLog.run
-  }
-
-  implicit class ViewTaskOps[A](task: Task[A])
-  {
-    def infraRun(desc: String) = infraResult(desc)(task.attemptRun)
   }
 }
 
