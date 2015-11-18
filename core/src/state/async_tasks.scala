@@ -2,7 +2,7 @@ package tryp.droid
 
 import scalaz._, Scalaz._, concurrent._
 
-import ViewState._
+import State._
 
 object AsyncTaskStateData
 {
@@ -42,7 +42,7 @@ object AsyncTaskStateData
 import AsyncTaskStateData._
 
 trait AsyncTasksImpl
-extends DroidState
+extends DroidStateEC
 {
   private[this] def execTask(msg: AsyncTask, data: AsyncTasksData, fade: Boolean) =
   {

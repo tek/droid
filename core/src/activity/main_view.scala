@@ -3,13 +3,13 @@ package droid
 
 import macroid.FullDsl._
 
-import ViewState._
+import State._
 import MainViewMessages._
 
 trait MainView
 extends ActivityBase
 with Transitions
-with Stateful
+with StatefulHasActivity
 {
   mainView: FragmentManagement
   with Akkativity ⇒

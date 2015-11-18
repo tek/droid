@@ -1,4 +1,5 @@
-package tryp.droid
+package tryp
+package droid
 
 import scalaz._, Scalaz._
 
@@ -11,7 +12,7 @@ case class FragmentBuilder(ctor: () ⇒ Fragment, id: Id,
   {
     def apply() = ctor()
 
-    def tag = tagO | id.value.toString
+    def tag = tagO | id.tag
   }
 
 class ActionMacroidOps[A](a: AnyAction[A])
@@ -41,15 +42,38 @@ import UiActionTypes._
 trait AndroidUiContext
 extends UiContext[Ui]
 {
-  def loadFragment(fragment: FragmentBuilder): Ui[Fragment]
+  def loadFragment(fragment: FragmentBuilder): Ui[String]
 
   def transitionFragment(fragment: FragmentBuilder): Ui[String]
 
   def showViewTree(view: View): String
 }
 
-trait AndroidHasActivityUiContext
+trait AndroidContextUiContext
 extends AndroidUiContext
+with HasContext
+with ResourcesAccess
+with Logging
+{
+  def aContext = context
+
+  def showViewTree(view: View): String = {
+    view.viewTree.drawTree
+  }
+
+  override def notify(id: String): Ui[Any] = Ui(log.info(id))
+
+  def loadFragment(fragment: FragmentBuilder) = {
+    Ui("AndroidContextUiContext cannot handle fragments")
+  }
+
+  def transitionFragment(fragment: FragmentBuilder) = {
+    loadFragment(fragment)
+  }
+}
+
+trait AndroidHasActivityUiContext
+extends AndroidContextUiContext
 with ResourcesAccess
 with Snackbars
 with FragmentManagement
@@ -57,15 +81,16 @@ with Transitions
 with TrypActivityAccess
 with HasSettings
 {
-  def loadFragment(fragment: FragmentBuilder) = {
+  override def loadFragment(fragment: FragmentBuilder) = {
     Ui {
       fragment() tap { inst ⇒
         replaceFragment(fragment.id, inst, false, fragment.tag, false)
       }
+      "fragment loaded successfully"
     }
   }
 
-  def transitionFragment(fragment: FragmentBuilder) = {
+  override def transitionFragment(fragment: FragmentBuilder) = {
     settings.app.bool("view_transitions", true)().fold(trypActivity, None)
       .some { a ⇒
         Ui[String] {
@@ -83,11 +108,8 @@ with HasSettings
     snackbarLiteral(e.map(_.show).toList.mkString("\n"))
   }
 
+  // TODO split in notifyLiteral and notifyRes or similar
   override def notify(id: String) = mkToast(id)
-
-  def showViewTree(view: View): String = {
-    view.viewTree.drawTree
-  }
 }
 
 trait AndroidActivityUiContext

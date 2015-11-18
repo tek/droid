@@ -6,55 +6,43 @@ import concurrent.duration._
 import scalaz._, Scalaz._
 import concurrent.Task
 
-import ViewState._
+import State._
+
+trait LogImpl
+extends StateImpl
+{
+  def handle = "log"
+
+  def logError(msg: String): ViewTransition = {
+    case s ⇒
+      log.error(msg)
+      s
+  }
+
+  def logInfo(msg: String): ViewTransition = {
+    case s ⇒
+      log.info(msg)
+      s
+  }
+
+  val transitions: ViewTransitions = {
+    case m: LogError ⇒ logError(m.message)
+    case m: LogFatal ⇒ logError(m.message)
+    case m: LogInfo ⇒ logInfo(m.message)
+    case UnknownResult(msg) ⇒ logInfo(msg.toString)
+    case m: EffectSuccessful ⇒ logInfo(m.message)
+    case m: Loggable ⇒ logInfo(m.toString)
+  }
+}
 
 trait Stateful
-extends DbAccess
-with ViewStateImplicits
+extends ViewStateImplicits
 {
-  implicit def uiCtx: AndroidUiContext
-
   implicit val broadcast: Broadcaster = new Broadcaster(sendAll)
 
-  lazy val logImpl = new StateImpl
-  {
-    def handle = "log"
+  lazy val logImpl = new LogImpl {}
 
-    def logError(msg: String): ViewTransition = {
-      case s ⇒
-        log.error(msg)
-        s
-    }
-
-    def logInfo(msg: String): ViewTransition = {
-      case s ⇒
-        log.info(msg)
-        s
-    }
-
-    val transitions: ViewTransitions = {
-      case m: LogError ⇒ logError(m.message)
-      case m: LogFatal ⇒ logError(m.message)
-      case m: LogInfo ⇒ logInfo(m.message)
-      case UnknownResult(msg) ⇒ logInfo(msg.toString)
-      case m: EffectSuccessful ⇒ logInfo(m.message)
-      case m: Loggable ⇒ logInfo(m.toString)
-    }
-  }
-
-  lazy val uiImpl = new StateImpl
-  {
-    def handle = "ui"
-
-    val transitions: ViewTransitions = {
-      case UiTask(ui, timeout) ⇒ {
-        case s ⇒
-          s << Task(scala.concurrent.Await.result(ui.run, timeout))
-      }
-    }
-  }
-
-  def impls: List[StateImpl] = logImpl :: uiImpl :: Nil
+  def impls: List[StateImpl] = logImpl :: Nil
 
   def allImpls[A](f: StateImpl ⇒ A) = impls map(f)
 
@@ -75,15 +63,39 @@ with ViewStateImplicits
   }
 }
 
-trait StatefulHasActivity
+trait UiDispatcher
+extends StateImpl
+{
+  def handle = "ui"
+
+  val transitions: ViewTransitions = {
+    case UiTask(ui, timeout) ⇒ {
+      case s ⇒
+        s << Task(scala.concurrent.Await.result(ui.run, timeout))
+    }
+  }
+}
+
+
+trait StatefulView
 extends Stateful
+{
+  lazy val uiImpl = new UiDispatcher {}
+
+  override def impls = uiImpl :: super.impls
+}
+
+trait StatefulHasActivity
+extends StatefulView
 with HasActivity
 {
   implicit def uiCtx: AndroidUiContext = AndroidActivityUiContext.default
 
   override def impls = activityImpl :: super.impls
 
-  protected lazy val activityImpl = new StateImpl
+  implicit def ec: EC
+
+  protected lazy val activityImpl = new DroidState
   {
     override def description = "activity access state"
 

@@ -10,6 +10,4 @@ class Fragments
 object Classes
 {
   var fragments: Fragments = new Fragments
-
-  var plus: GPlusBase = GPlusBase
 }

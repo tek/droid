@@ -1,13 +1,13 @@
 package tryp
 package droid
 
-import ViewState._
+import State._
 
 import NavMessages._
 
 trait HasNavigation
 extends MainView
-with Stateful
+with StatefulView
 { self: FragmentManagement
   with Akkativity ⇒
 

@@ -17,13 +17,14 @@ extends RecyclerView.ViewHolder(view)
 
 class SimpleModelAdapter[A <: NamedModel: ClassTag]
 (dao: Dao[A])
-(implicit activity: Activity)
+(implicit activity: Activity, dbi: DbInfo, ctx: AndroidUiContext)
 extends SimpleRecyclerAdapter[SimpleModelViewHolder, A]
 with DbProfile
+with ToUiValidationNelActionOps
 {
-  fetch.!
+  fetch.attemptUi
 
-  def fetch = dao.!.map(updateItems)
+  def fetch = dao.!.vmap(updateItems)
 
   def onCreateViewHolder(parent: ViewGroup, viewType: Int) = {
     val root = slut[RelativeLayout]
@@ -41,12 +42,13 @@ with DbProfile
   }
 
   def onBindViewHolder(holder: SimpleModelViewHolder, position: Int) {
-    val item = items(position)
-    Ui.run(
-      holder.root <~ On.click { enhance(holder, item) },
-      holder.name <~ txt.literal(item.name),
-      holder.delete <~ On.click { delete(position, item) }
-    )
+    items.lift(position) foreach { item ⇒
+      Ui.run(
+        holder.root <~ On.click { enhance(holder, item) },
+        holder.name <~ txt.literal(item.name),
+        holder.delete <~ On.click { delete(position, item) }
+      )
+    }
   }
 
   def enhance(holder: SimpleModelViewHolder, item: A) = {
@@ -57,7 +59,7 @@ with DbProfile
   }
 
   def delete(position: Int, item: A) = {
-    dao.delete(item)
+    dao.delete(item).!
     simpleItems.remove(position)
     applyFilter
   }

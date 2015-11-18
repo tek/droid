@@ -10,7 +10,7 @@ import com.google.android.gms.location._
 import LocationServices.GeofencingApi
 import com.google.android.gms.common.api._
 
-import ViewState._
+import State._
 
 case class GeofenceInterface(apiClient: GoogleApiClient, intent: PendingIntent)
 (implicit prefs: Settings)
@@ -68,24 +68,24 @@ case class GeofenceInterface(apiClient: GoogleApiClient, intent: PendingIntent)
 
 case class GeofenceHandler(intent: PendingIntent)
 (implicit val context: Context)
+extends Stateful
 {
   // TODO connect
   def success = async.signalOf(false)
 
   def installed: Boolean = success.get.attemptRun | false
 
-  lazy val location = new LocationInterface
+  lazy val location = new LocationInterface {}
 
-  lazy val geofences = GeofenceInterface(location.apiClient, intent)
-
-  def setupProcess(locations: Seq[GeofenceData]) = {
+  override def impls = location :: super.impls
+  
+  def setupProcess(client: GoogleApiClient, locations: Seq[GeofenceData]) = {
+    val geofences = GeofenceInterface(client, intent)
     Process.eval_(geofences.clear) ++
       Process.eval_(geofences.request(locations))
   }
 
   def setup(locations: Seq[GeofenceData]) = {
-    location.send(PlayServices.Connect)
-    setupProcess(locations)
-      .sleepUntil(location.isConnected.continuous)
+    location.oneClient flatMap(c ⇒ setupProcess(c, locations))
   }
 }

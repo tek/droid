@@ -3,20 +3,29 @@ package droid
 
 import scalaz._, Scalaz._, concurrent._, stream._, Process._
 
-import com.google.android.gms.common._
-import com.google.android.gms.common.api._
+import com.google.android.gms
+import gms.common.{ConnectionResult, GooglePlayServicesUtil}
+import gms.common.{api ⇒ gapi}
+import gapi.GoogleApiClient
 
-import ViewState._
+
+import State._
 
 object PlayServices
 {
   case object Connect
   extends Message
 
+  case object Disconnect
+  extends Message
+
   case object ConnectionEstablished
   extends Message
 
   case object ConnectionLost
+  extends Message
+
+  case class ConnectionFailed(result: ConnectionResult)
   extends Message
 
   case object Connected
@@ -30,15 +39,12 @@ object PlayServices
 }
 import PlayServices._
 
-trait PlayServices
-extends StateImpl
-with tryp.droid.Basic
+trait PlayServices[A <: WithContext]
+extends DroidStateBase[A]
 {
-  def init() = {
-    runFsm(Disconnected)
-  }
+  runFsm(Disconnected)
 
-  class ConnectionCallbacks(owner: PlayServices)
+  class ConnectionCallbacks(owner: PlayServices[A])
   extends GoogleApiClient.OnConnectionFailedListener
   with GoogleApiClient.ConnectionCallbacks
   {
@@ -61,24 +67,33 @@ with tryp.droid.Basic
     }
   }
 
-  def handle = "playservices"
+  def handle = s"playservices.$subHandle"
 
-  def playServicesAvailable =
-    GooglePlayServicesUtil.isGooglePlayServicesAvailable(context)
+  def subHandle: String
+
+  def playServicesAvailable = {
+    ctx.contextO
+      .map(GooglePlayServicesUtil.isGooglePlayServicesAvailable)
+      .contains(1)
+  }
 
   private lazy val connectionCallbacks = new ConnectionCallbacks(this)
 
-  lazy val apiClient = builder.build
+  protected lazy val apiClient = builder.map(_.build)
 
-  def builder = new GoogleApiClient.Builder(context)
-    .addApi(api)
-    .addConnectionCallbacks(connectionCallbacks)
-    .addOnConnectionFailedListener(connectionCallbacks)
+  def builder = {
+    ctx context { context ⇒
+      new GoogleApiClient.Builder(context)
+        .addApi(api)
+        .addConnectionCallbacks(connectionCallbacks)
+        .addOnConnectionFailedListener(connectionCallbacks)
+    }
+  }
 
-  protected def api: Api[_ <: Api.ApiOptions.NotRequiredOptions]
+  protected def api: gapi.Api[_ <: gapi.Api.ApiOptions.NotRequiredOptions]
 
-  def apiConnectionFailed(connectionResult: ConnectionResult) {
-    send(ConnectionLost)
+  def apiConnectionFailed(result: ConnectionResult) = {
+    send(ConnectionFailed(result))
   }
 
   def apiConnected(data: Bundle) = {
@@ -87,24 +102,42 @@ with tryp.droid.Basic
 
   lazy val isConnected = async.signalOf(false)
 
-  lazy val failed = async.signalOf(false)
+  lazy val client = {
+    apiClient
+      .map(Process.emit)
+      .some(_.repeat.when(isConnected.discrete))
+      .none(Process.halt)
+  }
 
-  val transitions: ViewTransitions = {
+  def oneClient = {
+    send(Connect)
+    client |> await1
+  }
+
+  val basicTransitions: ViewTransitions = {
     case Connect ⇒ connect
     case ConnectionEstablished ⇒ connectionEstablished
     case ConnectionLost ⇒ connectionLost
+    case ConnectionFailed(_) ⇒ connectionLost
+    case Disconnect ⇒ disconnect
   }
+
+  def transitions = basicTransitions
 
   def connect: ViewTransition = {
     case S(Disconnected, d) ⇒
       S(Connecting, d) <<
-        stateEffect("connecting play services") { apiClient.connect() }
+        stateEffect("connecting play services") {
+          apiClient foreach(_.connect())
+        }
   }
 
   def disconnect: ViewTransition = {
     case S(_, d) ⇒
       S(Disconnected, d) <<
-        stateEffect("disconnecting play services") { apiClient.disconnect() }
+        stateEffect("disconnecting play services") {
+          apiClient foreach(_.disconnect())
+        }
   }
 
   def connectionEstablished: ViewTransition = {

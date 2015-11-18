@@ -35,7 +35,7 @@ extends DrawerViewHolder(view)
 }
 
 class DrawerAdapter(navigation: Navigation)
-(implicit activity: Activity)
+(implicit activity: Activity, plus: PlusInterface)
 extends SimpleRecyclerAdapter[DrawerViewHolder, DrawerItem]
 with Macroid
 {
@@ -108,22 +108,31 @@ with Macroid
   def bindGPlusHeader(holder: DrawerViewHolder, header: GPlusHeader) = {
     holder match {
       case GPlusHeaderHolder(view, name, email, avatar) ⇒
-        GPlus { account ⇒
-          account.withCover { cover ⇒
-            cover.setColorFilter(Color.argb(80, 0, 0, 0),
-              PorterDuff.Mode.DARKEN)
-            Ui.run(view <~ bg(cover))
+        plus.oneAccount
+          .map { account ⇒
+            val cover = account.coverDrawable.infraRun("set plus cover").join
+              .map { cover ⇒
+                cover.setColorFilter(Color.argb(80, 0, 0, 0),
+                  PorterDuff.Mode.DARKEN)
+                view <~ bg(cover)
+              }
+            val photo = account.photoDrawable.infraRun("set plus photo").join
+              .map { photo ⇒
+                avatar <~ imageDrawableC(photo)
+              }
+            val actions = List(
+              name <~ account.name.map { n ⇒ txt.literal(n) },
+              email <~ account.email.map { n ⇒ txt.literal(n) }
+            ) ++ cover.toList ++ photo.toList
+            Ui.sequence(actions: _*).run
           }
-          account.withPhoto { photo ⇒
-            Ui.run(avatar <~ imageDrawableC(photo))
+          .runLog
+          .runAsync {
+            case -\/(err) ⇒ log.error(err)("bindGPlusHeader")
+            case _ ⇒
           }
-          Ui.run(
-            name <~ account.name.map { n ⇒ txt.literal(n) },
-            email <~ account.email.map { n ⇒ txt.literal(n) }
-          ).right
-        }
-      case _ ⇒ throw new java.lang.RuntimeException(
-          s"Invalid view holder for GPlusHeader: ${holder.className}")
+      case _ ⇒
+        sys.error(s"Invalid view holder for GPlusHeader: ${holder.className}")
     }
   }
 

@@ -11,6 +11,7 @@ import tryp.droid.Macroid._
 
 class DrawerFragment
 extends TrypFragment
+with PlusInterfaceAccess
 {
   val drawerView = slut[RecyclerView]
 

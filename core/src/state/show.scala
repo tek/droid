@@ -5,13 +5,13 @@ import scalaz._, Scalaz._
 
 import argonaut._, Argonaut._
 
-import ViewState._
+import State._
 import UiActionTypes._
 
 abstract class ShowStateImpl[A <: Model: DecodeJson]
 (implicit ec: EC, db: tryp.slick.DbInfo, ctx: AndroidUiContext,
   broadcast: Broadcaster)
-extends StateImpl
+extends DroidState
 {
   case class Model(model: A)
   extends Data

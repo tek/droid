@@ -1,9 +1,9 @@
 package tryp.droid
 
-import android.app.Service
-import android.os.{Binder,IBinder}
+import scalaz._, Scalaz._, concurrent.Task
 
-import scala.reflect.classTag
+import android.app.Service
+import android.os.{Binder, IBinder}
 
 trait ServiceStubs
 {
@@ -38,7 +38,10 @@ with ServiceCommon
   override def onStartCommand(intent: Intent, flags: Int, startId: Int): Int =
   {
     start
-    thread(handleIntent(intent))
+    Task(handleIntent(intent)).runAsync {
+      case -\/(err) ⇒ log.error(err)(s"starting intent $intent")
+      case _ ⇒ 
+    }
     Service.START_STICKY
   }
 
@@ -68,6 +71,8 @@ with ServiceCommon
   def init
   def handleIntent(intent: Intent)
 }
+
+import scala.reflect.classTag
 
 class ServiceFactory[A <: Service: ClassTag]
 {

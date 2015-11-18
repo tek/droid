@@ -6,12 +6,12 @@ import scalaz.syntax.std.all._
 import rx._
 import rx.ops._
 
-import com.google.android.gms.common._
-import com.google.android.gms.auth._
+import com.google.android.gms.common.Scopes
+import com.google.android.gms.auth.UserRecoverableAuthException
 
-import ViewState._
+import State._
 
-object AuthMessages
+object AuthState
 {
   case object Reset extends Message
   case object Fetch extends Message
@@ -28,21 +28,20 @@ object AuthMessages
   case class FetchTokenFailed(error: String)
   extends Message
 
-  case class TokenFetchResult(data: Try[\/[String, (String, String)]])
-  extends Message
-}
-import AuthMessages._
-
-trait AuthImpl
-extends DroidState
-with HasActivity
-{
-  override def handle = "gplus"
-
   case object Fetching extends BasicState
   case object Authing extends BasicState
   case object Unauthed extends BasicState
   case object Authed extends BasicState
+}
+
+abstract class AuthState
+(implicit ctx: AuthStateUiI, res: Resources, plus: PlusInterface,
+  bc: Broadcaster, settings: Settings)
+extends DroidState[AuthStateUiI]
+{
+  import AuthState._
+
+  override def handle = "gplus"
 
   case class BackendData(token: String)
   extends Data
@@ -55,13 +54,12 @@ with HasActivity
     case BackendAuthorized(token) ⇒ storeToken(token)
     case RequestPermission(intent) ⇒ requestPermission(intent)
     case FetchTokenFailed(error) ⇒ fetchTokenFailed(error)
-    case TokenFetchResult(data) ⇒ tokenFetchResult(data)
   }
 
   def resume: ViewTransition = {
     case S(Pristine, data) ⇒
       if (backendTokenValid) S(Authed, BackendData(backendToken()))
-      else S(Unauthed, data) << autoFetchAuthToken.option(Fetch)
+      else S(Unauthed, data) << autoFetchAuthToken().option(Fetch)
   }
 
   def reset: ViewTransition = {
@@ -95,54 +93,49 @@ with HasActivity
   def requestPermission(intent: Intent): ViewTransition = {
     case s @ S(Unauthed, data) ⇒
       s << stateEffect("initiating plus permission request") {
-      activity.startActivityForResult(intent, GPlusBase.RC_TOKEN_FETCH)
+        ctx.startActivity(intent, Plus.RC_TOKEN_FETCH)
     }
   }
 
-  def tokenFetchResult
-  (result: Try[\/[String, (String, String)]]) : ViewTransition = {
-    case s @ S(Fetching, data) ⇒
-      result match {
-        case Success(-\/(e)) ⇒
-          s << FetchTokenFailed(e)
-        case Success(\/-((a, t))) ⇒
-          s << AuthorizeToken(a, t)
-        case Failure(t: UserRecoverableAuthException) ⇒
-          s << FetchTokenFailed("insufficient permissions") <<
-            RequestPermission(t.getIntent).toResult
-        case Failure(t) ⇒
-          s << LogFatal("requesting plus token", t).toResult <<
-            FetchTokenFailed("exception thrown")
-      }
+  // FIXME blocking indefinitely if the connection failed
+  def fetchToken = {
+    val err = FetchTokenFailed("Plus account name unavailable").toFail
+    plus.oneAccount
+      .map(_.email cata(tokenFromEmail, err))
+      .runLast
   }
 
-  // TODO change to task
-  def fetchToken: AppEffect = {
-    stateEffect("initiating plus token acquisition") {
-      GPlus {
-        _.email
-          .map(e ⇒ e → plusToken(e))
-          .toRightDisjunction("Plus account name unavailable")
-      }
-      .future
-      .onComplete(TokenFetchResult.apply _ >>> send _)
+  def tokenFromEmail(email: String): Result = {
+    Try(plusToken(email)) match {
+      case Success(tkn) ⇒
+        AuthorizeToken(email, tkn).toResult
+      case Failure(t: UserRecoverableAuthException) ⇒
+        NonEmptyList(
+          FetchTokenFailed("insufficient permissions"),
+          RequestPermission(t.getIntent)
+        ).failure[Message]
+      case Failure(t) ⇒
+        NonEmptyList(
+          LogFatal("requesting plus token", t),
+          FetchTokenFailed("exception thrown")
+        ).failure[Message]
     }
   }
 
-  def serverClientId(implicit c: Context) =
-    res.string("gplus_oauth_server_client_id")
+  def serverClientId = res.string("gplus_oauth_server_client_id")
 
   val scopes = Scopes.PLUS_LOGIN
 
-  def scopeString(implicit c: Context) =
-    s"oauth2:server:client_id:$serverClientId:api_scope:$scopes"
+  def scope = s"oauth2:server:client_id:$serverClientId:api_scope:$scopes"
 
-  def plusToken(email: String) =
-    GoogleAuthUtil.getToken(activity, email, scopeString)
+  def plusToken(email: String) = ctx.plusToken(email, scope)
+
+  def backend: Backend
 
   def backendToken = backend.token
 
-  def autoFetchAuthToken = true
+  lazy val autoFetchAuthToken =
+    settings.app.bool("auto_fetch_auth_token", true)
 
   def authorizePlusToken(account: String, plusToken: String): AppEffect = {
     Task {
@@ -151,11 +144,7 @@ with HasActivity
   }
 
   def clearPlusToken(token: String): AppEffect =
-    stateEffect("clear plus token") {
-      GoogleAuthUtil.clearToken(context, token)
-    }
-
-  val backend = new Backend
+    stateEffect("clear plus token") { ctx.clearPlusToken(token) }
 
   def plusTokenResolved(success: Boolean) {
     if (success) send(Fetch)
@@ -170,25 +159,27 @@ trait AuthIntegration
 extends ActivityBase
 with AppPreferences
 with StatefulActivity
+with ResourcesAccess
+with HasPlus
 { act: Akkativity ⇒
 
-  lazy val gPlusImpl = new AuthImpl {
-    def activity = act
+  lazy val authImpl = new AuthState {
+    def backend = new Backend()(settings, res)
   }
 
-  override def impls = gPlusImpl :: super.impls
+  override def impls = authImpl :: super.impls
 
   override def onActivityResult(requestCode: Int, responseCode: Int,
     intent: Intent) = {
     Log.i(s"activity result: request $requestCode, response $responseCode")
     val ok = responseCode == android.app.Activity.RESULT_OK
-    if (requestCode == GPlusBase.RC_SIGN_IN)
-      GPlus.signInComplete(ok)
-    else if (requestCode == GPlusBase.RC_TOKEN_FETCH)
-      gPlusImpl.plusTokenResolved(ok)
+    if (requestCode == Plus.RC_SIGN_IN)
+      plus.send(PlayServices.Connect)
+    else if (requestCode == Plus.RC_TOKEN_FETCH)
+      authImpl.plusTokenResolved(ok)
   }
 
   def obtainToken() = {
-    sendAll(Reset <:: Fetch.wrapNel)
+    sendAll(AuthState.Reset <:: AuthState.Fetch.wrapNel)
   }
 }

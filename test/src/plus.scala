@@ -1,9 +1,14 @@
-package tryp.droid
+package tryp
+package droid
 package test
 
 import scalaz._, Scalaz._, concurrent._
 
-import ViewState._
+import com.google.android.gms
+import gms.common.{api ⇒ gapi}
+import gapi.GoogleApiClient
+
+import droid.State._
 import PlayServices._
 
 object MockData
@@ -12,37 +17,24 @@ object MockData
   val authToken = "authtoken"
 }
 
-class MockGPlus(implicit val context: Context)
-extends GPlus
+class MockPlusAccount(apiClient: GoogleApiClient)
+extends PlusAccount(apiClient)
+{
+  override def email = MockData.email.just
+}
+
+trait MockPlusInterface
+extends PlusInterface
 {
   override def connect: ViewTransition = {
-    case S(Disconnected, d) ⇒ S(Connected, d)
+    case s ⇒ s << ConnectionEstablished
   }
 
 
   override def apiConnected(data: Bundle) {
   }
-}
 
-class GPlusMock
-extends GPlusBase
-{
-  class MockAccount(implicit c: Context)
-  extends Account(new MockGPlus)
-  {
-    override def email = Some(MockData.email)
-  }
-
-  signedIn() = true
-
-  override def apply[A](callback: PlusCallback[A])(implicit a: Activity) = {
-    val promise = Promise[\/[String, A]]()
-    Task(callback(new MockAccount)) runAsync {
-      case \/-(result) ⇒ promise success result
-      case -\/(error) ⇒ promise failure error
-    }
-    promise
-  }
+  override def account = client map(new MockPlusAccount(_))
 }
 
 trait AuthStateMock
@@ -50,15 +42,19 @@ extends StatefulActivity
 with AuthIntegration
 { act: TrypActivity ⇒
 
-  override lazy val gPlusImpl = new AuthImpl {
+  override implicit lazy val plus: PlusInterface = new MockPlusInterface {}
+
+  override lazy val authImpl = new AuthState {
     def activity = act
+
+    def backend = new Backend()(settings, res)
 
     override def plusToken(email: String) = "mock_plus_token"
 
-    override def clearPlusToken(token: String) = ViewState.Nop
+    override def clearPlusToken(token: String) = droid.State.Nop
 
     override def authorizePlusToken(account: String, plusToken: String) = {
-      AuthMessages.BackendAuthorized(MockData.authToken).success
+      AuthState.BackendAuthorized(MockData.authToken).success
     }
   }
 }

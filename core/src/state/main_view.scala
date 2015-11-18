@@ -3,7 +3,7 @@ package droid
 
 import macroid.FullDsl._
 
-import ViewState._
+import State._
 
 import scalaz._, Scalaz._
 
@@ -15,7 +15,7 @@ object MainViewMessages
   case class LoadContent(view: View)
   extends Message
 
-  case class LoadFragment(fragment: () ⇒ Fragment)
+  case class LoadFragment(fragment: () ⇒ Fragment, tag: String)
   extends Message
 
   case class ContentLoaded(view: Ui[View])
@@ -27,19 +27,20 @@ object MainViewMessages
 import MainViewMessages._
 
 trait MainViewImpl
-extends DroidState
+extends DroidStateEC
 {
   override def description = "main view state"
 
   val transitions: ViewTransitions = {
-    case LoadFragment(fragment) ⇒ loadFragment(fragment)
+    case LoadFragment(fragment, tag) ⇒ loadFragment(fragment, tag)
     case ContentLoaded(view) ⇒ contentLoaded(view)
     case Back ⇒ back
   }
 
-  def loadFragment(fragment: () ⇒ Fragment): ViewTransition = {
+  def loadFragment(fragment: () ⇒ Fragment, tag: String): ViewTransition = {
     case s ⇒
-      s << ctx.transitionFragment(FragmentBuilder(fragment, Id.content))
+      s <<
+        ctx.transitionFragment(FragmentBuilder(fragment, Id.content, tag.some))
   }
 
   def contentLoaded(view: Ui[View]): ViewTransition = {

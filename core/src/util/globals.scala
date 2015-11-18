@@ -31,15 +31,9 @@ trait Types
   type AnyUi = macroid.Ui[_]
 }
 
-trait Basic
-{
-  def GPlus: tryp.droid.GPlusBase = tryp.droid.Classes.plus
-}
-
 trait GlobalsBase
 extends slick.sync.meta.GlobalsBase
 with Util
-with Basic
 with Types
 
 trait Implicits
@@ -51,7 +45,6 @@ with droid.ToTaskOps
 trait Globals
 extends tryp.slick.sync.meta.Globals
 with Util
-with Basic
 with Forward
 with Types
 with Implicits

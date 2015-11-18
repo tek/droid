@@ -8,10 +8,13 @@ import org.log4s.Logger
 object TaskOps
 {
   def infraResult[A](desc: String)(res: \/[Throwable, A])
-  (implicit log: Logger) = {
+  (implicit log: Logger): Maybe[A] = {
     res match {
-      case -\/(e) ⇒ log.error(s"failed to $desc: $e")
-      case _ ⇒
+      case -\/(e) ⇒
+        log.error(s"failed to $desc: $e")
+        Maybe.empty[A]
+      case a ⇒
+        a.toMaybe
     }
   }
 }

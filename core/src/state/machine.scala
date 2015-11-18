@@ -3,14 +3,13 @@ package droid
 
 import concurrent.duration._
 
-import scalaz._, Scalaz._
-import concurrent.{Task, Actor}
-import stream._
+import scalaz._, Scalaz._, concurrent._, stream._
+import async.mutable.Signal
 import Process._
 
 import shapeless.syntax.std.tuple._
 
-object ViewState
+object State
 {
   trait BasicState
   case object Pristine extends BasicState
@@ -20,6 +19,7 @@ object ViewState
   trait Message
   {
     def toResult = this.successNel[Message]
+    def toFail = this.failureNel[Message]
   }
 
   case class Create(args: Map[String, String], state: Option[Bundle])
@@ -78,8 +78,12 @@ object ViewState
     lazy val message = s"successful effect: $description"
   }
 
+  def stateEffectTask(description: String)(effect: Task[Unit]) = {
+    effect map(_ ⇒ EffectSuccessful(description).success)
+  }
+
   def stateEffect(description: String)(effect: ⇒ Unit) = {
-    Task(effect) map(_ ⇒ EffectSuccessful(description).success)
+    stateEffectTask(description)(Task(effect))
   }
 
   trait MessageInstances
@@ -121,7 +125,7 @@ object ViewState
 
   type Broadcaster = Actor[NonEmptyList[Message]]
 }
-import ViewState._
+import State._
 import Message._
 
 trait ToMessage[A]
@@ -216,6 +220,13 @@ extends Logging
     }
   }
 
+  implicit def liftOptionTask(t: Task[Option[Result]]): AppEffect = {
+    t map {
+      case Some(e) ⇒ e
+      case None ⇒ LogVerbose("task returned None")
+    }
+  }
+
   implicit def liftResult(r: Result): AppEffect = Task.now(r)
 
   implicit def liftMessage[A <: Message](m: A): Result =
@@ -301,6 +312,7 @@ object Zthulhu
     def <<(e: Option[AppEffect]) = (f, Nil) << e
     def <<[A: ToAppEffect](e: A) = (f, Nil) << e
     def <<[A: ToAppEffect](e: Option[A]) = (f, Nil) << e
+    def <<[A: ToAppEffect](e: List[A]) = (f, Nil) << e
   }
 
   implicit class ViewTransitionResultOps(r: ViewTransitionResult)
@@ -310,8 +322,8 @@ object Zthulhu
     def <<[A: ToAppEffect](e: A): ViewTransitionResult = {
       r << (e: AppEffect)
     }
-    def <<[A: ToAppEffect](e: Option[A]): ViewTransitionResult = {
-      r << (e map(a ⇒ (a: AppEffect)))
+    def <<[A: ToAppEffect, B[_]: Foldable](e: B[A]): ViewTransitionResult = {
+      (e foldLeft r) { case (z, a) ⇒ z << (a: AppEffect) }
     }
   }
 
@@ -329,7 +341,7 @@ with Logging
 {
   val S = Zthulhu
 
-  val transitions: ViewTransitions
+  def transitions: ViewTransitions
 
   private[this] val messages = async.unboundedQueue[Message]
 
@@ -338,6 +350,8 @@ with Logging
   private[this] val quit = async.signalOf(false)
 
   private[this] val term = async.signalOf(false)
+
+  val current = async.signalUnset[Zthulhu]
 
   private[this] val idle: Process[Task, Boolean] =
     messages.size.continuous map(_ == 0)
@@ -373,12 +387,15 @@ with Logging
     case m: Message ⇒ transitions
   }
 
+  def signalSetter[A] = process1.lift[A, Signal.Set[A]](Signal.Set(_))
+
   private[this] lazy val fsmProc: Process[Task, Zthulhu] = {
     running.set(true).infraRun("set sig running")
     term.discrete
       .merge(idle.when(quit.discrete))
       .wye(messages.dequeue)(wye.interrupt)
       .viewFsm(transitionsSelection, unsafePerformIO)
+      .observe(current.sink.pipeIn(signalSetter[Zthulhu]))
   }
 
   private[this] lazy val fsmTask = fsmProc.runLog
@@ -443,10 +460,30 @@ with Logging
   }
 }
 
-abstract class DroidState
-(implicit val ec: EC, db: tryp.slick.DbInfo, val ctx: AndroidUiContext,
-  broadcast: Broadcaster)
+trait DroidStateBase[A <: AndroidUiContext]
 extends StateImpl
 {
+  implicit def ctx: A
+  implicit def broadcast: Broadcaster
+
   override def dispatchResults(msgs: NonEmptyList[Message]) = broadcast ! msgs
 }
+
+abstract class DroidState[A <: AndroidUiContext]
+(implicit val ctx: A, val broadcast: Broadcaster)
+extends DroidStateBase[A]
+
+trait SimpleDroidState
+extends DroidState[AndroidUiContext]
+
+abstract class DroidStateEC(implicit val ec: EC, ctx: AndroidUiContext,
+  broadcast: Broadcaster)
+extends SimpleDroidState
+
+trait ActivityDroidState
+extends DroidState[AndroidActivityUiContext]
+
+abstract class DroidDBState
+(implicit ec: EC, db: tryp.slick.DbInfo, ctx: AndroidActivityUiContext,
+  broadcast: Broadcaster)
+extends DroidStateEC

@@ -1,162 +1,80 @@
 package tryp.droid
 
-import scalaz.{Plus ⇒ _, _}, Scalaz._, concurrent._
+import scalaz.{Plus ⇒ _, _}, Scalaz._, concurrent._, stream._
 
-import java.net.URL
+import com.google.android.gms
+import gms.common.ConnectionResult
+import gms.common.{api ⇒ gapi}
+import gms.plus
+import gapi.GoogleApiClient
 
-import android.graphics.drawable.Drawable
+import State._
 
-import com.google.android.gms.common._
-import com.google.android.gms.plus._
-import com.google.android.gms.auth._
-
-trait GPlus
-extends PlayServices
+object PlusInterface
 {
-  def api = Plus.API
-
-  override def builder = super.builder.addScope(Plus.SCOPE_PLUS_LOGIN)
-
-  def person = Option(Plus.PeopleApi.getCurrentPerson(apiClient))
-
-  def photo = person flatMap { p ⇒ Option(p.getImage) }
-
-  def cover = person flatMap { p ⇒ Option(p.getCover) } flatMap
-    { c ⇒ Option(c.getCoverPhoto) }
-
-  def email = Option(Plus.AccountApi.getAccountName(apiClient))
-
-  def name = person map(_.getName) map
-    { n ⇒ s"${n.getGivenName} ${n.getFamilyName}" }
+  case object SignOut
+  extends Message
 }
+import PlusInterface._
+import PlayServices._
 
-case class GPlusTask(callback: GPlusTask ⇒ Unit)
-(implicit val context: Context)
-extends GPlus
+class PlusInterface(implicit val ctx: StartActivity,
+  val broadcast: Broadcaster)
+extends PlayServices[StartActivity]
 {
-  override def apiConnected(data: Bundle) {
-    callback(this)
+  def subHandle = "plus"
+
+  def api = plus.Plus.API
+
+  override def transitions = plusTransitions orElse basicTransitions
+
+  val plusTransitions: ViewTransitions = {
+    case ConnectionFailed(result) ⇒ failed(result)
+    case SignOut ⇒ signOut
   }
-}
 
-class GPlusSignOut(implicit val context: Context)
-extends GPlus
-{
-  override def apiConnected(data: Bundle) {
-    Plus.AccountApi.clearDefaultAccount(apiClient)
-  }
-}
-
-class GPlusSignIn(callback: GPlusTask ⇒ Unit)(implicit val act: Activity)
-extends GPlusTask(callback)
-{
-  override def apiConnectionFailed(connectionResult: ConnectionResult) {
-    connectionResult.startResolutionForResult(act, GPlusBase.RC_SIGN_IN)
-  }
-}
-
-class GPlusBase
-extends ResourcesAccess
-{
-  case class Account(plus: GPlus)(implicit val context: Context)
-  extends Basic
-  {
-    def photoUrl = plus.photo map { c ⇒ new URL(c.getUrl) }
-
-    def coverUrl = plus.cover map { c ⇒ new URL(c.getUrl) }
-
-    def drawable(url: Option[URL], callback: Drawable ⇒ Unit) {
-      url foreach { u ⇒
-        thread {
-          val stream = u.openConnection().getInputStream()
-          callback(Drawable.createFromStream(stream, ""))
-        }
+  def failed(result: ConnectionResult): ViewTransition = {
+    case s ⇒
+      s << stateEffect("start plus sign-in activity") {
+        ctx.resolveResult(result, Plus.RC_SIGN_IN)
       }
-    }
-
-    def withPhoto(callback: Drawable ⇒ Unit) {
-      drawable(photoUrl, callback)
-    }
-
-    def withCover(callback: Drawable ⇒ Unit) {
-      drawable(coverUrl, callback)
-    }
-
-    def name = plus.name
-
-    def email = plus.email
   }
 
-  type PlusCallback[A] = Account ⇒ \/[String, A]
-  type PlusJob = GPlus ⇒ Unit
-
-  val scheduled: Buffer[PlusJob] = Buffer()
-
-  val signedIn = rx.Var(false)
-
-  var signInTask: Option[GPlusSignIn] = None
-
-  def signIn()(implicit act: Activity) {
-    if (signInTask.isEmpty) {
-      signInImpl()
-    }
+  def signOut: ViewTransition = {
+    case s ⇒
+      s << stateEffect("sign out of gplus") {
+        apiClient foreach(plus.Plus.AccountApi.clearDefaultAccount)
+    } << Disconnect
   }
 
-  private def signInImpl()(implicit act: Activity) {
-    Try {
-      signInTask = Some(new GPlusSignIn(t ⇒ signInComplete(true)))
-      signInTask foreach { _.send(PlayServices.Connect) }
-    } recover {
-      case e if TrypEnv.debug ⇒ throw e
-    }
+  def account = client map(new PlusAccount(_))
+
+  def oneAccount = {
+    send(Connect)
+    account |> Process.await1
   }
 
-  def signOut()(implicit c: Context) {
-    Try {
-      (new GPlusSignOut).send(PlayServices.Connect)
-    } recover {
-      case e if TrypEnv.debug ⇒ throw e
-    }
-  }
+  override def builder =
+    super.builder map(_.addScope(plus.Plus.SCOPE_PLUS_LOGIN))
 
-  def signInComplete(success: Boolean)(implicit c: Context) {
-    signedIn() = success
-    signInTask = None
-    if (success) {
-      scheduled foreach(withAccount)
-      scheduled.clear()
-    }
-  }
-
-  // TODO use Process, signal instead of promise
-  // state machine that accumulates Process instances for jobs, until plus is
-  // logged in, then set signal to fire processes
-  def apply[A](callback: PlusCallback[A])(implicit a: Activity) = {
-    val promise = Promise[\/[String, A]]()
-    val job: PlusJob = { plus ⇒
-      Task { callback(new Account(plus)) } runAsync {
-        case -\/(err) ⇒ promise.failure(err)
-        case \/-(res) ⇒ promise.success(res)
-      }
-    }
-    if (signedIn()) {
-      withAccount(job)
-    }
-    else {
-      scheduled += job
-      signIn()
-    }
-    promise
-  }
-
-  def withAccount(job: PlusJob)(implicit c: Context) {
-    GPlusTask(job).send(PlayServices.Connect)
-  }
 }
 
-object GPlusBase
-extends GPlusBase
+object Plus
 {
   val RC_SIGN_IN = 1
   val RC_TOKEN_FETCH = 2
+}
+
+trait HasPlus
+extends TrypActivity
+{
+  implicit lazy val plus = new PlusInterface {}
+}
+
+trait PlusInterfaceAccess
+extends ActivityAccess
+with StatefulHasActivity
+{
+  implicit lazy val plus =
+    activitySub[HasPlus] some(_.plus) none(new PlusInterface {})
 }

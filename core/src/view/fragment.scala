@@ -13,7 +13,7 @@ import macroid.FullDsl._
 
 import util.OS
 import tweaks.Recycler._
-import ViewState._
+import State._
 
 trait FragmentBase
 extends Fragment

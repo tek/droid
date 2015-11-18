@@ -115,10 +115,13 @@ extends LocationsConcern
   }
 }
 
-class LocationInterface(implicit val context: Context)
-extends PlayServices
-{
-  def api = LocationServices.API
+import State._
 
-  init()
+class LocationInterface(implicit val ctx: WithContext,
+  val broadcast: Broadcaster)
+extends PlayServices[WithContext]
+{
+  def subHandle = "location"
+
+  def api = LocationServices.API
 }

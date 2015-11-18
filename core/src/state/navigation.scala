@@ -1,7 +1,7 @@
 package tryp
 package droid
 
-import ViewState._
+import State._
 
 object NavMessages
 {
@@ -26,7 +26,7 @@ object NavMessages
 import NavMessages._
 
 trait NavImpl
-extends StateImpl
+extends SimpleDroidState
 {
   override def description = "nav state"
 
@@ -77,6 +77,6 @@ extends StateImpl
   }
 
   def loadTarget(t: NavigationTarget): ViewTransition = {
-    case s ⇒ s << MainViewMessages.LoadFragment(t.fragment)
+    case s ⇒ s << MainViewMessages.LoadFragment(t.fragment, t.title)
   }
 }

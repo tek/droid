@@ -1,5 +1,7 @@
 package tryp.droid
 
+import scalaz._, Scalaz._
+
 import macroid.{FragmentManagerContext, ContextWrapper, CanTweak}
 import macroid.FullDsl._
 
@@ -22,6 +24,14 @@ trait MacroidExt
     new CanTweak[W, Option[T], W] {
       def tweak(w: W, o: Option[T]) = Ui {
         o foreach { _(w) }
+        w
+      }
+    }
+
+  implicit def `Widget is tweakable with Maybe`[W <: View, T <: Tweak[W]] =
+    new CanTweak[W, Maybe[T], W] {
+      def tweak(w: W, m: Maybe[T]) = Ui {
+        m map(_(w))
         w
       }
     }

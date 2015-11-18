@@ -1,6 +1,6 @@
 package tryp.droid.tweaks
 
-import scala.concurrent.ExecutionContext
+import scalaz._, Scalaz._
 
 import macroid._
 
@@ -14,7 +14,9 @@ case class Slot[A <: View](var target: Option[A] = None)
 
   def <~(t: Option[Tweak[A]]) = target <~ t
 
-  def <~~(s: Snail[A])(implicit ec: ExecutionContext) = target <~~ s
+  def <~(t: Maybe[Tweak[A]]) = target <~ t.toOption
+
+  def <~~(s: Snail[A])(implicit ec: EC) = target <~~ s
 
   def foreach(f: A ⇒ Unit) {
     target foreach f
