@@ -28,6 +28,8 @@ import akka.actor.ActorSelection
 
 import com.melnykov.fab.FloatingActionButton
 
+import org.log4s.Logger
+
 import tryp.droid.{Resources,_}
 import tryp.droid.view.{TrypTextView,DividerItemDecoration,ParallaxHeader}
 import tryp.droid.Messages
@@ -194,9 +196,14 @@ with ResourcesAccess
 
   def parallaxScroll(y: Int) = Tweak[ParallaxHeader] { _.set(y) }
 
-  def longPress(dispatch: ⇒ Unit)(implicit a: Activity) = {
+  def longPress(dispatch: ⇒ Future[Any])
+  (implicit a: Activity, log: Logger, ec: EC) = {
     val gl = new GestureDetector.SimpleOnGestureListener {
-      override def onLongPress(e: MotionEvent) { dispatch }
+      override def onLongPress(e: MotionEvent) {
+        dispatch onFailure { case t ⇒
+          log.error(t)("longPress")
+        }
+      }
     }
     val g = new GestureDetector(a, gl)
     FuncOn.touch { (v: View, e: MotionEvent) ⇒ Ui(g.onTouchEvent(e)) }
