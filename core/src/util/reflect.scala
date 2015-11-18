@@ -1,8 +1,6 @@
-package tryp.droid.util
+package tryp.droid
 
-import scala.reflect.ClassTag
-
-// FIXME toss
+// used in loki.integration to access spinner fields
 object Reflect
 {
   implicit class `Any with reflectable fields`(obj: Any) {
