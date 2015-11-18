@@ -8,13 +8,8 @@ case object DrawerOpened
 case class DrawerClosed(callback: () ⇒ Unit)
 case class DrawerNavigated(callback: () ⇒ Unit)
 
-sealed trait State
-case object Open extends State
-case object Navigated extends State
-case object Closed extends State
-
 class DrawerState
-extends LoggingFSM[State, DrawerState.Data]
+extends LoggingFSM[DrawerState.State, DrawerState.Data]
 {
   import DrawerState._
 
@@ -64,6 +59,11 @@ object DrawerState {
   case object NoData extends Data
   case class Navigation(callback: () ⇒ Unit) extends Data
   case class Quit(callback: () ⇒ Unit) extends Data
+
+  sealed trait State
+  case object Open extends State
+  case object Navigated extends State
+  case object Closed extends State
 
   def props = Props(new DrawerState)
 }
