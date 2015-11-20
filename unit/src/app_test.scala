@@ -5,13 +5,15 @@ package test
 import android.support.v7.widget.RecyclerView
 
 import org.robolectric.Robolectric
-import org.robolectric.shadows.ShadowApplication
+import org.robolectric.shadows.ShadowLog
 
 trait TrypUnitSpec[A <: Activity with TrypTestActivity]
 extends TrypSpecExt
 with HasContext
 with TrypDroidSpec
 {
+  ShadowLog.stream = System.out
+
   def activityClass: Class[A]
 
   lazy val activityCtrl = Robolectric.buildActivity(activityClass)
