@@ -76,24 +76,35 @@ extends StateImpl
   }
 }
 
+trait DummyViewState
+extends ViewState
+{
+  def layoutIOT = w[View]
+}
 
 trait StatefulView
 extends Stateful
+with HasContext
 {
+  implicit def uiCtx: AndroidUiContext = AndroidContextUiContext.default
+
   lazy val uiImpl = new UiDispatcher {}
 
-  override def impls = uiImpl :: super.impls
+  implicit def ec: EC
+
+  def viewState: ViewState
+
+  override def impls = uiImpl :: viewState :: super.impls
 }
 
 trait StatefulHasActivity
 extends StatefulView
 with HasActivity
 {
-  implicit def uiCtx: AndroidUiContext = AndroidActivityUiContext.default
+  override implicit def uiCtx: AndroidUiContext =
+    AndroidActivityUiContext.default
 
   override def impls = activityImpl :: super.impls
-
-  implicit def ec: EC
 
   protected lazy val activityImpl = new DroidState
   {
@@ -116,7 +127,7 @@ trait StatefulFragment
 extends StatefulHasActivity
 with CallbackMixin
 {
-  self: TrypFragment ⇒
+  self: FragmentBase ⇒
 
   override implicit def uiCtx = AndroidFragmentUiContext.default(self)
 
@@ -136,6 +147,8 @@ trait StatefulActivity
 extends TrypActivity
 with StatefulHasActivity
 {
+  def viewState: ViewState = new DummyViewState {}
+
   // TODO impl log level
   override def onCreate(saved: Bundle) {
     super.onCreate(saved)

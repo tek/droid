@@ -1,7 +1,9 @@
 package tryp
 package droid
 
-import scalaz._, Scalaz._
+import concurrent.duration._
+
+import scalaz._, Scalaz._, concurrent._, stream._
 
 import argonaut._, Argonaut._
 
@@ -70,7 +72,9 @@ with ResourcesAccess
 trait TrypFragment
 extends Fragment
 with FragmentBase
+with StatefulFragment
 {
+  def viewState: ViewState = new DummyViewState {}
 
   override def onCreateView
   (inflater: LayoutInflater, container: ViewGroup, state: Bundle) = {
@@ -86,12 +90,36 @@ with FragmentBase
   }
 }
 
+trait VSTrypFragment
+extends Fragment
+with FragmentBase
+with StatefulFragment
+with Views
+{
+  def dummyLayout = w[TextView] >>= iota.text("Couldn't load content")
+
+  override def onCreateView
+  (inflater: LayoutInflater, container: ViewGroup, state: Bundle) = {
+    val l = (viewState.layout.discrete |> Process.await1)
+      .runLast
+      .attemptRunFor(10 seconds) match {
+      case \/-(Some(l)) ⇒ l
+      case \/-(None) ⇒
+        log.error("no layout produced by ViewState")
+        dummyLayout
+      case -\/(error) ⇒
+        log.error(s"error creating layout in ViewState: $error")
+        dummyLayout
+      }
+    l.perform()
+  }
+}
+
 case class CannotGoBack()
 extends java.lang.RuntimeException
 
 abstract class MainFragment
 extends TrypFragment
-with StatefulFragment
 with Fab
 with AppPreferences
 {

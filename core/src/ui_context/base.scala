@@ -72,6 +72,14 @@ with Logging
   }
 }
 
+class DefaultAndroidContextUiContext(implicit val context: Context)
+extends AndroidContextUiContext
+
+object AndroidContextUiContext
+{
+  def default(implicit c: Context) = new DefaultAndroidContextUiContext
+}
+
 trait AndroidHasActivityUiContext
 extends AndroidContextUiContext
 with ResourcesAccess
