@@ -72,14 +72,14 @@ object State
     def message = result.show.toString
   }
 
-  case class EffectSuccessful(description: String)
+  case class EffectSuccessful(description: String, result: Any)
   extends Loggable
   {
-    lazy val message = s"successful effect: $description"
+    lazy val message = s"successful effect: $description ($result)"
   }
 
   def stateEffectTask(description: String)(effect: Task[Unit]) = {
-    effect map(_ ⇒ EffectSuccessful(description).success)
+    effect map(EffectSuccessful(description, _).success)
   }
 
   def stateEffect(description: String)(effect: ⇒ Unit) = {
@@ -245,7 +245,9 @@ extends Logging
   implicit final class TaskOps[A](task: Task[A])
   {
     def effect: AppEffect = {
-      task map(r ⇒ liftMessage(EffectSuccessful(r.toString)))
+      task map(r ⇒ liftMessage(
+        EffectSuccessful("implicitly converted task", r.toString)
+      ))
     }
   }
 }
