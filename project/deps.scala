@@ -7,14 +7,14 @@ extends tryp.AndroidDeps
 {
   override def deps = super.deps ++ Map(
     "view" → view,
-    "core" → core,
+    "app" → app,
     "test" → test,
     "unit" → unit,
     "integration" → integration
   )
 
   override def resolvers = super.resolvers ++ Map(
-    "core" → List(Resolver.jcenterRepo)
+    "app" → List(Resolver.jcenterRepo)
   )
 
   def pulsar(pro: String) = {
@@ -25,7 +25,7 @@ extends tryp.AndroidDeps
     "com.hanhuy.android" %% "iota" % "+"
   )
 
-  def core = ids(
+  def app = ids(
     pulsar("slick"),
     "com.github.tony19" % "logback-android-core" % "+" exclude(
       "com.google.android", "android"),
