@@ -6,6 +6,7 @@ object DroidDeps
 extends tryp.AndroidDeps
 {
   override def deps = super.deps ++ Map(
+    "view" → view,
     "core" → core,
     "test" → test,
     "unit" → unit,
@@ -20,6 +21,10 @@ extends tryp.AndroidDeps
     dd("tryp" %% s"pulsar-$pro" % "+", "tek/pulsar", pro)
   }
 
+  def view = ids(
+    "com.hanhuy.android" %% "iota" % "+"
+  )
+
   def core = ids(
     pulsar("slick"),
     "com.github.tony19" % "logback-android-core" % "+" exclude(
@@ -33,7 +38,8 @@ extends tryp.AndroidDeps
     "com.google.android.gms" % "play-services-maps" % "+",
     "com.google.android.gms" % "play-services-location" % "+",
     "com.google.android.gms" % "play-services-plus" % "+",
-    ad(aar("org.macroid" %% "macroid" % "2.0.0-M4"), "macroid/macroid", "core").no,
+    ad(aar("org.macroid" %% "macroid" % "2.0.0-M4"), "macroid/macroid",
+      "core").no,
     "com.typesafe.akka" %% "akka-actor" % "2.3.+",
     "com.scalarx" %% "scalarx" % "+",
     "com.github.andkulikov" % "transitions-everywhere" % "+",

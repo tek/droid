@@ -7,9 +7,12 @@ extends tryp.AndroidBuild(deps = DroidDeps)
 {
   override val title = Some("droid")
 
+  lazy val view = aar("view")
+    .settingsV(description := "iota wrappers")
+
   lazy val core = aar("core")
-    .settingsV(description := "Common tryp stuff")
-    .transitive
+    .settingsV(description := "android commons")
+    .transitive <<< view
 
   lazy val test = aar("test") <<< core
 
