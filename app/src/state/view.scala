@@ -1,12 +1,12 @@
 package tryp
 package droid
 
+import view._
+
 import concurrent.duration._
 
 import scalaz._, Scalaz._, concurrent._, stream._
 import concurrent.Task
-
-import iota._
 
 import State._
 
@@ -33,7 +33,7 @@ object ViewState
 abstract class ViewState(implicit ec: EC, ctx: AndroidUiContext,
   broadcast: Broadcaster, val res: Resources)
 extends DroidStateEC
-with Views
+with ExtViews
 with TextCombinators
 {
   import ViewState._

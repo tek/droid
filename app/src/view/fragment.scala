@@ -1,6 +1,8 @@
 package tryp
 package droid
 
+import view._
+
 import concurrent.duration._
 
 import scalaz._, Scalaz._, concurrent._, stream._

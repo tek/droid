@@ -6,6 +6,7 @@ object DroidDeps
 extends tryp.AndroidDeps
 {
   override def deps = super.deps ++ Map(
+    "core" → core,
     "view" → view,
     "app" → app,
     "test" → test,
@@ -20,6 +21,10 @@ extends tryp.AndroidDeps
   def pulsar(pro: String) = {
     dd("tryp" %% s"pulsar-$pro" % "+", "tek/pulsar", pro)
   }
+
+  def core = ids(
+    pulsar("macros")
+  )
 
   def view = ids(
     "com.hanhuy.android" %% "iota" % "+"

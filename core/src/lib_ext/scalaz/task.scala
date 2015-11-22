@@ -1,7 +1,7 @@
 package tryp
 package droid
 
-import scalaz._, Scalaz._, concurrent._
+import scalaz.concurrent.Task
 
 import org.log4s.Logger
 
@@ -23,6 +23,10 @@ final class TaskOps[A](task: Task[A])
 {
   def infraRun(desc: String)(implicit log: Logger) = {
      TaskOps.infraResult(desc)(task.attemptRun)
+  }
+
+  def infraRunAsync(desc: String)(implicit log: Logger) = {
+    task.runAsync(TaskOps.infraResult[A](desc) _)
   }
 }
 
