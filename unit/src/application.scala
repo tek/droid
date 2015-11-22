@@ -1,17 +1,11 @@
 package tryp
 package droid
-package unit
+package test
 
-import slick.TestFileDbInfo
-
-trait UnitTestApplication
-{ self: Application ⇒
-
-  override def setupEnv() = {
-    setEnv(tryp.meta.UnitTestEnv)
-  }
-
-  override def setupDbInfo(name: String) = {
-    DbMeta.setDbInfo(TestFileDbInfo(name))
-  }
+class Application
+extends android.app.Application
+with droid.Application
+with unit.UnitTestApplication
+{
+  def name = "tryp"
 }

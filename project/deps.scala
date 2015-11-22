@@ -1,3 +1,5 @@
+package tryp
+
 import sbt._
 import sbt.Keys._
 import android.Keys._
@@ -10,6 +12,7 @@ extends tryp.AndroidDeps
     "view" → view,
     "app" → app,
     "test" → test,
+    "unit-core" → unitCore,
     "unit" → unit,
     "integration" → integration
   )
@@ -58,9 +61,11 @@ extends tryp.AndroidDeps
     pulsar("slick")
   )
 
-  override def unit = super.unit ++ ids(
+  def unitCore = super.unit ++ ids(
     pulsar("unit-slick")
   )
+
+  override def unit = ids()
 
   override def integration = super.integration ++ ids(
     "org.scalatest" %% "scalatest" % "2.2.+",

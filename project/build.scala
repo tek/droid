@@ -1,27 +1,39 @@
+package tryp
+
 import sbt._
 import sbt.Keys._
 import android.Keys._
+import TrypAndroid.autoImport._
 
 object DroidBuild
-extends tryp.AndroidBuild(deps = DroidDeps)
+extends tryp.AarsBuild("droid", deps = DroidDeps)
 {
-  override val title = Some("droid")
+  lazy val core = "core" / "android basics"
 
-  lazy val core = aar("core")
-    .settingsV(description := "android basics")
+  lazy val view = "view" / "iota wrappers" <<< core
 
-  lazy val view = aar("view")
-    .settingsV(description := "iota wrappers") << core
+  lazy val app = "app".transitive / "android commons" <<< view
 
-  lazy val app = aar("app")
-    .settingsV(description := "android commons")
-    .transitive <<< view
+  lazy val test = "test" <<< app
 
-  lazy val test = aar("test") <<< app
+  lazy val unitCore = "unit-core" <<< test
 
-  lazy val unit = aar("unit") <<< test
+  lazy val unit = ("unit" <<< unitCore)
+    .robotest
+    .manifest(
+      "appName" → "tryp",
+      "minSdk" → "21",
+      "targetSdk" → "21",
+      "versionCode" → "1",
+      "extra" → "",
+      "activityClass" → ".SpecActivity"
+    )
+    .settingsV(
+      manifestTokens += ("package" → androidPackage.value),
+      aarModule := "test"
+    )
 
-  lazy val debug = aar("debug") <<< app
+  lazy val debug = "debug" <<< app
 
-  lazy val integration = aar("integration") <<< test
+  lazy val integration = "integration" <<< test
 }
