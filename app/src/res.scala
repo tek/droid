@@ -1,5 +1,7 @@
 package tryp.droid
 
+import scalaz._, Scalaz._
+
 import android.content.res.{Resources ⇒ AResources}
 
 case class InvalidResource(msg: String)
@@ -23,10 +25,23 @@ with AppPreferences
       case name: String ⇒ resources
         .getIdentifier(name, defType, context.getPackageName)
     }
-    res.tapIfEquals(0) { i ⇒
-      throw InvalidResource(
-        s"Resource ${defType} '${input}' resolved to zero!")
+    idO(input, defType) | {
+      throw InvalidResource(s"$defType: '$input'")
     }
+  }
+
+  def idO[A >: IdTypes](input: A, defType: String = "id"): Option[Int] = {
+    val res = input match {
+      case i: Int ⇒ i
+      case i: Id ⇒ i.value
+      case name: String ⇒ resources
+        .getIdentifier(name, defType, context.getPackageName)
+    }
+    if (res == 0) {
+      Log.w(s"Resource $defType '$input' resolved to zero!")
+      none[Int]
+    }
+    else res.some
   }
 
   def integer[A >: IdTypes](_id: A) = res(_id, "integer") { _.getInteger _ }
@@ -87,6 +102,18 @@ with AppPreferences
   def stringId(name: String): Int = id(name, "string")
 
   def attrId(name: String) = id(name, "attr")
+
+  def xmlIdO(name: String) = idO(name, "xml")
+
+  def layoutIdO(name: String) = idO(name, "layout")
+
+  def themeIdO(name: String) = idO(name, "style")
+
+  def drawableIdO(name: String) = idO(name, "drawable")
+
+  def stringIdO(name: String) = idO(name, "string")
+
+  def attrIdO(name: String) = idO(name, "attr")
 
   def resourceName(_id: Int) = resources.getResourceName(_id)
 

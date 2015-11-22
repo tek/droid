@@ -13,7 +13,7 @@ with Preferences
   with FragmentManagement ⇒
 
   abstract override def onCreate(state: Bundle) {
-    setupPreferences
+    setupPreferences()
     super.onCreate(state)
   }
 
@@ -37,13 +37,13 @@ with Preferences
     value
   }
 
-  abstract override def onResume {
-    super.onResume
+  abstract override def onResume() = {
+    super.onResume()
     prefs.registerListener(this)
   }
 
-  abstract override def onPause {
-    super.onPause
+  abstract override def onPause() = {
+    super.onPause()
     prefs.unregisterListener(this)
   }
 
@@ -51,9 +51,10 @@ with Preferences
     loadFragment(Classes.fragments.settings())
   }
 
-  def setupPreferences {
-    PreferenceManager.setDefaultValues(activity, res.xmlId("user_preferences"),
-      false)
+  def setupPreferences() = {
+    res.xmlIdO("user_preferences") foreach { id ⇒
+      PreferenceManager.setDefaultValues(activity, id, false)
+    }
   }
 
   def changePref(key: String, value: Any) {
