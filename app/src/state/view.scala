@@ -31,7 +31,7 @@ object ViewState
 //   that contains a reference to the view root for insertion
 
 abstract class ViewState(implicit ec: EC, ctx: AndroidUiContext,
-  broadcast: Broadcaster, val res: Resources)
+  mt: MessageTopic, val res: Resources)
 extends DroidStateEC
 with ExtViews
 with TextCombinators
@@ -42,7 +42,7 @@ with TextCombinators
 
   def handle = "view"
 
-  val transitions: ViewTransitions = {
+  def transitions: ViewTransitions = {
     case Create(_, _) ⇒ create
     case SetLayout ⇒ setLayout
   }

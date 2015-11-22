@@ -10,7 +10,7 @@ import UiActionTypes._
 
 abstract class ShowStateImpl[A <: Model: DecodeJson]
 (implicit ec: EC, db: tryp.slick.DbInfo, ctx: AndroidUiContext,
-  broadcast: Broadcaster)
+  mt: MessageTopic)
 extends DroidState
 {
   case class Model(model: A)

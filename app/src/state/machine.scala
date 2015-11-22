@@ -3,9 +3,8 @@ package droid
 
 import concurrent.duration._
 
-import scalaz._, Scalaz._, concurrent._, stream._
+import scalaz.{Writer ⇒ _, _}, Scalaz._, concurrent._, stream._, Process._
 import async.mutable.Signal
-import Process._
 
 import shapeless.syntax.std.tuple._
 
@@ -18,7 +17,6 @@ object State
 
   trait Message
   {
-    def toResult = this.successNel[Message]
     def toFail = this.failureNel[Message]
   }
 
@@ -79,7 +77,7 @@ object State
   }
 
   def stateEffectTask(description: String)(effect: Task[Unit]) = {
-    effect map(EffectSuccessful(description, _).success)
+    Process.eval(effect map(EffectSuccessful(description, _).success))
   }
 
   def stateEffect(description: String)(effect: ⇒ Unit) = {
@@ -106,24 +104,20 @@ object State
   trait Data
   case object NoData extends Data
 
-  // TODO type class Operation that converts to Task[Result]
   type Result = ValidationNel[Message, Message]
-  type AppEffect = Task[Result]
+  type AppEffect = Process[Task, Result]
 
-  type ViewTransitionResult = (Zthulhu, List[AppEffect])
+  type ViewTransitionResult = (Zthulhu, AppEffect)
 
   type ViewTransition = PartialFunction[Zthulhu, ViewTransitionResult]
 
   type ViewTransitions = PartialFunction[Message, ViewTransition]
 
-  type TransitionsSelection =
-    Message ⇒ PartialFunction[Message, ViewTransition]
+  type TransitionsSelection = Message ⇒ ViewTransitions
 
-  type ViewEffects[A[_]] = List[AppEffect] ⇒ A[Unit]
+  val Nop = emit(NopMessage.successNel)
 
-  val Nop = Task.now(NopMessage.successNel)
-
-  type Broadcaster = Actor[NonEmptyList[Message]]
+  def signalSetter[A] = process1.lift[A, Signal.Set[A]](Signal.Set(_))
 }
 import State._
 import Message._
@@ -177,41 +171,99 @@ object ToMessageSyntax
 }
 import ToMessageSyntax._
 
+trait Operation[A]
+{
+  def result(a: A): Result
+}
+
+final class OperationSyntax[A](a: A)(implicit op: Operation[A])
+{
+  def toResult = op.result(a)
+}
+
+trait ToOperationSyntax
+{
+  implicit def ToOperationSyntax[A: Operation](a: A) = new OperationSyntax(a)
+}
+
+trait OperationInstances0
+extends ToOperationSyntax
+{
+  implicit lazy val messageOperation = new Operation[Message] {
+    def result(m: Message) = m.successNel[Message]
+  }
+
+  implicit def anyOperation[A] = new Operation[A] {
+    def result(a: A) = a.toMessage.toResult
+  }
+}
+
+trait OperationInstances
+extends OperationInstances0
+{
+  implicit def validationNelOperation[E: ToMessage, A: ToMessage] =
+    new Operation[ValidationNel[E, A]] {
+      def result(v: ValidationNel[E, A]): Result = {
+        v.bimap(_.map(e ⇒ e.toErrorMessage), _.toMessage)
+      }
+    }
+}
+
+object Operation
+extends OperationInstances
+
+trait ToProcess[F[_]]
+{
+  def proc[A](fa: F[A]): Process[Task, A]
+}
+
+object ToProcess
+{
+  implicit def anyActionToProcess(implicit ec: EC, dbi: DbInfo) =
+    new ToProcess[AnyAction] {
+      def proc[A](aa: AnyAction[A]) = aa.proc
+    }
+}
+
+trait ToProcessSyntax
+{
+  implicit class ToToProcess[A, F[_]](fa: F[A])(implicit tp: ToProcess[F])
+  {
+    def proc = tp.proc(fa)
+  }
+}
+
 // TODO add UiAction implicits
 trait ViewStateImplicits
 extends Logging
+with ToOperationSyntax
+with ToProcessSyntax
 {
-  implicit def validationNelToResult[E: ToMessage, A: ToMessage]
-  (v: ValidationNel[A, E]): Result = {
-    v.bimap(_.map(e ⇒ e.toErrorMessage), _.toMessage)
+  implicit def liftTask[A: Operation](t: Task[A]): AppEffect =
+    Process.eval(t map(_.toResult))
+
+  implicit def functorToAppEffect[A: Operation, F[_]: Functor: ToProcess]
+  (fa: F[A]) = {
+    new ToToProcess(fa map(_.toResult)) proc
   }
 
   // implicit conversions to Task[Result]
   // from Ui, DBIOAction, Message
-  implicit def uiToTask(ui: Ui[Result]): Task[Result] =
-    Task(UiTask(ui))
+  implicit def uiToTask(ui: Ui[Result]): AppEffect =
+    Process(UiTask(ui))
 
   // TODO really block the machine while the Ui is running?
   implicit def anyUiToTask[A: ToMessage](ui: Ui[A])
-  (implicit ec: EC): Task[Result] =
+  (implicit ec: EC): AppEffect = {
     uiToTask(ui map(_.toMessage))
+  }
 
   implicit def snailToTask[A](ui: Ui[ScalaFuture[A]])
-  (implicit ec: EC): Task[Result] =
+  (implicit ec: EC): AppEffect =
     Task {
       ui.run
       ForkedResult("Snail").toResult
     }
-
-  implicit def actionToTask(action: AnyAction[Result])
-  (implicit dbi: DbInfo, ec: EC): Task[Result] = action.task
-
-  implicit def anyActionToTask[E: ToMessage, A: ToMessage]
-  (action: AnyAction[ValidationNel[E, A]])
-  (implicit dbi: DbInfo, ec: EC): Task[Result] = {
-    action.map(a ⇒ a: Result)
-      .task
-  }
 
   implicit def tryToTask[A: ToMessage](t: Try[A]): AppEffect = {
     t match {
@@ -227,19 +279,13 @@ extends Logging
     }
   }
 
-  implicit def liftResult(r: Result): AppEffect = Task.now(r)
+  implicit def liftResult(r: Result): AppEffect = Process(r)
 
   implicit def liftMessage[A <: Message](m: A): Result =
     m.successNel[Message]
 
   implicit def messageToAppEffect[A <: Message](m: A): AppEffect = {
     (m: Result): AppEffect
-  }
-
-  implicit class ViewProcessOps[+O](proc: Process[Task, O])
-  {
-    // TODO don't log in production?
-    def !! = proc.runLog.run
   }
 
   implicit final class TaskOps[A](task: Task[A])
@@ -249,6 +295,13 @@ extends Logging
         EffectSuccessful("implicitly converted task", r.toString)
       ))
     }
+  }
+
+  type ToAppEffect[A] = A ⇒ AppEffect
+
+  implicit def foldableToAppEffect[A: ToAppEffect, F[_]: Foldable]
+  (fa: F[A]) = (fa foldLeft(halt: AppEffect)) {
+    case (z, a) ⇒ z ++ (a: AppEffect)
   }
 }
 
@@ -262,10 +315,10 @@ case class Zthulhu(state: BasicState = Pristine, data: Data = NoData)
 object Zthulhu
 {
   /* @param z current state machine
-   * @param f A ⇒ B ⇒ (B, C), transforms a message into a state transition
+   * @param f A ⇒ B ⇒ (B, E), transforms a message into a state transition
    * function.
    * the state of type B is transitioned into a new state of type B and a
-   * set of effects that has type C.
+   * Process of effects that have type E.
    * first, receive one item of type A representing a Message
    * if f is defined at that item and the transition function is defined for
    * the current state z, the result of that transition is calculated
@@ -275,68 +328,72 @@ object Zthulhu
    * in any case, the new or old state is used to recurse
    *
    */
-  def scanSplitW[A, B, C]
-  (z: B)
-  (f: A ⇒ PartialFunction[A, PartialFunction[B, (B, C)]])
-  (error: (B, A, Throwable) ⇒ Maybe[C])
-  : stream.Writer1[C, A, B] = {
-    receive1 { (a: A) ⇒
+  def scanSplitW[Z, E, M, F[_]](z: Z)
+  (f: M ⇒ PartialFunction[M, PartialFunction[Z, (Z, Process[F, E])]])
+  (transError: (Z, M, Throwable) ⇒ E)
+  (effectError: (Z, Z, M, Throwable) ⇒ E)
+  : stream.Writer1[Process[F, E], M, Z] = {
+    receive1 { (a: M) ⇒
       val (effect, newState) = Try(f(a) lift(a) flatMap(_.lift(z))) match {
-        case Success(Some((newState, effect))) ⇒ effect.just → newState.just
-        case Success(None) ⇒ Empty[C]() → Empty[B]()
-        case Failure(t) ⇒ error(z, a, t) → Empty[B]()
+        case Success(Some((newState, effect))) ⇒ effect → newState.just
+        case Success(None) ⇒ halt → Empty[Z]()
+        case Failure(t) ⇒ emit(transError(z, a, t)) → Empty[Z]()
       }
-      val o = newState.map(Process.emitO) | Process.halt
-      val w = effect.map(Process.emitW) | Process.halt
-      o ++ w ++ scanSplitW(newState | z)(f)(error)
+      val nextState = newState | z
+      (newState.map(emitO) | halt) ++ emitW(
+        effect.onFailure(t ⇒ Process(effectError(z, nextState, a, t)))
+      ) ++ scanSplitW(nextState)(f)(transError)(effectError)
     }
   }
 
-  def fatalTransition(state: Zthulhu, cause: Message, t: Throwable)
-  : Maybe[List[AppEffect]] = {
-    List(LogFatal(s"transitioning $state for $cause", t): AppEffect).just
+  def fatalTransition(state: Zthulhu, cause: Message, t: Throwable) = {
+    LogFatal(s"transitioning $state for $cause", t).toFail
   }
 
-  implicit class ProcessToZthulhu[A[_]](source: Process[A, Message])
-  {
-    def viewFsm(transition: TransitionsSelection, effect: ViewEffects[A]) = {
-      (source |> scanSplitW(Zthulhu())(transition)(fatalTransition))
-        .observeW(sink.lift(effect))
-        .stripW
-    }
+  def fatalEffect(state: Zthulhu, nextState: Zthulhu, cause: Message,
+    t: Throwable) = {
+    LogFatal(s"during io: $state ⇒ $nextState by $cause", t).toFail
   }
 
-  type ToAppEffect[A] = A ⇒ AppEffect
+  type VT[F[_]] = PartialFunction[Zthulhu, (Zthulhu, Process[F, Result])]
 
-  implicit class ZthulhuOps(f: Zthulhu)
-  {
-    def <<(e: AppEffect) = (f, Nil) << e
-    def <<(e: Option[AppEffect]) = (f, Nil) << e
-    def <<[A: ToAppEffect](e: A) = (f, Nil) << e
-    def <<[A: ToAppEffect](e: Option[A]) = (f, Nil) << e
-    def <<[A: ToAppEffect](e: List[A]) = (f, Nil) << e
-  }
+  type TS[F[_]] = Message ⇒ PartialFunction[Message, VT[F]]
 
-  implicit class ViewTransitionResultOps(r: ViewTransitionResult)
+  // create a state machine from a source process emitting Message instances,
+  // a transition function that turns messages and states into new states and
+  // side effects which optionally produce new messages, and a handler process
+  // that extract those new messages from the side effects.
+  // returns a writer that emits the states on the output side and the new
+  // messages on the write side.
+  implicit class ProcessToZthulhu[F[_]](source: Process[F, Message])
   {
-    def <<(e: AppEffect) = (r.head, r.last :+ e)
-    def <<(e: Option[AppEffect]): ViewTransitionResult = e some(r.<<) none(r)
-    def <<[A: ToAppEffect](e: A): ViewTransitionResult = {
-      r << (e: AppEffect)
-    }
-    def <<[A: ToAppEffect, B[_]: Foldable](e: B[A]): ViewTransitionResult = {
-      (e foldLeft r) { case (z, a) ⇒ z << (a: AppEffect) }
+    def viewFsm(transition: TS[F], effect: Process1[Result, Message]) = {
+      source
+        .pipe(scanSplitW(Zthulhu())(transition)(fatalTransition)(fatalEffect))
+        .flatMapW(a ⇒ writer.liftW(a |> effect))
     }
   }
 
   implicit def amendZthulhuWithEmptyEffects
   (f: Zthulhu): ViewTransitionResult =
-    (f, Nil)
+    (f, halt)
+
+  implicit class ViewTransitionResultOps(r: ViewTransitionResult)
+  {
+    def <<[A: ToAppEffect](e: A): ViewTransitionResult = {
+      (r.head, r.last ++ e: AppEffect)
+    }
+  }
+
+  implicit class ZthulhuOps(z: Zthulhu)
+  {
+    def <<[A: ToAppEffect](e: A) = (z: ViewTransitionResult) << e
+  }
 }
 
 import Zthulhu._
 
-trait StateImpl
+abstract class StateImpl(implicit messageTopic: MessageTopic)
 extends ToUiOps
 with ViewStateImplicits
 with Logging
@@ -345,7 +402,9 @@ with Logging
 
   def transitions: ViewTransitions
 
-  private[this] val messages = async.unboundedQueue[Message]
+  private[this] val messageIn = async.unboundedQueue[Message]
+
+  val messageOut = async.unboundedQueue[Message]
 
   private[this] val running = async.signalOf(false)
 
@@ -356,28 +415,16 @@ with Logging
   val current = async.signalUnset[Zthulhu]
 
   private[this] val idle: Process[Task, Boolean] =
-    messages.size.continuous map(_ == 0)
+    size map(_ == 0)
 
-  private[this] def unsafePerformIO(effects: List[AppEffect]) = {
-    Task[Unit] {
-      log.trace(s"performing io for ${effects.length} tasks")
-      val next = effects
-        .map(_.attemptRun)
-        .flatMap {
-          case \/-(m) ⇒
-            log.debug(s"task succeeded with ${m.show}")
-            m.fold(_.toList, List(_))
-          case -\/(t) ⇒
-            List(LogFatal("performing io", t))
-        }
-      next match {
-        case head :: tail ⇒
-          val msgs = NonEmptyList(head, tail: _*)
-          log.trace(s"broadcasting ${msgs.show}")
-          dispatchResults(msgs)
-        case Nil ⇒
-      }
+  private[this] lazy val unsafePerformIO: Process1[Result, Message] = {
+    def transformResults(r: Result): List[Message] = {
+        log.debug(s"task succeeded with ${r.show}")
+        r.fold(_.toList, List(_))
     }
+    process1
+      .lift(transformResults)
+      .flatMap(emitAll)
   }
 
   def dispatchResults(msgs: NonEmptyList[Message]) = {
@@ -389,20 +436,22 @@ with Logging
     case m: Message ⇒ transitions
   }
 
-  def signalSetter[A] = process1.lift[A, Signal.Set[A]](Signal.Set(_))
-
-  private[this] lazy val fsmProc: Process[Task, Zthulhu] = {
-    running.set(true).infraRun("set sig running")
+  private[this] lazy val fsmProc: Writer[Task, Message, Zthulhu] = {
     term.discrete
       .merge(idle.when(quit.discrete))
-      .wye(messages.dequeue)(wye.interrupt)
+      .wye(messageIn.dequeue)(wye.interrupt)
       .viewFsm(transitionsSelection, unsafePerformIO)
-      .observe(current.sink.pipeIn(signalSetter[Zthulhu]))
+      .observeO(current.sink.pipeIn(signalSetter[Zthulhu]))
+      .observeW(messageOut.enqueue)
   }
 
   private[this] lazy val fsmTask = fsmProc.runLog
 
   def runFsm(initial: BasicState = Pristine) = {
+    running.set(true).infraRun("set sig running")
+    (messageTopic.subscribe to messageIn.enqueue)
+      .run
+      .infraRunAsync("message input queue")
     fsmTask.runAsync {
       case a ⇒
         running.set(false).infraRun("unset sig running")
@@ -416,7 +465,7 @@ with Logging
   }
 
   def sendAll(msgs: NonEmptyList[Message]) = {
-    messages.enqueueAll(msgs.toList).attemptRun.swap.foreach { e ⇒
+    messageIn.enqueueAll(msgs.toList).attemptRun.swap.foreach { e ⇒
       log.error(s"failed to enqueue state messages: $e")
     }
   }
@@ -425,7 +474,7 @@ with Logging
   // the 'term' signal is woven into the main process using the wye combinator
   // 'interrupt', which listens asynchronously and terminates instantly
   def kill() = {
-    messages.kill.attemptRunFor(5 seconds)
+    messageIn.kill.attemptRunFor(5 seconds)
   }
 
   // gracefully shut down the state maching
@@ -441,9 +490,13 @@ with Logging
 
   def finished = running.continuous.exists(!_)
 
-  private[this] def size = messages.size.continuous
+  private[this] def size = {
+    messageIn.size.discrete.yipWith(messageOut.size.discrete)(_ + _)
+  }
 
-  private[this] def waitingTasks = size.take(1).!!.headOption.getOrElse(0)
+  private[this] def waitingTasks = {
+    size.runLast.attemptRun | None | 0
+  }
 
   def description = s"$handle state"
 
@@ -466,20 +519,17 @@ trait DroidStateBase[A <: AndroidUiContext]
 extends StateImpl
 {
   implicit def ctx: A
-  implicit def broadcast: Broadcaster
-
-  override def dispatchResults(msgs: NonEmptyList[Message]) = broadcast ! msgs
 }
 
 abstract class DroidState[A <: AndroidUiContext]
-(implicit val ctx: A, val broadcast: Broadcaster)
+(implicit val ctx: A, mt: MessageTopic)
 extends DroidStateBase[A]
 
 trait SimpleDroidState
 extends DroidState[AndroidUiContext]
 
 abstract class DroidStateEC(implicit val ec: EC, ctx: AndroidUiContext,
-  broadcast: Broadcaster)
+  mt: MessageTopic)
 extends SimpleDroidState
 
 trait ActivityDroidState
@@ -487,5 +537,5 @@ extends DroidState[AndroidActivityUiContext]
 
 abstract class DroidDBState
 (implicit ec: EC, db: tryp.slick.DbInfo, ctx: AndroidActivityUiContext,
-  broadcast: Broadcaster)
+  mt: MessageTopic)
 extends DroidStateEC

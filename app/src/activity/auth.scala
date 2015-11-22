@@ -36,7 +36,7 @@ object AuthState
 
 abstract class AuthState
 (implicit ctx: AuthStateUiI, res: Resources, plus: PlusInterface,
-  bc: Broadcaster, settings: Settings)
+  mt: MessageTopic, settings: Settings)
 extends DroidState[AuthStateUiI]
 {
   import AuthState._
@@ -180,6 +180,6 @@ with HasPlus
   }
 
   def obtainToken() = {
-    sendAll(AuthState.Reset <:: AuthState.Fetch.wrapNel)
+    sendAll(NonEmptyList(AuthState.Reset, AuthState.Fetch))
   }
 }

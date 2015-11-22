@@ -53,7 +53,8 @@ extends DroidStateEC
           s ⇒ AsyncTaskSuccess(s, msg.success))
         .successNel[Message]
     }
-    S(Running, AsyncTasksData(data.running :+ msg.task)) << optFade << t << msg.done
+    S(Running, AsyncTasksData(data.running :+ msg.task)) << optFade << t <<
+      msg.done
   }
 
   def startTask(msg: AsyncTask): ViewTransition = {
