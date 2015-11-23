@@ -14,7 +14,8 @@ extends tryp.AndroidDeps
     "test" → test,
     "unit-core" → unitCore,
     "unit" → unit,
-    "integration" → integration
+    "integration" → integration,
+    "logback" → logback
   )
 
   override def resolvers = super.resolvers ++ Map(
@@ -35,10 +36,6 @@ extends tryp.AndroidDeps
 
   def app = ids(
     pulsar("slick"),
-    "com.github.tony19" % "logback-android-core" % "+" exclude(
-      "com.google.android", "android"),
-    "com.github.tony19" % "logback-android-classic" % "+" exclude(
-      "com.google.android", "android"),
     aar("com.android.support" % "appcompat-v7" % "21.+"),
     aar("com.android.support" % "palette-v7" % "21.+"),
     aar("com.android.support" % "recyclerview-v7" % "21.+"),
@@ -55,6 +52,13 @@ extends tryp.AndroidDeps
     "com.android.support" % "support-v13" % "21.+",
     "com.makeramen" % "roundedimageview" % "+",
     "com.squareup.okhttp" % "okhttp" % "+"
+  )
+
+  def logback = ids(
+    "com.github.tony19" % "logback-android-core" % "+" exclude(
+      "com.google.android", "android"),
+    "com.github.tony19" % "logback-android-classic" % "+" exclude(
+      "com.google.android", "android")
   )
 
   def test = ids(

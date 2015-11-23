@@ -14,6 +14,8 @@ extends tryp.AarsBuild("droid", deps = DroidDeps)
 
   lazy val app = "app".transitive / "android commons" <<< view
 
+  lazy val logback = "logback" / "logback deps" <<< app
+
   lazy val test = "test" <<< app
 
   lazy val unitCore = "unit-core" <<< test
