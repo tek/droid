@@ -96,7 +96,7 @@ extends DroidStateBase[A]
     send(ConnectionFailed(result))
   }
 
-  def apiConnected(data: Bundle) = {
+  def apiConnected(data: Bundle): Unit = {
     send(ConnectionEstablished)
   }
 

@@ -79,13 +79,21 @@ extends Stateful
 
   override def impls = location :: super.impls
   
-  def setupProcess(client: GoogleApiClient, locations: Seq[GeofenceData]) = {
+  def setupProcess(client: GoogleApiClient,
+    locations: NonEmptyList[GeofenceData]) = {
     val geofences = GeofenceInterface(client, intent)
     Process.eval_(geofences.clear) ++
-      Process.eval_(geofences.request(locations))
+      Process.eval_(geofences.request(locations.toList))
   }
 
   def setup(locations: Seq[GeofenceData]) = {
-    location.oneClient flatMap(c ⇒ setupProcess(c, locations))
+    locations match {
+      case head :: tail ⇒
+        location.oneClient
+          .flatMap(c ⇒ setupProcess(c, NonEmptyList(head, tail: _*)))
+      case _ ⇒
+        log.debug("called GeofenceHandler.setup() with empty location list")
+        halt
+    }
   }
 }
