@@ -1,6 +1,8 @@
 package tryp
 package droid
 
+import java.util.concurrent.Executors
+
 import concurrent.duration._
 
 import scalaz.{Writer ⇒ _, _}, Scalaz._, concurrent._, stream._, Process._
@@ -429,6 +431,10 @@ extends ToUiOps
 with StateImplicits
 with Logging
 {
+  implicit private[this] lazy val executor = Executors.newFixedThreadPool(5)
+
+  implicit private[this] lazy val strat: Strategy = Strategy.Executor
+
   val S = Zthulhu
 
   def transitions: ViewTransitions

@@ -1,5 +1,7 @@
 package tryp.droid
 
+import java.util.concurrent.Executors
+
 import android.support.v7.app.ActionBarActivity
 
 import macroid.Contexts
@@ -24,7 +26,8 @@ with Snackbars
 
   override def defaultTheme = res.stringO("pref_theme_default")
 
-  implicit def ec = scala.concurrent.ExecutionContext.Implicits.global
+  implicit lazy val ec =
+    concurrent.ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))
 }
 
 abstract class TrypDefaultActivity
