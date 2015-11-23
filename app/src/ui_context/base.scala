@@ -91,9 +91,7 @@ with HasSettings
 {
   override def loadFragment(fragment: FragmentBuilder) = {
     Ui {
-      fragment() tap { inst ⇒
-        replaceFragment(fragment.id, inst, false, fragment.tag, false)
-      }
+      replaceFragment(fragment.id, fragment(), false, fragment.tag, false)
       "fragment loaded successfully"
     }
   }

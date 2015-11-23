@@ -113,7 +113,9 @@ with Views
         log.error(s"error creating layout in ViewState: $error")
         dummyLayout
       }
-    l.perform()
+    l.perform() unsafeTap { v ⇒
+      log.debug(s"setting view for fragment $title:\n${v.viewTree.drawTree}")
+    }
   }
 }
 

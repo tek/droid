@@ -58,7 +58,6 @@ extends TrypApplication
   def name: String
 
   abstract override def onCreate() {
-    AndroidLog.d("droid Application")
     createTrypApp(name)
     super.onCreate()
   }

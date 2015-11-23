@@ -97,9 +97,9 @@ with Macroid
   implicit class `Slot transition helper`[A <: ViewGroup](root: Slot[A])
   {
     def transitionTo(trans: FragmentTransition, view: Ui[View]) {
-      root foreach { r ⇒
+      root some { r ⇒
         trans.go(r, view.get)
-      }
+      } none(sys.error("no ui root set for transition!"))
     }
   }
 
