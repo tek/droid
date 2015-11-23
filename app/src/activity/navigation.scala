@@ -19,9 +19,8 @@ with StatefulView
 
   override def impls = navImpl :: super.impls
 
-  abstract override def onCreate(state: Bundle) {
+  override def postRunState() = {
     send(SetNav(navigation))
-    super.onCreate(state)
   }
 
   def navigateIndex(index: Int) {

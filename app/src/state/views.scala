@@ -66,6 +66,13 @@ extends ViewStateImplicits
     allImpls(_.runFsm())
   }
 
+  protected def initState() = {
+    runState()
+    postRunState()
+  }
+
+  protected def postRunState(): Unit = ()
+
   lazy val messageIn = unboundedQueue[Message]
 
   lazy val messageOut = impls.foldLeft(Process.halt: Process[Task, Message]) {
@@ -157,7 +164,7 @@ with CallbackMixin
 
   abstract override def onCreate(saved: Bundle) {
     super.onCreate(saved)
-    runState()
+    initState()
     send(Create(self.arguments, Option(saved)))
   }
 
@@ -176,7 +183,7 @@ with StatefulHasActivity
   // TODO impl log level
   override def onCreate(saved: Bundle) {
     super.onCreate(saved)
-    runState()
+    initState()
     // logImpl ! LogLevel(LogLevel.DEBUG)
     send(Create(Map(), Option(saved)))
   }
