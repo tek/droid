@@ -55,7 +55,7 @@ with TextCombinators
 
   val setLayout: ViewTransition = {
     case s @ S(_, Layout(l)) ⇒
-      s << stateEffectTask("set layout signal")(layout.set(l))
+      s << stateEffectTask[Task, Unit]("set layout signal")(layout.set(l))
   }
 
   def layoutIOT: IOT[View]

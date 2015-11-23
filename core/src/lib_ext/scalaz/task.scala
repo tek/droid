@@ -1,6 +1,8 @@
 package tryp
 package droid
 
+import concurrent.duration._
+
 import scalaz.concurrent.Task
 
 import org.log4s.Logger
@@ -25,8 +27,18 @@ final class TaskOps[A](task: Task[A])
      TaskOps.infraResult(desc)(task.attemptRun)
   }
 
+  def infraRunShort(desc: String)(implicit log: Logger) = {
+     TaskOps.infraResult(desc)(task.attemptRunFor(5 seconds))
+  }
+
+  def !?(desc: String)(implicit log: Logger) = infraRunShort(desc)
+
   def infraRunAsync(desc: String)(implicit log: Logger) = {
     task.runAsync(TaskOps.infraResult[A](desc) _)
+  }
+
+  def infraRunAsyncShort(desc: String)(implicit log: Logger) = {
+    task.timed(5 seconds).runAsync(TaskOps.infraResult[A](desc) _)
   }
 }
 

@@ -3,8 +3,8 @@ package droid
 
 import concurrent.duration._
 
-import scalaz._, Scalaz._, stream._, Process._, async._, mutable.Signal
-import concurrent.Task
+import scalaz._, Scalaz._, stream._, Process._, async._, mutable._
+import concurrent._
 
 import State._
 
@@ -35,17 +35,19 @@ extends StateImpl
   }
 }
 
-class MessageTopic
+case class MessageTopic(topic: Topic[Message] = async.topic[Message]())
+extends AnyVal
 {
-  private val topic = async.topic[Message]()
   def subscribe = topic.subscribe
   def publish = topic.publish
 }
 
 trait Stateful
-extends ViewStateImplicits
+extends StateImplicits
 {
-  implicit lazy val messageTopic = new MessageTopic
+  implicit lazy val strat: Strategy = Strategy.Naive
+
+  implicit lazy val messageTopic = MessageTopic()
 
   lazy val logImpl = new LogImpl {}
 
@@ -55,9 +57,9 @@ extends ViewStateImplicits
 
   def send(msg: Message) = sendAll(msg.wrapNel)
 
-  def sendAll(msgs: NonEmptyList[Message]) =
-    messageIn.enqueueAll(msgs.toList)
-      .infraRun(s"enqueue messages $msgs in $this")
+  def sendAll(msgs: NonEmptyList[Message]) = {
+    messageIn.enqueueAll(msgs.toList) !? s"enqueue messages $msgs in $this"
+  }
 
   val ! = send _
 
@@ -75,21 +77,21 @@ extends ViewStateImplicits
 
   lazy val messageIn = unboundedQueue[Message]
 
-  lazy val messageOut = impls.foldLeft(Process.halt: Process[Task, Message]) {
-    case (z, a) ⇒ z.merge(a.messageOut.dequeue)
-  }
+  lazy val messageOut = impls foldMap(_.messageOut.dequeue)
 
   private[this] def runPublisher() = {
-    (messageOut.merge(messageIn.dequeue) to messageTopic.publish)
+    messageOut
+      .merge(messageIn.dequeue)
+      .to(messageTopic.publish)
       .run
       .infraRunAsync("message publisher")
   }
 
-  def killState() {
+  def killState() = {
     allImpls(_.kill())
   }
 
-  def joinState() {
+  def joinState() = {
     allImpls(_.join())
   }
 }

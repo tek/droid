@@ -4,9 +4,11 @@ package droid
 import concurrent.duration._
 
 import scalaz.{Writer ⇒ _, _}, Scalaz._, concurrent._, stream._, Process._
-import async.mutable.Signal
+import async.mutable.{Signal, Queue, Topic}
 
 import shapeless.syntax.std.tuple._
+
+import org.log4s.Logger
 
 object State
 {
@@ -74,14 +76,6 @@ object State
   extends Loggable
   {
     lazy val message = s"successful effect: $description ($result)"
-  }
-
-  def stateEffectTask(description: String)(effect: Task[Unit]) = {
-    Process.eval(effect map(EffectSuccessful(description, _).success))
-  }
-
-  def stateEffect(description: String)(effect: ⇒ Unit) = {
-    stateEffectTask(description)(Task(effect))
   }
 
   trait MessageInstances
@@ -234,11 +228,15 @@ trait ToProcessSyntax
 }
 
 // TODO add UiAction implicits
-trait ViewStateImplicits
+trait StateImplicits
 extends Logging
 with ToOperationSyntax
 with ToProcessSyntax
 {
+  implicit def liftProcess[A: Operation](proc: Process[Task, A]) = {
+    proc map(a ⇒ a.toResult)
+  }
+
   implicit def liftTask[A: Operation](t: Task[A]): AppEffect =
     Process.eval(t map(_.toResult))
 
@@ -303,46 +301,81 @@ with ToProcessSyntax
   (fa: F[A]) = (fa foldLeft(halt: AppEffect)) {
     case (z, a) ⇒ z ++ (a: AppEffect)
   }
+
+  def stateEffectProc[F[_], O](description: String)(effect: Process[F, O]) = {
+    effect map(EffectSuccessful(description, _).toResult)
+  }
+
+  def stateEffectTask[F[_], O](description: String)(effect: F[O]) = {
+    stateEffectProc(description)(Process.eval(effect))
+  }
+
+  def stateEffect(description: String)(effect: ⇒ Unit) = {
+    stateEffectTask(description)(Task(effect))
+  }
+
+  implicit final class ProcessOps[F[_], A](proc: Process[F, A])
+  {
+    def logged(desc: String)(implicit logger: Logger) = {
+      proc |> process1.lift { m ⇒
+        logger.trace(s"$desc delivering $m")
+        m
+      }
+    }
+  }
+
+  implicit final class QueueOps[A](queue: Queue[A])
+  {
+    def publish(desc: String)(topic: Topic[A]) = {
+      queue.dequeue
+        .logged(desc)
+        .to(topic.publish)
+        .run
+        .infraRunAsync(desc)
+    }
+  }
+
+  implicit def messageProcMonoid =
+    Monoid.instance[Process[Task, Message]]((a, b) ⇒ a.merge(b), halt)
 }
 
-object ViewStateImplicits
-extends ViewStateImplicits
-
-import ViewStateImplicits._
+object StateImplicits
+extends StateImplicits
 
 case class Zthulhu(state: BasicState = Pristine, data: Data = NoData)
 
 object Zthulhu
+extends StateImplicits
 {
   /* @param z current state machine
-   * @param f A ⇒ B ⇒ (B, E), transforms a message into a state transition
-   * function.
-   * the state of type B is transitioned into a new state of type B and a
-   * Process of effects that have type E.
-   * first, receive one item of type A representing a Message
-   * if f is defined at that item and the transition function is defined for
-   * the current state z, the result of that transition is calculated
-   * if successful, the state z is emitted as output, the effects returned from
-   * the transition function are emitted as log and the current state z is
-   * replaced by the return value of the transition function
-   * in any case, the new or old state is used to recurse
+   * @param f (Z, M) ⇒ (Z, E), transforms a state and message into a new state
+   * and a Process of effects of type E
    *
+   * first, receive one item of type M representing a Message
+   * calculate new state, may be empty, then the old state is used
+   * the new state is emitted on the output side, the effects returned from
+   * the transition function, if any, are emitted on the writer side and the
+   * current state z is replaced by the return value of the transition function
+   * in any case, the new or old state is used to recurse
+   * error callbacks are invoked if the transition or effect throws an
+   * exception and their results emitted
    */
-  def scanSplitW[Z, E, M, F[_]](z: Z)
-  (f: M ⇒ PartialFunction[M, PartialFunction[Z, (Z, Process[F, E])]])
+  def stateLoop[Z, E, M, F[_]](z: Z)
+  (f: (Z, M) ⇒ Maybe[(Z, Process[F, E])])
   (transError: (Z, M, Throwable) ⇒ E)
   (effectError: (Z, Z, M, Throwable) ⇒ E)
   : stream.Writer1[Process[F, E], M, Z] = {
     receive1 { (a: M) ⇒
-      val (effect, newState) = Try(f(a) lift(a) flatMap(_.lift(z))) match {
-        case Success(Some((newState, effect))) ⇒ effect → newState.just
-        case Success(None) ⇒ halt → Empty[Z]()
-        case Failure(t) ⇒ emit(transError(z, a, t)) → Empty[Z]()
-      }
-      val nextState = newState | z
-      (newState.map(emitO) | halt) ++ emitW(
-        effect.onFailure(t ⇒ Process(effectError(z, nextState, a, t)))
-      ) ++ scanSplitW(nextState)(f)(transError)(effectError)
+      val (state, effect) =
+        Task(f(z, a)).attemptRun match {
+          case \/-(Just((nz, e))) ⇒ nz.just → e
+          case \/-(Empty()) ⇒ Maybe.empty[Z] → halt
+          case -\/(t) ⇒ Maybe.empty[Z] → emit(transError(z, a, t))
+        }
+      val o = state.cata(emitO, halt)
+      val w = effect.onFailure(t ⇒ Process(effectError(z, state | z, a, t)))
+      val l = stateLoop(state | z)(f)(transError)(effectError)
+      o ++ emitW(w) ++ l
     }
   }
 
@@ -355,10 +388,6 @@ object Zthulhu
     LogFatal(s"during io: $state ⇒ $nextState by $cause", t).toFail
   }
 
-  type VT[F[_]] = PartialFunction[Zthulhu, (Zthulhu, Process[F, Result])]
-
-  type TS[F[_]] = Message ⇒ PartialFunction[Message, VT[F]]
-
   // create a state machine from a source process emitting Message instances,
   // a transition function that turns messages and states into new states and
   // side effects which optionally produce new messages, and a handler process
@@ -367,9 +396,11 @@ object Zthulhu
   // messages on the write side.
   implicit class ProcessToZthulhu[F[_]](source: Process[F, Message])
   {
+    type TS[F[_]] = (Zthulhu, Message) ⇒ Maybe[(Zthulhu, Process[F, Result])]
+
     def viewFsm(transition: TS[F], effect: Process1[Result, Message]) = {
       source
-        .pipe(scanSplitW(Zthulhu())(transition)(fatalTransition)(fatalEffect))
+        .pipe(stateLoop(Zthulhu())(transition)(fatalTransition)(fatalEffect))
         .flatMapW(a ⇒ writer.liftW(a |> effect))
     }
   }
@@ -395,14 +426,21 @@ import Zthulhu._
 
 abstract class StateImpl(implicit messageTopic: MessageTopic)
 extends ToUiOps
-with ViewStateImplicits
+with StateImplicits
 with Logging
 {
   val S = Zthulhu
 
   def transitions: ViewTransitions
 
-  private[this] val messageIn = async.unboundedQueue[Message]
+  private[this] val internalMessageIn = async.unboundedQueue[Message]
+
+  private[this] val externalMessageIn = async.unboundedQueue[Message]
+
+  private[this] def messageIn = {
+    internalMessageIn.dequeue.logged(s"$description internal")
+      .merge(externalMessageIn.dequeue.logged(s"$description external"))
+  }
 
   val messageOut = async.unboundedQueue[Message]
 
@@ -418,12 +456,15 @@ with Logging
     size map(_ == 0)
 
   private[this] lazy val unsafePerformIO: Process1[Result, Message] = {
-    def transformResults(r: Result): List[Message] = {
-        log.debug(s"task succeeded with ${r.show}")
-        r.fold(_.toList, List(_))
-    }
     process1
-      .lift(transformResults)
+      .collect[Result, List[Message]] {
+        case scalaz.Success(m) ⇒
+          log.debug(s"task succeeded with ${m.show}")
+          List(m)
+        case scalaz.Failure(ms) ⇒
+          log.debug(s"task failed with ${ms.show}")
+          ms.toList
+      }
       .flatMap(emitAll)
   }
 
@@ -431,32 +472,48 @@ with Logging
     sendAll(msgs)
   }
 
-  protected val transitionsSelection: Message ⇒ ViewTransitions = {
+  protected def transitionsSelection: Message ⇒ ViewTransitions = {
     case m: InternalMessage ⇒ internalMessage
     case m: Message ⇒ transitions
+  }
+
+  protected def uncurriedTransitions(z: Zthulhu, m: Message) = {
+    transitionsSelection(m)
+      .orElse(unmatchedMessage)
+      .lift(m)
+      .getOrElse(unmatchedState(m))
+      .lift(z)
+      .toMaybe
   }
 
   private[this] lazy val fsmProc: Writer[Task, Message, Zthulhu] = {
     term.discrete
       .merge(idle.when(quit.discrete))
-      .wye(messageIn.dequeue)(wye.interrupt)
-      .viewFsm(transitionsSelection, unsafePerformIO)
+      .wye(messageIn)(wye.interrupt)
+      .viewFsm(uncurriedTransitions, unsafePerformIO)
       .observeO(current.sink.pipeIn(signalSetter[Zthulhu]))
       .observeW(messageOut.enqueue)
   }
 
   private[this] lazy val fsmTask = fsmProc.runLog
 
+  val debugStates = false
+
   def runFsm(initial: BasicState = Pristine) = {
-    running.set(true).infraRun("set sig running")
-    (messageTopic.subscribe to messageIn.enqueue)
+    running.set(true) !? "set sig running"
+    (messageTopic.subscribe to externalMessageIn.enqueue)
       .run
       .infraRunAsync("message input queue")
     fsmTask.runAsync {
       case a ⇒
-        running.set(false).infraRun("unset sig running")
+        running.set(false) !? "unset sig running"
         log.info(s"FSM terminated: $a")
     }
+    if (debugStates)
+      current.discrete
+        .map(z ⇒ log.debug(z.toString))
+        .run
+        .infraRunAsync("debug state printer")
     send(SetInitialState(initial))
   }
 
@@ -465,16 +522,16 @@ with Logging
   }
 
   def sendAll(msgs: NonEmptyList[Message]) = {
-    messageIn.enqueueAll(msgs.toList).attemptRun.swap.foreach { e ⇒
-      log.error(s"failed to enqueue state messages: $e")
-    }
+    internalMessageIn.enqueueAll(msgs.toList) !? "enqueue state messages"
   }
 
-  // kill the state machine
+  // kill the state machine by
   // the 'term' signal is woven into the main process using the wye combinator
   // 'interrupt', which listens asynchronously and terminates instantly
   def kill() = {
-    messageIn.kill.attemptRunFor(5 seconds)
+    term.set(true) !? "set signal term"
+    externalMessageIn.kill !? "kill external message queue"
+    internalMessageIn.kill !? "kill internal message queue"
   }
 
   // gracefully shut down the state maching
@@ -491,7 +548,9 @@ with Logging
   def finished = running.continuous.exists(!_)
 
   private[this] def size = {
-    messageIn.size.discrete.yipWith(messageOut.size.discrete)(_ + _)
+    externalMessageIn.size.discrete
+      .yipWith(internalMessageIn.size.discrete)(_ + _)
+      .take(1)
   }
 
   private[this] def waitingTasks = {
@@ -512,6 +571,20 @@ with Logging
 
   def setInitialState(s: BasicState): ViewTransition = {
     case S(Pristine, d) ⇒ S(s, d)
+  }
+
+  lazy val unmatchedMessage: ViewTransitions = {
+    case m if debugStates ⇒ {
+      case s ⇒
+        log.debug(s"unmatched message at $s: $m")
+        s
+    }
+  }
+
+  def unmatchedState(m: Message): ViewTransition = {
+    case s if debugStates ⇒
+      log.debug(s"unmatched state $s: $m")
+      s
   }
 }
 
