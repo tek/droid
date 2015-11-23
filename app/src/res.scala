@@ -26,7 +26,7 @@ with AppPreferences
         .getIdentifier(name, defType, context.getPackageName)
     }
     idO(input, defType) | {
-      throw InvalidResource(s"$defType: '$input'")
+      throw InvalidResource(s"$defType '$input'")
     }
   }
 
@@ -53,6 +53,16 @@ with AppPreferences
   def color[A >: IdTypes](_id: A) = res(_id, "color") { _.getColor _ }
 
   def bool[A >: IdTypes](_id: A) = res(_id, "bool") { _.getBoolean _ }
+
+  def integerO[A >: IdTypes](_id: A) = resO(_id, "integer") { _.getInteger _ }
+
+  def stringO[A >: IdTypes](_id: A) = resO(_id, "string") { _.getString _ }
+
+  def dimenO[A >: IdTypes](_id: A) = resO(_id, "dimen") { _.getDimension _ }
+
+  def colorO[A >: IdTypes](_id: A) = resO(_id, "color") { _.getColor _ }
+
+  def boolO[A >: IdTypes](_id: A) = resO(_id, "bool") { _.getBoolean _ }
 
   def i(name: String, suffix: Option[String] = None) = {
     namespaced(name, suffix, integer)
@@ -131,6 +141,11 @@ with AppPreferences
         throw new AResources.NotFoundException(msg)
       }
     }
+  }
+
+  def resO[A >: IdTypes, B](_id: A, defType: String)
+  (callback: AResources ⇒ (Int ⇒ B)): Option[B] = {
+    Try(res(_id, defType)(callback)).toOption
   }
 }
 

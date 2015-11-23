@@ -22,7 +22,7 @@ with Snackbars
 
   override def searcher = this
 
-  override def defaultTheme = res.string("pref_theme_default")
+  override def defaultTheme = res.stringO("pref_theme_default")
 
   implicit def ec = scala.concurrent.ExecutionContext.Implicits.global
 }

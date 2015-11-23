@@ -72,12 +72,8 @@ with Preferences
     Log.e("Invalid value for preference ${key}: ${value} (${value.getClass})")
   }
 
-  // FIXME cannot resolve theme id in robolectric test
   def changeTheme(theme: String, restart: Boolean = true) {
-    val id = res.themeId(theme)
-    if (id > 0) {
-      applyTheme(id, restart)
-    }
+    res.themeIdO(theme) foreach(applyTheme(_, restart))
   }
 
   def applyTheme(id: Int, restart: Boolean = true) {

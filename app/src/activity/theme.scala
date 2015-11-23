@@ -1,6 +1,8 @@
 package tryp
 package droid
 
+import scalaz._, Scalaz._
+
 import rx._
 
 trait Theme extends ActivityBase
@@ -14,13 +16,18 @@ trait Theme extends ActivityBase
     super.onCreate(state)
   }
 
-  lazy val currentTheme = prefs.string("theme", defaultTheme)
+  lazy val prefTheme = prefs.string("theme")
+
+  lazy val currentTheme = Rx {
+    val t = prefTheme()
+    (t != "").option(t) orElse defaultTheme
+  }
 
   lazy val observeTheme = Obs(currentTheme) {
-    changeTheme(currentTheme(), themeInitialized)
+    currentTheme() foreach(changeTheme(_, themeInitialized))
   }
 
   def changeTheme(name: String, restart: Boolean)
 
-  def defaultTheme: String
+  def defaultTheme: Option[String]
 }
