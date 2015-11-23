@@ -1,6 +1,6 @@
 package tryp
 package droid
-package test
+package unit
 
 class IOBSpec
 extends SpecBase
@@ -11,9 +11,17 @@ extends SpecBase
 
   def before = {
     activity
+    // activity.navigateIndex(0)
   }
 
   def signal = {
+    activity
+    sync()
+    Thread.sleep(2000)
+    sync()
+    pr(activity.viewTree.drawTree)
+    frag[SpecFragment]("test") foreachA { f ⇒
+    }
     1 === 1
   }
 }

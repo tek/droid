@@ -69,7 +69,7 @@ extends tryp.AndroidDeps
     pulsar("unit-slick")
   )
 
-  override def unit = ids()
+  override def unit = ids(pulsar("jvm"))
 
   override def integration = super.integration ++ ids(
     "org.scalatest" %% "scalatest" % "2.2.+",

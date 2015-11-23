@@ -1,6 +1,6 @@
 package tryp
 package droid
-package test
+package unit
 
 class Application
 extends android.app.Application

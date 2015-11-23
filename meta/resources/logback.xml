@@ -1,0 +1,19 @@
+<configuration>
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>target/log/${log_file_name}.log</file>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %-5level %logger{35} | %msg%n</pattern>
+    </encoder>
+  </appender>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %-5level %logger{35} | %msg%n</pattern>
+    </encoder>
+  </appender>
+  <logger name="slick" level="warn" />
+  <logger name="tryp.state" level="debug" />
+  <root>
+    <appender-ref ref="FILE" />
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>

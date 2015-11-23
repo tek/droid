@@ -1,6 +1,6 @@
 package tryp
 package droid
-package test
+package unit
 
 import android.widget._
 
@@ -36,14 +36,26 @@ extends ViewState[FrameLayout]
 }
 
 case class SpecFragment()
-extends VSTrypFragment
+extends TrypFragment
+with view.ExtViews
 {
-  lazy val viewState = new SpecViewState {}
+  // lazy val viewState = new SpecViewState {}
+
+  def layout(state: Bundle) = {
+    import android.view.ViewGroup.LayoutParams._
+    Ui{
+      l[FrameLayout](
+        l[RelativeLayout](
+          w[AutoCompleteTextView]
+        ) >>= iota.lp(MATCH_PARENT, MATCH_PARENT)
+      ).perform()
+    }
+  }
 }
 
 class SpecActivity
 extends Activity
-with TrypTestActivity
+with test.TrypTestActivity
 {
   def actorsProps = Nil
 
@@ -55,7 +67,7 @@ with TrypTestActivity
 }
 
 abstract class SpecBase
-extends TrypUnitSpecs2Spec[SpecActivity]
+extends test.TrypUnitSpecs2Spec[SpecActivity]
 with tryp.Matchers
 with HasActivity
 {

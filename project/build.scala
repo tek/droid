@@ -4,6 +4,7 @@ import sbt._
 import sbt.Keys._
 import android.Keys._
 import TrypAndroid.autoImport._
+import Tryp.autoImport._
 
 object DroidBuild
 extends tryp.AarsBuild("droid", deps = DroidDeps)
@@ -20,7 +21,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps)
 
   lazy val unitCore = "unit-core" <<< test
 
-  lazy val unit = ("unit" <<< unitCore)
+  lazy val unit = (adp("unit") <<< unitCore <<< app)
     .robotest
     .manifest(
       "appName" → "tryp",
@@ -32,8 +33,11 @@ extends tryp.AarsBuild("droid", deps = DroidDeps)
     )
     .settingsV(
       manifestTokens += ("package" → androidPackage.value),
-      aarModule := "test"
+      aarModule := "unit",
+      logbackOutput := outputLayout.value(projectLayout.value).classes /
+        "assets" / logbackName
     )
+    .logback("tag" → "tryp")
 
   lazy val debug = "debug" <<< app
 
