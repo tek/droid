@@ -4,8 +4,6 @@ package unit
 
 import org.specs2._
 
-import State._
-
 class DummyAndroidUiContext
 extends AndroidUiContext
 {
@@ -27,7 +25,7 @@ extends Specification
 
   def machine = {
     implicit val c = new DummyAndroidUiContext
-    val sf = new Stateful {
+    val sf = new Agent {
     }
     sf.runState()
     sf.send(Resume)

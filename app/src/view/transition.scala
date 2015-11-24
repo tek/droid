@@ -14,7 +14,6 @@ import android.transitions.everywhere._
 import com.melnykov.fab.FloatingActionButton
 
 import tryp.droid.Macroid._
-import tryp.droid.view.ParallaxHeader
 
 class WidgetBase[A <: View](transName: String)
 {

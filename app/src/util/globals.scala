@@ -42,18 +42,23 @@ with droid.ToViewOps
 with droid.ToIntentOps
 with droid.ToTaskOps
 
+trait AndroidTypes
+{
+  type Activity = android.app.Activity
+  type View = android.view.View
+  type ViewGroup = android.view.ViewGroup
+  type LayoutInflater = android.view.LayoutInflater
+}
+
 trait Globals
 extends tryp.slick.sync.meta.Globals
 with Util
 with Forward
 with Types
 with Implicits
+with droid.state.Exports
+with AndroidTypes
 {
-  type Activity = android.app.Activity
-  type View = android.view.View
-  type ViewGroup = android.view.ViewGroup
-  type LayoutInflater = android.view.LayoutInflater
-
   val AndroidLog = tryp.droid.meta.AndroidLog
 }
 

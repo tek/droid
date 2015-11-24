@@ -1,6 +1,6 @@
 package tryp.droid
 
-import scalaz._, Scalaz._, concurrent.Task
+import scalaz._, Scalaz._, concurrent._
 
 import android.app.Service
 import android.os.{Binder, IBinder}
@@ -40,7 +40,7 @@ with ServiceCommon
     start
     Task(handleIntent(intent)).runAsync {
       case -\/(err) ⇒ log.error(err)(s"starting intent $intent")
-      case _ ⇒ 
+      case _ ⇒
     }
     Service.START_STICKY
   }

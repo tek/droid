@@ -5,7 +5,7 @@ import akka.actor._
 import akka.util._
 import akka.pattern.ask
 
-trait Agent[M]
+trait BasicAgent[M]
 {
   def !(m: M)
 
@@ -14,7 +14,7 @@ trait Agent[M]
 }
 
 case class AkkaAgent(actor: ActorSelection)
-extends Agent[Any]
+extends BasicAgent[Any]
 {
   def !(m: Any) = actor ! m
 
@@ -23,7 +23,7 @@ extends Agent[Any]
 }
 
 case class DummyAgent()
-extends Agent[Any]
+extends BasicAgent[Any]
 {
   def !(m: Any) = ()
   def ?(m: Any)(implicit timeout: Timeout, sender: ActorRef = Actor.noSender) =
@@ -32,7 +32,7 @@ extends Agent[Any]
 
 trait Communicator
 {
-  def core: Agent[Any]
+  def core: BasicAgent[Any]
 }
 
 object Communicator

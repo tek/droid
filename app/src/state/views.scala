@@ -1,103 +1,11 @@
 package tryp
 package droid
+package state
 
 import concurrent.duration._
 
-import scalaz._, Scalaz._, stream._, Process._, async._, mutable._
-import concurrent._
-
-import State._
-
-trait LogImpl
-extends StateImpl
-{
-  def handle = "log"
-
-  def logError(msg: String): ViewTransition = {
-    case s ⇒
-      log.error(msg)
-      s
-  }
-
-  def logInfo(msg: String): ViewTransition = {
-    case s ⇒
-      log.info(msg)
-      s
-  }
-
-  val transitions: ViewTransitions = {
-    case m: LogError ⇒ logError(m.message)
-    case m: LogFatal ⇒ logError(m.message)
-    case m: LogInfo ⇒ logInfo(m.message)
-    case UnknownResult(msg) ⇒ logInfo(msg.toString)
-    case m: EffectSuccessful ⇒ logInfo(m.message)
-    case m: Loggable ⇒ logInfo(m.toString)
-  }
-}
-
-case class MessageTopic(topic: Topic[Message] = async.topic[Message]())
-extends AnyVal
-{
-  def subscribe = topic.subscribe
-  def publish = topic.publish
-}
-
-trait Stateful
-extends StateImplicits
-{
-  implicit lazy val strat: Strategy = Strategy.Naive
-
-  implicit lazy val messageTopic = MessageTopic()
-
-  lazy val logImpl = new LogImpl {}
-
-  def impls: List[StateImpl] = logImpl :: Nil
-
-  def allImpls[A](f: StateImpl ⇒ A) = impls map(f)
-
-  def send(msg: Message) = sendAll(msg.wrapNel)
-
-  def sendAll(msgs: NonEmptyList[Message]) = {
-    messageIn.enqueueAll(msgs.toList) !? s"enqueue messages $msgs in $this"
-  }
-
-  val ! = send _
-
-  def runState() = {
-    runPublisher()
-    allImpls(_.runFsm())
-  }
-
-  protected def initState() = {
-    runState()
-    postRunState()
-  }
-
-  protected def postRunState(): Unit = ()
-
-  lazy val messageIn = unboundedQueue[Message]
-
-  lazy val messageOut = impls foldMap(_.messageOut.dequeue)
-
-  private[this] def runPublisher() = {
-    messageOut
-      .merge(messageIn.dequeue)
-      .to(messageTopic.publish)
-      .run
-      .infraRunAsync("message publisher")
-  }
-
-  def killState() = {
-    allImpls(_.kill())
-  }
-
-  def joinState() = {
-    allImpls(_.join())
-  }
-}
-
 trait UiDispatcher
-extends StateImpl
+extends Machine
 {
   def handle = "ui"
 
@@ -110,13 +18,13 @@ extends StateImpl
 }
 
 trait DummyViewState
-extends ViewState
+extends ViewState[View]
 {
   def layoutIOT = w[View]
 }
 
-trait StatefulView
-extends Stateful
+trait HasContextAgent
+extends Agent
 with HasContext
 {
   implicit def uiCtx: AndroidUiContext = AndroidContextUiContext.default
@@ -125,13 +33,13 @@ with HasContext
 
   implicit def ec: EC
 
-  def viewState: ViewState
+  val viewState: ViewState[_ <: View]
 
   override def impls = uiImpl :: viewState :: super.impls
 }
 
-trait StatefulHasActivity
-extends StatefulView
+trait HasActivityAgent
+extends HasContextAgent
 with HasActivity
 {
   override implicit def uiCtx: AndroidUiContext =
@@ -156,8 +64,8 @@ with HasActivity
   }
 }
 
-trait StatefulFragment
-extends StatefulHasActivity
+trait FragmentAgent
+extends HasActivityAgent
 with CallbackMixin
 {
   self: FragmentBase ⇒
@@ -176,11 +84,11 @@ with CallbackMixin
   }
 }
 
-trait StatefulActivity
+trait ActivityAgent
 extends TrypActivity
-with StatefulHasActivity
+with HasActivityAgent
 {
-  def viewState: ViewState = new DummyViewState {}
+  lazy val viewState: ViewState[View] = new DummyViewState {}
 
   // TODO impl log level
   override def onCreate(saved: Bundle) {

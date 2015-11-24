@@ -1,4 +1,5 @@
-package tryp.droid
+package tryp
+package droid
 
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.{ActionBarDrawerToggle,ActionBarActivity}
@@ -14,7 +15,7 @@ with DrawerLayout.DrawerListener
 { self: ActionBarActivity
   with FragmentManagement
   with Akkativity
-  with StatefulView ⇒
+  with HasContextAgent ⇒
 
   import tryp.droid.tweaks.{Toolbar ⇒ T, Drawer ⇒ D}
 
@@ -129,7 +130,7 @@ with DrawerLayout.DrawerListener
     drawerActor ! Messages.Navigation(target)
   }
 
-  def drawerClick(action: State.Message) = {
+  def drawerClick(action: droid.state.Message) = {
     closeIfOpen()
     send(action)
   }

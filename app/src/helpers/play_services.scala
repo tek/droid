@@ -1,15 +1,14 @@
 package tryp
 package droid
 
-import scalaz._, Scalaz._, concurrent._, stream._, Process._
+import scalaz._, Scalaz._, stream._, Process._
 
 import com.google.android.gms
 import gms.common.{ConnectionResult, GooglePlayServicesUtil}
 import gms.common.{api ⇒ gapi}
 import gapi.GoogleApiClient
 
-
-import State._
+import state._
 
 object PlayServices
 {
@@ -142,7 +141,7 @@ extends DroidStateBase[A]
 
   def connectionEstablished: ViewTransition = {
     case S(_, d) ⇒
-      S(Connected, d) << isConnected.set(true).effect
+      S(Connected, d) << isConnected.set(true).effect("set signal isConnected")
   }
 
   def connectionLost: ViewTransition = {

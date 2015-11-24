@@ -8,7 +8,7 @@ import gms.common.{api ⇒ gapi}
 import gms.plus
 import gapi.GoogleApiClient
 
-import State._
+import state._
 
 object PlusInterface
 {
@@ -72,7 +72,7 @@ extends TrypActivity
 
 trait PlusInterfaceAccess
 extends ActivityAccess
-with StatefulHasActivity
+with HasActivityAgent
 {
   implicit lazy val plus =
     activitySub[HasPlus] some(_.plus) none(new PlusInterface {})

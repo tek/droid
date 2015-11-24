@@ -17,7 +17,7 @@ import macroid.FullDsl._
 
 import util.OS
 import tweaks.Recycler._
-import State._
+import state._
 
 trait FragmentBase
 extends Fragment
@@ -74,9 +74,9 @@ with ResourcesAccess
 trait TrypFragment
 extends Fragment
 with FragmentBase
-with StatefulFragment
+with FragmentAgent
 {
-  def viewState: ViewState = new DummyViewState {}
+  lazy val viewState: ViewState[View] = new DummyViewState {}
 
   override def onCreateView
   (inflater: LayoutInflater, container: ViewGroup, state: Bundle) = {
@@ -95,7 +95,7 @@ with StatefulFragment
 trait VSTrypFragment
 extends Fragment
 with FragmentBase
-with StatefulFragment
+with FragmentAgent
 with Views
 {
   def dummyLayout = w[TextView] >>= iota.text("Couldn't load content")

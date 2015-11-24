@@ -5,7 +5,7 @@ import scalaz._, Scalaz._
 
 import argonaut._, Argonaut._
 
-import State._
+import state._
 import UiActionTypes._
 
 abstract class ShowStateImpl[A <: Model: DecodeJson]
@@ -45,9 +45,9 @@ extends DroidState
 
   def fetchData(id: ObjectId): AnyAction[Option[A]]
 
-  def fetchDetails(m: A): AppEffect = Nop
+  def fetchDetails(m: A): Effect = Nop
 
-  def updateData(m: A): AppEffect
+  def updateData(m: A): Effect
 
   def create(args: Map[String, String], state: Option[Bundle])
   : ViewTransition = {

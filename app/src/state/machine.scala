@@ -1,353 +1,21 @@
 package tryp
 package droid
+package state
 
 import java.util.concurrent.Executors
 
 import concurrent.duration._
 
-import scalaz.{Writer ⇒ _, _}, Scalaz._, concurrent._, stream._, Process._
-import async.mutable.{Signal, Queue, Topic}
-
 import shapeless.syntax.std.tuple._
 
-import org.log4s.Logger
+import scalaz._, Scalaz._
 
-object State
-{
-  trait BasicState
-  case object Pristine extends BasicState
-  case object Initialized extends BasicState
-  case object Initializing extends BasicState
-
-  trait Message
-  {
-    def toFail = this.failureNel[Message]
-  }
-
-  case class Create(args: Map[String, String], state: Option[Bundle])
-  extends Message
-  case object Resume extends Message
-  case object Update extends Message
-  case object Done extends Message
-  case object NopMessage extends Message
-  case class Toast(id: String) extends Message
-  case class ForkedResult(reason: String) extends Message
-  case object Debug extends Message
-  case class UiTask(ui: Ui[Result], timeout: Duration = 30 seconds)
-  extends Message
-
-  trait InternalMessage
-  extends Message
-
-  case class SetInitialState(state: BasicState)
-  extends InternalMessage
-
-  trait Loggable extends Message
-  {
-    def message: String
-  }
-
-  case class LogError(description: String, msg: String)
-  extends Loggable
-  {
-    lazy val message = s"error while $description: $msg"
-  }
-
-  case class LogFatal(description: String, error: Throwable)
-  extends Loggable
-  {
-    lazy val message = Error.withTrace(s"exception while $description", error)
-  }
-
-  case class LogInfo(message: String)
-  extends Loggable
-
-  case class LogVerbose(message: String)
-  extends Loggable
-
-  case class LogDebug(message: String)
-  extends Loggable
-
-  case class UnknownResult[A: Show](result: A)
-  extends Loggable
-  {
-    def message = result.show.toString
-  }
-
-  case class EffectSuccessful(description: String, result: Any)
-  extends Loggable
-  {
-    lazy val message = s"successful effect: $description ($result)"
-  }
-
-  trait MessageInstances
-  {
-    implicit val messageShow = new Show[Message] {
-      override def show(msg: Message) = {
-        msg match {
-          case res @ UnknownResult(result) ⇒
-            Cord(s"${res.className}(${res.message})")
-          case _ ⇒
-            msg.toString
-        }
-      }
-    }
-  }
-
-  object Message
-  extends MessageInstances
-
-  trait Data
-  case object NoData extends Data
-
-  type Result = ValidationNel[Message, Message]
-  type AppEffect = Process[Task, Result]
-
-  type ViewTransitionResult = (Zthulhu, AppEffect)
-
-  type ViewTransition = PartialFunction[Zthulhu, ViewTransitionResult]
-
-  type ViewTransitions = PartialFunction[Message, ViewTransition]
-
-  type TransitionsSelection = Message ⇒ ViewTransitions
-
-  val Nop = emit(NopMessage.successNel)
-
-  def signalSetter[A] = process1.lift[A, Signal.Set[A]](Signal.Set(_))
-}
-import State._
-import Message._
-
-trait ToMessage[A]
-{
-  def message(a: A): Message
-  def error(a: A): Message
-}
-
-trait ToMessageInstances0
-{
-  implicit def anyToMessage[A] = new ToMessage[A] {
-    def message(a: A) = {
-      UnknownResult(a.toString)
-    }
-    def error(a: A) = LogError("running unknown task", a.toString)
-  }
-}
-
-trait ToMessageInstances
-extends ToMessageInstances0
-{
-  implicit def showableToMessage[A: Show] = new ToMessage[A] {
-    def message(a: A) = UnknownResult(a)
-    def error(a: A) = LogError("running unknown task", a.toString)
-  }
-}
-
-object ToMessage
-extends ToMessageInstances
-{
-  implicit def messageToMessage[A <: Message] = new ToMessage[A] {
-    def message(a: A) = a
-    def error(a: A) = a
-  }
-
-  implicit def futureToMessage[A] = new ToMessage[ScalaFuture[A]] {
-    private[this] def fail = sys.error("Tried to convert future to message")
-    def message(f: Future[A]) = fail
-    def error(f: Future[A]) = fail
-  }
-}
-
-object ToMessageSyntax
-{
-  implicit class ToMessageOps[A](a: A)(implicit tm: ToMessage[A]) {
-    def toErrorMessage = tm.error(a)
-    def toMessage = tm.message(a)
-  }
-}
-import ToMessageSyntax._
-
-trait Operation[A]
-{
-  def result(a: A): Result
-}
-
-final class OperationSyntax[A](a: A)(implicit op: Operation[A])
-{
-  def toResult = op.result(a)
-}
-
-trait ToOperationSyntax
-{
-  implicit def ToOperationSyntax[A: Operation](a: A) = new OperationSyntax(a)
-}
-
-trait OperationInstances0
-extends ToOperationSyntax
-{
-  implicit lazy val messageOperation = new Operation[Message] {
-    def result(m: Message) = m.successNel[Message]
-  }
-
-  implicit def anyOperation[A] = new Operation[A] {
-    def result(a: A) = a.toMessage.toResult
-  }
-}
-
-trait OperationInstances
-extends OperationInstances0
-{
-  implicit def validationNelOperation[E: ToMessage, A: ToMessage] =
-    new Operation[ValidationNel[E, A]] {
-      def result(v: ValidationNel[E, A]): Result = {
-        v.bimap(_.map(e ⇒ e.toErrorMessage), _.toMessage)
-      }
-    }
-}
-
-object Operation
-extends OperationInstances
-
-trait ToProcess[F[_]]
-{
-  def proc[A](fa: F[A]): Process[Task, A]
-}
-
-object ToProcess
-{
-  implicit def anyActionToProcess(implicit ec: EC, dbi: DbInfo) =
-    new ToProcess[AnyAction] {
-      def proc[A](aa: AnyAction[A]) = aa.proc
-    }
-}
-
-trait ToProcessSyntax
-{
-  implicit class ToToProcess[A, F[_]](fa: F[A])(implicit tp: ToProcess[F])
-  {
-    def proc = tp.proc(fa)
-  }
-}
-
-// TODO add UiAction implicits
-trait StateImplicits
-extends Logging
-with ToOperationSyntax
-with ToProcessSyntax
-{
-  implicit def liftProcess[A: Operation](proc: Process[Task, A]) = {
-    proc map(a ⇒ a.toResult)
-  }
-
-  implicit def liftTask[A: Operation](t: Task[A]): AppEffect =
-    Process.eval(t map(_.toResult))
-
-  implicit def functorToAppEffect[A: Operation, F[_]: Functor: ToProcess]
-  (fa: F[A]) = {
-    new ToToProcess(fa map(_.toResult)) proc
-  }
-
-  // implicit conversions to Task[Result]
-  // from Ui, DBIOAction, Message
-  implicit def uiToTask(ui: Ui[Result]): AppEffect =
-    Process(UiTask(ui))
-
-  // TODO really block the machine while the Ui is running?
-  implicit def anyUiToTask[A: ToMessage](ui: Ui[A])
-  (implicit ec: EC): AppEffect = {
-    uiToTask(ui map(_.toMessage))
-  }
-
-  implicit def snailToTask[A](ui: Ui[ScalaFuture[A]])
-  (implicit ec: EC): AppEffect =
-    Task {
-      ui.run
-      ForkedResult("Snail").toResult
-    }
-
-  implicit def tryToTask[A: ToMessage](t: Try[A]): AppEffect = {
-    t match {
-      case Success(a) ⇒ a.toMessage
-      case Failure(e) ⇒ LogFatal("evaluating try", e)
-    }
-  }
-
-  implicit def liftOptionTask(t: Task[Option[Result]]): AppEffect = {
-    t map {
-      case Some(e) ⇒ e
-      case None ⇒ LogVerbose("task returned None")
-    }
-  }
-
-  implicit def liftResult(r: Result): AppEffect = Process(r)
-
-  implicit def liftMessage[A <: Message](m: A): Result =
-    m.successNel[Message]
-
-  implicit def messageToAppEffect[A <: Message](m: A): AppEffect = {
-    (m: Result): AppEffect
-  }
-
-  implicit final class TaskOps[A](task: Task[A])
-  {
-    def effect: AppEffect = {
-      task map(r ⇒ liftMessage(
-        EffectSuccessful("implicitly converted task", r.toString)
-      ))
-    }
-  }
-
-  type ToAppEffect[A] = A ⇒ AppEffect
-
-  implicit def foldableToAppEffect[A: ToAppEffect, F[_]: Foldable]
-  (fa: F[A]) = (fa foldLeft(halt: AppEffect)) {
-    case (z, a) ⇒ z ++ (a: AppEffect)
-  }
-
-  def stateEffectProc[F[_], O](description: String)(effect: Process[F, O]) = {
-    effect map(EffectSuccessful(description, _).toResult)
-  }
-
-  def stateEffectTask[F[_], O](description: String)(effect: F[O]) = {
-    stateEffectProc(description)(Process.eval(effect))
-  }
-
-  def stateEffect(description: String)(effect: ⇒ Unit) = {
-    stateEffectTask(description)(Task(effect))
-  }
-
-  implicit final class ProcessOps[F[_], A](proc: Process[F, A])
-  {
-    def logged(desc: String)(implicit logger: Logger) = {
-      proc |> process1.lift { m ⇒
-        logger.trace(s"$desc delivering $m")
-        m
-      }
-    }
-  }
-
-  implicit final class QueueOps[A](queue: Queue[A])
-  {
-    def publish(desc: String)(topic: Topic[A]) = {
-      queue.dequeue
-        .logged(desc)
-        .to(topic.publish)
-        .run
-        .infraRunAsync(desc)
-    }
-  }
-
-  implicit def messageProcMonoid =
-    Monoid.instance[Process[Task, Message]]((a, b) ⇒ a.merge(b), halt)
-}
-
-object StateImplicits
-extends StateImplicits
+import stream.async
+import Process._
 
 case class Zthulhu(state: BasicState = Pristine, data: Data = NoData)
 
 object Zthulhu
-extends StateImplicits
 {
   /* @param z current state machine
    * @param f (Z, M) ⇒ (Z, E), transforms a state and message into a new state
@@ -366,7 +34,7 @@ extends StateImplicits
   (f: (Z, M) ⇒ Maybe[(Z, Process[F, E])])
   (transError: (Z, M, Throwable) ⇒ E)
   (effectError: (Z, Z, M, Throwable) ⇒ E)
-  : stream.Writer1[Process[F, E], M, Z] = {
+  : Writer1[Process[F, E], M, Z] = {
     receive1 { (a: M) ⇒
       val (state, effect) =
         Task(f(z, a)).attemptRun match {
@@ -413,27 +81,26 @@ extends StateImplicits
 
   implicit class ViewTransitionResultOps(r: ViewTransitionResult)
   {
-    def <<[A: ToAppEffect](e: A): ViewTransitionResult = {
-      (r.head, r.last ++ e: AppEffect)
+    def <<[A: StateEffect](e: A): ViewTransitionResult = {
+      (r.head, r.last ++ (e: Effect))
     }
   }
 
   implicit class ZthulhuOps(z: Zthulhu)
   {
-    def <<[A: ToAppEffect](e: A) = (z: ViewTransitionResult) << e
+    def <<[A: StateEffect](e: A) = (z: ViewTransitionResult) << e
   }
 }
 
 import Zthulhu._
 
-abstract class StateImpl(implicit messageTopic: MessageTopic)
+abstract class Machine(implicit messageTopic: MessageTopic)
 extends ToUiOps
-with StateImplicits
 with Logging
 {
   implicit private[this] lazy val executor = Executors.newFixedThreadPool(5)
 
-  implicit private[this] lazy val strat: Strategy = Strategy.Executor
+  implicit private[this] lazy val strat = concurrent.Strategy.Executor
 
   val S = Zthulhu
 
@@ -462,7 +129,7 @@ with Logging
     size map(_ == 0)
 
   private[this] lazy val unsafePerformIO: Process1[Result, Message] = {
-    process1
+    stream.process1
       .collect[Result, List[Message]] {
         case scalaz.Success(m) ⇒
           log.debug(s"task succeeded with ${m.show}")
@@ -492,10 +159,10 @@ with Logging
       .toMaybe
   }
 
-  private[this] lazy val fsmProc: Writer[Task, Message, Zthulhu] = {
+  private[this] lazy val fsmProc: stream.Writer[Task, Message, Zthulhu] = {
     term.discrete
       .merge(idle.when(quit.discrete))
-      .wye(messageIn)(wye.interrupt)
+      .wye(messageIn)(stream.wye.interrupt)
       .viewFsm(uncurriedTransitions, unsafePerformIO)
       .observeO(current.sink.pipeIn(signalSetter[Zthulhu]))
       .observeW(messageOut.enqueue)
@@ -595,7 +262,7 @@ with Logging
 }
 
 trait DroidStateBase[A <: AndroidUiContext]
-extends StateImpl
+extends Machine
 {
   implicit def ctx: A
 }

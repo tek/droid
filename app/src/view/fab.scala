@@ -16,7 +16,7 @@ import FullDsl._
 import AsyncTaskStateData._
 
 trait Fab
-extends StatefulHasActivity
+extends HasActivityAgent
 with Transitions
 with Macroid
 { fabView ⇒

@@ -1,14 +1,12 @@
 package tryp
 package droid
+package state
 
 import view._
 
 import concurrent.duration._
 
-import scalaz._, Scalaz._, concurrent._, stream._
-import concurrent.Task
-
-import State._
+import scalaz._, Scalaz._, stream.async
 
 object ViewState
 {

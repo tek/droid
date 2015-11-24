@@ -5,7 +5,7 @@ import scalaz._, Scalaz._
 
 import rx._
 
-trait Theme extends ActivityBase
+trait Themes extends ActivityBase
 { self: Preferences ⇒
 
   private var themeInitialized = false

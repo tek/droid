@@ -1,9 +1,9 @@
 package tryp {
-  package object droid extends tryp.droid.meta.TrypDroidGlobals
+  import droid.meta.TrypDroidGlobals
+  package object droid extends TrypDroidGlobals
   package droid {
-    package object meta extends tryp.droid.meta.GlobalsBase
-    package object helpers extends tryp.droid.meta.TrypDroidGlobals
-    package object view extends tryp.droid.meta.TrypDroidGlobals
-    package object tweaks extends tryp.droid.meta.TrypDroidGlobals
+    package object meta extends GlobalsBase
+    package object helpers extends TrypDroidGlobals
+    package object tweaks extends TrypDroidGlobals
   }
 }

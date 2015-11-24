@@ -1,4 +1,4 @@
-package tryp.droid.view
+package tryp.droid
 
 import android.content.res.{TypedArray,ColorStateList}
 import android.graphics.drawable.Drawable

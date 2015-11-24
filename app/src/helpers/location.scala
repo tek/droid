@@ -115,7 +115,7 @@ extends LocationsConcern
   }
 }
 
-import State._
+import state._
 
 class LocationInterface(implicit val ctx: WithContext, mt: MessageTopic)
 extends PlayServices[WithContext]

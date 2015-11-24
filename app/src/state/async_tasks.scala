@@ -2,7 +2,7 @@ package tryp.droid
 
 import scalaz._, Scalaz._, concurrent._
 
-import State._
+import state._
 
 object AsyncTaskStateData
 {
@@ -94,7 +94,7 @@ extends DroidStateEC
     case m: AsyncTaskFailure ⇒ taskFail(m)
   }
 
-  def switchToAsyncUi: AppEffect = Ui.nop
+  def switchToAsyncUi: Effect = Nop
 
-  def switchToIdleUi: AppEffect = Ui.nop
+  def switchToIdleUi: Effect = Nop
 }

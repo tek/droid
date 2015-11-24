@@ -219,7 +219,7 @@ extends AkkaClient
 {
 }
 
-abstract class TrypActivityActor[A <: StatefulActivity: ClassTag]
+abstract class TrypActivityActor[A <: ActivityAgent: ClassTag]
 extends TrypActor[A]
 {
   import Messages._
@@ -245,7 +245,7 @@ extends TrypActor[A]
 }
 
 abstract class TrypDrawerActivityActor
-[A <: StatefulActivity with TrypDrawerActivity: ClassTag]
+[A <: ActivityAgent with TrypDrawerActivity: ClassTag]
 extends TrypActivityActor[A]
 {
   import Messages._

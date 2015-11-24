@@ -9,7 +9,7 @@ import rx.ops._
 import com.google.android.gms.common.Scopes
 import com.google.android.gms.auth.UserRecoverableAuthException
 
-import State._
+import state._
 
 object AuthState
 {
@@ -98,7 +98,7 @@ extends DroidState[AuthStateUiI]
   }
 
   // FIXME blocking indefinitely if the connection failed
-  def fetchToken = {
+  def fetchToken: Task[Option[Result]] = {
     val err = FetchTokenFailed("Plus account name unavailable").toFail
     plus.oneAccount
       .map(_.email cata(tokenFromEmail, err))
@@ -137,13 +137,13 @@ extends DroidState[AuthStateUiI]
   lazy val autoFetchAuthToken =
     settings.app.bool("auto_fetch_auth_token", true)
 
-  def authorizePlusToken(account: String, plusToken: String): AppEffect = {
+  def authorizePlusToken(account: String, plusToken: String): Effect = {
     Task {
       backend.authorizePlusToken(account, plusToken) map(BackendAuthorized(_))
     }
   }
 
-  def clearPlusToken(token: String): AppEffect =
+  def clearPlusToken(token: String) =
     stateEffect("clear plus token") { ctx.clearPlusToken(token) }
 
   def plusTokenResolved(success: Boolean) {
@@ -158,7 +158,7 @@ extends DroidState[AuthStateUiI]
 trait AuthIntegration
 extends ActivityBase
 with AppPreferences
-with StatefulActivity
+with ActivityAgent
 with ResourcesAccess
 with HasPlus
 { act: Akkativity ⇒

@@ -1,4 +1,4 @@
-package tryp.droid.view
+package tryp.droid
 
 import android.content.res.TypedArray
 import android.graphics.Canvas
@@ -7,8 +7,6 @@ import android.graphics.drawable.Drawable
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
-//remove if not needed
-import scala.collection.JavaConversions._
 
 class DividerItemDecoration
 extends RecyclerView.ItemDecoration

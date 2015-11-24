@@ -62,5 +62,5 @@ extends DrawerItem
   def title = "GPlus"
 }
 
-case class DrawerButton(title: String, action: State.Message)
+case class DrawerButton(title: String, action: state.Message)
 extends DrawerItem

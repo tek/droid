@@ -3,7 +3,7 @@ package droid
 
 import macroid.FullDsl._
 
-import State._
+import state._
 
 import scalaz._, Scalaz._
 
@@ -39,8 +39,9 @@ extends DroidStateEC
 
   def loadFragment(fragment: () ⇒ Fragment, tag: String): ViewTransition = {
     case s ⇒
-      s <<
-        ctx.transitionFragment(FragmentBuilder(fragment, Id.content, tag.some))
+      s << ctx
+        .transitionFragment(FragmentBuilder(fragment, Id.content, tag.some))
+        .toResult
   }
 
   def contentLoaded(view: Ui[View]): ViewTransition = {

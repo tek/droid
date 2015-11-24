@@ -16,7 +16,7 @@ with AppPreferences
 
   private val global = GlobalResourceNamespace
 
-  lazy val theme = new tryp.droid.view.Theme
+  lazy val theme = new Theme
 
   def id[A >: IdTypes](input: A, defType: String = "id"): Int = {
     val res = input match {

@@ -38,7 +38,7 @@ extends PlusInterface
 }
 
 trait AuthStateMock
-extends StatefulActivity
+extends ActivityAgent
 with AuthIntegration
 { act: TrypActivity ⇒
 

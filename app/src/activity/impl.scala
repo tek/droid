@@ -9,7 +9,7 @@ import macroid.Contexts
 import Macroid._
 
 abstract trait TrypActivity
-extends Theme
+extends Themes
 with Broadcast
 with ManagePreferences
 with MainView
@@ -44,5 +44,5 @@ abstract class TrypDrawerActivity
 extends TrypDefaultActivity
 with Drawer
 {
-  self: StatefulView ⇒
+  self: HasContextAgent ⇒
 }
