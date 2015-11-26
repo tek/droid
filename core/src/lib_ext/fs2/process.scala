@@ -18,6 +18,14 @@ extends ToTaskOps
   def infraRunFor(desc: String, timeout: Duration)(implicit log: Logger) = {
     proc.run.infraRunFor(desc, timeout)
   }
+
+  def infraRunLogAsync(desc: String)(implicit log: Logger) = {
+    proc.runLog.infraRunAsync(desc)
+  }
+
+  def infraRunLogFor(desc: String, timeout: Duration)(implicit log: Logger) = {
+    proc.runLog.infraRunFor(desc, timeout)
+  }
 }
 
 trait ToProcessOps
