@@ -61,8 +61,8 @@ with FixedStrategy
   val ! = send _
 
   def runState() = {
-    runPublisher()
-    allMachines(_.runFsm())
+    connect()
+    allMachines(_.run())
   }
 
   protected def initState() = {
@@ -76,7 +76,7 @@ with FixedStrategy
 
   lazy val messageOut = machines foldMap(_.messageOut.dequeue)
 
-  private[this] def runPublisher() = {
+  protected def connect() = {
     messageOut
       .merge(messageIn.dequeue)
       .to(messageTopic.publish)

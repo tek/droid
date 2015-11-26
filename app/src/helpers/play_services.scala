@@ -41,7 +41,7 @@ import PlayServices._
 trait PlayServices[A <: WithContext]
 extends DroidStateBase[A]
 {
-  runFsm(Disconnected)
+  run(Disconnected)
 
   class ConnectionCallbacks(owner: PlayServices[A])
   extends GoogleApiClient.OnConnectionFailedListener
