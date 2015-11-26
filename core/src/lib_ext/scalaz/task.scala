@@ -27,8 +27,12 @@ final class TaskOps[A](task: Task[A])
      TaskOps.infraResult(desc)(task.attemptRun)
   }
 
+  def infraRunFor(desc: String, timeout: Duration)(implicit log: Logger) = {
+     TaskOps.infraResult(desc)(task.attemptRunFor(timeout))
+  }
+
   def infraRunShort(desc: String)(implicit log: Logger) = {
-     TaskOps.infraResult(desc)(task.attemptRunFor(5 seconds))
+    infraRunFor(desc, 5 seconds)
   }
 
   def !?(desc: String)(implicit log: Logger) = infraRunShort(desc)

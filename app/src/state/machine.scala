@@ -176,7 +176,6 @@ with Logging
   def runFsm(initial: BasicState = Pristine) = {
     running.set(true) !? "set sig running"
     (messageTopic.subscribe to externalMessageIn.enqueue)
-      .run
       .infraRunAsync("message input queue")
     fsmTask.runAsync {
       case a ⇒
@@ -186,7 +185,6 @@ with Logging
     if (debugStates)
       current.discrete
         .map(z ⇒ log.debug(z.toString))
-        .run
         .infraRunAsync("debug state printer")
     send(SetInitialState(initial))
   }
@@ -216,7 +214,8 @@ with Logging
   // roughly equivalent to a flatMap(_ ⇒ b)
   def join() = {
     log.trace(s"terminating $this")
-    quit.set(true) *> finished.run attemptRunFor(20 seconds)
+    (quit.set(true) *> finished.run)
+      .infraRunFor("wait for finished signal", 20 seconds)
   }
 
   def finished = running.continuous.exists(!_)
