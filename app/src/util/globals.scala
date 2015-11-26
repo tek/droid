@@ -40,7 +40,6 @@ trait Implicits
 extends droid.ViewInstances
 with droid.ToViewOps
 with droid.ToIntentOps
-with droid.ToTaskOps
 
 trait AndroidTypes
 {
@@ -52,6 +51,7 @@ trait AndroidTypes
 
 trait Globals
 extends tryp.slick.sync.meta.Globals
+with droid.core.meta.Globals
 with Util
 with Forward
 with Types
