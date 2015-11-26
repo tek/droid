@@ -30,7 +30,7 @@ with Logging
 trait ActivityAccess
 extends HasActivity
 {
-  def activitySub[A <: ActivityBase: ClassTag] = {
+  def activitySub[A <: ActivityBase: ClassTag]: Option[A] = {
     activity match {
       case a: A ⇒ Option[A](a)
       case _ ⇒ None

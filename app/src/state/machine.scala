@@ -2,7 +2,7 @@ package tryp
 package droid
 package state
 
-import java.util.concurrent.Executors
+import shapeless._
 
 import concurrent.duration._
 
@@ -112,7 +112,7 @@ with FixedStrategy
 
   private[this] def messageIn = {
     internalMessageIn.dequeue.logged(s"$description internal")
-      .merge(externalMessageIn.dequeue.logged(s"$description external"))
+      .merge(messageTopic.subscribe.logged(s"$description external"))
   }
 
   val messageOut = async.unboundedQueue[Message]
@@ -172,10 +172,8 @@ with FixedStrategy
 
   val debugStates = false
 
-  def runFsm(initial: BasicState = Pristine) = {
+  def run(initial: BasicState = Pristine) = {
     running.set(true) !? "set sig running"
-    (messageTopic.subscribe to externalMessageIn.enqueue)
-      .infraRunAsync("message input queue")
     fsmTask.runAsync {
       case a ⇒
         running.set(false) !? "unset sig running"

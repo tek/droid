@@ -66,7 +66,7 @@ case class GeofenceInterface(apiClient: GoogleApiClient, intent: PendingIntent)
 
 case class GeofenceHandler(intent: PendingIntent)
 (implicit val context: Context)
-extends Agent
+extends SolitaryAgent
 {
   // TODO connect
   def success = async.signalOf(false)

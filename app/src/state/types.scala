@@ -282,6 +282,8 @@ with ToStateEffectSyntax
   def signalSetter[A] = stream.process1.lift[A, Signal.Set[A]](Signal.Set(_))
 
   type Agent = droid.state.Agent
+  type SolitaryAgent = droid.state.SolitaryAgent
+  type Mediator = droid.state.Mediator
   type HasContextAgent = droid.state.HasContextAgent
   type HasActivityAgent = droid.state.HasActivityAgent
   type ActivityAgent = droid.state.ActivityAgent

@@ -2,6 +2,8 @@ package tryp
 package droid
 package state
 
+import shapeless._
+
 import concurrent.duration._
 
 trait UiDispatcher
@@ -40,7 +42,7 @@ with HasContext
 
 trait HasActivityAgent
 extends HasContextAgent
-with HasActivity
+with ActivityAccess
 {
   override implicit def uiCtx: AndroidUiContext =
     AndroidActivityUiContext.default
@@ -62,6 +64,8 @@ with HasActivity
       case Toast(id) ⇒ toast(id)
     }
   }
+
+  lazy val mediator = activitySub[ActivityAgent] getOrElse fallbackMediator
 }
 
 trait FragmentAgent
@@ -87,6 +91,7 @@ with CallbackMixin
 trait ActivityAgent
 extends TrypActivity
 with HasActivityAgent
+with Mediator
 {
   lazy val viewState: ViewState[View] = new DummyViewState {}
 
@@ -94,7 +99,7 @@ with HasActivityAgent
   override def onCreate(saved: Bundle) {
     super.onCreate(saved)
     initState()
-    // logImpl ! LogLevel(LogLevel.DEBUG)
+    // logMachine ! LogLevel(LogLevel.DEBUG)
     send(Create(Map(), Option(saved)))
   }
 
@@ -102,4 +107,6 @@ with HasActivityAgent
     super.onResume()
     send(Resume)
   }
+
+  override lazy val mediator = this
 }

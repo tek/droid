@@ -2,13 +2,31 @@ package tryp
 package droid
 package unit
 
-import org.specs2._
+import org.specs2._, specification._, matcher._, concurrent._
 
-import state._
+import scalaz._, Scalaz._, scalaz.concurrent._, stream.async
 
+import droid.state._
+
+trait Matchers
+extends SpecificationLike
 {
+  def become[A](target: A): Matcher[Task[A]] = { (ta: Task[A]) ⇒
+    ta.attemptRun.toOption must beSome(target)
+  } eventually
+}
 
+case object Go
+extends Message
 
+case object Received0
+extends Message
+
+case object Received1
+extends Message
+
+case object Received2
+extends Message
 
 
 trait State0
@@ -17,7 +35,9 @@ extends Machine[HNil]
   def handle = "state0"
 
   def transitions: ViewTransitions = {
-    case _ ⇒ { case s ⇒ s }
+    case Received2 ⇒ {
+      case s ⇒ s  << Received0
+    }
   }
 }
 
@@ -26,8 +46,15 @@ extends Machine[HNil]
 {
   def handle = "state1"
 
+  lazy val output = async.signalOf(false)
+
   def transitions: ViewTransitions = {
-    case _ ⇒ { case s ⇒ s }
+    case Go ⇒ {
+      case s ⇒ s << Received1
+    }
+    case Received0 ⇒ {
+      case s ⇒ s << output.set(true)
+    }
   }
 }
 
@@ -37,19 +64,21 @@ extends Machine[HNil]
   def handle = "state2"
 
   def transitions: ViewTransitions = {
-    case _ ⇒ { case s ⇒ s }
+    case Received1 ⇒ {
+      case s ⇒ s << Received2
+    }
   }
 }
 
 class MachineSpec
 extends Specification
+with Matchers
 {
   def is = s2"""
   machine $machine
   """
 
   def machine = {
-    implicit val c = new DummyAndroidUiContext
     val med = new Mediator {
       lazy val state = new State0 {}
 
@@ -59,12 +88,20 @@ extends Specification
       lazy val state = new State1 {}
 
       override def machines = state :: super.machines
+
+      val mediator = med
     }
     val ag2 = new Agent {
       lazy val state = new State2 {}
 
       override def machines = state :: super.machines
+
+      val mediator = med
     }
-    1 === 1
+    med.runState()
+    ag1.runState()
+    ag2.runState()
+    ag1.send(Go)
+    ag1.state.output.get must become(true)
   }
 }

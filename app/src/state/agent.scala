@@ -2,6 +2,8 @@ package tryp
 package droid
 package state
 
+import shapeless._
+
 import scalaz._, Scalaz._, concurrent.Strategy, stream.async
 
 trait LogMachine
@@ -44,7 +46,11 @@ with FixedStrategy
 {
   val threads = 2
 
-  implicit lazy val messageTopic = MessageTopic()
+  def mediator: Mediator
+
+  implicit protected lazy val toMachines = MessageTopic()
+
+  private[this] lazy val fromMachines = MessageTopic()
 
   lazy val logMachine = new LogMachine {}
 
@@ -78,10 +84,15 @@ with FixedStrategy
 
   protected def connect() = {
     messageOut
+      .to(fromMachines.publish)
+      .infraRunAsync("machine emission")
+    mediator.subscribe
       .merge(messageIn.dequeue)
-      .to(messageTopic.publish)
-      .run
-      .infraRunAsync("message publisher")
+      .to(toMachines.publish)
+      .infraRunAsync("machine reception")
+    fromMachines.subscribe
+      .to(mediator.publish)
+      .infraRunAsync("machine to mediator")
   }
 
   def killState() = {
@@ -91,4 +102,24 @@ with FixedStrategy
   def joinState() = {
     allMachines(_.join())
   }
+
+  lazy val fallbackMediator = new Mediator {}
+}
+
+trait SolitaryAgent
+extends Agent
+{
+  lazy val mediator = fallbackMediator
+}
+
+trait Mediator
+extends Agent
+{
+  private[this] val exchange = MessageTopic()
+
+  def publish = exchange.publish
+
+  def subscribe = exchange.subscribe
+
+  def mediator = this
 }
