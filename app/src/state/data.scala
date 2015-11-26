@@ -19,15 +19,34 @@ trait Message
 
 case class Create(args: Map[String, String], state: Option[Bundle])
 extends Message
-case object Resume extends Message
-case object Update extends Message
-case object Done extends Message
-case object NopMessage extends Message
-case class Toast(id: String) extends Message
-case class ForkedResult(reason: String) extends Message
-case object Debug extends Message
+
+case object Resume
+extends Message
+
+case object Update
+extends Message
+
+case object Done
+extends Message
+
+case object NopMessage
+extends Message
+
+case class Toast(id: String)
+extends Message
+
+case class ForkedResult(reason: String)
+extends Message
+
+case object Debug
+extends Message
+
+case object UnitTask
+extends Message
+
 case class UiTask(ui: Ui[Result], timeout: Duration = 30 seconds)
 extends Message
+
 case class UiSuccessful(result: Any)
 extends Message
 
@@ -37,7 +56,8 @@ extends Message
 case class SetInitialState(state: BasicState)
 extends InternalMessage
 
-trait Loggable extends Message
+trait Loggable
+extends Message
 {
   def message: String
 }

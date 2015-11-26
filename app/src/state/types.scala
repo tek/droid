@@ -2,6 +2,8 @@ package tryp
 package droid
 package state
 
+import scala.annotation.implicitNotFound
+
 import org.log4s.Logger
 
 import scalaz._, Scalaz._
@@ -57,6 +59,7 @@ object ToMessageSyntax
 }
 import ToMessageSyntax._
 
+@implicitNotFound("no Operation[${A}] defined")
 trait Operation[-A]
 {
   def result(a: A): Result
@@ -85,16 +88,14 @@ extends ToOperationSyntax
     }
   }
 
-  implicit def unitUiOperation = new Operation[Ui[Unit]] {
-    def result(u: Ui[Unit]) = {
-      u map(_ ⇒ UiSuccessful("unit Ui").toResult) toResult
+  implicit def anyUiOperation[A] = new Operation[Ui[A]] {
+    def result(u: Ui[A]) = {
+      u map(_.toString) map(UiSuccessful(_).toResult) toResult
     }
   }
 
-  implicit def anyUiOperation = new Operation[Ui[Any]] {
-    def result(u: Ui[Any]) = {
-      u map(_.toString) map(UiSuccessful(_).toResult) toResult
-    }
+  implicit def unitOperation = new Operation[Unit] {
+    def result(u: Unit) = UnitTask.toResult
   }
 
   implicit def optionOperation[A: Operation] = new Operation[Option[A]] {
@@ -115,6 +116,12 @@ extends OperationInstances0
         v.bimap(_.map(e ⇒ e.toErrorMessage), _.toMessage)
       }
     }
+
+  implicit def unitUiOperation = new Operation[Ui[Unit]] {
+    def result(u: Ui[Unit]) = {
+      u map(_ ⇒ UiSuccessful("unit Ui").toResult) toResult
+    }
+  }
 
   implicit def uiOperation[A: Operation] = new Operation[Ui[A]] {
     def result(u: Ui[A]) = u map(_.toResult) toResult
