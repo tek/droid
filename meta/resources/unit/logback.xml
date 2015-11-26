@@ -5,13 +5,7 @@
       <pattern>%d{HH:mm:ss.SSS} %-5level %logger{35} | %msg%n</pattern>
     </encoder>
   </appender>
-  <appender
-    name="LOGCAT"
-    class="ch.qos.logback.classic.android.LogcatAppender"
-    >
-    <tagEncoder>
-      <pattern>${tag}</pattern>
-    </tagEncoder>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <pattern>%d{HH:mm:ss.SSS} %-5level %logger{35} | %msg%n</pattern>
     </encoder>
@@ -20,6 +14,6 @@
   <logger name="tryp.state" level="debug" />
   <root>
     <appender-ref ref="FILE" />
-    <appender-ref ref="LOGCAT" />
+    <appender-ref ref="STDOUT" />
   </root>
 </configuration>
