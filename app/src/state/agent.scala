@@ -40,8 +40,9 @@ extends AnyVal
 
 trait Agent
 extends Logging
+with FixedStrategy
 {
-  implicit lazy val strat: Strategy = Strategy.Naive
+  val threads = 2
 
   implicit lazy val messageTopic = MessageTopic()
 

@@ -98,10 +98,9 @@ abstract class Machine[A <: HList]
 (implicit messageTopic: MessageTopic)
 extends ToUiOps
 with Logging
+with FixedStrategy
 {
-  implicit private[this] lazy val executor = Executors.newFixedThreadPool(5)
-
-  implicit private[this] lazy val strat = concurrent.Strategy.Executor
+  val threads = 5
 
   val S = Zthulhu
 
