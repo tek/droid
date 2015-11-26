@@ -17,6 +17,9 @@ trait Message
   def toFail = this.failureNel[Message]
 }
 
+case class MachineTerminated(z: Machine[_ <: shapeless.HList])
+extends Message
+
 case class Create(args: Map[String, String], state: Option[Bundle])
 extends Message
 

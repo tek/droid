@@ -250,6 +250,19 @@ final class ProcessEffectOps[F[_], A](proc: Process[F, A])
   }
 }
 
+object SignalEffectOps
+{
+  def signalSetter[A] = stream.process1.lift[A, Signal.Set[A]](Signal.Set(_))
+}
+
+final class SignalEffectOps[A](val self: Signal[A])
+extends AnyVal
+{
+  def pipeIn = self.sink.pipeIn(SignalEffectOps.signalSetter[A])
+
+  def setter(value: A) = emit(value) observe pipeIn
+}
+
 trait MiscEffectOps
 {
   implicit lazy val uiMonad = new Monad[Ui]
@@ -275,7 +288,9 @@ trait MiscEffectOps
   implicit def ToProcessEffectOps[F[_], A](proc: Process[F, A]) =
     new ProcessEffectOps(proc)
 
-  implicit def ToTaskEffectOps[A](proc: Task[A]) = new TaskEffectOps(proc)
+  implicit def ToTaskEffectOps[A](t: Task[A]) = new TaskEffectOps(t)
+
+  implicit def ToSignalEffectOps[A](sig: Signal[A]) = new SignalEffectOps(sig)
 }
 
 trait Exports
@@ -285,8 +300,6 @@ with ToProcessSyntax
 with ToStateEffectSyntax
 {
   val Nop: Effect = Process.halt
-
-  def signalSetter[A] = stream.process1.lift[A, Signal.Set[A]](Signal.Set(_))
 
   type Agent = droid.state.Agent
   type SolitaryAgent = droid.state.SolitaryAgent

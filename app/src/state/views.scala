@@ -78,7 +78,7 @@ with CallbackMixin
 
   abstract override def onCreate(saved: Bundle) {
     super.onCreate(saved)
-    initState()
+    initMachines()
     send(Create(self.arguments, Option(saved)))
   }
 
@@ -98,7 +98,7 @@ with Mediator
   // TODO impl log level
   override def onCreate(saved: Bundle) {
     super.onCreate(saved)
-    initState()
+    initMachines()
     // logMachine ! LogLevel(LogLevel.DEBUG)
     send(Create(Map(), Option(saved)))
   }

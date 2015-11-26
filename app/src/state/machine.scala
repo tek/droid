@@ -117,7 +117,7 @@ with FixedStrategy
 
   val messageOut = async.unboundedQueue[Message]
 
-  private[this] val running = async.signalOf(false)
+  private[this] val running = async.signalOf(true)
 
   private[this] val quit = async.signalOf(false)
 
@@ -159,31 +159,26 @@ with FixedStrategy
       .toMaybe
   }
 
-  private[this] lazy val fsmProc: stream.Writer[Task, Message, Zthulhu] = {
+  private[this] lazy val fsmProc: Process[Task, Message] = {
     term.discrete
       .merge(idle.when(quit.discrete))
       .wye(messageIn)(stream.wye.interrupt)
       .viewFsm(uncurriedTransitions, unsafePerformIO)
-      .observeO(current.sink.pipeIn(signalSetter[Zthulhu]))
-      .observeW(messageOut.enqueue)
+      .observeO(current.pipeIn)
+      .stripO
   }
-
-  private[this] lazy val fsmTask = fsmProc.runLog
 
   val debugStates = false
 
-  def run(initial: BasicState = Pristine) = {
-    running.set(true) !? "set sig running"
-    fsmTask.runAsync {
-      case a ⇒
-        running.set(false) !? "unset sig running"
-        log.info(s"FSM terminated: $a")
-    }
+  def run(initial: BasicState = Pristine): Process[Task, Message] = {
     if (debugStates)
       current.discrete
         .map(z ⇒ log.debug(z.toString))
         .infraRunAsync("debug state printer")
     send(SetInitialState(initial))
+    fsmProc.onComplete {
+      running.setter(false).map(_ ⇒ MachineTerminated(this))
+    }
   }
 
   def send(msg: Message) = {

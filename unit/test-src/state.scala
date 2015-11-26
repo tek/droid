@@ -98,9 +98,9 @@ with Matchers
 
       val mediator = med
     }
-    med.runState()
-    ag1.runState()
-    ag2.runState()
+    med.initMachines()
+    ag1.initMachines()
+    ag2.initMachines()
     ag1.send(Go)
     ag1.state.output.get must become(true)
   }

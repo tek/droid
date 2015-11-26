@@ -66,34 +66,30 @@ with FixedStrategy
 
   val ! = send _
 
-  def runState() = {
-    connect()
-    allMachines(_.run())
-  }
+  lazy val messageOut = machines foldMap(_.run())
 
-  protected def initState() = {
-    runState()
-    postRunState()
-  }
-
-  protected def postRunState(): Unit = ()
-
-  lazy val messageIn = async.unboundedQueue[Message]
-
-  lazy val messageOut = machines foldMap(_.messageOut.dequeue)
-
-  protected def connect() = {
+  protected def runMachines() = {
     messageOut
       .to(fromMachines.publish)
       .infraRunAsync("machine emission")
     mediator.subscribe
       .merge(messageIn.dequeue)
+      .logged("agent to machines")
       .to(toMachines.publish)
       .infraRunAsync("machine reception")
     fromMachines.subscribe
       .to(mediator.publish)
       .infraRunAsync("machine to mediator")
   }
+
+  def initMachines() = {
+    runMachines()
+    postRunMachines()
+  }
+
+  protected def postRunMachines(): Unit = ()
+
+  lazy val messageIn = async.unboundedQueue[Message]
 
   def killState() = {
     allMachines(_.kill())
