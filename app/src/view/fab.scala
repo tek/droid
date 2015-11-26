@@ -23,13 +23,13 @@ with Macroid
 
   import CommonWidgets._
 
-  lazy val asyncImpl = new AsyncTasksImpl {
+  lazy val asyncMachine = new AsyncTasksMachine {
     def handle = "fab"
     override def switchToAsyncUi = fabView.fadeToProgress
     override def switchToIdleUi = fabView.fadeToFab
   }
 
-  override def impls = asyncImpl :: super.impls
+  override def machines = asyncMachine :: super.machines
 
   val progress = slut[ProgressBar]
 

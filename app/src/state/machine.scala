@@ -94,7 +94,8 @@ object Zthulhu
 
 import Zthulhu._
 
-abstract class Machine(implicit messageTopic: MessageTopic)
+abstract class Machine[A <: HList]
+(implicit messageTopic: MessageTopic)
 extends ToUiOps
 with Logging
 {
@@ -262,7 +263,7 @@ with Logging
 }
 
 trait DroidStateBase[A <: AndroidUiContext]
-extends Machine
+extends Machine[HNil]
 {
   implicit def ctx: A
 }

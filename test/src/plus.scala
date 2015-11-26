@@ -8,7 +8,7 @@ import com.google.android.gms
 import gms.common.{api ⇒ gapi}
 import gapi.GoogleApiClient
 
-import droid.State._
+import droid.state._
 import PlayServices._
 
 object MockData
@@ -44,17 +44,17 @@ with AuthIntegration
 
   override implicit lazy val plus: PlusInterface = new MockPlusInterface {}
 
-  override lazy val authImpl = new AuthState {
+  override lazy val authMachine = new AuthState {
     def activity = act
 
     def backend = new Backend()(settings, res)
 
     override def plusToken(email: String) = "mock_plus_token"
 
-    override def clearPlusToken(token: String) = droid.State.Nop
+    override def clearPlusToken(token: String) = Nop
 
     override def authorizePlusToken(account: String, plusToken: String) = {
-      AuthState.BackendAuthorized(MockData.authToken).success
+      AuthState.BackendAuthorized(MockData.authToken)
     }
   }
 }

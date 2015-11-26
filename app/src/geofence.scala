@@ -75,7 +75,7 @@ extends Agent
 
   lazy val location = new LocationInterface {}
 
-  override def impls = location :: super.impls
+  override def machines = location :: super.machines
 
   def setupProcess(client: GoogleApiClient,
     locations: NonEmptyList[GeofenceData]) = {

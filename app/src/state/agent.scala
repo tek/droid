@@ -4,8 +4,8 @@ package state
 
 import scalaz._, Scalaz._, concurrent.Strategy, stream.async
 
-trait LogImpl
-extends Machine
+trait LogMachine
+extends Machine[HNil]
 {
   def handle = "log"
 
@@ -45,11 +45,11 @@ extends Logging
 
   implicit lazy val messageTopic = MessageTopic()
 
-  lazy val logImpl = new LogImpl {}
+  lazy val logMachine = new LogMachine {}
 
-  def impls: List[Machine] = logImpl :: Nil
+  def machines: List[Machine[_]] = logMachine :: Nil
 
-  def allImpls[A](f: Machine ⇒ A) = impls map(f)
+  def allMachines[A](f: Machine[_] ⇒ A) = machines map(f)
 
   def send(msg: Message) = sendAll(msg.wrapNel)
 
@@ -61,7 +61,7 @@ extends Logging
 
   def runState() = {
     runPublisher()
-    allImpls(_.runFsm())
+    allMachines(_.runFsm())
   }
 
   protected def initState() = {
@@ -73,7 +73,7 @@ extends Logging
 
   lazy val messageIn = async.unboundedQueue[Message]
 
-  lazy val messageOut = impls foldMap(_.messageOut.dequeue)
+  lazy val messageOut = machines foldMap(_.messageOut.dequeue)
 
   private[this] def runPublisher() = {
     messageOut
@@ -84,10 +84,10 @@ extends Logging
   }
 
   def killState() = {
-    allImpls(_.kill())
+    allMachines(_.kill())
   }
 
   def joinState() = {
-    allImpls(_.join())
+    allMachines(_.join())
   }
 }

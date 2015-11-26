@@ -25,7 +25,7 @@ object NavMessages
 }
 import NavMessages._
 
-trait NavImpl
+trait NavMachine
 extends SimpleDroidState
 {
   override def description = "nav state"

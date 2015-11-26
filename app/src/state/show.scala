@@ -8,7 +8,7 @@ import argonaut._, Argonaut._
 import state._
 import UiActionTypes._
 
-abstract class ShowStateImpl[A <: Model: DecodeJson]
+abstract class ShowStateMachine[A <: Model: DecodeJson]
 (implicit ec: EC, db: tryp.slick.DbInfo, ctx: AndroidUiContext,
   mt: MessageTopic)
 extends DroidState

@@ -11,11 +11,11 @@ with HasContextAgent
 
   def navigation: Navigation
 
-  lazy val navImpl = new NavImpl {
+  lazy val navMachine = new NavMachine {
     def handle = "nav"
   }
 
-  override def impls = navImpl :: super.impls
+  override def machines = navMachine :: super.machines
 
   override def postRunState() = {
     send(SetNav(navigation))

@@ -5,7 +5,7 @@ package state
 import concurrent.duration._
 
 trait UiDispatcher
-extends Machine
+extends Machine[HNil]
 {
   def handle = "ui"
 
@@ -29,13 +29,13 @@ with HasContext
 {
   implicit def uiCtx: AndroidUiContext = AndroidContextUiContext.default
 
-  lazy val uiImpl = new UiDispatcher {}
+  lazy val uiMachine = new UiDispatcher {}
 
   implicit def ec: EC
 
   val viewState: ViewState[_ <: View]
 
-  override def impls = uiImpl :: viewState :: super.impls
+  override def machines = uiMachine :: viewState :: super.machines
 }
 
 trait HasActivityAgent
@@ -45,9 +45,9 @@ with HasActivity
   override implicit def uiCtx: AndroidUiContext =
     AndroidActivityUiContext.default
 
-  override def impls = activityImpl :: super.impls
+  override def machines = activityMachine :: super.machines
 
-  protected lazy val activityImpl = new DroidState
+  protected lazy val activityMachine = new DroidState
   {
     override def description = "activity access state"
 

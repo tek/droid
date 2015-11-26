@@ -163,9 +163,9 @@ with AppPreferences
 abstract class ShowFragment[A <: Model]
 extends MainFragment
 {
-  def showImpl: ShowStateImpl[A]
+  def showMachine: ShowStateMachine[A]
 
-  override def impls = showImpl :: super.impls
+  override def machines = showMachine :: super.machines
 
   override def onViewStateRestored(state: Bundle) {
     super.onViewStateRestored(state)

@@ -15,13 +15,13 @@ with HasActivityAgent
 
   val content = slut[FrameLayout]
 
-  lazy val mainViewImpl = new MainViewImpl {
+  lazy val mainViewMachine = new MainViewMachine {
     def handle = "mainview"
     override def description = "main view state"
     override def nativeBack() = mainView.nativeBack()
   }
 
-  override def impls = mainViewImpl :: super.impls
+  override def machines = mainViewMachine :: super.machines
 
   implicit val fm: FragmentManagement = mainView
 

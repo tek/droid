@@ -6,6 +6,8 @@ import android.widget._
 
 import akka.actor.{Props, ActorLogging, ActorRef}
 
+import state._
+
 class CoreActor
 extends TrypActivityActor[SpecActivity]
 with ActorLogging

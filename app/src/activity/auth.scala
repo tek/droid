@@ -163,11 +163,11 @@ with ResourcesAccess
 with HasPlus
 { act: Akkativity ⇒
 
-  lazy val authImpl = new AuthState {
+  lazy val authMachine = new AuthState {
     def backend = new Backend()(settings, res)
   }
 
-  override def impls = authImpl :: super.impls
+  override def machines = authMachine :: super.machines
 
   override def onActivityResult(requestCode: Int, responseCode: Int,
     intent: Intent) = {
@@ -176,7 +176,7 @@ with HasPlus
     if (requestCode == Plus.RC_SIGN_IN)
       plus.send(PlayServices.Connect)
     else if (requestCode == Plus.RC_TOKEN_FETCH)
-      authImpl.plusTokenResolved(ok)
+      authMachine.plusTokenResolved(ok)
   }
 
   def obtainToken() = {

@@ -41,7 +41,7 @@ object AsyncTaskStateData
 }
 import AsyncTaskStateData._
 
-trait AsyncTasksImpl
+trait AsyncTasksMachine
 extends DroidStateEC
 {
   private[this] def execTask(msg: AsyncTask, data: AsyncTasksData, fade: Boolean) =
