@@ -6,17 +6,10 @@ import org.specs2._
 
 import state._
 
-class DummyAndroidUiContext
-extends AndroidUiContext
 {
-  def loadFragment(fragment: FragmentBuilder) = Ui("not implemented")
 
-  def transitionFragment(fragment: FragmentBuilder) = Ui("not implemented")
 
-  def showViewTree(view: View) = "not implemented"
 
-  def notify(id: String): Ui[Any] = Ui("asdf")
-}
 
 trait State0
 extends Machine[HNil]

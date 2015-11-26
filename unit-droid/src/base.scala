@@ -75,3 +75,16 @@ with HasActivity
 {
   def activityClass = classOf[SpecActivity]
 }
+
+
+class DummyAndroidUiContext
+extends AndroidUiContext
+{
+  def loadFragment(fragment: FragmentBuilder) = Ui("not implemented")
+
+  def transitionFragment(fragment: FragmentBuilder) = Ui("not implemented")
+
+  def showViewTree(view: View) = "not implemented"
+
+  def notify(id: String): Ui[Any] = Ui("asdf")
+}
