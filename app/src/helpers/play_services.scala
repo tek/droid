@@ -39,7 +39,7 @@ object PlayServices
 import PlayServices._
 
 trait PlayServices[A <: WithContext]
-extends DroidStateBase[A]
+extends DroidMachineBase[A]
 {
   run(Disconnected)
 
@@ -113,7 +113,7 @@ extends DroidStateBase[A]
     client |> await1
   }
 
-  val basicTransitions: ViewTransitions = {
+  val basicAdmit: Admission = {
     case Connect ⇒ connect
     case ConnectionEstablished ⇒ connectionEstablished
     case ConnectionLost ⇒ connectionLost
@@ -121,9 +121,9 @@ extends DroidStateBase[A]
     case Disconnect ⇒ disconnect
   }
 
-  def transitions = basicTransitions
+  def admit = basicAdmit
 
-  def connect: ViewTransition = {
+  def connect: Transit = {
     case S(Disconnected, d) ⇒
       S(Connecting, d) <<
         stateEffect("connecting play services") {
@@ -131,7 +131,7 @@ extends DroidStateBase[A]
         }
   }
 
-  def disconnect: ViewTransition = {
+  def disconnect: Transit = {
     case S(_, d) ⇒
       S(Disconnected, d) <<
         stateEffect("disconnecting play services") {
@@ -139,12 +139,12 @@ extends DroidStateBase[A]
         }
   }
 
-  def connectionEstablished: ViewTransition = {
+  def connectionEstablished: Transit = {
     case S(_, d) ⇒
       S(Connected, d) << isConnected.set(true).effect("set signal isConnected")
   }
 
-  def connectionLost: ViewTransition = {
+  def connectionLost: Transit = {
     case S(_, d) ⇒
       S(Disconnected, d)
   }

@@ -42,7 +42,7 @@ object AsyncTaskStateData
 import AsyncTaskStateData._
 
 trait AsyncTasksMachine
-extends DroidStateEC
+extends DroidMachineEC
 {
   private[this] def execTask(msg: AsyncTask, data: AsyncTasksData, fade: Boolean) =
   {
@@ -57,14 +57,14 @@ extends DroidStateEC
       msg.done
   }
 
-  def startTask(msg: AsyncTask): ViewTransition = {
+  def startTask(msg: AsyncTask): Transit = {
     case S(Idle, f @ AsyncTasksData(_)) ⇒
       execTask(msg, f, true)
     case S(Running, f @ AsyncTasksData(_)) ⇒
       execTask(msg, f, false)
   }
 
-  def taskDone(msg: AsyncTaskDone): ViewTransition = {
+  def taskDone(msg: AsyncTaskDone): Transit = {
     case S(Running, AsyncTasksData(tasks)) ⇒
       val remaining = tasks filterNot(_ == msg.task)
       if (remaining.isEmpty)
@@ -73,20 +73,20 @@ extends DroidStateEC
         S(Running, AsyncTasksData(remaining))
   }
 
-  def taskSuccess(msg: AsyncTaskSuccess): ViewTransition = {
+  def taskSuccess(msg: AsyncTaskSuccess): Transit = {
     case s ⇒ s << AsyncTaskResult(msg.result) << msg.toast.map(Toast(_))
   }
 
-  def taskFail(msg: AsyncTaskFailure): ViewTransition = {
+  def taskFail(msg: AsyncTaskFailure): Transit = {
     case s ⇒ s << LogFatal("executing async task", msg.error) <<
       msg.toast.map(Toast(_))
   }
 
-  val create: ViewTransition = {
+  val create: Transit = {
     case S(Pristine, _) ⇒ S(Idle, AsyncTasksData(Nil))
   }
 
-  val transitions: ViewTransitions = {
+  val admit: Admission = {
     case Create(_, _) ⇒ create
     case m: AsyncTask ⇒ startTask(m)
     case m: AsyncTaskDone ⇒ taskDone(m)

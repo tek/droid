@@ -37,7 +37,7 @@ object AuthState
 abstract class AuthState
 (implicit ctx: AuthStateUiI, res: Resources, plus: PlusInterface,
   mt: MessageTopic, settings: Settings)
-extends DroidState[AuthStateUiI]
+extends DroidMachine[AuthStateUiI]
 {
   import AuthState._
 
@@ -46,7 +46,7 @@ extends DroidState[AuthStateUiI]
   case class BackendData(token: String)
   extends Data
 
-  val transitions: ViewTransitions = {
+  val admit: Admission = {
     case Resume ⇒ resume
     case Reset ⇒ reset
     case Fetch ⇒ fetch
@@ -56,41 +56,41 @@ extends DroidState[AuthStateUiI]
     case FetchTokenFailed(error) ⇒ fetchTokenFailed(error)
   }
 
-  def resume: ViewTransition = {
+  def resume: Transit = {
     case S(Pristine, data) ⇒
       if (backendTokenValid) S(Authed, BackendData(backendToken()))
       else S(Unauthed, data) << autoFetchAuthToken().option(Fetch)
   }
 
-  def reset: ViewTransition = {
+  def reset: Transit = {
     case _ ⇒
       S(Unauthed, NoData) <<
         stateEffect("clear backend auth token") { backendToken() = "" }
   }
 
-  def fetch: ViewTransition = {
+  def fetch: Transit = {
     case s @ S(Unauthed, data) ⇒
       S(Fetching, data) << fetchToken
   }
 
-  def auth(account: String, plusToken: String): ViewTransition = {
+  def auth(account: String, plusToken: String): Transit = {
     case S(Fetching, data) ⇒
       S(Authing, data) << authorizePlusToken(account, plusToken) <<
         clearPlusToken(plusToken)
   }
 
-  def storeToken(token: String): ViewTransition = {
+  def storeToken(token: String): Transit = {
     case S(_, data) ⇒
       S(Authed, BackendData(token)) << Toast("backend_auth_success") <<
         stateEffect("store backend auth token") { backendToken() = token }
   }
 
-  def fetchTokenFailed(error: String): ViewTransition = {
+  def fetchTokenFailed(error: String): Transit = {
     case S(_, _) ⇒
       S(Unauthed, NoData) << LogError("requesting plus token", error).toResult
   }
 
-  def requestPermission(intent: Intent): ViewTransition = {
+  def requestPermission(intent: Intent): Transit = {
     case s @ S(Unauthed, data) ⇒
       s << stateEffect("initiating plus permission request") {
         ctx.startActivity(intent, Plus.RC_TOKEN_FETCH)

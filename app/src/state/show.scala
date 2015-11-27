@@ -11,7 +11,7 @@ import UiActionTypes._
 abstract class ShowStateMachine[A <: Model: DecodeJson]
 (implicit ec: EC, db: tryp.slick.DbInfo, ctx: AndroidUiContext,
   mt: MessageTopic)
-extends DroidState
+extends DroidMachine
 {
   case class Model(model: A)
   extends Data
@@ -50,27 +50,27 @@ extends DroidState
   def updateData(m: A): Effect
 
   def create(args: Map[String, String], state: Option[Bundle])
-  : ViewTransition = {
+  : Transit = {
     case S(Pristine, data) ⇒
       S(Initializing, data) << setupData(args)
   }
 
-  val resume: ViewTransition = {
+  val resume: Transit = {
     case s @ S(_, _) ⇒
       s
   }
 
-  def model(m: A): ViewTransition = {
+  def model(m: A): Transit = {
     case S(Initializing, data) ⇒
       S(Initialized, Model(m)) << Update
   }
 
-  def update: ViewTransition = {
+  def update: Transit = {
     case s @ S(Initialized, Model(m)) ⇒
       s << updateData(m) << fetchDetails(m)
   }
 
-  val transitions: ViewTransitions = {
+  val admit: Admission = {
     case Create(args, state) ⇒ create(args, state)
     case Resume ⇒ resume
     case Update ⇒ update

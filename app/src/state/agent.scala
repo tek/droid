@@ -11,19 +11,19 @@ extends Machine[HNil]
 {
   def handle = "log"
 
-  def logError(msg: String): ViewTransition = {
+  def logError(msg: String): Transit = {
     case s ⇒
       log.error(msg)
       s
   }
 
-  def logInfo(msg: String): ViewTransition = {
+  def logInfo(msg: String): Transit = {
     case s ⇒
       log.info(msg)
       s
   }
 
-  val transitions: ViewTransitions = {
+  val admit: Admission = {
     case m: LogError ⇒ logError(m.message)
     case m: LogFatal ⇒ logError(m.message)
     case m: LogInfo ⇒ logInfo(m.message)
@@ -91,11 +91,11 @@ with FixedStrategy
 
   lazy val messageIn = async.unboundedQueue[Message]
 
-  def killState() = {
+  def killMachines() = {
     allMachines(_.kill())
   }
 
-  def joinState() = {
+  def joinMachines() = {
     allMachines(_.join())
   }
 

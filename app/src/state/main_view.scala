@@ -27,29 +27,29 @@ object MainViewMessages
 import MainViewMessages._
 
 trait MainViewMachine
-extends DroidStateEC
+extends DroidMachineEC
 {
   override def description = "main view state"
 
-  val transitions: ViewTransitions = {
+  val admit: Admission = {
     case LoadFragment(fragment, tag) ⇒ loadFragment(fragment, tag)
     case ContentLoaded(view) ⇒ contentLoaded(view)
     case Back ⇒ back
   }
 
-  def loadFragment(fragment: () ⇒ Fragment, tag: String): ViewTransition = {
+  def loadFragment(fragment: () ⇒ Fragment, tag: String): Transit = {
     case s ⇒
       s << ctx
         .transitionFragment(FragmentBuilder(fragment, Id.content, tag.some))
         .toResult
   }
 
-  def contentLoaded(view: Ui[View]): ViewTransition = {
+  def contentLoaded(view: Ui[View]): Transit = {
     case s ⇒ s <<
       LogInfo(s"Loaded content view:\n${ctx.showViewTree(view.get)}")
   }
 
-  def back: ViewTransition = {
+  def back: Transit = {
     case s ⇒
       s << Ui { nativeBack() }
   }

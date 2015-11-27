@@ -25,21 +25,21 @@ extends PlayServices[StartActivity]
 
   def api = plus.Plus.API
 
-  override def transitions = plusTransitions orElse basicTransitions
+  override def admit = plusAdmit orElse basicAdmit
 
-  val plusTransitions: ViewTransitions = {
+  val plusAdmit: Admission = {
     case ConnectionFailed(result) ⇒ failed(result)
     case SignOut ⇒ signOut
   }
 
-  def failed(result: ConnectionResult): ViewTransition = {
+  def failed(result: ConnectionResult): Transit = {
     case s ⇒
       s << stateEffect("start plus sign-in activity") {
         ctx.resolveResult(result, Plus.RC_SIGN_IN)
       }
   }
 
-  def signOut: ViewTransition = {
+  def signOut: Transit = {
     case s ⇒
       s << stateEffect("sign out of gplus") {
         apiClient foreach(plus.Plus.AccountApi.clearDefaultAccount)

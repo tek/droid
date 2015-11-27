@@ -25,11 +25,11 @@ with droid.meta.AndroidTypes
 
   type Effect = Process[Task, Result]
 
-  type ViewTransitionResult = (Zthulhu, Effect)
+  type TransitResult = (Zthulhu, Effect)
 
-  type ViewTransition = PartialFunction[Zthulhu, ViewTransitionResult]
+  type Transit = PartialFunction[Zthulhu, TransitResult]
 
-  type ViewTransitions = PartialFunction[Message, ViewTransition]
+  type Admission = PartialFunction[Message, Transit]
 
-  type TransitionsSelection = Message ⇒ ViewTransitions
+  type Preselection = Message ⇒ Admission
 }

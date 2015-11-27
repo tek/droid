@@ -11,7 +11,7 @@ extends Machine[HNil]
 {
   def handle = "ui"
 
-  val transitions: ViewTransitions = {
+  val admit: Admission = {
     case UiTask(ui, timeout) ⇒ {
       case s ⇒
         s << Task(scala.concurrent.Await.result(ui.run, timeout))
@@ -49,18 +49,18 @@ with ActivityAccess
 
   override def machines = activityMachine :: super.machines
 
-  protected lazy val activityMachine = new DroidState
+  protected lazy val activityMachine = new DroidMachine
   {
     override def description = "activity access state"
 
     def handle = "activity"
 
-    def toast(id: String): ViewTransition = {
+    def toast(id: String): Transit = {
       case s ⇒
         s << uiCtx.notify(id)
     }
 
-    val transitions: ViewTransitions = {
+    val admit: Admission = {
       case Toast(id) ⇒ toast(id)
     }
   }

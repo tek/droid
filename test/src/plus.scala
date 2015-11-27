@@ -26,7 +26,7 @@ extends PlusAccount(apiClient)
 trait MockPlusInterface
 extends PlusInterface
 {
-  override def connect: ViewTransition = {
+  override def connect: Transit = {
     case s ⇒ s << ConnectionEstablished
   }
 

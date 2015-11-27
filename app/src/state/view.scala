@@ -30,7 +30,7 @@ object ViewState
 
 abstract class ViewState(implicit ec: EC, ctx: AndroidUiContext,
   mt: MessageTopic, val res: Resources)
-extends DroidStateEC
+extends DroidMachineEC
 with ExtViews
 with TextCombinators
 {
@@ -40,18 +40,18 @@ with TextCombinators
 
   def handle = "view"
 
-  def transitions: ViewTransitions = {
+  def admit: Admission = {
     case Create(_, _) ⇒ create
     case SetLayout ⇒ setLayout
   }
 
-  val create: ViewTransition = {
+  val create: Transit = {
     case S(Pristine, _) ⇒
       val data = Layout(layoutIOT)
       S(Initialized, data) << SetLayout
   }
 
-  val setLayout: ViewTransition = {
+  val setLayout: Transit = {
     case s @ S(_, Layout(l)) ⇒
       s << stateEffectTask[Task, Unit]("set layout signal")(layout.set(l))
   }

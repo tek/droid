@@ -76,19 +76,19 @@ object Zthulhu
   }
 
   implicit def amendZthulhuWithEmptyEffects
-  (f: Zthulhu): ViewTransitionResult =
+  (f: Zthulhu): TransitResult =
     (f, halt)
 
-  implicit class ViewTransitionResultOps(r: ViewTransitionResult)
+  implicit class TransitResultOps(r: TransitResult)
   {
-    def <<[A: StateEffect](e: A): ViewTransitionResult = {
+    def <<[A: StateEffect](e: A): TransitResult = {
       (r.head, r.last ++ (e: Effect))
     }
   }
 
   implicit class ZthulhuOps(z: Zthulhu)
   {
-    def <<[A: StateEffect](e: A) = (z: ViewTransitionResult) << e
+    def <<[A: StateEffect](e: A) = (z: TransitResult) << e
   }
 }
 
@@ -104,7 +104,7 @@ with FixedStrategy
 
   val S = Zthulhu
 
-  def transitions: ViewTransitions
+  def admit: Admission
 
   private[this] val internalMessageIn = async.unboundedQueue[Message]
 
@@ -145,13 +145,13 @@ with FixedStrategy
     sendAll(msgs)
   }
 
-  protected def transitionsSelection: Message ⇒ ViewTransitions = {
+  protected def preselect: Preselection = {
     case m: InternalMessage ⇒ internalMessage
-    case m: Message ⇒ transitions
+    case m: Message ⇒ admit
   }
 
   protected def uncurriedTransitions(z: Zthulhu, m: Message) = {
-    transitionsSelection(m)
+    preselect(m)
       .orElse(unmatchedMessage)
       .lift(m)
       .getOrElse(unmatchedState(m))
@@ -230,15 +230,15 @@ with FixedStrategy
 
   override val loggerName = s"state.$handle".some
 
-  lazy val internalMessage: ViewTransitions = {
+  lazy val internalMessage: Admission = {
     case SetInitialState(s) ⇒ setInitialState(s)
   }
 
-  def setInitialState(s: BasicState): ViewTransition = {
+  def setInitialState(s: BasicState): Transit = {
     case S(Pristine, d) ⇒ S(s, d)
   }
 
-  lazy val unmatchedMessage: ViewTransitions = {
+  lazy val unmatchedMessage: Admission = {
     case m if debugStates ⇒ {
       case s ⇒
         log.debug(s"unmatched message at $s: $m")
@@ -246,34 +246,34 @@ with FixedStrategy
     }
   }
 
-  def unmatchedState(m: Message): ViewTransition = {
+  def unmatchedState(m: Message): Transit = {
     case s if debugStates ⇒
       log.debug(s"unmatched state $s: $m")
       s
   }
 }
 
-trait DroidStateBase[A <: AndroidUiContext]
+trait DroidMachineBase[A <: AndroidUiContext]
 extends Machine[HNil]
 {
   implicit def ctx: A
 }
 
-abstract class DroidState[A <: AndroidUiContext]
+abstract class DroidMachine[A <: AndroidUiContext]
 (implicit val ctx: A, mt: MessageTopic)
-extends DroidStateBase[A]
+extends DroidMachineBase[A]
 
-trait SimpleDroidState
-extends DroidState[AndroidUiContext]
+trait SimpleDroidMachine
+extends DroidMachine[AndroidUiContext]
 
-abstract class DroidStateEC(implicit val ec: EC, ctx: AndroidUiContext,
+abstract class DroidMachineEC(implicit val ec: EC, ctx: AndroidUiContext,
   mt: MessageTopic)
-extends SimpleDroidState
+extends SimpleDroidMachine
 
-trait ActivityDroidState
-extends DroidState[AndroidActivityUiContext]
+trait ActivityDroidMachine
+extends DroidMachine[AndroidActivityUiContext]
 
-abstract class DroidDBState
+abstract class DroidDBMachine
 (implicit ec: EC, db: tryp.slick.DbInfo, ctx: AndroidActivityUiContext,
   mt: MessageTopic)
-extends DroidStateEC
+extends DroidMachineEC

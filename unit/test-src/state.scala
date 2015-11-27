@@ -34,7 +34,7 @@ extends Machine[HNil]
 {
   def handle = "state0"
 
-  def transitions: ViewTransitions = {
+  def admit: Admission = {
     case Received2 ⇒ {
       case s ⇒ s  << Received0
     }
@@ -48,7 +48,7 @@ extends Machine[HNil]
 
   lazy val output = async.signalOf(false)
 
-  def transitions: ViewTransitions = {
+  def admit: Admission = {
     case Go ⇒ {
       case s ⇒ s << Received1
     }
@@ -63,7 +63,7 @@ extends Machine[HNil]
 {
   def handle = "state2"
 
-  def transitions: ViewTransitions = {
+  def admit: Admission = {
     case Received1 ⇒ {
       case s ⇒ s << Received2
     }
