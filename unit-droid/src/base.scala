@@ -57,7 +57,7 @@ with view.ExtViews
 
 class SpecActivity
 extends Activity
-with test.TrypTestActivity
+with UnitActivity
 {
   def actorsProps = Nil
 
@@ -69,7 +69,7 @@ with test.TrypTestActivity
 }
 
 abstract class SpecBase
-extends test.TrypUnitSpecs2Spec[SpecActivity]
+extends UnitSpecs2Spec[SpecActivity]
 with tryp.Matchers
 with HasActivity
 {

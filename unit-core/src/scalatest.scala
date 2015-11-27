@@ -1,16 +1,16 @@
 package tryp
 package droid
-package test
+package unit
 
 import reflect.classTag
 
 import org.scalatest._
 import matchers._
 
-trait TrypUnitScalatestSpec[A <: Activity with TrypTestActivity]
+trait UnitScalatestSpec[A <: Activity with UnitActivity]
 extends FeatureSpec
 with RobolectricSuite
-with TrypUnitSpec[A]
+with UnitSpec[A]
 with Matchers
 with BeforeAndAfterEach
 with BeforeAndAfterAll

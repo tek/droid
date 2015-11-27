@@ -4,7 +4,7 @@ package unit
 
 import slick.TestFileDbInfo
 
-trait UnitTestApplication
+trait UnitApplication
 { self: Application ⇒
 
   override def setupEnv() = {

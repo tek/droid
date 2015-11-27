@@ -1,12 +1,12 @@
 package tryp
 package droid
-package test
+package unit
 
 import org.specs2._, specification._, matcher._
 
-trait TrypUnitSpecs2Spec[A <: Activity with TrypTestActivity]
+trait UnitSpecs2Spec[A <: Activity with UnitActivity]
 extends RobolectricSpecification
-with TrypUnitSpec[A]
+with UnitSpec[A]
 with BeforeEach
 with slick.ActionExpectations
 with MustThrownExpectations

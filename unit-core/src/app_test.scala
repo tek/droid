@@ -1,16 +1,22 @@
 package tryp
 package droid
-package test
+package unit
 
 import android.support.v7.widget.RecyclerView
 
 import org.robolectric.Robolectric
 import org.robolectric.shadows.ShadowLog
 
-trait TrypUnitSpec[A <: Activity with TrypTestActivity]
+trait UnitActivity
+extends test.TrypTestActivity
+{
+  override def changeTheme(theme: String, restart: Boolean = true) { }
+}
+
+trait UnitSpec[A <: Activity with UnitActivity]
 extends TrypSpecExt
 with HasContext
-with TrypDroidSpec
+with test.TrypDroidSpec
 {
   ShadowLog.stream = System.out
 
