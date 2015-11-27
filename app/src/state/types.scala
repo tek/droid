@@ -233,17 +233,19 @@ extends StateEffectInstances0
 object StateEffect
 extends StateEffectInstances
 
-final class TaskEffectOps[A](t: Task[A])
+final class TaskEffectOps[A](val self: Task[A])
+extends AnyVal
 {
   def effect(desc: String) = {
-    t map(_ ⇒ EffectSuccessful(desc).toResult)
+    self map(_ ⇒ EffectSuccessful(desc).toResult)
   }
 }
 
-final class ProcessEffectOps[F[_], A](proc: Process[F, A])
+final class ProcessEffectOps[F[_], A](val self: Process[F, A])
+extends AnyVal
 {
   def logged(desc: String)(implicit logger: Logger) = {
-    proc |> stream.process1.lift { m ⇒
+    self |> stream.process1.lift { m ⇒
       logger.trace(s"$desc delivering $m")
       m
     }
