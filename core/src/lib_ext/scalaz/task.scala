@@ -44,10 +44,11 @@ final class TaskOps[A](task: Task[A])
   def infraRunAsyncShort(desc: String)(implicit log: Logger) = {
     task.timed(5 seconds).runAsync(TaskOps.infraResult[A](desc) _)
   }
+
+  def peek() = task.attemptRunFor(5 seconds)
 }
 
 trait ToTaskOps
 {
-  implicit def ToTaskOps[A](task: Task[A])(implicit log: Logger) =
-    new TaskOps(task)
+  implicit def ToTaskOps[A](task: Task[A]) = new TaskOps(task)
 }

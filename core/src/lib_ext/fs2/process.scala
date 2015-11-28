@@ -19,6 +19,10 @@ extends ToTaskOps
     proc.run.infraRunFor(desc, timeout)
   }
 
+  def infraRunShort(desc: String)(implicit log: Logger) = {
+    proc.run.infraRunShort(desc)
+  }
+
   def infraRunLogAsync(desc: String)(implicit log: Logger) = {
     proc.runLog.infraRunAsync(desc)
   }
@@ -26,11 +30,12 @@ extends ToTaskOps
   def infraRunLogFor(desc: String, timeout: Duration)(implicit log: Logger) = {
     proc.runLog.infraRunFor(desc, timeout)
   }
+
+  def peek() = proc.runLog.peek()
 }
 
 trait ToProcessOps
 {
-  implicit def ToTaskProcessOps[A](task: Process[Task, A])
-  (implicit log: Logger) =
+  implicit def ToTaskProcessOps[A](task: Process[Task, A]) =
     new TaskProcessOps(task)
 }
