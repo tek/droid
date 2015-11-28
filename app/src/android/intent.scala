@@ -1,6 +1,8 @@
 package tryp
 package droid
 
+import Z._
+
 final class IntentOps(intent: Intent)
 {
   implicit val mm: Monoid[Params] = scalaz.std.map.mapMonoid

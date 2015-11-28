@@ -3,7 +3,7 @@ package droid
 
 import concurrent.duration._
 
-import scalaz.concurrent.Task
+import Z._
 
 import org.log4s.Logger
 

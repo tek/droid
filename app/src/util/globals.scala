@@ -51,7 +51,7 @@ trait AndroidTypes
 
 trait Globals
 extends tryp.slick.sync.meta.Globals
-with droid.core.meta.Globals
+with droid.view.meta.Globals
 with Util
 with Forward
 with Types
