@@ -7,6 +7,7 @@ import android.widget._
 import akka.actor.{Props, ActorLogging, ActorRef}
 
 import state._
+import view._
 
 class CoreActor
 extends TrypActivityActor[SpecActivity]
@@ -25,34 +26,20 @@ extends ViewState[FrameLayout]
 
   import android.view.ViewGroup.LayoutParams._
 
-  lazy val searchB = w[AutoCompleteTextView] >>= large
-
-  def search = searchB.v
+  lazy val search = w[AutoCompleteTextView] >>= large
 
   def layoutIOT =
     l[FrameLayout](
       l[RelativeLayout](
-        searchB
+        search
       ) >>= lp(MATCH_PARENT, MATCH_PARENT)
     )
 }
 
 case class SpecFragment()
-extends TrypFragment
-with view.ExtViews
+extends VSTrypFragment
 {
-  // lazy val viewState = new SpecViewState {}
-
-  def layout(state: Bundle) = {
-    import android.view.ViewGroup.LayoutParams._
-    Ui{
-      l[FrameLayout](
-        l[RelativeLayout](
-          w[AutoCompleteTextView]
-        ) >>= iota.lp(MATCH_PARENT, MATCH_PARENT)
-      ).perform()
-    }
-  }
+  lazy val viewState: SpecViewState = new SpecViewState {}
 }
 
 class SpecActivity
@@ -70,7 +57,7 @@ with UnitActivity
 
 abstract class SpecBase
 extends UnitSpecs2Spec[SpecActivity]
-with tryp.Matchers
+with Matchers
 with HasActivity
 {
   def activityClass = classOf[SpecActivity]

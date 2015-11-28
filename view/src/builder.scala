@@ -5,6 +5,7 @@ package view
 import reflect.macros.whitebox
 
 import scalaz.{Tree ⇒ STree, _}, Scalaz._, concurrent._, stream._, Process._
+import async.mutable._
 
 import android.content.Context
 import android.view.{View, ViewGroup}
@@ -14,20 +15,36 @@ import org.log4s.Logger
 @core.IOBase
 object IOBase
 
+object IOB
+extends FixedStrategy
+{
+  val threads = 5
+
+  def attachSignal[A](sig: Signal[Maybe[A]])(implicit log: Logger) =
+    iota.kestrel[A, Unit] { a ⇒
+      sig.set(a.just).infraRunShort("set signal for IOB")
+    }
+}
+
 case class IOB[A](create: Context ⇒ iota.IO[A])
 extends IOT[A]
+with Logging
 {
+  import IOB.strat
+
+  override val loggerName = Some("iob")
+
   def >>=[B](f: A ⇒ iota.IO[B]): IOB[B] = IOB(create >=> f)
 
-  def perform()(implicit c: Context, log: Logger): A = {
-    super.perform() unsafeTap { v ⇒
-      sig.set(v.just).infraRun("set signal for IOT")
-    }
+  override def reify(c: Context): iota.IO[A] = {
+    super.reify(c) >>= IOB.attachSignal(sig)
   }
 
-  val sig = async.signalOf[Maybe[A]](Maybe.Empty())
+  lazy val sig = async.signalOf[Maybe[A]](Maybe.Empty())
 
-  def v = (sig.discrete |> await1) flatMap(_.cata(emit, halt))
+  def vs = sig.continuous flatMap(_.cata(emit, halt))
+
+  def v = vs |> await1
 }
 
 trait ExtViews

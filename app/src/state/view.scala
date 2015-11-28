@@ -10,7 +10,7 @@ import scalaz._, Scalaz._, stream.async
 
 object ViewState
 {
-  case class Layout(layout: IOT[View])
+  case class Layout[A <: View](layout: IOB[A])
   extends Data
 
   case object SetLayout
@@ -28,7 +28,7 @@ object ViewState
 //   in subviews (nested fragments, maybe reinvent), pass a modified UiContext
 //   that contains a reference to the view root for insertion
 
-abstract class ViewState(implicit ec: EC, ctx: AndroidUiContext,
+abstract class ViewState[A <: View](implicit ec: EC, ctx: AndroidUiContext,
   mt: MessageTopic, val res: Resources)
 extends DroidMachineEC
 with ExtViews
@@ -39,6 +39,11 @@ with TextCombinators
   val Aid = iota.Id
 
   def handle = "view"
+
+  def layoutIOT: IOB[A]
+
+  lazy val layout: async.mutable.Signal[IOB[View]] =
+    async.signalUnset[IOB[View]]
 
   def admit: Admission = {
     case Create(_, _) ⇒ create
@@ -55,8 +60,4 @@ with TextCombinators
     case s @ S(_, Layout(l)) ⇒
       s << stateEffectTask[Task, Unit]("set layout signal")(layout.set(l))
   }
-
-  def layoutIOT: IOT[View]
-
-  lazy val layout = async.signalUnset[IOT[View]]
 }

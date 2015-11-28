@@ -2,6 +2,10 @@ package tryp
 package droid
 package unit
 
+import scalaz._, Scalaz._, concurrent.Task
+
+import android.widget._
+
 class IOBSpec
 extends SpecBase
 {
@@ -9,19 +13,11 @@ extends SpecBase
   signal $signal
   """
 
-  def before = {
-    activity
-    // activity.navigateIndex(0)
-  }
+  val text = Random.string(10)
 
   def signal = {
-    activity
-    sync()
-    Thread.sleep(2000)
-    sync()
-    pr(activity.viewTree.drawTree)
-    frag[SpecFragment]("test") foreachA { f ⇒
-    }
-    1 === 1
+    val f = frag[SpecFragment]("test").getA
+    f.viewOfType[TextView] foreachA(_.setText(text))
+    f.viewState.search.text.continuous willCompute_== text
   }
 }

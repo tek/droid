@@ -8,14 +8,6 @@ import scalaz._, Scalaz._, scalaz.concurrent._, stream.async
 
 import droid.state._
 
-trait Matchers
-extends SpecificationLike
-{
-  def become[A](target: A): Matcher[Task[A]] = { (ta: Task[A]) ⇒
-    ta.attemptRun.toOption must beSome(target)
-  } eventually
-}
-
 case object Go
 extends Message
 

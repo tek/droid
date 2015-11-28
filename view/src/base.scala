@@ -15,12 +15,12 @@ trait IOT[+A]
 
   def >>=[B](f: A ⇒ iota.IO[B]): IOT[B]
 
-  def reify()(implicit c: Context): IO[A] = {
+  def reify(c: Context): IO[A] = {
     create(c)
   }
 
   def perform()(implicit c: Context): A = {
-    reify().perform()
+    reify(c).perform()
   }
 }
 
@@ -34,7 +34,8 @@ trait Views
 {
   def w[A]: IOT[A] = macro ViewM.w[A]
 
-  def l[A <: ViewGroup](vs: IOT[_ <: View]*): IOT[A] = macro ViewM.l[A]
+  def l[A <: ViewGroup](vs: IOT[_ <: View]*): IOT[A] =
+    macro ViewM.l[A]
 }
 
 trait ViewMBase
@@ -47,14 +48,15 @@ trait ViewMBase
 
   def lImpl[A <: ViewGroup: c.WeakTypeTag, B[_] <: IOT[_]]
   (ctor: c.Expr[(Context ⇒ iota.IO[A]) ⇒ B[A]])
-  (vs: Seq[c.Expr[IOT[_ <: View]]]): c.Expr[B[A]] = {
+  (vs: Seq[c.Expr[IOT[_ <: View]]])
+  : c.Expr[B[A]] = {
     c.Expr[B[A]] {
       val tp = weakTypeOf[A]
       q"""
       iota.c[$tp] {
         $ctor { (ctx: $actx) ⇒
           val ch = Seq(..$vs)
-          iota.l[$tp](ch map(_.create(ctx)): _*)(ctx)
+          iota.l[$tp](ch map(_.reify(ctx)): _*)(ctx)
         }
       }
       """
