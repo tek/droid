@@ -47,4 +47,11 @@ extends tryp.AarsBuild("droid", deps = DroidDeps)
     .logback()
 
   lazy val integration = "integration" <<< test
+
+  override def consoleImports = super.consoleImports + """
+  import concurrent._
+  import stream._
+  import Process._
+  import scala.concurrent.duration._
+  """
 }
