@@ -21,28 +21,29 @@ object TaskOps
   }
 }
 
-final class TaskOps[A](task: Task[A])
+final class TaskOps[A](task: Task[A])(implicit log: Logger)
 {
-  def infraRun(desc: String)(implicit log: Logger) = {
+  def infraRun(desc: String) = {
      TaskOps.infraResult(desc)(task.attemptRun)
   }
 
-  def infraRunFor(desc: String, timeout: Duration)(implicit log: Logger) = {
+  def infraRunFor(desc: String, timeout: Duration) = {
      TaskOps.infraResult(desc)(task.attemptRunFor(timeout))
   }
 
-  def infraRunShort(desc: String)(implicit log: Logger) = {
-    infraRunFor(desc, 5 seconds)
+  def infraRunShort(desc: String)(implicit timeout: Duration = 5 seconds) = {
+    infraRunFor(desc, timeout)
   }
 
-  def !?(desc: String)(implicit log: Logger) = infraRunShort(desc)
+  def !?(desc: String) = infraRunShort(desc)
 
-  def infraRunAsync(desc: String)(implicit log: Logger) = {
+  def infraRunAsync(desc: String) = {
     task.runAsync(TaskOps.infraResult[A](desc) _)
   }
 
-  def infraRunAsyncShort(desc: String)(implicit log: Logger) = {
-    task.timed(5 seconds).runAsync(TaskOps.infraResult[A](desc) _)
+  def infraRunAsyncShort(desc: String)
+  (implicit timeout: Duration = 5 seconds) = {
+    task.timed(timeout).runAsync(TaskOps.infraResult[A](desc) _)
   }
 
   def peek() = task.attemptRunFor(5 seconds)
@@ -50,5 +51,6 @@ final class TaskOps[A](task: Task[A])
 
 trait ToTaskOps
 {
-  implicit def ToTaskOps[A](task: Task[A]) = new TaskOps(task)
+  implicit def ToTaskOps[A](task: Task[A])(implicit log: Logger) =
+    new TaskOps(task)
 }
