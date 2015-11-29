@@ -1,6 +1,8 @@
 package tryp
 package droid
 
+import android.widget._
+
 import scalaz._, Scalaz._, effect.IO
 
 trait ViewMetadata
@@ -61,12 +63,19 @@ trait ToViewOps
 trait ViewInstances
 extends ToViewOps
 {
+  def extraInfo(v: View) = {
+    v.some collect {
+      case tv: TextView ⇒ tv.getText
+    }
+  }
+
   implicit def viewShow(implicit res: Resources) =
     new Show[View]
     {
       override def show(v: View) = {
         val meta = v.meta
-        s"${meta.desc} (${v.getId})"
+        val extra = extraInfo(v) | ""
+        s"${meta.desc} $extra (${v.getId})"
       }
     }
 }
