@@ -9,7 +9,8 @@ import android.graphics.drawable.Drawable
 
 import tryp.droid.util._
 
-trait AndroidExt {
+trait AndroidExt
+{
   implicit class ViewGroupExt(vg: ViewGroup) {
     def children: Seq[View] = {
       (0 until vg.getChildCount) map { i ⇒ vg.getChildAt(i) }

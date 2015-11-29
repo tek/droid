@@ -71,7 +71,7 @@ with TrypDroidSpec
     }
   }
 
-  implicit class SearchableExt(target: Searchable) {
+  implicit class ViewAssertions[A: droid.SearchView](target: A) {
     def recycler = {
       target.viewOfType[RecyclerView] effect { r ⇒
         idleSync()
@@ -85,7 +85,7 @@ with TrypDroidSpec
         recycler
           .map(r ⇒ s"recycler childcount ${r.getChildCount} != $count")
           .getOrElse("recycler doesn't exist")
-      } { recycler exists { _.getChildCount == count } }
+      } { recycler exists(_.getChildCount == count) }
       recycler
     }
   }

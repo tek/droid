@@ -40,6 +40,7 @@ trait Implicits
 extends droid.ViewInstances
 with droid.ToViewOps
 with droid.ToIntentOps
+with droid.ToSearchViewOps
 
 trait AndroidTypes
 {

@@ -22,8 +22,100 @@ import macroid.support.FragmentApi
 
 import util._
 
-trait Searchable
+trait SearchView[A]
+{
+  def root(v: A): View
+}
+
+final class SearchViewOps[A](a: A)(implicit sv: SearchView[A])
+{
+  def view = sv.root(a)
+
+  def viewsOfType[A <: View: ClassTag]: Seq[A] = {
+    view match {
+      case v: A ⇒ Seq(v)
+      case layout: ViewGroup ⇒
+        layout.children map {
+          case v: A ⇒ Seq(v)
+          case sub: ViewGroup ⇒ sub.viewsOfType[A]
+          case _ ⇒ Nil
+        } flatten
+      case _ ⇒ Nil
+    }
+  }
+
+  def viewOfType[A <: View: ClassTag] = {
+    viewsOfType[A].headOption
+  }
+
+  def viewTree: Tree[View] = {
+    view match {
+      case vg: ViewGroup ⇒
+        (vg: View).node(vg.children map(_.viewTree): _*)
+      case v ⇒
+        v.leaf
+    }
+  }
+
+  def showViewTree()(implicit sh: Show[View]) = Log.i(viewTree.drawTree)
+}
+
+trait ToSearchViewOps
+{
+  implicit def ToSearchViewOps[A: SearchView](a: A) = new SearchViewOps(a)
+}
+
+object SearchView
+{
+  implicit def viewSearchView[A <: View] = new SearchView[A] {
+    def root(v: A) = v
+  }
+
+  implicit def activitySearchView[A <: Activity] = new SearchView[A] {
+    def root(a: A) = a.getWindow.getDecorView.getRootView
+  }
+
+  implicit def fragmentSearchView[A <: Fragment] = new SearchView[A] {
+    def root(f: A) = f.getView
+  }
+}
+
+trait SearchableView
 extends Basic
+{
+  def view: View
+
+  def viewsOfType[A <: View: ClassTag]: Seq[A] = {
+    view match {
+      case v: A ⇒ Seq(v)
+      case layout: ViewGroup ⇒
+        layout.children map {
+          case v: A ⇒ Seq(v)
+          case sub: ViewGroup ⇒ sub.viewsOfType[A]
+          case _ ⇒ Nil
+        } flatten
+      case _ ⇒ Nil
+    }
+  }
+
+  def viewOfType[A <: View: ClassTag] = {
+    viewsOfType[A].headOption
+  }
+
+  def viewTree: Tree[View] = {
+    view match {
+      case vg: ViewGroup ⇒
+        (vg: View).node(vg.children map(_.viewTree): _*)
+      case v ⇒
+        v.leaf
+    }
+  }
+
+  def showViewTree() = Log.i(viewTree.drawTree)
+}
+
+trait Searchable
+extends SearchableView
 {
   trait ProxyBase {
     def extractView(args: Any*): Option[View] = {
@@ -98,42 +190,14 @@ extends Basic
       }
     }
   }
-
-  def viewsOfType[A <: View: ClassTag]: Seq[A] = {
-    view match {
-      case v: A ⇒ Seq(v)
-      case layout: ViewGroup ⇒ {
-        layout.children map {
-          case v: A ⇒ Seq(v)
-          case sub: ViewGroup ⇒ sub.viewsOfType[A]
-          case _ ⇒ Nil
-        } flatten
-      }
-      case _ ⇒ Nil
-    }
-  }
-
-  def viewOfType[A <: View: ClassTag] = {
-    viewsOfType[A].headOption
+  def viewExists[A >: Basic#IdTypes](name: A) = {
+    Try(find(name)) isSuccess
   }
 
   def textView[A >: Basic#IdTypes](
     name: A, root: Option[View] = None
   ): Option[TextView] = {
     findt[A, TextView](name, root)
-  }
-
-  def viewExists[A >: Basic#IdTypes](name: A) = {
-    Try(find(name)) isSuccess
-  }
-
-  def viewTree: Tree[View] = {
-    view match {
-      case vg: ViewGroup ⇒
-        (vg: View).node(vg.children map(_.viewTree): _*)
-      case v ⇒
-        v.leaf
-    }
   }
 
   lazy val tviews = TypedViewsProxy(this)

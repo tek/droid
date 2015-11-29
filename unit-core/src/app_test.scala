@@ -42,7 +42,7 @@ extends TrivialImplTestHelpers
     Thread.sleep(100L)
   }
 
-  implicit class SearchableExt(target: Searchable) {
+  implicit class ViewAssertions[A: droid.SearchView](target: A) {
     def recycler = {
       target.viewOfType[RecyclerView] effect { r ⇒
         sync()
