@@ -64,7 +64,7 @@ extends Machine[HNil]
 
 class MachineSpec
 extends Specification
-with Matchers
+with tryp.Matchers
 {
   def is = s2"""
   machine $machine
@@ -94,6 +94,6 @@ with Matchers
     ag1.initMachines()
     ag2.initMachines()
     ag1.send(Go)
-    ag1.state.output.get must become(true)
+    ag1.state.output.get will_== true
   }
 }
