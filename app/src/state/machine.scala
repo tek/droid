@@ -31,32 +31,30 @@ extends CachedPool
    * error callbacks are invoked if the transition or effect throws an
    * exception and their results emitted
    */
-  def stateLoop[Z, E, M, F[_]](z: Z)
-  (f: (Z, M) ⇒ Maybe[(Z, Process[F, E])])
+  def stateLoop[Z, E, M]
+  (z: Z)
+  (f: (Z, M) ⇒ Maybe[(Z, E)])
   (transError: (Z, M, Throwable) ⇒ E)
-  (effectError: (Z, Z, M, Throwable) ⇒ E)
-  : Writer1[Process[F, E], M, Z] = {
+  : Writer1[E, M, Z] = {
     receive1 { (a: M) ⇒
       val (state, effect) =
         Task(f(z, a)).attemptRun match {
-          case \/-(Just((nz, e))) ⇒ nz.just → e
+          case \/-(Just((nz, e))) ⇒ nz.just → emitW(e)
           case \/-(Empty()) ⇒ Maybe.empty[Z] → halt
-          case -\/(t) ⇒ Maybe.empty[Z] → emit(transError(z, a, t))
+          case -\/(t) ⇒ Maybe.empty[Z] → emitW(transError(z, a, t))
         }
       val o = state.cata(emitO, halt)
-      val w = effect.onFailure(t ⇒ Process(effectError(z, state | z, a, t)))
-      val l = stateLoop(state | z)(f)(transError)(effectError)
-      o ++ emitW(w) ++ l
+      val l = stateLoop(state | z)(f)(transError)
+      o ++ effect ++ l
     }
   }
 
   def fatalTransition(state: Zthulhu, cause: Message, t: Throwable) = {
-    LogFatal(s"transitioning $state for $cause", t).toFail
+    emit(LogFatal(s"transitioning $state for $cause", t).toFail)
   }
 
-  def fatalEffect(state: Zthulhu, nextState: Zthulhu, cause: Message,
-    t: Throwable) = {
-    LogFatal(s"during io: $state ⇒ $nextState by $cause", t).toFail
+  def fatalEffect(t: Throwable) = {
+      emit(LogFatal("performing effect", t).toFail)
   }
 
   // create a state machine from a source process emitting Message instances,
@@ -71,8 +69,8 @@ extends CachedPool
 
     def viewFsm(transition: TS[F], effect: Process1[Result, Message]) = {
       source
-        .pipe(stateLoop(Zthulhu())(transition)(fatalTransition)(fatalEffect))
-        .flatMapW(a ⇒ writer.liftW(a |> effect))
+        .pipe(stateLoop(Zthulhu())(transition)(fatalTransition))
+        .flatMapW(a ⇒ writer.liftW(a.onFailure(fatalEffect) |> effect))
     }
   }
 
@@ -126,8 +124,7 @@ with CachedStrategy
 
   val current = async.signalUnset[Zthulhu]
 
-  private[this] val idle: Process[Task, Boolean] =
-    size map(_ == 0)
+  private[this] val idle: Process[Task, Boolean] = size map(_ == 0)
 
   private[this] lazy val unsafePerformIO: Process1[Result, Message] = {
     stream.process1
