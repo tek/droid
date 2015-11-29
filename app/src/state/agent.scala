@@ -55,9 +55,7 @@ with CachedStrategy
 
   private[this] lazy val fromMachines = MessageTopic()
 
-  lazy val logMachine = new LogMachine {}
-
-  def machines: List[Machine[_]] = logMachine :: Nil
+  def machines: List[Machine[_]] = Nil
 
   def allMachines[A](f: Machine[_] ⇒ A) = machines map(f)
 
@@ -121,4 +119,8 @@ extends Agent
   def subscribe = exchange.subscribe
 
   def mediator = this
+
+  lazy val logMachine = new LogMachine {}
+
+  override def machines = logMachine :: super.machines
 }
