@@ -142,10 +142,6 @@ with CachedStrategy
       .flatMap(emitAll)
   }
 
-  def dispatchResults(msgs: NonEmptyList[Message]) = {
-    sendAll(msgs)
-  }
-
   protected def preselect: Preselection = {
     case m: InternalMessage ⇒ internalMessage
     case m: Message ⇒ admit
