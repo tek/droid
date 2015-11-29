@@ -16,6 +16,7 @@ import Process._
 case class Zthulhu(state: BasicState = Pristine, data: Data = NoData)
 
 object Zthulhu
+extends CachedPool
 {
   /* @param z current state machine
    * @param f (Z, M) ⇒ (Z, E), transforms a state and message into a new state
@@ -98,9 +99,9 @@ abstract class Machine[A <: HList]
 (implicit messageTopic: MessageTopic)
 extends ToUiOps
 with Logging
-with FixedStrategy
+with CachedStrategy
 {
-  val threads = 5
+  def cachedPool = Zthulhu
 
   val S = Zthulhu
 
@@ -266,14 +267,10 @@ extends DroidMachineBase[A]
 trait SimpleDroidMachine
 extends DroidMachine[AndroidUiContext]
 
-abstract class DroidMachineEC(implicit val ec: EC, ctx: AndroidUiContext,
-  mt: MessageTopic)
-extends SimpleDroidMachine
-
 trait ActivityDroidMachine
 extends DroidMachine[AndroidActivityUiContext]
 
 abstract class DroidDBMachine
-(implicit ec: EC, db: tryp.slick.DbInfo, ctx: AndroidActivityUiContext,
+(implicit db: tryp.slick.DbInfo, ctx: AndroidActivityUiContext,
   mt: MessageTopic)
-extends DroidMachineEC
+extends ActivityDroidMachine

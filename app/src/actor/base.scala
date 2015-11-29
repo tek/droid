@@ -62,8 +62,6 @@ trait AkkaClient extends AkkaComponent
       selectActor(p.actorName) ! msg
     }
   }
-
-  implicit def ec = actorSystem.dispatcher
 }
 
 trait Akkativity

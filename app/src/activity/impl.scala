@@ -25,9 +25,6 @@ with Snackbars
   override def searcher = this
 
   override def defaultTheme = res.stringO("pref_theme_default")
-
-  implicit lazy val ec =
-    concurrent.ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))
 }
 
 abstract class TrypDefaultActivity

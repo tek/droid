@@ -1,4 +1,5 @@
-package tryp.droid
+package tryp
+package droid
 
 import com.google.android.gms.maps.{MapFragment ⇒ AMapFragment,_}
 
@@ -9,6 +10,7 @@ extends AMapFragment
 with tryp.droid.FragmentBase
 with Contexts[android.app.Fragment]
 with OnMapReadyCallback
+with DefaultStrategy
 {
   lazy val showMapActor = actor(ShowMapActor.props)
 

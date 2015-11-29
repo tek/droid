@@ -16,10 +16,8 @@ import org.log4s.Logger
 object IOBase
 
 object IOB
-extends FixedStrategy
+extends CachedPool
 {
-  val threads = 5
-
   def attachSignal[A](sig: Signal[Maybe[A]])(implicit log: Logger) =
     iota.kestrel[A, Unit] { a ⇒
       sig.set(a.just).infraRunShort("set signal for IOB")
@@ -29,8 +27,9 @@ extends FixedStrategy
 case class IOB[A](create: Context ⇒ iota.IO[A])
 extends IOT[A]
 with Logging
+with CachedStrategy
 {
-  import IOB.strat
+  def cachedPool = IOB
 
   override val loggerName = Some("iob")
 

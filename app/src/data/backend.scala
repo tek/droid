@@ -153,7 +153,6 @@ with HasComm
       .recoverWith {
         case AuthError(error) ⇒
           val errmsg = s"not authed with backend: $error"
-          implicit val timeout = akka.util.Timeout(10 seconds)
           val next = DBIO.from(comm.core ? message)
           messages.toList match {
             case head :: tail ⇒

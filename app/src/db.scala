@@ -21,7 +21,7 @@ extends Logging
 {
   implicit def dbInfo = DbMeta.dbInfo
 
-  implicit val timeout = Timeout(5 seconds)
+  implicit val dbTimeout = Timeout(5 seconds)
 
   implicit def ec: EC
 

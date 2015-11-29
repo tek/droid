@@ -40,11 +40,14 @@ extends AnyVal
   def publish = topic.publish
 }
 
+object Agent
+extends CachedPool
+
 trait Agent
 extends Logging
-with FixedStrategy
+with CachedStrategy
 {
-  val threads = 2
+  def cachedPool = Agent
 
   def mediator: Mediator
 

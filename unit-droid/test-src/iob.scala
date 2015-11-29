@@ -8,6 +8,7 @@ import android.widget._
 
 class IOBSpec
 extends SpecBase
+with CachedStrategy
 {
   def is = s2"""
   signal $signal

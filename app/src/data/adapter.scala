@@ -1,4 +1,5 @@
-package tryp.droid
+package tryp
+package droid
 
 import android.widget.{BaseAdapter,TextView,Filterable,Filter}
 import android.support.v7.widget.RecyclerView
@@ -8,6 +9,7 @@ extends BaseAdapter
 with tryp.droid.Confirm
 with ActivityContexts
 with Macroid
+with DefaultStrategy
 {
   def items: Seq[AnyRef]
 
@@ -65,6 +67,7 @@ with tryp.droid.HasActivity
 with Filterable
 with AkkaAdapter
 with Macroid
+with DefaultStrategy
 {
   def items: Seq[B]
 

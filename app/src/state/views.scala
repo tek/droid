@@ -19,8 +19,8 @@ extends Machine[HNil]
   }
 }
 
-trait DummyViewState
-extends ViewState[View]
+trait DummyViewMachine
+extends ViewMachine[View]
 {
   def layoutIOT = w[View]
 }
@@ -33,11 +33,9 @@ with HasContext
 
   lazy val uiMachine = new UiDispatcher {}
 
-  implicit def ec: EC
+  val viewMachine: ViewMachine[_ <: View]
 
-  val viewState: ViewState[_ <: View]
-
-  override def machines = uiMachine :: viewState :: super.machines
+  override def machines = uiMachine :: viewMachine :: super.machines
 }
 
 trait HasActivityAgent
@@ -93,13 +91,11 @@ extends TrypActivity
 with HasActivityAgent
 with Mediator
 {
-  lazy val viewState: ViewState[View] = new DummyViewState {}
+  lazy val viewMachine: ViewMachine[View] = new DummyViewMachine {}
 
-  // TODO impl log level
   override def onCreate(saved: Bundle) {
     super.onCreate(saved)
     initMachines()
-    // logMachine ! LogLevel(LogLevel.DEBUG)
     send(Create(Map(), Option(saved)))
   }
 

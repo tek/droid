@@ -28,7 +28,7 @@ extends ViewState[FrameLayout]
 
   lazy val search = w[AutoCompleteTextView] >>= large
 
-  def layoutIOT =
+  lazy val layoutIOT =
     l[FrameLayout](
       l[RelativeLayout](
         search
@@ -39,7 +39,7 @@ extends ViewState[FrameLayout]
 case class SpecFragment()
 extends VSTrypFragment
 {
-  lazy val viewState: SpecViewState = new SpecViewState {}
+  lazy val viewMachine: SpecViewState = new SpecViewState {}
 }
 
 class SpecActivity

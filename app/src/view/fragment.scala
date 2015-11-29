@@ -76,7 +76,7 @@ extends Fragment
 with FragmentBase
 with FragmentAgent
 {
-  lazy val viewState: ViewState[View] = new DummyViewState {}
+  lazy val viewMachine: ViewMachine[View] = new DummyViewMachine {}
 
   override def onCreateView
   (inflater: LayoutInflater, container: ViewGroup, state: Bundle) = {
@@ -87,8 +87,8 @@ with FragmentAgent
 
   def resLayout(inflater: LayoutInflater, container: ViewGroup) = {
     layoutRes
-      .some { id ⇒ Ui(inflater.inflate(id, container, false)) }
-      .none { RL()() }
+      .some(id ⇒ Ui(inflater.inflate(id, container, false)))
+      .none(RL()())
   }
 }
 
@@ -102,15 +102,15 @@ with Views
 
   override def onCreateView
   (inflater: LayoutInflater, container: ViewGroup, state: Bundle) = {
-    val l = (viewState.layout.discrete |> Process.await1)
+    val l = (viewMachine.layout.discrete |> Process.await1)
       .runLast
       .attemptRunFor(10 seconds) match {
       case \/-(Some(l)) ⇒ l
       case \/-(None) ⇒
-        log.error("no layout produced by ViewState")
+        log.error("no layout produced by ViewMachine")
         dummyLayout
       case -\/(error) ⇒
-        log.error(s"error creating layout in ViewState: $error")
+        log.error(s"error creating layout in ViewMachine: $error")
         dummyLayout
       }
     l.perform() unsafeTap { v ⇒
@@ -163,7 +163,7 @@ with AppPreferences
 abstract class ShowFragment[A <: Model]
 extends MainFragment
 {
-  def showMachine: ShowStateMachine[A]
+  def showMachine: ShowMachine[A]
 
   override def machines = showMachine :: super.machines
 

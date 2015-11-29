@@ -27,7 +27,7 @@ object MainViewMessages
 import MainViewMessages._
 
 trait MainViewMachine
-extends DroidMachineEC
+extends SimpleDroidMachine
 {
   override def description = "main view state"
 

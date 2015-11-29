@@ -8,7 +8,7 @@ import concurrent.duration._
 
 import scalaz._, Scalaz._, stream.async
 
-object ViewState
+object ViewMachine
 {
   case class Layout[A <: View](layout: IOB[A])
   extends Data
@@ -28,13 +28,13 @@ object ViewState
 //   in subviews (nested fragments, maybe reinvent), pass a modified UiContext
 //   that contains a reference to the view root for insertion
 
-abstract class ViewState[A <: View](implicit ec: EC, ctx: AndroidUiContext,
+abstract class ViewMachine[A <: View](implicit ctx: AndroidUiContext,
   mt: MessageTopic, val res: Resources)
-extends DroidMachineEC
+extends SimpleDroidMachine
 with ExtViews
 with TextCombinators
 {
-  import ViewState._
+  import ViewMachine._
 
   val Aid = iota.Id
 
