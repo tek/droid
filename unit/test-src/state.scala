@@ -6,6 +6,8 @@ import org.specs2._, specification._, matcher._, concurrent._
 
 import scalaz._, Scalaz._, scalaz.concurrent._, stream.async
 
+import shapeless.HNil
+
 import droid.state._
 
 case object Go
@@ -20,9 +22,15 @@ extends Message
 case object Received2
 extends Message
 
+case object Set0
+extends Message
 
+case object Set1
+extends Message
+
+@Publish(Received0)
 trait State0
-extends Machine[HNil]
+extends Machine[HNil, HNil]
 {
   def handle = "state0"
 
@@ -33,25 +41,30 @@ extends Machine[HNil]
   }
 }
 
+@Publish(Received1)
 trait State1
-extends Machine[HNil]
+extends Machine[HNil, HNil]
 {
   def handle = "state1"
 
-  lazy val output = async.signalOf(false)
+  lazy val output = async.signalOf(-1)
 
   def admit: Admission = {
     case Go ⇒ {
       case s ⇒ s << Received1
     }
     case Received0 ⇒ {
-      case s ⇒ s << output.set(true)
+      case s ⇒ s << output.set(0) << Set0
+    }
+    case Set1 ⇒ {
+      case s ⇒ s << output.set(1)
     }
   }
 }
 
+@Publish(Received2)
 trait State2
-extends Machine[HNil]
+extends Machine[HNil, HNil]
 {
   def handle = "state2"
 
@@ -59,10 +72,13 @@ extends Machine[HNil]
     case Received1 ⇒ {
       case s ⇒ s << Received2
     }
+    case Set0 ⇒ {
+      case s ⇒ s << Set1
+    }
   }
 }
 
-class MachineSpec
+class MediationSpec
 extends Specification
 with tryp.Matchers
 {
@@ -94,6 +110,6 @@ with tryp.Matchers
     ag1.initMachines()
     ag2.initMachines()
     ag1.send(Go)
-    ag1.state.output.get will_== true
+    ag1.state.output.get will_== 0
   }
 }

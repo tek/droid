@@ -5,6 +5,8 @@ import android.location.Location
 
 import scalaz._, Scalaz._, concurrent._, stream._, Process._
 
+import shapeless.tag.@@
+
 import com.google.android.gms.location._
 import LocationServices.{FusedLocationApi ⇒ LocApi}
 import com.google.android.gms.common._
@@ -117,7 +119,7 @@ extends LocationsConcern
 
 import state._
 
-class LocationInterface(implicit val ctx: WithContext, mt: MessageTopic)
+class LocationInterface(implicit val ctx: WithContext, mt: MessageTopic @@ To)
 extends PlayServices[WithContext]
 {
   def subHandle = "location"

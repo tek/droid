@@ -4,9 +4,11 @@ package droid
 import scalaz._, Scalaz._, stream._, async._
 
 package object state
-extends droid.meta.GlobalsBase
-with droid.meta.Forward
-with droid.meta.AndroidTypes
+extends droid.core.meta.Globals
+with droid.core.meta.AndroidTypes
+with tryp.slick.sync.meta.Globals
+with ToStateEffectSyntax
+with MiscEffectOps
 {
   private[state] type Signal[A] = mutable.Signal[A]
   private[state] type Queue[A] = mutable.Queue[A]
@@ -21,7 +23,7 @@ with droid.meta.AndroidTypes
   private[state] val Task = concurrent.Task
   private[state] val writer = stream.writer
 
-  type Result = ValidationNel[Message, Message]
+  type Result = ValidationNel[Parcel, Parcel]
 
   type Effect = Process[Task, Result]
 

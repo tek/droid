@@ -2,6 +2,8 @@ package tryp.droid
 
 import scalaz.{Plus ⇒ _, _}, Scalaz._, concurrent._, stream._
 
+import shapeless.tag.@@
+
 import com.google.android.gms
 import gms.common.ConnectionResult
 import gms.common.{api ⇒ gapi}
@@ -18,7 +20,7 @@ object PlusInterface
 import PlusInterface._
 import PlayServices._
 
-class PlusInterface(implicit val ctx: StartActivity, mt: MessageTopic)
+class PlusInterface(implicit val ctx: StartActivity, mt: MessageTopic @@ To)
 extends PlayServices[StartActivity]
 {
   def subHandle = "plus"

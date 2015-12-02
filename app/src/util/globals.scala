@@ -11,18 +11,14 @@ extends slick.sync.Exports
 {
   val TrypKeys = tryp.droid.Keys
 
-  type Context = android.content.Context
-  type Bundle = android.os.Bundle
   type Intent = android.content.Intent
   type Fragment = android.app.Fragment
   type FrameLayout = android.widget.FrameLayout
   type RelativeLayout = android.widget.RelativeLayout
 
-  type Ui[+A] = macroid.Ui[A]
   type Tweak[-A <: android.view.View] = macroid.Tweak[A]
   type Snail[-A <: android.view.View] = macroid.Snail[A]
 
-  val Ui = macroid.Ui
   val Tweak = macroid.Tweak
 }
 
@@ -42,14 +38,6 @@ with droid.ToViewOps
 with droid.ToIntentOps
 with droid.ToSearchViewOps
 
-trait AndroidTypes
-{
-  type Activity = android.app.Activity
-  type View = android.view.View
-  type ViewGroup = android.view.ViewGroup
-  type LayoutInflater = android.view.LayoutInflater
-}
-
 trait Globals
 extends tryp.slick.sync.meta.Globals
 with droid.view.meta.Globals
@@ -58,7 +46,7 @@ with Forward
 with Types
 with Implicits
 with droid.state.Exports
-with AndroidTypes
+with droid.core.meta.AndroidTypes
 {
   val AndroidLog = tryp.droid.meta.AndroidLog
 }

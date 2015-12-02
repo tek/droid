@@ -19,8 +19,8 @@ with ActorLogging
   }
 }
 
-trait SpecViewState
-extends ViewState[FrameLayout]
+trait SpecViewMachine
+extends ViewMachine[FrameLayout]
 {
   import iota._
 
@@ -39,7 +39,7 @@ extends ViewState[FrameLayout]
 case class SpecFragment()
 extends VSTrypFragment
 {
-  lazy val viewMachine: SpecViewState = new SpecViewState {}
+  lazy val viewMachine: SpecViewMachine = new SpecViewMachine {}
 }
 
 class SpecActivity

@@ -1,7 +1,9 @@
-package tryp.droid
+package tryp
+package droid
 
-import scalaz._, Scalaz._, concurrent._
 import scalaz.syntax.std.all._
+
+import shapeless.tag.@@
 
 import rx._
 import rx.ops._
@@ -10,8 +12,9 @@ import com.google.android.gms.common.Scopes
 import com.google.android.gms.auth.UserRecoverableAuthException
 
 import state._
+import ZS._
 
-object AuthState
+object AuthStateData
 {
   case object Reset extends Message
   case object Fetch extends Message
@@ -34,13 +37,14 @@ object AuthState
   case object Authed extends BasicState
 }
 
+import AuthStateData._
+
+@Publish(AuthorizeToken)
 abstract class AuthState
 (implicit ctx: AuthStateUiI, res: Resources, plus: PlusInterface,
-  mt: MessageTopic, settings: Settings)
+  mt: MessageTopic @@ To, settings: Settings)
 extends DroidMachine[AuthStateUiI]
 {
-  import AuthState._
-
   override def handle = "gplus"
 
   case class BackendData(token: String)
@@ -59,7 +63,7 @@ extends DroidMachine[AuthStateUiI]
   def resume: Transit = {
     case S(Pristine, data) ⇒
       if (backendTokenValid) S(Authed, BackendData(backendToken()))
-      else S(Unauthed, data) << autoFetchAuthToken().option(Fetch)
+      else S(Unauthed, data).<<(autoFetchAuthToken().option(Fetch))(StateEffect.optionStateEffect[Fetch.type](Operation.messageOperation[Fetch.type]))
   }
 
   def reset: Transit = {
@@ -98,11 +102,10 @@ extends DroidMachine[AuthStateUiI]
   }
 
   // FIXME blocking indefinitely if the connection failed
-  def fetchToken: Task[Option[Result]] = {
-    val err = FetchTokenFailed("Plus account name unavailable").toFail
+  def fetchToken: Process[Task, Result] = {
+    val err = FetchTokenFailed("Plus account name unavailable").toResult
     plus.oneAccount
       .map(_.email cata(tokenFromEmail, err))
-      .runLast
   }
 
   def tokenFromEmail(email: String): Result = {
@@ -111,14 +114,14 @@ extends DroidMachine[AuthStateUiI]
         AuthorizeToken(email, tkn).toResult
       case Failure(t: UserRecoverableAuthException) ⇒
         NonEmptyList(
-          FetchTokenFailed("insufficient permissions"),
-          RequestPermission(t.getIntent)
-        ).failure[Message]
+          FetchTokenFailed("insufficient permissions").toParcel,
+          RequestPermission(t.getIntent).toParcel
+        ).failure[Parcel]
       case Failure(t) ⇒
         NonEmptyList(
-          LogFatal("requesting plus token", t),
-          FetchTokenFailed("exception thrown")
-        ).failure[Message]
+          LogFatal("requesting plus token", t).toParcel,
+          FetchTokenFailed("exception thrown").toParcel
+        ).failure[Parcel]
     }
   }
 
@@ -180,6 +183,6 @@ with HasPlus
   }
 
   def obtainToken() = {
-    sendAll(NonEmptyList(AuthState.Reset, AuthState.Fetch))
+    sendAll(NonEmptyList(Reset, Fetch))
   }
 }

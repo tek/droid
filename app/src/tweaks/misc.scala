@@ -28,8 +28,6 @@ import akka.actor.ActorSelection
 
 import com.melnykov.fab.FloatingActionButton
 
-import org.log4s.Logger
-
 import tryp.droid.{Resources,_}
 import tryp.droid.{TrypTextView,DividerItemDecoration,ParallaxHeader}
 import tryp.droid.Messages

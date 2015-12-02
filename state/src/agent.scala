@@ -3,11 +3,12 @@ package droid
 package state
 
 import shapeless._
+import shapeless.tag.@@
 
 import scalaz._, Scalaz._, concurrent.Strategy, stream.async
 
 trait LogMachine
-extends Machine[HNil]
+extends Machine[HNil, HNil]
 {
   def handle = "log"
 
@@ -43,6 +44,8 @@ extends AnyVal
 object Agent
 extends CachedPool
 
+trait To
+
 trait Agent
 extends Logging
 with CachedStrategy
@@ -51,13 +54,14 @@ with CachedStrategy
 
   def mediator: Mediator
 
-  implicit protected lazy val toMachines = MessageTopic()
+  implicit protected lazy val toMachines: MessageTopic @@ To =
+    tag.apply[To](MessageTopic())
 
   private[this] lazy val fromMachines = MessageTopic()
 
-  def machines: List[Machine[_]] = Nil
+  def machines: List[Machine[_, _]] = Nil
 
-  def allMachines[A](f: Machine[_] ⇒ A) = machines map(f)
+  def allMachines[A](f: Machine[_, _] ⇒ A) = machines map(f)
 
   def send(msg: Message) = sendAll(msg.wrapNel)
 
@@ -75,7 +79,6 @@ with CachedStrategy
       .infraRunAsync("machine emission")
     mediator.subscribe
       .merge(messageIn.dequeue)
-      .logged("agent to machines")
       .to(toMachines.publish)
       .infraRunAsync("machine reception")
     fromMachines.subscribe

@@ -44,7 +44,7 @@ with HasContextAgent
   var history: List[NavigationTarget] = List()
 
   override def back() {
-    send(Back)
+    send(NavBack)
   }
 
   def navigated(target: NavigationTarget) {

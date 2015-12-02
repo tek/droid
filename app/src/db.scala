@@ -1,8 +1,6 @@
 package tryp
 package droid
 
-import concurrent.duration._
-
 import akka.util.Timeout
 
 object DbMeta

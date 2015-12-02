@@ -2,7 +2,6 @@ package tryp
 package droid
 
 import concurrent._
-import duration.Duration
 
 import scalaz._, Scalaz._, concurrent._
 

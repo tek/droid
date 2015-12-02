@@ -9,6 +9,7 @@ extends tryp.AndroidDeps
 {
   override def deps = super.deps ++ Map(
     "core" → core,
+    "state" → state,
     "view" → view,
     "app" → app,
     "test" → test,
@@ -27,7 +28,13 @@ extends tryp.AndroidDeps
   }
 
   def core = ids(
-    pulsar("macros")
+    pulsar("macros"),
+    ad(aar("org.macroid" %% "macroid" % "2.0.0-M4"), "macroid/macroid",
+      "core").no
+  )
+
+  def state = ids(
+    pulsar("slick")
   )
 
   def view = ids(
@@ -35,7 +42,6 @@ extends tryp.AndroidDeps
   )
 
   def app = ids(
-    pulsar("slick"),
     aar("com.android.support" % "appcompat-v7" % "21.+"),
     aar("com.android.support" % "palette-v7" % "21.+"),
     aar("com.android.support" % "recyclerview-v7" % "21.+"),
@@ -43,8 +49,6 @@ extends tryp.AndroidDeps
     "com.google.android.gms" % "play-services-maps" % "+",
     "com.google.android.gms" % "play-services-location" % "+",
     "com.google.android.gms" % "play-services-plus" % "+",
-    ad(aar("org.macroid" %% "macroid" % "2.0.0-M4"), "macroid/macroid",
-      "core").no,
     "com.typesafe.akka" %% "akka-actor" % "2.3.+",
     "com.scalarx" %% "scalarx" % "+",
     "com.github.andkulikov" % "transitions-everywhere" % "+",

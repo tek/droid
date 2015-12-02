@@ -1,11 +1,7 @@
 package tryp
 package droid
 
-import concurrent.duration._
-
 import Z._
-
-import org.log4s.Logger
 
 object TaskOps
 {

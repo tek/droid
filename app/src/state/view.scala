@@ -8,6 +8,8 @@ import concurrent.duration._
 
 import scalaz._, Scalaz._, stream.async
 
+import shapeless.tag.@@
+
 object ViewMachine
 {
   case class Layout[A <: View](layout: IOB[A])
@@ -29,7 +31,7 @@ object ViewMachine
 //   that contains a reference to the view root for insertion
 
 abstract class ViewMachine[A <: View](implicit ctx: AndroidUiContext,
-  mt: MessageTopic, val res: Resources)
+  mt: MessageTopic @@ To, val res: Resources)
 extends SimpleDroidMachine
 with ExtViews
 with TextCombinators
@@ -58,6 +60,6 @@ with TextCombinators
 
   val setLayout: Transit = {
     case s @ S(_, Layout(l)) ⇒
-      s << stateEffectTask[Task, Unit]("set layout signal")(layout.set(l))
+      s << stateEffectTask("set layout signal")(layout.set(l))
   }
 }

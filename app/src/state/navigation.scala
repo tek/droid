@@ -20,11 +20,13 @@ object NavMessages
   case class SetNav(nav: Navigation)
   extends Message
 
-  case object Back
+  case object NavBack
   extends Message
 }
 import NavMessages._
+import MainViewMessages._
 
+@Publish(LoadFragment, Back)
 trait NavMachine
 extends SimpleDroidMachine
 {
@@ -44,7 +46,7 @@ extends SimpleDroidMachine
     case Target(t) ⇒ target(t)
     case Index(i) ⇒ index(i)
     case Home ⇒ index(0)
-    case Back ⇒ back
+    case NavBack ⇒ back
     case LoadTarget(t) ⇒ loadTarget(t)
   }
 
@@ -73,7 +75,7 @@ extends SimpleDroidMachine
   def back: Transit = {
     case S(s, NavData(nav, cur :: next :: hist)) ⇒
       S(s, NavData(nav, next :: hist)) << LoadTarget(next)
-    case s ⇒ s << MainViewMessages.Back
+    case s ⇒ s << Back
   }
 
   def loadTarget(t: NavigationTarget): Transit = {

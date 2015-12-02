@@ -4,7 +4,7 @@ package unit
 
 class Application
 extends android.app.Application
-with droid.Application
+with tryp.droid.Application
 with UnitApplication
 {
   def name = "tryp"

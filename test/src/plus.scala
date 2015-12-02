@@ -54,7 +54,7 @@ with AuthIntegration
     override def clearPlusToken(token: String) = Nop
 
     override def authorizePlusToken(account: String, plusToken: String) = {
-      AuthState.BackendAuthorized(MockData.authToken)
+      AuthStateData.BackendAuthorized(MockData.authToken)
     }
   }
 }

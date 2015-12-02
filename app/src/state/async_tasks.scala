@@ -51,7 +51,6 @@ extends SimpleDroidMachine
       msg.task.attemptRun
         .fold(f ⇒ AsyncTaskFailure(f, msg.failure),
           s ⇒ AsyncTaskSuccess(s, msg.success))
-        .successNel[Message]
     }
     S(Running, AsyncTasksData(data.running :+ msg.task)) << optFade << t <<
       msg.done

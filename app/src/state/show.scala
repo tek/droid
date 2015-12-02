@@ -3,13 +3,15 @@ package droid
 
 import scalaz._, Scalaz._
 
+import shapeless.tag.@@
+
 import argonaut._, Argonaut._
 
 import state._
 import UiActionTypes._
 
 abstract class ShowMachine[A <: Model: DecodeJson]
-(implicit db: tryp.slick.DbInfo, ctx: AndroidUiContext, mt: MessageTopic)
+(implicit db: tryp.slick.DbInfo, ctx: AndroidUiContext, mt: MessageTopic @@ To)
 extends DroidMachine
 {
   case class Model(model: A)

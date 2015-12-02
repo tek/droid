@@ -2,7 +2,6 @@ package tryp.droid
 
 import scala.language.dynamics
 import scala.collection.convert.wrapAll._
-import scala.concurrent.duration._
 import scala.concurrent.Await
 
 import scalaz._

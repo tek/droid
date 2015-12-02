@@ -3,8 +3,6 @@ package droid
 
 import view._
 
-import concurrent.duration._
-
 import scalaz._, Scalaz._, concurrent._, stream._
 
 import argonaut._, Argonaut._
@@ -12,6 +10,7 @@ import argonaut._, Argonaut._
 import android.widget._
 import android.transitions.everywhere.TransitionSet
 import android.support.v7.widget.RecyclerView
+import android.view.LayoutInflater
 
 import macroid.FullDsl._
 

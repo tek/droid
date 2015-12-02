@@ -4,9 +4,6 @@ package view
 
 import reflect.macros.whitebox
 
-import android.content.Context
-import android.view.{View, ViewGroup}
-
 import iota._
 
 trait IOT[+A]

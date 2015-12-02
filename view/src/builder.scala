@@ -7,11 +7,6 @@ import reflect.macros.whitebox
 import scalaz.{Tree ⇒ STree, _}, Scalaz._, concurrent._, stream._, Process._
 import async.mutable._
 
-import android.content.Context
-import android.view.{View, ViewGroup}
-
-import org.log4s.Logger
-
 @core.IOBase
 object IOBase
 
