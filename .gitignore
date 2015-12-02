@@ -9,3 +9,4 @@ libs
 target/
 .history
 .tags
+.ensime*
