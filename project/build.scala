@@ -14,7 +14,9 @@ extends tryp.AarsBuild("droid", deps = DroidDeps)
 
   lazy val view = "view" / "iota wrappers" <<< core
 
-  lazy val app = "app".transitive / "android commons" <<< view
+  lazy val state = "state" / "state machine" <<< core
+
+  lazy val app = "app".transitive / "android commons" <<< view <<< state
 
   lazy val logback = "logback" / "logback deps" <<< app
 
