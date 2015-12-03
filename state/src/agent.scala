@@ -59,9 +59,9 @@ with CachedStrategy
 
   private[this] lazy val fromMachines = MessageTopic()
 
-  def machines: List[Machine[_, _]] = Nil
+  def machines: List[Machine] = Nil
 
-  def allMachines[A](f: Machine[_, _] ⇒ A) = machines map(f)
+  def allMachines[A](f: Machine ⇒ A) = machines map (f)
 
   def send(msg: Message) = sendAll(msg.wrapNel)
 

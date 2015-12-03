@@ -30,7 +30,7 @@ extends Message
 
 @Publish(Received0)
 trait State0
-extends Machine[HNil, HNil]
+extends Machine
 {
   def handle = "state0"
 
@@ -43,7 +43,7 @@ extends Machine[HNil, HNil]
 
 @Publish(Received1)
 trait State1
-extends Machine[HNil, HNil]
+extends Machine
 {
   def handle = "state1"
 
@@ -64,7 +64,7 @@ extends Machine[HNil, HNil]
 
 @Publish(Received2)
 trait State2
-extends Machine[HNil, HNil]
+extends Machine
 {
   def handle = "state2"
 
