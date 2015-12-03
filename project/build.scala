@@ -10,6 +10,19 @@ import Templates.autoImport._
 object DroidBuild
 extends tryp.AarsBuild("droid", deps = DroidDeps)
 {
+  override def defaultBuilder = { name: String ⇒
+    super.defaultBuilder(name)
+      .manifest("minSdkVersion" → "14")
+      .settingsV(
+        manifestTemplate := metaRes.value / "aar" / manifestName,
+        manifestTokens ++= Map(
+          "package" → androidPackage.value,
+          "versionName" → version.value,
+          "versionCode" → "1"
+        )
+      )
+  }
+
   lazy val core = "core" / "android basics"
 
   lazy val view = "view" / "iota wrappers" <<< core
@@ -22,7 +35,8 @@ extends tryp.AarsBuild("droid", deps = DroidDeps)
 
   lazy val test = "test" <<< app
 
-  lazy val unitCore = "unit-core" <<< test
+  lazy val unitCore = ("unit-core" <<< test)
+    .settingsV(aarModule := "")
 
   lazy val debug = "debug" <<< app
 
@@ -55,5 +69,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps)
   import stream._
   import Process._
   import scala.concurrent.duration._
+  import shapeless._
+  import tryp._
   """
 }
