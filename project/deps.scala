@@ -16,7 +16,8 @@ extends tryp.AndroidDeps
     "unit-core" → unitCore,
     "unit" → unit,
     "integration" → integration,
-    "logback" → logback
+    "logback" → logback,
+    "macro-console" → macroConsole
   )
 
   override def resolvers = super.resolvers ++ Map(
@@ -80,5 +81,9 @@ extends tryp.AndroidDeps
     "junit" % "junit" % "4.12" % "provided",
     "com.android.support.test" % "runner" % "+" exclude("junit", "junit"),
     "com.android.support" % "multidex-instrumentation" % "+"
+  )
+
+  def macroConsole = ids(
+    pulsar("core")
   )
 }
