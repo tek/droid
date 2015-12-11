@@ -2,7 +2,11 @@ package tryp
 
 import sbt._
 import sbt.Keys._
+
 import android.Keys._
+
+import com.typesafe.sbt.SbtScalariform.autoImport._
+
 import TrypAndroid.autoImport._
 import Tryp.autoImport._
 import Templates.autoImport._
@@ -14,6 +18,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps)
     super.defaultBuilder(name)
       .manifest("minSdkVersion" → "14")
       .settingsV(
+        scalariformFormat in Compile := Nil,
         manifestTemplate := metaRes.value / "aar" / manifestName,
         manifestTokens ++= Map(
           "package" → androidPackage.value,
