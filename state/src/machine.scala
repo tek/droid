@@ -17,7 +17,7 @@ import Zthulhu._
 // params
 // for export, try to create a macro that divides the messages at compile-time,
 // maybe via class annotation
-abstract class Machine[A <: HList, P <: HList]
+abstract class Machine
 (implicit messageTopic: MessageTopic @@ To)
 extends Logging
 with CachedStrategy

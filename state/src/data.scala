@@ -10,8 +10,7 @@ case object Pristine extends BasicState
 case object Initialized extends BasicState
 case object Initializing extends BasicState
 
-case class MachineTerminated(
-  z: Machine[_ <: shapeless.HList, _ <: shapeless.HList])
+case class MachineTerminated(z: Machine)
 extends Message
 
 case class Create(args: Params, state: Option[Bundle])

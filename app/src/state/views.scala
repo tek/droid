@@ -7,7 +7,7 @@ import shapeless._
 import concurrent.duration._
 
 trait UiDispatcher
-extends Machine[HNil, HNil]
+extends Machine
 {
   def handle = "ui"
 

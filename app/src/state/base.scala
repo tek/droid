@@ -6,7 +6,7 @@ import shapeless.HNil
 import shapeless.tag.@@
 
 trait DroidMachineBase[A <: AndroidUiContext]
-extends Machine[HNil, HNil]
+extends Machine
 {
   implicit def ctx: A
 }

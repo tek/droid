@@ -8,7 +8,7 @@ import shapeless.tag.@@
 import scalaz._, Scalaz._, concurrent.Strategy, stream.async
 
 trait LogMachine
-extends Machine[HNil, HNil]
+extends Machine
 {
   def handle = "log"
 
