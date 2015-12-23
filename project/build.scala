@@ -5,8 +5,6 @@ import sbt.Keys._
 
 import android.Keys._
 
-import com.typesafe.sbt.SbtScalariform.autoImport._
-
 import TrypAndroid.autoImport._
 import Tryp.autoImport._
 import Templates.autoImport._
@@ -18,7 +16,6 @@ extends tryp.AarsBuild("droid", deps = DroidDeps)
     super.defaultBuilder(name)
       .manifest("minSdkVersion" → "14")
       .settingsV(
-        scalariformFormat in Compile := Nil,
         manifestTemplate := metaRes.value / "aar" / manifestName,
         manifestTokens ++= Map(
           "package" → androidPackage.value,
@@ -32,9 +29,9 @@ extends tryp.AarsBuild("droid", deps = DroidDeps)
 
   lazy val view = "view" / "iota wrappers" <<< core
 
-  lazy val state = "state" / "state machine" <<< core
+  lazy val state = "state" / "state machine" <<< view
 
-  lazy val app = "app".transitive / "android commons" <<< view <<< state
+  lazy val app = "app".transitive / "android commons" <<< state <<< view
 
   lazy val logback = "logback" / "logback deps" <<< app
 
