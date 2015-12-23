@@ -41,4 +41,6 @@ trait TextCombinators
     }
     textWatcher(listener)
   }
+
+  def clear[A <: TextView] = text[A]("")
 }
