@@ -47,6 +47,8 @@ extends UiContext[Ui]
   def transitionFragment(fragment: FragmentBuilder): Ui[String]
 
   def showViewTree(view: View): String
+
+  def hideKeyboard(): Ui[String]
 }
 
 trait AndroidContextUiContext
@@ -70,6 +72,8 @@ with Logging
   def transitionFragment(fragment: FragmentBuilder) = {
     loadFragment(fragment)
   }
+
+  def hideKeyboard() = Ui("Cannot hide keyboard without activity")
 }
 
 class DefaultAndroidContextUiContext(implicit val context: Context)
@@ -88,6 +92,7 @@ with FragmentManagement
 with Transitions
 with TrypActivityAccess
 with HasSettings
+with Input
 {
   override def loadFragment(fragment: FragmentBuilder) = {
     Ui {
@@ -116,6 +121,10 @@ with HasSettings
 
   // TODO split in notifyLiteral and notifyRes or similar
   override def notify(id: String) = mkToast(id)
+
+  override def hideKeyboard() = {
+    super[Input].hideKeyboard()
+  }
 }
 
 trait AndroidActivityUiContext

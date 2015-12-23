@@ -301,8 +301,11 @@ extends ViewBasic
   def inputMethodManager =
     systemService[InputMethodManager](Context.INPUT_METHOD_SERVICE)
 
-  def hideKeyboard {
-    inputMethodManager.hideSoftInputFromWindow(view.getWindowToken, 0)
+  def hideKeyboard() = {
+    Ui {
+      inputMethodManager.hideSoftInputFromWindow(view.getWindowToken, 0)
+      "keyboard successfully hidden"
+    }
   }
 }
 
