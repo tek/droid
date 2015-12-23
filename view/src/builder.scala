@@ -36,9 +36,17 @@ with IOStrategy
 
   lazy val sig = async.signalOf[Maybe[A]](Maybe.Empty())
 
-  def vs = sig.continuous flatMap(_.cata(emit, halt))
+  def view = sig.continuous flatMap(_.cata(emit, halt))
 
-  def v = vs |> await1
+  def io = view map(iota.IO(_))
+
+  def v = IOV(io)
+}
+
+case class IOV[A](view: Process[Task, iota.IO[A]]) {
+  def >>=[B](f: A ⇒ iota.IO[B]): IOV[B] = IOV(view map (_ >>= f))
+
+  def performMain() = view take(1) map(_.performMain())
 }
 
 trait ExtViews

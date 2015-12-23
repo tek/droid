@@ -8,7 +8,7 @@ import android.widget.TextView
 
 final class TextViewOps[A <: TextView](a: IOB[A])
 {
-  def text = a.vs
+  def text = a.view
     .map(_.getText.toString)
     .toSignal
 }

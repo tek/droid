@@ -11,6 +11,8 @@ import shapeless.tag.@@
 
 import Process._
 
+import droid.view._
+
 @implicitNotFound("no Operation[${A}] defined")
 trait Operation[-A]
 {
@@ -95,6 +97,12 @@ extends ToOperationSyntax
           .map(_.toString)
           .map(UiSuccessful(_).internal)
           .toParcel
+    }
+  }
+
+  implicit def iovOperation[A] = new ParcelOperation[IOV[A]] {
+    def parcel(v: IOV[A]) = {
+      IOVTask(v).publish
     }
   }
 

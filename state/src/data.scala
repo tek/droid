@@ -5,6 +5,8 @@ import scalaz._, Scalaz._
 
 import Process._
 
+import droid.view._
+
 trait BasicState
 case object Pristine extends BasicState
 case object Initialized extends BasicState
@@ -44,6 +46,12 @@ case class UiTask(ui: Ui[Result], timeout: Duration = 30 seconds)
 extends Message
 
 case class UiSuccessful(result: Any)
+extends Message
+
+case class IOVTask[A](iov: IOV[A], timeout: Duration = 30 seconds)
+extends Message
+
+case class IOVSuccessful(result: Any)
 extends Message
 
 trait InternalMessage
