@@ -22,7 +22,7 @@ extends CachedPool
 case class IOB[A](create: Context ⇒ iota.IO[A])
 extends IOT[A]
 with Logging
-with CachedStrategy
+with IOStrategy
 {
   def cachedPool = IOB
 

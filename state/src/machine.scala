@@ -20,7 +20,7 @@ import Zthulhu._
 abstract class Machine
 (implicit messageTopic: MessageTopic @@ To)
 extends Logging
-with CachedStrategy
+with StateStrategy
 {
   def cachedPool = Zthulhu
 

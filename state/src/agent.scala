@@ -48,7 +48,7 @@ trait To
 
 trait Agent
 extends Logging
-with CachedStrategy
+with StateStrategy
 {
   def cachedPool = Agent
 
