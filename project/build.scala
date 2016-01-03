@@ -38,7 +38,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps)
   lazy val test = "test" <<< app
 
   lazy val unitCore = ("unit-core" <<< test)
-    .settingsV(aarModule := "")
+    .settingsV(aarModule := "unit.core")
 
   lazy val debug = "debug" <<< app
 
