@@ -6,7 +6,7 @@ import sbt.Keys._
 import android.Keys._
 
 import TrypAndroid.autoImport._
-import Tryp.autoImport._
+import TrypBuildKeys._
 import Templates.autoImport._
 
 object DroidBuild
