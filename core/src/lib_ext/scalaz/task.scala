@@ -20,11 +20,11 @@ object TaskOps
 final class TaskOps[A](task: Task[A])(implicit log: Logger)
 {
   def infraRun(desc: String) = {
-     TaskOps.infraResult(desc)(task.attemptRun)
+     TaskOps.infraResult(desc)(task.unsafePerformSyncAttempt)
   }
 
   def infraRunFor(desc: String, timeout: Duration) = {
-     TaskOps.infraResult(desc)(task.attemptRunFor(timeout))
+     TaskOps.infraResult(desc)(task.unsafePerformSyncAttemptFor(timeout))
   }
 
   def infraRunShort(desc: String)(implicit timeout: Duration = 5 seconds) = {
@@ -34,15 +34,17 @@ final class TaskOps[A](task: Task[A])(implicit log: Logger)
   def !?(desc: String) = infraRunShort(desc)
 
   def infraRunAsync(desc: String) = {
-    task.runAsync(TaskOps.infraResult[A](desc) _)
+    task.unsafePerformAsync(TaskOps.infraResult[A](desc) _)
   }
 
   def infraRunAsyncShort(desc: String)
   (implicit timeout: Duration = 5 seconds) = {
-    task.timed(timeout).runAsync(TaskOps.infraResult[A](desc) _)
+    task
+      .unsafePerformTimed(timeout)
+      .unsafePerformAsync(TaskOps.infraResult[A](desc) _)
   }
 
-  def peek() = task.attemptRunFor(5 seconds)
+  def peek() = task.unsafePerformSyncAttemptFor(5 seconds)
 }
 
 trait ToTaskOps

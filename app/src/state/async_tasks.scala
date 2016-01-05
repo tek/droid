@@ -48,7 +48,7 @@ extends SimpleDroidMachine
   {
     val optFade = if (fade) switchToAsyncUi.some else none
     val t = Task {
-      msg.task.attemptRun
+      msg.task.unsafePerformSyncAttempt
         .fold(f ⇒ AsyncTaskFailure(f, msg.failure),
           s ⇒ AsyncTaskSuccess(s, msg.success))
     }

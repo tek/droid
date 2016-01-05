@@ -103,7 +103,7 @@ with Views
   (inflater: LayoutInflater, container: ViewGroup, state: Bundle) = {
     val l = (viewMachine.layout.discrete |> Process.await1)
       .runLast
-      .attemptRunFor(10 seconds) match {
+      .unsafePerformSyncAttemptFor(10 seconds) match {
       case \/-(Some(l)) ⇒ l
       case \/-(None) ⇒
         log.error("no layout produced by ViewMachine")

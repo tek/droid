@@ -126,7 +126,7 @@ with StateStrategy
   }
 
   private[this] def waitingTasks = {
-    size.runLast.attemptRun | None | 0
+    size.runLast.unsafePerformSyncAttempt | None | 0
   }
 
   def description = s"$handle state"

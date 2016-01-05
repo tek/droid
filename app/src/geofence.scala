@@ -71,7 +71,7 @@ extends SolitaryAgent
   // TODO connect
   def success = async.signalOf(false)
 
-  def installed: Boolean = success.get.attemptRun | false
+  def installed: Boolean = success.get.unsafePerformSyncAttempt | false
 
   lazy val location = new LocationInterface {}
 

@@ -127,7 +127,7 @@ with Macroid
             Ui.sequence(actions: _*).run
           }
           .runLog
-          .runAsync {
+          .unsafePerformAsync {
             case -\/(err) ⇒ log.error(err)("bindGPlusHeader")
             case _ ⇒
           }
