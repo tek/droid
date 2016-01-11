@@ -20,7 +20,7 @@ with ActorLogging
 }
 
 trait SpecViewMachine
-extends ViewMachine[FrameLayout]
+extends SimpleViewMachine[FrameLayout]
 {
   import iota._
 

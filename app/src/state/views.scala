@@ -7,7 +7,7 @@ import shapeless._
 import concurrent.duration._
 
 trait UiDispatcher
-extends Machine
+extends SimpleMachine
 {
   def handle = "ui"
 
@@ -20,9 +20,9 @@ extends Machine
 }
 
 trait DummyViewMachine
-extends ViewMachine[View]
+extends SimpleViewMachine[View]
 {
-  def layoutIOT = w[View]
+  def layoutIO = w[View]
 }
 
 trait HasContextAgent
@@ -47,7 +47,7 @@ with ActivityAccess
 
   override def machines = activityMachine :: super.machines
 
-  protected lazy val activityMachine = new DroidMachine
+  protected lazy val activityMachine = new SimpleDroidMachine
   {
     override def description = "activity access state"
 

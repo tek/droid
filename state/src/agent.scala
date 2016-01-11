@@ -8,7 +8,7 @@ import shapeless.tag.@@
 import scalaz._, Scalaz._, concurrent.Strategy, stream.async
 
 trait LogMachine
-extends Machine
+extends SimpleMachine
 {
   def handle = "log"
 
@@ -73,17 +73,20 @@ with StateStrategy
 
   lazy val messageOut = machines foldMap(_.run())
 
+  // FIXME remove fromMachines?
+  // merge sending and receiving from machine as a channel?
   protected def runMachines() = {
     messageOut
       .to(fromMachines.publish)
-      .infraRunAsync("machine emission")
+      .infraRunAsync("publish messages from machines")
     mediator.subscribe
       .merge(messageIn.dequeue)
       .to(toMachines.publish)
-      .infraRunAsync("machine reception")
+      .infraRunAsync("publish mediator messages to machines")
+    // messageOut
     fromMachines.subscribe
       .to(mediator.publish)
-      .infraRunAsync("machine to mediator")
+      .infraRunAsync("publish machine messages to mediator")
   }
 
   def initMachines() = {

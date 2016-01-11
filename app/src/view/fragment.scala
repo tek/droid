@@ -185,8 +185,9 @@ extends ActivityContexts
 }
 
 trait RecyclerFragment[A <: RecyclerView.Adapter[_]]
-extends TrypFragment
 {
+  self: FragmentBase ⇒
+
   def adapter: A
 
   def recyclerTweaks: Tweak[RecyclerView]

@@ -17,11 +17,12 @@ import Zthulhu._
 // params
 // for export, try to create a macro that divides the messages at compile-time,
 // maybe via class annotation
-abstract class Machine
-(implicit messageTopic: MessageTopic @@ To)
+trait Machine
 extends Logging
 with StateStrategy
 {
+  implicit def messageTopic: MessageTopic @@ To
+
   def cachedPool = Zthulhu
 
   val S = Zthulhu
@@ -163,3 +164,7 @@ with StateStrategy
     def allowed = false
   }
 }
+
+abstract class SimpleMachine
+(implicit val messageTopic: MessageTopic @@ To)
+extends Machine

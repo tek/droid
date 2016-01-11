@@ -48,7 +48,8 @@ extends Message
 case class UiSuccessful(result: Any)
 extends Message
 
-case class IOVTask[A](iov: IOV[A], timeout: Duration = 30 seconds)
+case class ViewStreamTask[A](
+  iov: ViewStream[A], timeout: Duration = 30 seconds)
 extends Message
 
 case class IOVSuccessful(result: Any)

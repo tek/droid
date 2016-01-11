@@ -39,7 +39,7 @@ object PlayServices
 import PlayServices._
 
 trait PlayServices[A <: WithContext]
-extends DroidMachineBase[A]
+extends DroidMachine[A]
 {
   run(Disconnected)
 

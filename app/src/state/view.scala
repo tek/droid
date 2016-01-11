@@ -30,12 +30,13 @@ object ViewMachine
 //   in subviews (nested fragments, maybe reinvent), pass a modified UiContext
 //   that contains a reference to the view root for insertion
 
-abstract class ViewMachine[A <: View](implicit ctx: AndroidUiContext,
-  mt: MessageTopic @@ To, val res: Resources)
-extends SimpleDroidMachine
+trait ViewMachine[A <: View]
+extends Machine
 with ExtViews
 with TextCombinators
 {
+  implicit def res: Resources
+
   import ViewMachine._
 
   val Aid = iota.Id
@@ -63,3 +64,8 @@ with TextCombinators
       s << stateEffectTask("set layout signal")(layout.set(l))
   }
 }
+
+abstract class SimpleViewMachine[A <: View]
+(implicit ctx: AndroidUiContext, val messageTopic: MessageTopic @@ To,
+  val res: Resources)
+extends ViewMachine[A]
