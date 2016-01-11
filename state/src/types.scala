@@ -100,9 +100,9 @@ extends ToOperationSyntax
     }
   }
 
-  implicit def iovOperation[A] = new ParcelOperation[IOV[A]] {
-    def parcel(v: IOV[A]) = {
-      IOVTask(v).publish
+  implicit def vsOperation[A] = new ParcelOperation[ViewStream[A]] {
+    def parcel(v: ViewStream[A]) = {
+      ViewStreamTask(v).publish
     }
   }
 

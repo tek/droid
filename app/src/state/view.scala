@@ -12,7 +12,7 @@ import shapeless.tag.@@
 
 object ViewMachine
 {
-  case class Layout[A <: View](layout: IOB[A])
+  case class Layout[A <: View](layout: FreeIO[A])
   extends Data
 
   case object SetLayout
@@ -34,6 +34,7 @@ trait ViewMachine[A <: View]
 extends Machine
 with ExtViews
 with TextCombinators
+with RecyclerCombinators
 {
   implicit def res: Resources
 
@@ -43,10 +44,10 @@ with TextCombinators
 
   def handle = "view"
 
-  def layoutIOT: IOB[A]
+  def layoutIO: FreeIO[A]
 
-  lazy val layout: async.mutable.Signal[IOB[View]] =
-    async.signalUnset[IOB[View]]
+  lazy val layout: async.mutable.Signal[FreeIO[View]] =
+    async.signalUnset[FreeIO[View]]
 
   def admit: Admission = {
     case Create(_, _) ⇒ create
@@ -55,7 +56,7 @@ with TextCombinators
 
   val create: Transit = {
     case S(Pristine, _) ⇒
-      val data = Layout(layoutIOT)
+      val data = Layout(layoutIO)
       S(Initialized, data) << SetLayout
   }
 

@@ -95,9 +95,10 @@ trait VSTrypFragment
 extends Fragment
 with FragmentBase
 with FragmentAgent
-with Views
+with ExtViews
 {
-  def dummyLayout = w[TextView] >>= iota.text("Couldn't load content")
+  def dummyLayout = w[TextView] >>=
+    iota.text[TextView]("Couldn't load content")
 
   override def onCreateView
   (inflater: LayoutInflater, container: ViewGroup, state: Bundle) = {

@@ -2,80 +2,147 @@ package tryp
 package droid
 package view
 
-import reflect.macros.whitebox
+import reflect.macros._
 
 import iota._
 
-trait IOT[+A]
+import simulacrum._
+
+import shapeless._
+import shapeless.ops.hlist._
+
+trait AndroidEffect[F[_, _]]
 {
-  def create: Context ⇒ iota.IO[A]
+  def curry[A, B](f: F[A, IO[B]]): IOCTrans[A, B]
+}
 
-  def >>=[B](f: A ⇒ iota.IO[B]): IOT[B]
-
-  def reify(c: Context): IO[A] = {
-    create(c)
+object AndroidEffect
+{
+  implicit lazy val func1AndroidEffect = new AndroidEffect[Function1] {
+    def curry[A, B](f: A ⇒ IO[B]) = c ⇒ f
   }
 
-  def perform()(implicit c: Context): A = {
-    reify(c).perform()
+  implicit lazy val ctransAndroidEffect =
+    new AndroidEffect[λ[(a, b) ⇒ Context ⇒ a ⇒ b]]
+    {
+      def curry[A, B](f: Context ⇒ A ⇒ IO[B]): IOCTrans[A, B] = f
+    }
+}
+
+@typeclass trait IOBuilder[F[_]]
+{
+  @op(">>=", alias = true)
+  def flatMap[A, B, C[_, _], D]
+  (fa: F[A])
+  (f: C[D, IO[B]])
+  (implicit eff: AndroidEffect[C], lis: scalaz.Liskov[A, D]): F[B] =
+  {
+    lift { ctx ⇒
+      val curried = lis.apply _ andThen eff.curry(f)(ctx)
+      ctor(fa)(ctx) >>= curried
+    }
+  }
+
+  def reify[A](fa: F[A])(ctx: Context): IO[A] = {
+    ctor(fa)(ctx)
+  }
+
+  @op("perform")
+  def perform[A](fa: F[A])()(implicit ctx: Context): A = {
+    reify(fa)(ctx).perform()
+  }
+
+  def lift[A, B](f: Context ⇒ iota.IO[B]) = pure(f)
+
+  def pure[A](f: IOCtor[A]): F[A]
+
+  def ctor[A](fa: F[A]): IOCtor[A]
+}
+
+trait IOBase[A]
+{
+  def ctor: IOCtor[A]
+}
+
+@core.IOBase
+object IOBase
+
+case class Widget[A <: View](ctor: IOCtor[A])
+extends IOBase[A]
+
+case class Layout[A <: ViewGroup](ctor: IOCtor[A])
+extends IOBase[A]
+
+case class SimpleIO[A](ctor: IOCtor[A])
+
+object SimpleIO
+{
+  implicit def simpleIoBuilder = new IOBuilder[SimpleIO] {
+    def pure[A](f: IOCtor[A]) = SimpleIO(f)
+
+    def ctor[A](fa: SimpleIO[A]) = fa.ctor
   }
 }
 
-case class IOTS[+A](create: Context ⇒ iota.IO[A])
-extends IOT[A]
+object reifySub
+extends Poly1
 {
-  def >>=[B](f: A ⇒ iota.IO[B]): IOT[B] = IOTS(create >=> f)
+  implicit def caseIOBuilder[A <: View, F[_]](implicit b: IOBuilder[F]) =
+    at[F[A]](fa ⇒ b.reify(fa) _)
+}
+
+case class LayoutBuilder[A, F[_]](layout: Context ⇒ List[IOV] ⇒ IO[A])
+(implicit builder: IOBuilder[F])
+{
+  def apply[In <: HList, Out <: HList](vs: In)
+  (implicit
+    m: Mapper.Aux[reifySub.type, In, Out],
+    tta: ToTraversable.Aux[Out, List, Context ⇒ IOV]): F[A] = {
+      val f = { ctx: Context ⇒
+        val reifies = vs.map(reifySub).toList.map(_(ctx))
+        layout(ctx)(reifies)
+      }
+      builder.pure(f)
+  }
 }
 
 trait Views
 {
-  def w[A]: IOT[A] = macro ViewM.w[A]
+  def w[A <: View]: SimpleIO[A] = macro ViewM.w[A, SimpleIO]
 
-  def l[A <: ViewGroup](vs: IOT[_ <: View]*): IOT[A] =
-    macro ViewM.l[A]
+  def l[A <: ViewGroup](inner: Any): SimpleIO[A] = macro ViewM.l[A, SimpleIO]
 }
 
-trait ViewMBase
+class ViewM(val c: blackbox.Context)
+extends AndroidMacros
 {
-  val c: whitebox.Context
-
   import c.universe._
+  import c.Expr
 
-  val actx = tq"android.content.Context"
-
-  def lImpl[A <: ViewGroup: c.WeakTypeTag, B[_] <: IOT[_]]
-  (ctor: c.Expr[(Context ⇒ iota.IO[A]) ⇒ B[A]])
-  (vs: Seq[c.Expr[IOT[_ <: View]]])
-  : c.Expr[B[A]] = {
-    c.Expr[B[A]] {
-      val tp = weakTypeOf[A]
+  def w[A <: View: WeakTypeTag, F[_]]
+  (implicit wtf: WeakTypeTag[F[_]]): Expr[F[A]] = {
+    val aType = weakTypeOf[A]
+    val TypeRef(pre, sym, args) = wtf.tpe
+    val ctor = internal.typeRef(pre, sym, List(aType))
+    Expr[F[A]] {
       q"""
-      iota.c[$tp] {
-        $ctor { (ctx: $actx) ⇒
-          val ch = Seq(..$vs)
-          iota.l[$tp](ch map(_.reify(ctx)): _*)(ctx)
-        }
+      new $ctor(iota.w[$aType](_))
+      """
+    }
+  }
+
+  def l[A <: ViewGroup: c.WeakTypeTag, F[_]](inner: Expr[Any])
+  (implicit wtf: WeakTypeTag[F[_]]): Expr[F[A]] = {
+    val aType = weakTypeOf[A]
+    val fType = wtf.tpe.typeConstructor
+    Expr {
+      q"""
+      iota.c[$aType] {
+        val b = tryp.droid.view.LayoutBuilder[$aType, $fType](
+          ctx ⇒ sub ⇒ iota.l[$aType](sub: _*)(ctx))
+        b($inner)
       }
       """
     }
-  }
-}
-
-class ViewM(val c: whitebox.Context)
-extends ViewMBase
-{
-  import c.universe._
-
-  def w[A: c.WeakTypeTag]: c.Expr[IOT[A]] = {
-    c.Expr[IOT[A]] {
-      q"""
-      tryp.droid.view.IOTS(iota.w[${weakTypeOf[A]}](_))
-      """
-    }
-  }
-
-  def l[A <: ViewGroup: c.WeakTypeTag](vs: c.Expr[IOT[_ <: View]]*)
-  : c.Expr[IOT[A]] = {
-    lImpl(reify(IOTS.apply[A](_)))(vs)
   }
 }

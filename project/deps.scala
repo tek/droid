@@ -31,7 +31,8 @@ extends tryp.AndroidDeps
   def core = ids(
     pulsar("macros"),
     ad(aar("org.macroid" %% "macroid" % "2.0.0-M4"), "macroid/macroid",
-      "core").no
+      "core").no,
+    dd("tryp" %% "pulsar-unit-core" % "+" % "test", "tek/pulsar", "unit-core")
   )
 
   def state = ids(

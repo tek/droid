@@ -6,6 +6,8 @@ import android.widget._
 
 import akka.actor.{Props, ActorLogging, ActorRef}
 
+import shapeless._
+
 import state._
 import view._
 
@@ -26,14 +28,15 @@ extends SimpleViewMachine[FrameLayout]
 
   import android.view.ViewGroup.LayoutParams._
 
-  lazy val search = w[AutoCompleteTextView] >>= large
+  lazy val search = w[AutoCompleteTextView] >>= large[AutoCompleteTextView]
 
-  lazy val layoutIOT =
+  lazy val layoutIO = {
     l[FrameLayout](
-      l[RelativeLayout](
-        search
-      ) >>= lp(MATCH_PARENT, MATCH_PARENT)
-    )
+      (l[RelativeLayout](search :: HNil) >>=
+        lp[RelativeLayout](MATCH_PARENT, MATCH_PARENT)
+        ) :: HNil
+      )
+    }
 }
 
 case class SpecFragment()
@@ -74,4 +77,6 @@ extends AndroidUiContext
   def showViewTree(view: View) = "not implemented"
 
   def notify(id: String): Ui[Any] = Ui("asdf")
+
+  def hideKeyboard(): Ui[String] = Ui("asdf")
 }

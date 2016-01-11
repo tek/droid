@@ -40,7 +40,7 @@ with droid.ToSearchViewOps
 
 trait Globals
 extends tryp.slick.sync.meta.Globals
-with droid.view.meta.Globals
+with droid.view.meta.Exports
 with Util
 with Forward
 with Types

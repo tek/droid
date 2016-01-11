@@ -6,7 +6,7 @@ import scalaz._, Scalaz._, stream._, concurrent._
 
 import android.widget.TextView
 
-final class TextViewOps[A <: TextView](a: IOB[A])
+final class TextViewOps[A <: TextView](a: FreeIO[A])
 {
   def text = a.view
     .map(_.getText.toString)
@@ -15,5 +15,5 @@ final class TextViewOps[A <: TextView](a: IOB[A])
 
 trait ToTextViewOps
 {
-  implicit def ToTextViewOps[A <: TextView](a: IOB[A]) = new TextViewOps(a)
+  implicit def ToTextViewOps[A <: TextView](a: FreeIO[A]) = new TextViewOps(a)
 }

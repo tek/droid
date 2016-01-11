@@ -13,15 +13,15 @@ trait TextCombinators
     hint(res.s(resName, Some("hint")))
   }
 
-  def size(points: Int) = {
-    kestrel((_: TextView).setTextSize(TypedValue.COMPLEX_UNIT_SP, points))
+  def size[A <: TextView](points: Int): Kestrel[A] = {
+    kestrel(_.setTextSize(TypedValue.COMPLEX_UNIT_SP, points))
   }
-  val medium = size(18)
-  val large = size(22)
+  def medium[A <: TextView]: Kestrel[A] = size(18)
+  def large[A <: TextView]: Kestrel[A] = size(22)
 
-  def minWidth(name: String)(implicit res: Resources) = {
+  def minWidth[A <: TextView](name: String)(implicit res: Resources) = {
     val width = res.d(name, Some("min_width")).toInt
-    kestrel((_: TextView).setMinWidth(width))
+    kestrel((_: A).setMinWidth(width))
   }
 
   def textWatcher(listener: TextWatcher) = {
