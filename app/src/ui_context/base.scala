@@ -202,7 +202,7 @@ extends ToUiOps
 {
   def attemptUi: Unit = {
     Log.d(s"running action")
-    a.!.task runAsync {
+    a.!.task unsafePerformAsync {
       case \/-(r) ⇒ handleActionResult(r)
       case -\/(e) ⇒ dbError(e)
     }

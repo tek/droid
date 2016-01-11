@@ -33,7 +33,7 @@ extends CachedPool
   : Writer1[Z, M, E] = {
     receive1 { (a: M) ⇒
       val (state, effect) =
-        Task(f(z, a)).attemptRun match {
+        Task(f(z, a)).unsafePerformSyncAttempt match {
           case \/-(Just((nz, e))) ⇒ nz.just → e.just
           case \/-(Empty()) ⇒ Maybe.empty[Z] → Maybe.empty[E]
           case -\/(t) ⇒ Maybe.empty[Z] → transError(z, a, t).just

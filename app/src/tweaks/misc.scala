@@ -2,8 +2,6 @@ package tryp.droid.tweaks
 
 import java.net.URL
 
-import scala.language.reflectiveCalls
-
 import android.widget._
 import android.support.v7.widget._
 import android.view.{Gravity,MotionEvent,GestureDetector}

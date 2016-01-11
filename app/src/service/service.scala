@@ -38,7 +38,7 @@ with ServiceCommon
   override def onStartCommand(intent: Intent, flags: Int, startId: Int): Int =
   {
     start
-    Task(handleIntent(intent)).runAsync {
+    Task(handleIntent(intent)).unsafePerformAsync {
       case -\/(err) ⇒ log.error(err)(s"starting intent $intent")
       case _ ⇒
     }
