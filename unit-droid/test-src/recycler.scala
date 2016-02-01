@@ -10,6 +10,7 @@ import android.widget._
 class RecyclerSpec
 {
   def is = s2"""
+  empty $empty
   add $add
   """
 
@@ -17,16 +18,17 @@ class RecyclerSpec
 
   val text = Random.string(10)
 
+  lazy val recFrag = frag[RecyclerSpecFragment]("test").getA
+
+  def empty = {
+    recFrag willContain emptyRecycler
+  }
+
   def add = {
-    Thread.sleep(3000)
-    val f = frag[RecyclerSpecFragment]("test").getA
-    f.viewMachine.adapter.updateItems(List("first", "second"))
-    Thread.sleep(3000)
-    f.nonEmptyRecycler(1)
-    1 === 1
+    recFrag.viewMachine.adapter.updateItems(List("first", "second")).run
+    recFrag willContain nonEmptyRecycler(2)
   }
 }
-
 
 class RecyclerActSpec
 extends ActivitySpec[ThinSpecActivity]
@@ -42,10 +44,7 @@ extends ActivitySpec[ThinSpecActivity]
   val text = Random.string(10)
 
   def add = {
-    activity
     activity.viewMachine.adapter.updateItems(List("first", "second")).run
-    sync()
-    activity.nonEmptyRecycler(2)
-    1 === 1
+    activity willContain nonEmptyRecycler(2)
   }
 }

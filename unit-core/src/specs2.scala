@@ -10,3 +10,4 @@ with UnitSpec[A]
 with BeforeEach
 with slick.ToActionExpectable
 with MustThrownExpectations
+with ContainsView
