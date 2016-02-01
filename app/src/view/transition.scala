@@ -13,7 +13,7 @@ import android.transitions.everywhere._
 
 import com.melnykov.fab.FloatingActionButton
 
-import tryp.droid.Macroid._
+import Macroid._
 
 class WidgetBase[A <: View](transName: String)
 {

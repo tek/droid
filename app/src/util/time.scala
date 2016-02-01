@@ -5,6 +5,8 @@ import rx.ops._
 
 import java.util.{Timer, TimerTask}
 
+import ScalazGlobals._
+
 case class Ticker(seconds: Rx[Double])(callback: ⇒ Unit)
 {
   val millis = Rx { (((seconds() <= 0) ? 1.0 | seconds()) * 1000).toInt }

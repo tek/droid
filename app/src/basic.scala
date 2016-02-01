@@ -10,10 +10,10 @@ trait HasContext
 
 trait Basic
 extends HasContext
-with ResourcesAccess
+with core.ResourcesAccess
 with Logging
 {
-  type IdTypes = Int with String with Id
+  type RIdTypes = Int with String with RId
 
   def systemService[A: ClassTag](name: String) = {
     context.getSystemService(name) match {

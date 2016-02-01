@@ -1,4 +1,5 @@
-package tryp.droid
+package tryp
+package droid
 
 import android.widget._
 import android.support.v7.widget.RecyclerView
@@ -8,6 +9,8 @@ import macroid.Snails
 
 import akka.actor.ActorSelection
 import akka.pattern.ask
+
+import scalaz._, Scalaz._
 
 import tweaks.Slot
 
@@ -19,6 +22,7 @@ class SimpleModelAdapter[A <: NamedModel: ClassTag]
 (dao: Dao[A])
 (implicit activity: Activity, dbi: DbInfo, ctx: AndroidUiContext)
 extends SimpleRecyclerAdapter[SimpleModelViewHolder, A]
+with Macroid
 with DbProfile
 with ToUiValidationNelActionOps
 {

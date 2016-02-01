@@ -1,8 +1,16 @@
 package tryp
 package droid
 
+import state._
+import view._
+
+import shapeless._
+
 import android.widget.{BaseAdapter,TextView,Filterable,Filter}
 import android.support.v7.widget.RecyclerView
+import android.view.ViewGroup.LayoutParams._
+
+import ViewExports._
 
 abstract class ListAdapter(implicit val activity: Activity)
 extends BaseAdapter
@@ -32,7 +40,7 @@ extends ListAdapter
   protected def setupView(view: View, position: Int, parent: ViewGroup)
 
   protected def label(view: View, name: String) = {
-    view.textView(s"${prefix}_${name}")
+    activity.textView(s"${prefix}_$name")
   }
 
   protected def setAttrs(view: View, item: Map[String, String]) {
@@ -42,7 +50,9 @@ extends ListAdapter
   }
 
   protected def newView: View = {
-    activity.getLayoutInflater.inflate(res.layoutId(layoutName), null)
+    res.layoutId(layoutName)
+      .map(name ⇒ activity.getLayoutInflater.inflate(name, null))
+      .getOrElse(new View(activity))
   }
 
   protected def layoutName: String
@@ -66,7 +76,6 @@ with ActivityContexts
 with tryp.droid.HasActivity
 with Filterable
 with AkkaAdapter
-with Macroid
 with DefaultStrategy
 {
   def items: Seq[B]
@@ -100,7 +109,8 @@ with DefaultStrategy
     new Filter {
       def publishResults(q: CharSequence, results: Filter.FilterResults) {
         results.values match {
-          case v: Seq[B] ⇒ Ui(updateVisibleData(v)).run
+          case v: Seq[B] ⇒
+            Ui(updateVisibleData(v)).run
           case v ⇒ {
             Log.e(s"Error casting filtering results in ${this.className}")
           }
@@ -131,5 +141,33 @@ extends RecyclerAdapter[A, B]
   def updateItems(newItems: Seq[B]) = {
     simpleItems = newItems.toBuffer
     applyFilter
+  }
+}
+
+case class StringHolder(view: View, content: ViewStream[TextView])
+extends RecyclerView.ViewHolder(view)
+
+trait StringRecyclerAdapter
+extends SimpleRecyclerAdapter[StringHolder, String]
+with ExtViews
+with FrameLayoutCombinators
+{
+  import iota._
+
+  def onCreateViewHolder(parent: ViewGroup, viewType: Int) = {
+    val tv = w[TextView]
+    val v = c[FrameLayout](
+      l[FrameLayout](tv :: HNil) >>=
+        lp[FrameLayout](MATCH_PARENT, MATCH_PARENT) >>= nopK >>=
+          selectableFg
+    )
+    StringHolder(v.perform(), tv.v)
+  }
+
+  def onBindViewHolder(holder: StringHolder, position: Int) {
+    items(position) foreach { s ⇒
+      val io = holder.content >>= text[TextView](s)
+      io.performMain()
+    }
   }
 }

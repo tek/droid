@@ -8,12 +8,13 @@ import android.view.Gravity
 
 import macroid.FullDsl._
 
-trait Drawer
+import cats.syntax.apply._
+
+trait DrawerBase
 extends HasToolbar
 with HasNavigation
 with DrawerLayout.DrawerListener
 { self: ActionBarActivity
-  with FragmentManagement
   with Akkativity
   with HasContextAgent ⇒
 
@@ -21,13 +22,13 @@ with DrawerLayout.DrawerListener
 
   override def initView {
     super.initView
-    initDrawer
+    initDrawer()
   }
 
-  private lazy val state = actorSystem.actorOf(DrawerState.props)
+  private lazy val state = self.actorSystem.actorOf(DrawerState.props)
 
-  def initDrawer {
-    replaceFragment(Id.Drawer, Fragments.drawer(), false, Tag.Drawer)
+  def initDrawer() {
+    this.replaceFragment(RId.Drawer, Fragments.drawer(), false, Tag.Drawer)
     drawerToggle
     drawerActor ! Messages.Inject("navigation", navigation)
   }
@@ -36,14 +37,11 @@ with DrawerLayout.DrawerListener
 
   lazy val drawerToggle = {
     drawer flatMap { drawer ⇒
-      toolbar map { tb ⇒
-        new ActionBarDrawerToggle(
-          activity,
-          drawer,
-          tb,
-          res.stringId("drawer_open"),
-          res.stringId("drawer_close")
-        )
+      toolbar flatMap { tb ⇒
+        res.stringId("drawer_open") |@| res.stringId("drawer_close") map {
+          case (o, c) ⇒
+            new ActionBarDrawerToggle(activity, drawer, tb, o, c)
+        } toOption
       }
     }
   }
@@ -51,7 +49,7 @@ with DrawerLayout.DrawerListener
   override def belowToolbarLayout = {
     l[DrawerLayout](
       contentLayout,
-      l[FrameLayout]() <~ Id.Drawer <~ dlp(res.dimen("drawer_width"), ↕)
+      l[FrameLayout]() <~ RId.Drawer <~ dlp(app.R.dimen.drawer_width, ↕)
     ) <~ whore(drawer) <~ llp(↔, ↕) <~ D.listener(this)
   }
 
@@ -134,4 +132,12 @@ with DrawerLayout.DrawerListener
     closeIfOpen()
     send(action)
   }
+}
+
+trait Drawer
+extends DrawerBase
+{ self: ActionBarActivity
+  with Akkativity
+  with HasContextAgent ⇒
+
 }

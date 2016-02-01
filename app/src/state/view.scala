@@ -30,11 +30,9 @@ object ViewMachine
 //   in subviews (nested fragments, maybe reinvent), pass a modified UiContext
 //   that contains a reference to the view root for insertion
 
-trait ViewMachine[A <: View]
+trait ViewMachine
 extends Machine
 with ExtViews
-with TextCombinators
-with RecyclerCombinators
 {
   implicit def res: Resources
 
@@ -44,10 +42,10 @@ with RecyclerCombinators
 
   def handle = "view"
 
-  def layoutIO: FreeIO[A]
+  lazy val layout: async.mutable.Signal[FreeIO[_ <: View]] =
+    async.signalUnset[FreeIO[_ <: View]]
 
-  lazy val layout: async.mutable.Signal[FreeIO[View]] =
-    async.signalUnset[FreeIO[View]]
+  def layoutIO: FreeIO[_ <: View]
 
   def admit: Admission = {
     case Create(_, _) ⇒ create
@@ -66,7 +64,7 @@ with RecyclerCombinators
   }
 }
 
-abstract class SimpleViewMachine[A <: View]
+abstract class SimpleViewMachine
 (implicit ctx: AndroidUiContext, val messageTopic: MessageTopic @@ To,
   val res: Resources)
-extends ViewMachine[A]
+extends ViewMachine

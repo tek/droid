@@ -6,7 +6,10 @@ import reflect.macros.blackbox
 
 import cats._
 import cats.data._
+import cats.syntax.foldable._
 import Func._
+
+import scalaz.Liskov.<~<
 
 import simulacrum._
 
@@ -43,16 +46,25 @@ with AndroidMacros
     val m = ann.method
     MethodAnnottee {
       val impl =
-        if(wrap) m.rhs
-        else q"iota.kestrel[Principal, Any](${m.rhs})"
+        if(wrap) List(q"val x = ${m.rhs}", q"x(ctx)")
+        else List(q"iota.kestrel[Principal, Any](${m.rhs})")
       q"""
       def ${m.name}[..${m.tparams}](...${m.vparamss}): CK[Principal] =
         (ctx: $actx) ⇒ {
           implicit val ${TermName(c.freshName)} = ctx
-          $impl
+          ..$impl
         }
       """
     }
+  }
+
+  def templF(ann: MethodAnnottee, wrap: Boolean) = {
+    val ann0 = ann.withRhs {
+      q"""
+      foldableSyntaxU(${ann.rhs}).fold
+      """
+    }
+    templ(ann0, wrap)
   }
 }
 
@@ -68,16 +80,17 @@ extends IotaAnnBase
   def apply(ann: MethodAnnottee) = templ(ann, true)
 }
 
-trait IotaCombinators[A]
+class IotaAnnWrapFold(val c: blackbox.Context)
+extends IotaAnnBase
 {
-  type Principal = A
-
-  def k[B] = kestrel[Principal, B] _
+  def apply(ann: MethodAnnottee) = templF(ann, true)
 }
 
 @anno(IotaAnn) class ck()
 
 @anno(IotaAnnWrap) class ckw()
+
+@anno(IotaAnnWrapFold) class ckwf()
 
 import scalaz.Liskov.<~<
 
@@ -108,4 +121,33 @@ trait ChainKestrelInstances
     new ChainKestrel[CK] {
       def curry[A](fa: CK[A]) = fa
     }
+}
+
+object ChainKestrel
+extends ChainKestrelInstances
+{
+  def ckZero[A]: CK[A] = (ctx: Context) ⇒ kestrel((_: A) ⇒ ())
+}
+
+object CKInstances
+{
+  import ChainKestrel.ops._
+
+  implicit def ckMonoid[A] = new Monoid[CK[A]] {
+    def empty = ChainKestrel.ckZero[A]
+
+    def combine(x: CK[A], y: CK[A]) = x >>= y
+  }
+}
+
+trait IotaCombinators[A]
+{
+  type Principal = A
+
+  implicit def ckMonoid[A] = CKInstances.ckMonoid[A]
+
+  protected def k[B]: (Principal ⇒ B) ⇒ CK[Principal] =
+    kestrel[Principal, B] _ andThen { a ⇒ (ctx: Context) ⇒ a }
+
+  protected def nopK = k(_ ⇒ ())
 }

@@ -5,6 +5,8 @@ import scalaz._, Scalaz._
 import macroid.{FragmentManagerContext, ContextWrapper, CanTweak}
 import macroid.FullDsl._
 
+import cats.data.Xor
+
 trait MacroidExt
 {
   implicit class FragmentBuilderExt[A](fb: macroid.FragmentBuilder[A])(
@@ -13,7 +15,7 @@ trait MacroidExt
   {
     def f[M](implicit managerCtx: FragmentManagerContext[A, M]) = {
       val name = ct.runtimeClass.getSimpleName
-      fb.framed(Id(name), Tag(name))
+      fb.framed(RId(name), Tag(name))
     }
   }
 
@@ -24,6 +26,14 @@ trait MacroidExt
     new CanTweak[W, Option[T], W] {
       def tweak(w: W, o: Option[T]) = Ui {
         o foreach { _(w) }
+        w
+      }
+    }
+
+  implicit def `Widget is tweakable with Xor`[W <: View, T <: Tweak[W], A] =
+    new CanTweak[W, Xor[A, T], W] {
+      def tweak(w: W, x: Xor[A, T]) = Ui {
+        x.toOption foreach { _(w) }
         w
       }
     }

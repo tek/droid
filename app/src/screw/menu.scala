@@ -4,6 +4,8 @@ import android.view.MenuItem
 
 trait MenuScrews
 {
+  lazy val nopMenu = Screw[MenuItem](_ ⇒ ())
+
   protected case class Menu(implicit c: Context, ns: ResourceNamespace)
   extends tryp.droid.ResourcesAccess
   {
@@ -13,11 +15,15 @@ trait MenuScrews
     val never = MenuItem.SHOW_AS_ACTION_NEVER
     val withText = MenuItem.SHOW_AS_ACTION_WITH_TEXT
 
-    def icon(name: String) = Screw[MenuItem](_.setIcon(theme.drawable(name)))
+    def icon(name: String) = {
+      theme.drawable(name)
+        .map(a ⇒ Screw[MenuItem](_.setIcon(a)))
+        .getOrElse(nopMenu)
+    }
 
     def show(flags: Int) = Screw[MenuItem](_.setShowAsAction(flags))
 
-    def id(i: Id) = Screw[MenuItem] { m ⇒
+    def id(i: RId) = Screw[MenuItem] { m ⇒
       val intent = new Intent
       intent.putExtra("menu_id", i.value)
       m.setIntent(intent)

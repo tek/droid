@@ -1,11 +1,12 @@
-package tryp.droid
+package tryp
+package droid
 
 import scala.language.dynamics
 import scala.collection.convert.wrapAll._
 import scala.concurrent.Await
 
 import scalaz._
-import Scalaz.{Id ⇒ sId,_}
+import Scalaz._
 
 import android.widget.{AdapterView,TextView}
 import android.content.res.{Resources ⇒ AResources,Configuration}
@@ -20,189 +21,6 @@ import macroid._
 import macroid.support.FragmentApi
 
 import util._
-
-trait SearchView[A]
-{
-  def root(v: A): View
-}
-
-final class SearchViewOps[A](a: A)(implicit sv: SearchView[A])
-{
-  def view = sv.root(a)
-
-  def viewsOfType[A <: View: ClassTag]: Seq[A] = {
-    view match {
-      case v: A ⇒ Seq(v)
-      case layout: ViewGroup ⇒
-        layout.children map {
-          case v: A ⇒ Seq(v)
-          case sub: ViewGroup ⇒ sub.viewsOfType[A]
-          case _ ⇒ Nil
-        } flatten
-      case _ ⇒ Nil
-    }
-  }
-
-  def viewOfType[A <: View: ClassTag] = {
-    viewsOfType[A].headOption
-  }
-
-  def viewTree: Tree[View] = {
-    view match {
-      case vg: ViewGroup ⇒
-        (vg: View).node(vg.children map(_.viewTree): _*)
-      case v ⇒
-        v.leaf
-    }
-  }
-
-  def showViewTree()(implicit sh: Show[View]) = Log.i(viewTree.drawTree)
-}
-
-trait ToSearchViewOps
-{
-  implicit def ToSearchViewOps[A: SearchView](a: A) = new SearchViewOps(a)
-}
-
-object SearchView
-{
-  implicit def viewSearchView[A <: View] = new SearchView[A] {
-    def root(v: A) = v
-  }
-
-  implicit def activitySearchView[A <: Activity] = new SearchView[A] {
-    def root(a: A) = a.getWindow.getDecorView.getRootView
-  }
-
-  implicit def fragmentSearchView[A <: Fragment] = new SearchView[A] {
-    def root(f: A) = f.getView
-  }
-}
-
-trait SearchableView
-extends Basic
-{
-  def view: View
-
-  def viewsOfType[A <: View: ClassTag]: Seq[A] = {
-    view match {
-      case v: A ⇒ Seq(v)
-      case layout: ViewGroup ⇒
-        layout.children map {
-          case v: A ⇒ Seq(v)
-          case sub: ViewGroup ⇒ sub.viewsOfType[A]
-          case _ ⇒ Nil
-        } flatten
-      case _ ⇒ Nil
-    }
-  }
-
-  def viewOfType[A <: View: ClassTag] = {
-    viewsOfType[A].headOption
-  }
-
-  def viewTree: Tree[View] = {
-    view match {
-      case vg: ViewGroup ⇒
-        (vg: View).node(vg.children map(_.viewTree): _*)
-      case v ⇒
-        v.leaf
-    }
-  }
-
-  def showViewTree() = Log.i(viewTree.drawTree)
-}
-
-trait Searchable
-extends SearchableView
-{
-  trait ProxyBase {
-    def extractView(args: Any*): Option[View] = {
-      args.lift(0) flatMap {
-        _ match {
-          case v: View ⇒ Some(v)
-          case _ ⇒ None
-        }
-      }
-    }
-  }
-
-  case class ViewsProxy(owner: Searchable)
-  extends Dynamic
-  with ProxyBase
-  {
-    def applyDynamic(name: String)(args: Any*): Option[View] = {
-      owner.find(name, extractView(args))
-    }
-
-    def selectDynamic(name: String): Option[View] = {
-      owner.find(name)
-    }
-  }
-
-  case class TypedViewsProxy(owner: Searchable)
-  extends Dynamic
-  with ProxyBase
-  {
-    def applyDynamic[A <: View: ClassTag](name: String)
-    (args: Any*): Option[A] = {
-      owner.findt[String, A](name, extractView(args))
-    }
-
-    def selectDynamic[A <: View: ClassTag](name: String): Option[A] = {
-      owner.findt[String, A](name)
-    }
-  }
-
-  type CanFindView = AnyRef { def findViewById(id: Int): View }
-
-  def view: View
-
-  def searcher: CanFindView = view
-
-  def find[A >: Basic#IdTypes](
-    name: A, root: Option[View] = None
-  ): Option[View] = {
-    val entry = root getOrElse view
-    entry.findViewById(res.id(name)) match {
-      case v: View ⇒ Option(v)
-      case null ⇒ {
-        if (TrypEnv.release) None
-        else {
-          val msg = s"Couldn't find a view with id '$name'! " +
-          s"Current views: ${Id.ids}\n" +
-          s"tree:\n" + viewTree.drawTree
-          throw new ClassCastException(msg)
-        }
-      }
-    }
-  }
-
-  def findt[A >: Basic#IdTypes, B <: View: ClassTag](
-    name: A, root: Option[View] = None
-  ): Option[B] = {
-    find(name, root) match {
-      case Some(view: B) ⇒ Some(view)
-      case a ⇒ {
-        Log.e(s"Couldn't cast view ${a} to specified type!")
-        None
-      }
-    }
-  }
-  def viewExists[A >: Basic#IdTypes](name: A) = {
-    Try(find(name)) isSuccess
-  }
-
-  def textView[A >: Basic#IdTypes](
-    name: A, root: Option[View] = None
-  ): Option[TextView] = {
-    findt[A, TextView](name, root)
-  }
-
-  lazy val tviews = TypedViewsProxy(this)
-
-  lazy val views = ViewsProxy(this)
-}
 
 trait ActivityContexts {
   implicit def toActivityContextWrapper(implicit activity: Activity) =
@@ -235,7 +53,9 @@ with HasComm
 
   def inflateLayout[A <: View: ClassTag](name: String): Ui[A] = {
     Ui {
-      activity.getLayoutInflater.inflate(res.layoutId(name), null) match {
+      val id = res.layoutId(name)
+        .getOrElse(sys.error(s"invalid layout name: $name"))
+      activity.getLayoutInflater.inflate(id, null) match {
         case view: A ⇒ view
         case view ⇒ {
           throw new ClassCastException(
@@ -256,7 +76,6 @@ with HasComm
 
 trait ViewBasic
 extends HasActivity
-with Searchable
 
 trait Click
 extends ViewBasic
@@ -303,7 +122,8 @@ extends ViewBasic
 
   def hideKeyboard() = {
     Ui {
-      inputMethodManager.hideSoftInputFromWindow(view.getWindowToken, 0)
+      inputMethodManager
+        .hideSoftInputFromWindow(activity.root.getWindowToken, 0)
       "keyboard successfully hidden"
     }
   }
@@ -326,8 +146,12 @@ with Basic
   override def onCreateDialog(state: Bundle): Dialog = {
     val builder = new AlertDialog.Builder(context)
     builder.setMessage(message)
-    builder.setPositiveButton(res.string("yes"), new DialogListener(callback))
-    builder.setNegativeButton(res.string("no"), new DialogListener)
+    res.string("yes").foreach { text ⇒
+      builder.setPositiveButton(text, new DialogListener(callback))
+    }
+    res.string("no").foreach { text ⇒
+      builder.setNegativeButton(text, new DialogListener)
+    }
     builder.create
   }
 }
@@ -341,148 +165,6 @@ extends HasActivity
   }
 }
 
-trait FragmentManagement
-extends HasActivity
-with Searchable
-{
-  def getFragmentManager: FragmentManager
-
-  def rootFragmentManager = getFragmentManager
-
-  def fragmentManager = rootFragmentManager
-
-  def findFragment(tag: String) = {
-    Option[Fragment](rootFragmentManager.findFragmentByTag(tag))
-  }
-
-  def replaceFragment[A >: Basic#IdTypes](name: A, fragment: Fragment,
-    backStack: Boolean, tag: String, check: Boolean = true)
-  {
-    moveFragment(name, fragment, backStack, tag, check) {
-      _.replace(res.id(name), fragment, tag)
-    }
-  }
-
-  // Check for existence of 'fragment' by 'tag', insert the new one if not
-  // found
-  // Return true if the fragment has been inserted
-  // TODO allow overriding the check for existence for back stack fragments
-  def replaceFragmentIf(name: Id, fragment: ⇒ Fragment, backStack: Boolean,
-    tag: String) =
-  {
-    val frag = findFragment(tag)
-    frag ifNone { replaceFragment(name, fragment, backStack, tag) }
-    frag isEmpty
-  }
-
-  def replaceFragmentCustom
-  (id: Id, fragment: Fragment, backStack: Boolean) =
-  {
-    replaceFragmentIf(id, fragment, backStack,
-      fragmentClassName(fragment.getClass))
-  }
-
-  def replaceFragmentAuto[A <: Fragment: ClassTag](id: Id,
-    backStack: Boolean) =
-  {
-    val tag = Tag(fragmentName[A])
-    replaceFragmentIf(id, makeFragment[A], backStack, tag)
-  }
-
-  def clearBackStack() = {
-    backStackNonEmpty tapIf {
-        fragmentManager.popBackStack(null,
-          FragmentManager.POP_BACK_STACK_INCLUSIVE)
-    }
-  }
-
-  def addFragment[A >: Basic#IdTypes](name: A, fragment: Fragment,
-    backStack: Boolean, tag: String, check: Boolean = true)
-  {
-    moveFragment(name, fragment, backStack, tag, check) {
-      _.add(res.id(name), fragment, tag)
-    }
-  }
-
-  def moveFragment[A >: Basic#IdTypes](name: A, fragment: Fragment,
-    backStack: Boolean, tag: String, check: Boolean = true)
-  (move: FragmentTransaction ⇒ Unit)
-  {
-    checkFrame(name, check) {
-      val trans = fragmentManager.beginTransaction
-      move(trans)
-      if (backStack) {
-        trans.addToBackStack(tag)
-      }
-      trans.commit
-    }
-  }
-
-  def addFragmentUnchecked[A <: Fragment: ClassTag](ctor: ⇒ A) {
-    val name = fragmentName[A]
-    addFragment(Id(name), ctor, false, Tag(name), false)
-  }
-
-  def addFragmentIf[A <: Fragment: ClassTag](ctor: ⇒ A) {
-    val name = fragmentName[A]
-    if (!fragmentExists[A]) replaceFragment(Id(name), ctor, false, Tag(name))
-  }
-
-  def fragmentExists[A <: Fragment: ClassTag] = {
-    val name = fragmentName[A]
-    val tag = Tag(name)
-    findFragment(tag) isDefined
-  }
-
-  def addFragmentIfAuto[A <: Fragment: ClassTag] {
-    addFragmentIf { makeFragment[A] }
-  }
-
-  def fragmentClassName(cls: Class[_]) = {
-    cls.className.stripSuffix("Fragment")
-  }
-
-  import scala.reflect.classTag
-
-  def fragmentName[A <: Fragment: ClassTag] = {
-    fragmentClassName(classTag[A].runtimeClass)
-  }
-
-  def makeFragment[A <: Fragment: ClassTag] = {
-    val cls = classTag[A].runtimeClass
-    cls.newInstance.asInstanceOf[Fragment]
-  }
-
-  def popBackStackSync {
-    rootFragmentManager.popBackStackImmediate
-  }
-
-  def findNestedFrag[A <: Fragment: ClassTag](
-    tags: String*
-  ): Option[A] = {
-    tags lift(0) flatMap { findFragment } flatMap { frag ⇒
-      frag.findNestedFrag(tags.tail: _*) orElse {
-        frag match {
-          case f: A ⇒ Some(f)
-          case _ ⇒ None
-        }
-      }
-    }
-  }
-
-  def checkFrame[A >: Basic#IdTypes](name: A, check: Boolean = true)
-  (f: ⇒ Unit) {
-    if (!check || viewExists(name))
-      f
-    else
-      Log.e(s"Tried to add fragment to nonexistent frame with id '${name}'")
-  }
-
-  def backStackEmpty = fragmentManager.getBackStackEntryCount == 0
-
-  def backStackNonEmpty = !backStackEmpty
-}
-
 trait Snackbars
 extends HasActivity
 {
@@ -492,7 +174,7 @@ extends HasActivity
   private implicit val ns = PrefixResourceNamespace("snackbar")
 
   def snackbar(resName: String) = {
-    snackbarImpl(txt.content(resName))
+    txt.content(resName).foreach(snackbarImpl)
   }
 
   def snackbarLiteral(message: String) = {
@@ -507,10 +189,10 @@ extends HasActivity
   }
 
   def toast(resName: String) {
-    mkToast(resName).run
+    mkToast(resName).foreach(_.run)
   }
 
-  def mkToast(resName: String) = mToast(res.s(resName)) <~ fry
+  def mkToast(resName: String) = res.s(resName).map(a ⇒ mToast(a) <~ fry)
 }
 
 trait Alarm

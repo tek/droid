@@ -6,6 +6,8 @@ import android.app.Service
 import android.content.{ServiceConnection,ComponentName}
 import android.os.IBinder
 
+import ScalazGlobals._
+
 case class ServiceProxy[A <: ServiceBase: ClassTag](
   consumer: ServiceConsumer, name: String
 )

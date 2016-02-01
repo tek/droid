@@ -9,9 +9,17 @@ import iota._
 
 import view._
 
+import cats._
+import cats.syntax.foldable._
+
 trait FrameLayoutCombinators
 extends IotaCombinators[FrameLayout]
 with ResourcesAccess
 {
-  def foreground(res: Drawable) = k(_.setForeground(res))
+  def foreground(draw: Drawable): CK[FrameLayout] = k(_.setForeground(draw))
+
+  @ckwf def selectableFg = {
+    res.theme.drawable("selectableItemBackground")
+      .map(foreground)
+  }
 }

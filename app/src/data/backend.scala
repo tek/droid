@@ -33,18 +33,19 @@ class Backend(implicit prefs: Settings, res: Resources)
 
   lazy val host = {
     val pref = prefs.user.string("host")()
-    if (pref.isEmpty) res.string("backend_host")
+    if (pref.isEmpty) res.string("backend_host") getOrElse("invalid")
     else pref
   }
 
   lazy val port = {
     val pref = prefs.user.int("port")().toInt
-    if (pref == 0) res.integer("backend_port")
+    if (pref == 0) res.integer("backend_port") getOrElse(443)
     else pref
   }
 
   lazy val scheme = {
-    if (prefs.user.bool("tls", res.bool("backend_tls"))()) "https"
+    val default = res.bool("backend_tls") getOrElse(false)
+    if (prefs.user.bool("tls", default)()) "https"
     else "http"
   }
 

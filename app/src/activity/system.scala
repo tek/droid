@@ -6,8 +6,8 @@ extends ActivityBase
 {
   import android.view.View
 
-  def hideStatusBar {
-    activity.getWindow.getDecorView.setSystemUiVisibility(
+  def hideStatusBar() {
+    getWindow.getDecorView.setSystemUiVisibility(
       View.SYSTEM_UI_FLAG_FULLSCREEN)
   }
 }

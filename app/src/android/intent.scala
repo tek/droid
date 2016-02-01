@@ -1,14 +1,13 @@
 package tryp
 package droid
 
-import Z._
-
 final class IntentOps(intent: Intent)
 {
-  implicit val mm: Monoid[Params] = scalaz.std.map.mapMonoid
-
   def extrasSafe: Params = {
-    Option(intent) flatMap(i ⇒ Option(i.getExtras)) map(_.toMap) orZero
+    Option(intent)
+      .flatMap(i ⇒ Option(i.getExtras))
+      .map(_.toMap)
+      .getOrElse(Map())
   }
 
   def storeExtras(extras: Params) = {

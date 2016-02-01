@@ -7,10 +7,13 @@ import android.text.{TextWatcher,TextUtils,Editable}
 
 import iota._
 
-trait TextCombinators
+object TextCombinators
+extends view.IotaCombinators[TextView]
 {
   def hintR[A <: TextView](resName: String)(implicit res: Resources) = {
-    hint(res.s(resName, Some("hint")))
+    res.s(resName, Some("hint"))
+      .map(hint)
+      .getOrElse(nopK)
   }
 
   def size[A <: TextView](points: Int): Kestrel[A] = {
@@ -20,8 +23,9 @@ trait TextCombinators
   def large[A <: TextView]: Kestrel[A] = size(22)
 
   def minWidth[A <: TextView](name: String)(implicit res: Resources) = {
-    val width = res.d(name, Some("min_width")).toInt
-    kestrel((_: A).setMinWidth(width))
+    res.d(name, Some("min_width"))
+      .map(w ⇒ kestrel((_: A).setMinWidth(w.toInt)))
+      .getOrElse(nopK)
   }
 
   def textWatcher(listener: TextWatcher) = {

@@ -7,6 +7,8 @@ import ZS._
 import shapeless._
 import tag.@@
 
+import ScalazGlobals._
+
 import reflect.macros.blackbox
 
 class Publish
@@ -185,17 +187,11 @@ extends MacroMetadata
 
   def pub[A <: HList: c.WeakTypeTag] = {
     val tp = weakTypeOf[A]
-    // val anyVerdict = q"""
-    // implicit def any_verdict[A] = Verdict[A](false)
-    // """
     val anyVerdict = q"""
     implicit def default[A] = at[A](_ ⇒ false)
     """
     val verdicts = hlistTypes(tp) map { t ⇒
       val name = TermName(s"${t.typeSymbol.name.d}")
-      // q"""
-      // implicit val $name = Verdict[$t](true)
-      // """
       q"""
       implicit def $name = at[$t](_ ⇒ true)
       """

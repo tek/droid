@@ -44,24 +44,24 @@ with Macroid
   def fabBetween(icon: String, parallax: Boolean = false)
   (headerView: Ui[View], contentView: Ui[View]) =
   {
-    val geom = rlp(↦, alignBottom(Id.header)) +
-      margin(right = 16 dp,
-        bottom = res.dimen("fab_margin_normal_minus").toInt)
-    val contentParams = rlp(parallax ? ↥ | below(Id.header))
+    val marg = res.dimen("fab_margin_normal_minus").getOrElse((16 dp).toFloat)
+    val geom = rlp(↦, alignBottom(RId.header)) +
+      margin(right = 16 dp, bottom = marg.toInt)
+    val contentParams = rlp(parallax ? ↥ | below(RId.header))
     RL(rlp(↔, ↕), metaName("fab corner container"))(
       content(contentView) <~ contentParams <~ metaName("content view"),
       header(
         RL(rlp(↔, ↕))(
           headerView <~ metaName("fab header")
         ) <~ bgCol("header") <~ metaName("fab header container")
-      ) <~ Id.header <~ rlp(↥, ↔, Height(headerHeight)),
+      ) <~ RId.header <~ rlp(↥, ↔, Height(headerHeight)),
       progressUi <~ geom <~ metaName("progress indicator"),
       fabUi(icon) <~ geom <~ metaName("fab")
     )
   }
 
   def progressUi = w[ProgressBar] <~ indeterminate <~ hide <~
-        Width(res.dimen("fab_width").toInt) <~ whore(progress)
+    res.dimen("fab_width").map(a ⇒ Width(a.toInt)).toOption <~ whore(progress)
 
   def fabUi(icon: String) = {
     fab() <~
@@ -96,7 +96,7 @@ with Macroid
   lazy val fadeToFab = (progress <~~ fadeOut(fadeTime) <~ hide) ~
     (fab <~~ fadeIn(fadeTime) <~ show)
 
-  lazy val headerHeight = res.dimen("header_height")
+  lazy val headerHeight = res.dimen("header_height").toOption | 140.dp.toFloat
 
   val lock = new Object
 

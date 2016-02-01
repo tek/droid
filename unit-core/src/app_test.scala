@@ -13,7 +13,7 @@ extends test.TrypTestActivity
   override def changeTheme(theme: String, restart: Boolean = true) { }
 }
 
-trait UnitSpec[A <: Activity with UnitActivity]
+trait UnitSpec[A <: Activity]
 extends TrypSpecExt
 with HasContext
 with test.TrypDroidSpec
@@ -42,7 +42,7 @@ extends TrivialImplTestHelpers
     Thread.sleep(100L)
   }
 
-  implicit class ViewAssertions[A: droid.SearchView](target: A) {
+  implicit class ViewAssertions[A: RootView](target: A) {
     def recycler = {
       target.viewOfType[RecyclerView] effect { r ⇒
         sync()

@@ -1,4 +1,5 @@
-package tryp.droid
+package tryp
+package droid
 
 import scalaz._, Scalaz._
 
@@ -14,6 +15,7 @@ import akka.actor.ActorSelection
 
 import com.makeramen.roundedimageview.RoundedImageView
 
+import core._
 import tweaks.Slot
 
 sealed abstract class DrawerViewHolder(v: View)
@@ -73,10 +75,11 @@ with Macroid
     val avatar = slut[RoundedImageView]
     val photoSize = 64 dp
     val textTweaks = txt.ellipsize() + txt.color("header_text")
-    val layout = RL(flp(↔, Height(res.d("header_height"))))(
-      w[TextView] <~ whore(name) <~ textTweaks <~ rlp(↤, above(Id.email)) <~
+    val height = Height(res.d("header_height").getOrElse(0.0f))
+    val layout = RL(flp(↔, height))(
+      w[TextView] <~ whore(name) <~ textTweaks <~ rlp(↤, above(RId.email)) <~
         bold <~ margin(left = 8 dp, top = 16 dp),
-      w[TextView] <~ whore(email) <~ textTweaks <~ Id.email <~
+      w[TextView] <~ whore(email) <~ textTweaks <~ RId.email <~
         rlp(↤, ↧) <~ margin(left = 8 dp, bottom = 8 dp),
       w[RoundedImageView] <~ whore(avatar) <~
         imageCornerRadius(photoSize / 2) <~ imageBorderWidth(2) <~

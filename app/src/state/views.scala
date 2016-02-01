@@ -20,7 +20,7 @@ extends SimpleMachine
 }
 
 trait DummyViewMachine
-extends SimpleViewMachine[View]
+extends SimpleViewMachine
 {
   def layoutIO = w[View]
 }
@@ -33,9 +33,7 @@ with HasContext
 
   lazy val uiMachine = new UiDispatcher {}
 
-  val viewMachine: ViewMachine[_ <: View]
-
-  override def machines = uiMachine :: viewMachine :: super.machines
+  override def machines = uiMachine :: super.machines
 }
 
 trait HasActivityAgent
@@ -87,12 +85,10 @@ with CallbackMixin
 }
 
 trait ActivityAgent
-extends TrypActivity
+extends ActivityBase
 with HasActivityAgent
 with Mediator
 {
-  lazy val viewMachine: ViewMachine[View] = new DummyViewMachine {}
-
   override def onCreate(saved: Bundle) {
     super.onCreate(saved)
     initMachines()

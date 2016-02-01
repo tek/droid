@@ -15,16 +15,17 @@ case class NavigationTarget(title: String, fragment: () ⇒ Fragment,
   home: Boolean = false)
 extends DrawerItem
 {
-  def create(id: Id)(implicit a: Activity, fm: FragmentManagement) =
-    frag(fragment(), id, title)
+  def create[A: FragmentManagement: HasActivityF](parent: A, id: RId) =
+    frag(parent, fragment(), id, title)
 }
 
 class ShowNavigationTarget[A <: SyncModel: ClassTag](title: String,
   fragment: () ⇒ ShowFragment[A], model: A)
 extends NavigationTarget(title, fragment)
 {
-  override def create(id: Id)(implicit a: Activity, fm: FragmentManagement) =
-    showFrag(model, fragment, id)
+  override def create[A: FragmentManagement: HasActivityF]
+  (parent: A, id: RId) =
+    showFrag(parent, model, fragment, id)
 }
 
 case class Navigation(drawerItems: NonEmptyList[DrawerItem])

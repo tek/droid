@@ -4,6 +4,8 @@ import com.typesafe.config.ConfigFactory
 
 import akka.actor.{ ActorSelection, ActorSystem, Actor, Props }
 
+import ScalazGlobals._
+
 object Akka
 {
   def newSystem(name: String, loader: ClassLoader) =
@@ -217,7 +219,8 @@ extends AkkaClient
 {
 }
 
-abstract class TrypActivityActor[A <: ActivityAgent: ClassTag]
+abstract class TrypActivityActor
+[A <: ActivityAgent with TrypActivity: ClassTag]
 extends TrypActor[A]
 {
   import Messages._

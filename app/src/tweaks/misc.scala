@@ -1,4 +1,6 @@
-package tryp.droid.tweaks
+package tryp
+package droid
+package tweaks
 
 import java.net.URL
 
@@ -24,13 +26,30 @@ import macroid.contrib.Layouts._
 
 import akka.actor.ActorSelection
 
+import ScalazGlobals._
+
+import cats.data.Xor
+
 import com.melnykov.fab.FloatingActionButton
 
-import tryp.droid.{Resources,_}
-import tryp.droid.{TrypTextView,DividerItemDecoration,ParallaxHeader}
-import tryp.droid.Messages
+trait TweakHelpers
+extends Logging
+{
+  def nopT[A <: View] = Tweak[A](_ ⇒ ())
+
+  def errorT[A <: View, B](err: B) = Tweak[A] { t ⇒
+    log.error(s"error during Tweak preparation: $t")
+  }
+
+  implicit def optionToTweak[A <: View](o: Option[Tweak[A]]) =
+    o | nopT[A]
+
+  implicit def xorToTweak[A <: View, B](o: Xor[B, Tweak[A]]) =
+    o valueOr(errorT[A, B])
+}
 
 trait Text
+extends TweakHelpers
 {
   case class Text(implicit c: Context, res: Resources,
     ns: ResourceNamespace = GlobalResourceNamespace)
@@ -44,14 +63,16 @@ trait Text
       Tweak[TrypTextView](_.setShadow(color, radius, x, y))
 
     def size(name: String) =
-      Tweak[TextView](_.setTextSize(res.i(name)))
+      res.i(name).map(a ⇒ Tweak[TextView](_.setTextSize(a)))
 
     def literal(value: String) =
       Tweak[TextView](_.setText(value))
 
     def clear = literal("")
 
-    def content(name: String) = literal(res.s(name))
+    def content(name: String) = {
+      res.s(name).map(a ⇒ literal(a))
+    }
 
     def large = macroid.contrib.TextTweaks.large
 
@@ -60,17 +81,16 @@ trait Text
     }
 
     def hint(name: String) = {
-      val hint = res.s(name, Some("hint"))
-      hintLiteral(hint)
+      res.s(name, Some("hint")).map(hintLiteral)
     }
 
     def minWidth(name: String) = {
-      val width = res.d(name, Some("min_width")).toInt
-      Tweak[TextView](_.setMinWidth(width))
+      res.d(name, Some("min_width"))
+        .map(width ⇒ Tweak[TextView](_.setMinWidth(width.toInt)))
     }
 
-    def color(name: String) = Tweak[TextView] {
-      _.setTextColor(res.c(name, Some("color")))
+    def color(name: String) = Tweak[TextView] { a ⇒
+      res.c(name, Some("color")).foreach(a.setTextColor)
     }
   }
 
@@ -83,11 +103,11 @@ extends Text
 with ResourcesAccess
 {
   def imageRes(name: String)(implicit c: Context) = {
-    Tweak[ImageView](_.setImageResource(res.drawableId(name)))
+    res.drawableId(name).map(a ⇒ Tweak[ImageView](_.setImageResource(a)))
   }
 
   def imageResC(name: String)(implicit c: Context) = {
-    imageFitCenter + image(name)
+    imageFitCenter + image(name).getOrElse(nopT)
   }
 
   def imageFitCenter = imageScale(ImageView.ScaleType.FIT_CENTER)
@@ -96,11 +116,13 @@ with ResourcesAccess
     Tweak[ImageView](_.setScaleType(sType))
 
   def image(name: String)(implicit c: Context) =
-    imageDrawable(theme.drawable(name))
+    theme.drawable(name)
+      .map(imageDrawable)
+      .toOption
 
 
   def imageC(name: String)(implicit c: Context) = {
-    imageFitCenter + image(name)
+    imageFitCenter + image(name).getOrElse(nopT)
   }
 
   def imageDrawable(drawable: Drawable)(implicit c: Context) =
@@ -114,12 +136,14 @@ with ResourcesAccess
   def bgCol(name: String)(
     implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
   ) = {
-    val col = res.c(name, Some("bg")).toInt
-    Tweak[View](_.setBackgroundColor(col))
+    res.c(name, Some("bg"))
+      .map(col ⇒ Tweak[View](_.setBackgroundColor(col.toInt)))
+      .toOption
   }
 
   def cardBackgroundColor(color: String)(implicit c: Context) =
-    Tweak[CardView](_.setCardBackgroundColor(res.c(color, Some("bg"))))
+    res.c(color, Some("bg"))
+      .map(a ⇒ Tweak[CardView](_.setCardBackgroundColor(a)))
 
   def checked(state: Boolean) = {
     Tweak[CheckBox](_.setChecked(state))
@@ -149,17 +173,16 @@ with ResourcesAccess
 
   type canSetColor = View { def setColor(i: Int) }
 
-  def color(name: String)(implicit c: Context) = Tweak[canSetColor] {
-    _.setColor(res.c(name))
-  }
+  def color(name: String)(implicit c: Context) = 
+    res.c(name).map(a ⇒ Tweak[canSetColor](_.setColor(a)))
 
   object Fab
   extends ResourcesAccess
   {
     def colors(normal: String, pressed: String)(implicit c: Context) =
       Tweak[FloatingActionButton] { fab ⇒
-        fab.setColorNormal(res.c(normal))
-        fab.setColorPressed(res.c(pressed))
+        res.c(normal).foreach(a ⇒ fab.setColorNormal(a))
+        res.c(pressed).foreach(a ⇒ fab.setColorPressed(a))
       }
   }
 
@@ -215,8 +238,8 @@ with ResourcesAccess
 
   def imageBorderColor(name: String)(implicit c: Context, ns: ResourceNamespace
     = GlobalResourceNamespace) =
-    Tweak[RoundedImageView] {
-    _.setBorderColor(res.c(name, Some("border_color")))
+    Tweak[RoundedImageView] { a ⇒
+      res.c(name, Some("border_color")).foreach(a.setBorderColor)
   }
 
   def meta(data: ViewMetadata)(implicit r: Resources) =
@@ -238,6 +261,7 @@ extends ResourcesAccess
 
 object Recycler
 extends ResourcesAccess
+with TweakHelpers
 {
   val t = Tweak[RecyclerView] _
 
@@ -296,8 +320,10 @@ extends ResourcesAccess
   }
 
   def parallaxScroller(actor: ActorSelection)(implicit c: Context) = {
-    onScrollActor(actor) + Layout.noClipToPadding +
-      padding(top = res.dimen("header_height").toInt)
+    val pad = res.dimen("header_height")
+      .map(a ⇒ padding(top = a.toInt))
+      .getOrElse(nopT)
+    onScrollActor(actor) + Layout.noClipToPadding + pad
   }
 }
 
@@ -314,8 +340,12 @@ extends ResourcesAccess
 
   def logo(resid: Int) = Tweak[AToolbar](_.setLogo(resid))
 
-  def titleColor(name: String)(implicit c: Context) = Tweak[AToolbar] {
-    _.setTitleTextColor(res.c(name))
+  def titleColor(name: String)(implicit c: Context) = {
+    res.c(name)
+      .map { col ⇒
+        Tweak[AToolbar](_.setTitleTextColor(col))
+      }
+      .toOption
   }
 
   def navButtonListener(callback: ⇒ Unit) = Tweak[AToolbar] {

@@ -7,7 +7,7 @@ import macroid._
 
 import tryp.UiContext
 
-case class FragmentBuilder(ctor: () ⇒ Fragment, id: Id,
+case class FragmentBuilder(ctor: () ⇒ Fragment, id: RId,
   tagO: Option[String] = None)
   {
     def apply() = ctor()
@@ -41,6 +41,7 @@ import UiActionTypes._
 
 trait AndroidUiContext
 extends UiContext[Ui]
+with ViewExports
 {
   def loadFragment(fragment: FragmentBuilder): Ui[String]
 
@@ -88,15 +89,16 @@ trait AndroidHasActivityUiContext
 extends AndroidContextUiContext
 with ResourcesAccess
 with Snackbars
-with FragmentManagement
 with Transitions
 with TrypActivityAccess
 with HasSettings
 with Input
+with tweaks.TweakHelpers
 {
   override def loadFragment(fragment: FragmentBuilder) = {
     Ui {
-      replaceFragment(fragment.id, fragment(), false, fragment.tag, false)
+      // activity.replaceFragment(
+      //   fragment.id, fragment(), false, fragment.tag, false)
       "fragment loaded successfully"
     }
   }
@@ -105,8 +107,9 @@ with Input
     settings.app.bool("view_transitions", true)().fold(trypActivity, None)
       .some { a ⇒
         Ui[String] {
-          implicit val handler: FragmentManagement = a
-          val ui = Macroid.frag(fragment(), fragment.id, fragment.tag)
+          implicit val fm = FragmentManagement.activityFragmentManagement[Activity]
+          val ui = Macroid.frag(
+            activity, fragment(), fragment.id, fragment.tag)
           a.transition(ui)
           "Transition successful"
         }
@@ -120,7 +123,7 @@ with Input
   }
 
   // TODO split in notifyLiteral and notifyRes or similar
-  override def notify(id: String) = mkToast(id)
+  override def notify(id: String) = mkToast(id).getOrElse(Ui.nop)
 
   override def hideKeyboard() = {
     super[Input].hideKeyboard()
@@ -131,8 +134,6 @@ trait AndroidActivityUiContext
 extends AndroidHasActivityUiContext
 {
   def getFragmentManager = activity.getFragmentManager
-
-  def view = activity.view
 }
 
 class DefaultAndroidActivityUiContext(implicit val activity: Activity)
@@ -149,8 +150,6 @@ extends AndroidHasActivityUiContext
   val fragment: Fragment
 
   def getFragmentManager = fragment.getChildFragmentManager
-
-  def view = activity.view
 }
 
 class DefaultAndroidFragmentUiContext(implicit val fragment: Fragment)

@@ -29,11 +29,11 @@ with ResourcesAccess
   //   layoutManager(new StaggeredGridLayoutManager(count.toInt, orientation))
 
   @ckw def grid(count: Long) =
-    layoutManager(new GridLayoutManager(ctx, count.toInt))(ctx)
+    layoutManager(new GridLayoutManager(ctx, count.toInt))
 
-  // def divider = ck(_.addItemDecoration(new DividerItemDecoration(ctx, null)))
+  @ck def divider = _.addItemDecoration(new DividerItemDecoration(ctx, null))
 
-  // def dataChanged = ck(_.getAdapter.notifyDataSetChanged)
+  def dataChanged = k(_.getAdapter.notifyDataSetChanged)
 
   def onScroll(callback: (ViewGroup, Int) ⇒ Unit) = k { v ⇒
     val listener = new RecyclerView.OnScrollListener {
@@ -62,9 +62,16 @@ with ResourcesAccess
   //   rv.scrollToPosition(rv.getAdapter.getItemCount - 1)
   // }
 
-  @ckw def rvPad = padding[Principal](top = res.dimen("header_height").toInt)
+  @ckw def rvPad = {
+    res.dimen("header_height")
+      .map(a ⇒ (ctx: Context) ⇒ padding[Principal](top = a.toInt))
+      .getOrElse(nopK)
+  }
 
   def parallaxScroller(actor: ActorSelection) = {
     onScrollActor(actor) >>= noClipToPadding >>= rvPad
   }
 }
+
+object RecyclerCombinators
+extends RecyclerCombinators

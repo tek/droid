@@ -18,7 +18,7 @@ with PlusInterfaceAccess
   override val actors = Seq(DrawerActor.props)
 
   def layout(state: Bundle) = {
-    FL(bgCol("main"))(
+    FL(bgCol("main").toList: _*)(
       w[RecyclerView] <~ drawerView <~ linear <~ divider
     )
   }

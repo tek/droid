@@ -36,7 +36,6 @@ trait Implicits
 extends droid.ViewInstances
 with droid.ToViewOps
 with droid.ToIntentOps
-with droid.ToSearchViewOps
 
 trait Globals
 extends tryp.slick.sync.meta.Globals
@@ -47,6 +46,7 @@ with Types
 with Implicits
 with droid.state.Exports
 with droid.core.meta.AndroidTypes
+with droid.ViewExports
 {
   val AndroidLog = tryp.droid.meta.AndroidLog
 }

@@ -6,8 +6,7 @@ import NavMessages._
 trait HasNavigation
 extends MainView
 with HasContextAgent
-{ self: FragmentManagement
-  with Akkativity ⇒
+{ self: Akkativity ⇒
 
   def navigation: Navigation
 
@@ -26,7 +25,7 @@ with HasContextAgent
   }
 
   def loadNavTarget(target: NavigationTarget) {
-    send(MainViewMessages.LoadUi(target.create(Id.content)))
+    send(MainViewMessages.LoadUi(target.create(this, RId.content)))
     navigated(target)
   }
 

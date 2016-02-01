@@ -8,6 +8,8 @@ import android.preference.PreferenceManager
 import rx._
 import rx.ops._
 
+import ScalazGlobals._
+
 class PreferencesFacade(val prefs: SharedPreferences)
 {
   val prefix = "pref_"

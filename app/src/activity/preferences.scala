@@ -9,8 +9,7 @@ extends ActivityBase
 with OnSharedPreferenceChangeListener
 with Preferences
 {
-  self: MainView
-  with FragmentManagement ⇒
+  self: MainView ⇒
 
   abstract override def onCreate(state: Bundle) {
     setupPreferences()
@@ -52,7 +51,7 @@ with Preferences
   }
 
   def setupPreferences() = {
-    res.xmlIdO("user_preferences") foreach { id ⇒
+    res.xmlId("user_preferences") foreach { id ⇒
       PreferenceManager.setDefaultValues(activity, id, false)
     }
   }
@@ -73,7 +72,7 @@ with Preferences
   }
 
   def changeTheme(theme: String, restart: Boolean = true) {
-    res.themeIdO(theme) foreach(applyTheme(_, restart))
+    res.themeId(theme) foreach(applyTheme(_, restart))
   }
 
   def applyTheme(id: Int, restart: Boolean = true) {

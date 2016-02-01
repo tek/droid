@@ -15,7 +15,7 @@ with ResourcesAccess
   var scroll = 0.0f
   def offset = scroll * scrollFactor()
   def clip = (scroll * (1.0f - scrollFactor())).toInt
-  lazy val headerHeight = res.dimen("header_height")
+  lazy val headerHeight = app.R.dimen.header_height
 
   def set(y: Int) {
     scroll = y.toFloat

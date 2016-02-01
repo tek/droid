@@ -17,6 +17,21 @@ trait AndroidTypes
 
 trait Globals
 extends tryp.meta.Globals
-with ToTaskOps
+with Exports
+
+trait Exports
+extends ToTaskOps
 with ToProcessOps
 with AndroidTypes
+{
+  type Resources = core.Resources
+  type ResourcesAccess = core.ResourcesAccess
+  type ResourceNamespace = core.ResourceNamespace
+  type PrefixResourceNamespace = core.PrefixResourceNamespace
+  val GlobalResourceNamespace = core.GlobalResourceNamespace
+  val PrefixResourceNamespace = core.PrefixResourceNamespace
+  type RId = core.RId
+  val RId = core.RId
+  val Tag = core.Tag
+  type ResId[A] = core.ResId[A]
+}

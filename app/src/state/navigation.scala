@@ -3,6 +3,8 @@ package droid
 
 import state._
 
+import ScalazGlobals._
+
 object NavMessages
 {
   case object Home

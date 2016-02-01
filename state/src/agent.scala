@@ -7,6 +7,8 @@ import shapeless.tag.@@
 
 import scalaz._, Scalaz._, concurrent.Strategy, stream.async
 
+import cats.data.Streaming
+
 trait LogMachine
 extends SimpleMachine
 {
@@ -54,10 +56,10 @@ with StateStrategy
 
   def mediator: Mediator
 
+  def sub: Streaming[Agent] = Streaming.Empty()
+
   implicit protected lazy val toMachines: MessageTopic @@ To =
     tag.apply[To](MessageTopic())
-
-  private[this] lazy val fromMachines = MessageTopic()
 
   def machines: List[Machine] = Nil
 
@@ -73,24 +75,26 @@ with StateStrategy
 
   lazy val messageOut = machines foldMap(_.run())
 
-  // FIXME remove fromMachines?
-  // merge sending and receiving from machine as a channel?
-  protected def runMachines() = {
-    messageOut
-      .to(fromMachines.publish)
-      .infraRunAsync("publish messages from machines")
+  def machinesComm = {
     mediator.subscribe
       .merge(messageIn.dequeue)
-      .to(toMachines.publish)
-      .infraRunAsync("publish mediator messages to machines")
-    // messageOut
-    fromMachines.subscribe
+      .either(messageOut)
+      .observeW(toMachines.publish)
+      .stripW
       .to(mediator.publish)
-      .infraRunAsync("publish machine messages to mediator")
+  }
+
+  protected def connectMachines() = {
+    machinesComm
+      .infraRunAsync("exchange with mediator")
+  }
+
+  def integrate = {
+
   }
 
   def initMachines() = {
-    runMachines()
+    connectMachines()
     postRunMachines()
   }
 

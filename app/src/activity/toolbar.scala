@@ -7,10 +7,12 @@ import android.view.Gravity
 
 import macroid.FullDsl._
 
+import ViewExports._
+import ScalazGlobals._
+
 trait HasToolbar
 extends MainView
 { self: ActionBarActivity
-  with FragmentManagement
   with Akkativity ⇒
 
     import tryp.droid.tweaks.{Toolbar ⇒ T}
@@ -33,10 +35,12 @@ extends MainView
   }
 
   def toolbarLayout = {
-    l[Toolbar](l[FrameLayout]() <~ Id.toolbar <~ ↔) <~
+    val t = theme.dimension("actionBarSize")
+      .map(a ⇒ T.minHeight(a.toInt)).toOption
+    l[Toolbar](l[FrameLayout]() <~ RId.toolbar <~ ↔) <~
       whore(toolbar) <~
       bgCol("toolbar") <~
-      T.minHeight(theme.dimension("actionBarSize").toInt) <~
+      t <~
       T.titleColor("toolbar_text") <~
       toolbarLp(↔, Height.wrap, Gravity.RIGHT)
   }
@@ -44,11 +48,12 @@ extends MainView
   def belowToolbarLayout: Ui[View] = contentLayout
 
   def toolbarTitle(title: String) = {
-    toolbar <~ T.title(title.isEmpty ? res.string("app_title") | title)
+    toolbar <~ T.title(
+      title.isEmpty ? (res.string("app_title") getOrElse("app")) | title)
   }
 
   def toolbarView(view: Fragment) {
-    replaceFragmentCustom(Id.toolbar, view, false)
+    // this.replaceFragmentCustom(RId.toolbar, view, false)
   }
 
   def navButtonClick() = {

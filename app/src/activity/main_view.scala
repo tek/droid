@@ -5,13 +5,15 @@ import macroid.FullDsl._
 
 import MainViewMessages._
 
+import cats._
+import cats.syntax.apply._
+
 trait MainView
 extends ActivityBase
 with Transitions
-with HasActivityAgent
+with ActivityAgent
 {
-  mainView: FragmentManagement
-  with Akkativity ⇒
+  mainView: Akkativity ⇒
 
   val content = slut[FrameLayout]
 
@@ -22,8 +24,6 @@ with HasActivityAgent
   }
 
   override def machines = mainViewMachine :: super.machines
-
-  implicit val fm: FragmentManagement = mainView
 
   def setContentView(v: View)
 
@@ -40,17 +40,19 @@ with HasActivityAgent
   def mainLayout = contentLayout
 
   def contentLayout: Ui[ViewGroup] = {
-    attachRoot(FL(bgCol("main"), metaName("root frame"))(
-      l[FrameLayout]() <~ content <~ Id.content <~ metaName("content frame")))
+    val tw = List(bgCol("main"), Some(metaName("root frame"))).flatten
+    attachRoot(FL(tw: _*)(
+      l[FrameLayout]() <~ content <~ RId.content <~ metaName("content frame")))
   }
 
   def loadFragment(fragment: Fragment) = {
-    send(LoadUi(frag(fragment, Id.content)))
+    val f = frag(this, fragment, RId.content)
+    send(LoadUi(f))
   }
 
   def loadShowFragment[A <: SyncModel: ClassTag]
   (model: A, ctor: () ⇒ ShowFragment[A]) {
-    send(LoadUi(showFrag(model, ctor, Id.content)))
+    send(LoadUi(showFrag(this, model, ctor, RId.content)))
   }
 
   def contentLoaded() {}
@@ -73,7 +75,7 @@ with HasActivityAgent
     super.onBackPressed()
   }
 
-  def canGoBack = backStackNonEmpty
+  def canGoBack = this.backStackNonEmpty
 
   lazy val mainActor = createActor(MainActor.props)._2
 

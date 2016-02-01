@@ -19,11 +19,10 @@ trait AndroidExt
 
   implicit class ViewExt(val view: View)
   extends tryp.droid.Basic
-  with tryp.droid.Searchable
   {
     def context = view.getContext
 
-    def clickListen(callback: (View) ⇒ Unit) {
+    def clickListen(callback: View ⇒ Unit) {
       view.setOnClickListener(new android.view.View.OnClickListener {
         def onClick(v: View) = callback(v)
       })
@@ -93,24 +92,24 @@ trait AndroidExt
     }
   }
 
-  implicit class `Fragment extensions`(f: Fragment)
-  extends tryp.droid.Basic
-  with tryp.droid.Searchable
-  with tryp.droid.FragmentManagement
-  {
-    def view = f.getView
-    def activity = f.getActivity
-    def getFragmentManager = f.getChildFragmentManager
-  }
+  // implicit class `Fragment extensions`(f: Fragment)
+  // extends tryp.droid.Basic
+  // with tryp.droid.Searchable
+  // with tryp.droid.FragmentManagement
+  // {
+  //   def view = f.getView
+  //   def activity = f.getActivity
+  //   def getFragmentManager = f.getChildFragmentManager
+  // }
 
-  implicit class `Activity extensions`(a: Activity)
-  extends tryp.droid.Basic
-  with tryp.droid.Searchable
-  with tryp.droid.FragmentManagement
-  {
-    override def context = a
-    def view = a.getWindow.getDecorView.getRootView
-    override def activity = a
-    def getFragmentManager = a.getFragmentManager
-  }
+  // implicit class `Activity extensions`(a: Activity)
+  // extends tryp.droid.Basic
+  // with tryp.droid.Searchable
+  // with tryp.droid.FragmentManagement
+  // {
+  //   override def context = a
+  //   def view = a.getWindow.getDecorView.getRootView
+  //   override def activity = a
+  //   def getFragmentManager = a.getFragmentManager
+  // }
 }

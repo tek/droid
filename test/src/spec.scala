@@ -5,8 +5,8 @@ package test
 trait TrypDroidSpec
 extends TestHelpers
 {
-  def activity: TrypActivity
+  def activity: Activity
 
   def frag[A <: Fragment: ClassTag](names: String*) =
-    activity.findNestedFrag[A](names: _*)
+    activity.findNestedFrag[A](names)
 }

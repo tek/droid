@@ -17,11 +17,11 @@ import macroid.FullDsl._
 import util.OS
 import tweaks.Recycler._
 import state._
+import core._
 
 trait FragmentBase
 extends Fragment
 with Broadcast
-with FragmentManagement
 with TrypActivityAccess
 with AkkaFragment
 with Snackbars
@@ -30,6 +30,7 @@ with Macroid
 with Screws
 with DbAccess
 with ResourcesAccess
+with FragmentHelpers
 {
   val name = fragmentClassName(getClass)
 
@@ -49,10 +50,6 @@ with ResourcesAccess
   }
 
   override implicit def activity = getActivity
-
-  override def view = getView
-
-  override def fragmentManager = getChildFragmentManager
 
   abstract override def onViewStateRestored(state: Bundle) {
     if (OS.hasFragmentOnViewStateRestored) {
@@ -75,7 +72,7 @@ extends Fragment
 with FragmentBase
 with FragmentAgent
 {
-  lazy val viewMachine: ViewMachine[View] = new DummyViewMachine {}
+  lazy val viewMachine: ViewMachine = new DummyViewMachine {}
 
   override def onCreateView
   (inflater: LayoutInflater, container: ViewGroup, state: Bundle) = {
@@ -99,6 +96,10 @@ with ExtViews
 {
   def dummyLayout = w[TextView] >>=
     iota.text[TextView]("Couldn't load content")
+
+  def viewMachine: ViewMachine
+
+  override def machines = viewMachine :: super.machines
 
   override def onCreateView
   (inflater: LayoutInflater, container: ViewGroup, state: Bundle) = {

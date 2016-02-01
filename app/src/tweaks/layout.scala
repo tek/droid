@@ -1,4 +1,6 @@
-package tryp.droid.tweaks
+package tryp
+package droid
+package tweaks
 
 import scala.collection.mutable.ListBuffer
 
@@ -17,11 +19,13 @@ import macroid.FullDsl._
 import macroid.contrib.Layouts._
 import RuleRelativeLayout.Rule
 
-import tryp.droid._
-import Macroid._
+import ScalazGlobals._
 
 trait Layout
+extends Misc
 {
+  private[this] implicit def res(implicit c: Context) = new Resources
+
   def above(d: Int) = Rule(ABOVE, d)
   def below(d: Int) = Rule(BELOW, d)
   def rightOf(d: Int) = Rule(RIGHT_OF, d)
@@ -129,10 +133,14 @@ trait Layout
   def foreground(res: Drawable) = Tweak[FrameLayout](_.setForeground(res))
 
   def selectableFg(implicit c: Context) =
-    foreground(new Resources().theme.drawable("selectableItemBackground"))
+    res.theme.drawable("selectableItemBackground")
+      .map(foreground)
+      .toOption
 
   def selectable(implicit c: Context) =
-    bg(new Resources().theme.drawable("selectableItemBackground"))
+    res.theme.drawable("selectableItemBackground")
+      .map(bg)
+      .toOption
 
   def elevation(dist: Float) = Tweak[CardView](_.setCardElevation(dist))
 
@@ -163,7 +171,7 @@ trait Layout
   }
 
   def clickFrame(ui: Ui[View]*)(implicit a: Activity) = {
-    FL(selectableFg)(ui: _*)
+    FL(selectableFg.toList: _*)(ui: _*)
   }
 
   def dispatchFrame(dispatch: ⇒ Unit)(ui: Ui[View]*)(implicit a: Activity) = {
@@ -185,8 +193,8 @@ trait Layout
   object LL
   extends ActivityContexts
   {
-    def apply(tweaks: Tweak[LinearLayout]*)(children: Ui[View]*)(
-      implicit a: Activity, r: Resources) = {
+    def apply(tweaks: Tweak[LinearLayout]*)(children: Ui[View]*)
+    (implicit a: Activity) = {
       l[LinearLayout](children: _*) <~ Macroid.meta(LayoutMetadata.lin) <~
         tweakSum(tweaks: _*)
     }
@@ -201,24 +209,26 @@ trait Layout
     }
   }
 
-  def frag(ctor: ⇒ Fragment, id: Id = Id.next, tag: String = "")
-  (implicit a: Activity, handler: FragmentManagement) = {
+  def frag[A: FragmentManagement: HasContextF]
+  (parent: A, ctor: ⇒ Fragment, id: RId = RId.next, tag: String = "") = {
     val t = tag.isEmpty ? id.value.toString | tag
     Ui(
-      (new FrameLayout(a)) tap { fl ⇒
+      (new FrameLayout(parent.context)) tap { fl ⇒
         fl.setId(id.value)
-        handler.replaceFragment(id, ctor, false, t, false)
+        parent.replaceFragment(id, ctor, false, t, false)
       }
     )
   }
 
   import tryp.droid.ShowFragment
 
-  def showFrag[A <: SyncModel: ClassTag]
-  (model: A, ctor: () ⇒ ShowFragment[A], id: Id = Id.next)
-  (implicit a: Activity, fm: FragmentManagement) =
+  def showFrag
+  [A <: SyncModel: ClassTag, B: FragmentManagement: HasActivityF]
+  (parent: B, model: A, ctor: () ⇒ ShowFragment[A], id: RId = RId.next)
+   =
   {
-    frag(ShowFragment(model)(ctor()), id, className[A])
+    frag(parent, ShowFragment(model)(ctor())(parent.activity), id,
+      className[A])
   }
 
   import android.view.ViewGroup.LayoutParams._

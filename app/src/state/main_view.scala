@@ -40,7 +40,7 @@ extends SimpleDroidMachine
   def loadFragment(fragment: () ⇒ Fragment, tag: String): Transit = {
     case s ⇒
       s << ctx
-        .transitionFragment(FragmentBuilder(fragment, Id.content, tag.some))
+        .transitionFragment(FragmentBuilder(fragment, RId.content, tag.some))
         .toResult
   }
 

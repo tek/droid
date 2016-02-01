@@ -6,7 +6,7 @@ import scalaz._, Scalaz._, concurrent.Task
 
 import android.widget._
 
-class IOBSpec
+class ViewStreamSpec
 extends SpecBase
 with DefaultStrategy
 {

@@ -5,6 +5,8 @@ import android.widget._
 
 import scalaz._, Scalaz._, effect.IO
 
+import cats.data.Xor
+
 trait ViewMetadata
 {
   def desc: String
@@ -15,14 +17,13 @@ trait ViewMetadata
 case class SimpleViewMetadata(desc: String, extra: Params = Map())
 extends ViewMetadata
 
-final class ViewOps[A <: View: ClassTag](v: A)
-(implicit res: Resources)
+final class ViewOps[A <: View: ClassTag](v: A)(implicit res: Resources)
 {
-  val metaKey = res.id("view_metadata")
+  lazy val metaKey = res.id("view_metadata")
 
   def meta: ViewMetadata = {
-    v.getTag(metaKey) match {
-      case m: ViewMetadata ⇒ m
+    metaKey.map(_.value).map(v.getTag) match {
+      case Xor.Right(m: ViewMetadata) ⇒ m
       case _ ⇒ inferMetadata
     }
   }
@@ -33,7 +34,7 @@ final class ViewOps[A <: View: ClassTag](v: A)
 
   def storeMeta(meta: ViewMetadata) = {
     IO {
-      v.setTag(metaKey, meta)
+      metaKey.foreach(v.setTag(_, meta))
     }
   }
 }

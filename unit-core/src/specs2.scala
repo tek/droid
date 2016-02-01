@@ -4,7 +4,7 @@ package unit
 
 import org.specs2._, specification._, matcher._
 
-trait UnitSpecs2Spec[A <: Activity with UnitActivity]
+trait UnitSpecs2Spec[A <: Activity]
 extends RobolectricSpecification
 with UnitSpec[A]
 with BeforeEach
