@@ -12,8 +12,7 @@ import scalaz.{Tree ⇒ STree, _}, Scalaz._, concurrent._, stream._, Process._
 import async.mutable._
 
 object FreeIO
-extends CachedPool
-with Logging
+extends Logging
 {
   def attachSignal[A](sig: Signal[Maybe[A]])(implicit log: Logger) =
     iota.kestrel[A, Unit] { a ⇒
@@ -36,7 +35,6 @@ case class FreeIO[A](ctor: IOCtor[A])
 extends Logging
 with IOStrategy
 {
-  def cachedPool = FreeIO
 
   override val loggerName = Some("iob")
 
