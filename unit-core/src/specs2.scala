@@ -8,5 +8,5 @@ trait UnitSpecs2Spec[A <: Activity]
 extends RobolectricSpecification
 with UnitSpec[A]
 with BeforeEach
-with slick.ActionExpectations
+with slick.ToActionExpectable
 with MustThrownExpectations
