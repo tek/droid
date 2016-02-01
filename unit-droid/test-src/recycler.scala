@@ -34,6 +34,7 @@ class RecyclerActSpec
 extends ActivitySpec[ThinSpecActivity]
 {
   def is = s2"""
+  empty $empty
   add $add
   """
 
@@ -42,6 +43,12 @@ extends ActivitySpec[ThinSpecActivity]
   def activityClass = classOf[ThinSpecActivity]
 
   val text = Random.string(10)
+
+  sequential
+
+  def empty = {
+    activity willContain emptyRecycler
+  }
 
   def add = {
     activity.viewMachine.adapter.updateItems(List("first", "second")).run
