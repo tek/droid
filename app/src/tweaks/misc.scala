@@ -120,7 +120,6 @@ with ResourcesAccess
       .map(imageDrawable)
       .toOption
 
-
   def imageC(name: String)(implicit c: Context) = {
     imageFitCenter + image(name).getOrElse(nopT)
   }
@@ -131,7 +130,6 @@ with ResourcesAccess
   def imageDrawableC(drawable: Drawable)(implicit c: Context) = {
     imageFitCenter + imageDrawable(drawable)
   }
-
 
   def bgCol(name: String)(
     implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace

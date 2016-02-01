@@ -30,7 +30,6 @@ extends PlusInterface
     case s ⇒ s << ConnectionEstablished
   }
 
-
   override def apiConnected(data: Bundle) {
   }
 
