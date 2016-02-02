@@ -13,7 +13,8 @@ extends ActivitySpec[NestedActivity]
   change text in a nested agent's view $nested
   """
 
-  def before = ()
+  def before = {
+  }
 
   def activityClass = classOf[NestedActivity]
 
@@ -27,8 +28,8 @@ extends ActivitySpec[NestedActivity]
 
   def changedText = {
     activity.nestedAgent.send(NestedActivity.SetText(text))
-    activity.nestedAgent.waitMachines()
     sync()
+    activity.nestedAgent.waitMachines()
     activity.nestedAgent.nested2.tv.text computes_== text
   }
 

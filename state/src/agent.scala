@@ -52,8 +52,6 @@ trait Agent
 extends Logging
 with StateStrategy
 {
-  def cachedPool = Agent
-
   def mediator: Mediator
 
   def sub: Streaming[Agent] = Streaming.Empty()

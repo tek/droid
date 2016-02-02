@@ -116,8 +116,8 @@ extends ToOperationSyntax
   }
 
   implicit def disjunctionOperation[A: ParcelOperation, B: ParcelOperation] =
-    new Operation[\/[A, B]] {
-      def result(a: \/[A, B]) = {
+    new Operation[A \/ B] {
+      def result(a: A \/ B) = {
         a match {
           case -\/(e) ⇒ e.toParcel.fail
           case \/-(r) ⇒ r.toResult
