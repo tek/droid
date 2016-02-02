@@ -30,8 +30,8 @@ class RecyclerSpec
   }
 }
 
-class RecyclerActSpec
-extends ActivitySpec[ThinSpecActivity]
+class RecyclerActivitySpec
+extends ActivitySpec[RecyclerActivity]
 {
   def is = s2"""
   empty $empty
@@ -40,7 +40,7 @@ extends ActivitySpec[ThinSpecActivity]
 
   def before = ()
 
-  def activityClass = classOf[ThinSpecActivity]
+  def activityClass = classOf[RecyclerActivity]
 
   val text = Random.string(10)
 

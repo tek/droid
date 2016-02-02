@@ -18,3 +18,12 @@ extends RecyclerVSFragment[StringRecyclerAdapter]
     def adapter = new StringRecyclerAdapter {}
   }
 }
+
+class RecyclerActivity
+extends TestViewActivity
+{
+  override lazy val viewMachine =
+    new RecyclerSpecMachine {
+      lazy val adapter = new StringRecyclerAdapter {}
+    }
+}
