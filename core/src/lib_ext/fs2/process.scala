@@ -1,6 +1,8 @@
 package tryp
 package droid
 
+import java.util.concurrent._
+
 import ZS._
 import scalaz.Liskov.<~<
 
@@ -8,8 +10,8 @@ final class TaskProcessEffectOps[O](self: Process[Task, O])
 (implicit log: Logger)
 extends ToTaskOps
 {
-  def infraRunAsync(desc: String) = {
-    self.run.infraRunAsync(desc)
+  def infraFork(desc: String)(implicit x: ExecutorService) = {
+    self.run.infraFork(desc)
   }
 
   def infraRunFor(desc: String, timeout: Duration) = {
@@ -20,8 +22,8 @@ extends ToTaskOps
     self.run.infraRunShort(desc)
   }
 
-  def infraRunLogAsync(desc: String) = {
-    self.runLog.infraRunAsync(desc)
+  def infraRunLogFork(desc: String)(implicit x: ExecutorService) = {
+    self.runLog.infraFork(desc)
   }
 
   def infraRunLogFor(desc: String, timeout: Duration) = {

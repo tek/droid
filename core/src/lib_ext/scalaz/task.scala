@@ -1,11 +1,13 @@
 package tryp
 package droid
 
+import java.util.concurrent._
+
 import Z._
 
 object TaskOps
 {
-  def infraResult[A](desc: String)(res: \/[Throwable, A])
+  def infraResult[A](desc: String)(res: Throwable \/ A)
   (implicit log: Logger): Maybe[A] = {
     res match {
       case -\/(e) ⇒
@@ -33,12 +35,16 @@ final class TaskOps[A](task: Task[A])(implicit log: Logger)
 
   def !?(desc: String) = infraRunShort(desc)
 
-  def infraRunAsync(desc: String) = {
+  def fork(f: (Throwable \/ A) ⇒ Unit)(implicit x: ExecutorService) = {
+    Task.fork(task)(x).unsafePerformAsync(f)
+  }
+
+  def infraFork(desc: String)(implicit x: ExecutorService) = {
     task.unsafePerformAsync(TaskOps.infraResult[A](desc) _)
   }
 
-  def infraRunAsyncShort(desc: String)
-  (implicit timeout: Duration = 5 seconds) = {
+  def infraForkShort(desc: String)
+  (implicit x: ExecutorService, timeout: Duration = 5 seconds) = {
     task
       .unsafePerformTimed(timeout)
       .unsafePerformAsync(TaskOps.infraResult[A](desc) _)

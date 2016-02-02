@@ -23,8 +23,6 @@ with StateStrategy
 {
   implicit def messageTopic: MessageTopic @@ To
 
-  def cachedPool = Zthulhu
-
   val S = Zthulhu
 
   def admit: Admission
@@ -80,7 +78,7 @@ with StateStrategy
     if (debugStates)
       current.discrete
         .map(z ⇒ log.debug(z.toString))
-        .infraRunAsync("debug state printer")
+        .infraFork("debug state printer")
     fsmProc(initial)
       .onComplete { running.setter(false).flatMap(_ ⇒ halt) }
   }

@@ -95,7 +95,7 @@ with StateStrategy
 
   protected def connectMachines() = {
     isolatedMachinesComm
-      .infraRunAsync("exchange with mediator")
+      .infraFork("exchange with mediator")
   }
 
   def integrate = {
