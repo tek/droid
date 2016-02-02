@@ -233,6 +233,14 @@ extends AnyVal
   }
 }
 
+final class ProcessEffectOps[A](val self: Process[Task, A])
+extends AnyVal
+{
+  def effect(desc: String): Effect = {
+    self map(a ⇒ EffectSuccessful(desc, a).internal.success)
+  }
+}
+
 trait MiscEffectOps
 {
   implicit lazy val uiMonad = new Monad[Ui]
@@ -257,4 +265,7 @@ trait MiscEffectOps
   }
 
   implicit def ToTaskEffectOps[A](t: Task[A]) = new TaskEffectOps(t)
+
+  implicit def ToProcessEffectOps[A](t: Process[Task, A]) =
+    new ProcessEffectOps(t)
 }

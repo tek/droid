@@ -16,6 +16,10 @@ extends SimpleMachine
       case s ⇒
         s << Task(scala.concurrent.Await.result(ui.run, timeout))
     }
+    case ViewStreamTask(io, timeout) ⇒ {
+      case s ⇒
+        s << io.unsafePerformIOMain(timeout).effect("perform ViewStream IO")
+    }
   }
 }
 

@@ -36,7 +36,7 @@ extends Logging
 with IOStrategy
 {
 
-  override val loggerName = Some("iob")
+  override val loggerName = Some("freeio")
 
   lazy val sig = async.signalOf[Maybe[A]](Maybe.Empty())
 
@@ -48,9 +48,13 @@ with IOStrategy
 }
 
 case class ViewStream[A](view: Process[Task, iota.IO[A]]) {
-  def >>=[B](f: A ⇒ iota.IO[B]): ViewStream[B] = ViewStream(view map (_ >>= f))
+  def >>=[B](f: A ⇒ iota.IO[B]): ViewStream[B] = ViewStream(view map(_ >>= f))
 
-  def performMain() = view take(1) map(_.performMain())
+  def unsafePerformIOMain(timeout: Duration = Duration.Inf) =
+    view
+      .take(1)
+      .map(_.performMain())
+      .map(scala.concurrent.Await.result(_, timeout))
 }
 
 trait ExtViews

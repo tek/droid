@@ -167,7 +167,7 @@ with FrameLayoutCombinators
   def onBindViewHolder(holder: StringHolder, position: Int) {
     items(position) foreach { s ⇒
       val io = holder.content >>= text[TextView](s)
-      io.performMain()
+      io.unsafePerformIOMain()
     }
   }
 }

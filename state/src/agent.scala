@@ -63,7 +63,7 @@ with StateStrategy
 
   def machines: List[Machine] = Nil
 
-  def allMachines[A](f: Machine ⇒ A) = machines map (f)
+  def allMachines[A](f: Machine ⇒ A) = machines map(f)
 
   def send(msg: Message) = sendAll(msg.wrapNel)
 
@@ -75,17 +75,26 @@ with StateStrategy
 
   lazy val messageOut = machines foldMap(_.run())
 
-  def machinesComm = {
+  def machinesComm: Process[Task, Message] = {
     mediator.subscribe
       .merge(messageIn.dequeue)
       .either(messageOut)
       .observeW(toMachines.publish)
       .stripW
+      .merge(subMachinesComm)
+  }
+
+  def subMachinesComm = {
+    cats.Foldable[Streaming].foldMap(sub)(_.machinesComm)
+  }
+
+  def isolatedMachinesComm = {
+    machinesComm
       .to(mediator.publish)
   }
 
   protected def connectMachines() = {
-    machinesComm
+    isolatedMachinesComm
       .infraRunAsync("exchange with mediator")
   }
 
@@ -108,6 +117,10 @@ with StateStrategy
 
   def joinMachines() = {
     allMachines(_.join())
+  }
+
+  def waitMachines() = {
+    allMachines(_.waitIdle())
   }
 
   lazy val fallbackMediator = new Mediator {}

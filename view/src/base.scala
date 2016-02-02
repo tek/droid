@@ -64,9 +64,6 @@ trait IOBase[A]
   def ctor: IOCtor[A]
 }
 
-@core.IOBase
-object IOBase
-
 case class Widget[A <: View](ctor: IOCtor[A])
 extends IOBase[A]
 

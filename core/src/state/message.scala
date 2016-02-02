@@ -78,8 +78,16 @@ trait MessageInstances
     case a ⇒ a.toString
   }
 
-  implicit lazy val messageProcMonoid =
-    Monoid.instance[Process[Task, Message]]((a, b) ⇒ a.merge(b), Process.halt)
+  type MProc = Process[Task, Message]
+
+  implicit lazy val mProcMonoid =
+    Monoid.instance[MProc]((a, b) ⇒ a.merge(b), Process.halt)
+
+  implicit lazy val mProcMonoidNon: algebra.Monoid[MProc] =
+    new algebra.Monoid[MProc] {
+      def empty = Process.halt
+      def combine(x: MProc, y: MProc) = x.merge(y)
+    }
 }
 
 case class Parcel(message: Message, publish: Boolean)

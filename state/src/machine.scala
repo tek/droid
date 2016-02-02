@@ -48,7 +48,7 @@ with StateStrategy
 
   val current = async.signalUnset[Zthulhu]
 
-  private[this] val idle: Process[Task, Boolean] = size map(_ == 0)
+  private[this] def idle: Process[Task, Boolean] = size map(_ == 0)
 
   protected def preselect: Preselection = {
     case m: InternalMessage ⇒ internalMessage
@@ -64,8 +64,7 @@ with StateStrategy
       .toMaybe
   }
 
-  private[this] def fsmProc(initial: BasicState)
-  : Process[Task, Message] = {
+  private[this] def fsmProc(initial: BasicState): Process[Task, Message] = {
     term.discrete
       .merge(idle.when(quit.discrete))
       .wye(messageIn)(stream.wye.interrupt)
@@ -77,8 +76,7 @@ with StateStrategy
 
   val debugStates = false
 
-  def run(initial: BasicState = Pristine)
-  : Process[Task, Message] = {
+  def run(initial: BasicState = Pristine): Process[Task, Message] = {
     if (debugStates)
       current.discrete
         .map(z ⇒ log.debug(z.toString))
@@ -118,16 +116,21 @@ with StateStrategy
       .infraRunFor("wait for finished signal", 20 seconds)
   }
 
+  def waitIdle(timeout: Duration = 20 seconds) = {
+    log.trace(s"waiting for $this to idle")
+    idle.exists(a ⇒ a)
+      .infraRunFor(s"wait for $this to idle", timeout)
+  }
+
   def finished = running.continuous.exists(!_)
 
   private[this] def size = {
     externalMessageIn.size.discrete
       .yipWith(internalMessageIn.size.discrete)(_ + _)
-      .take(1)
   }
 
   private[this] def waitingTasks = {
-    size.runLast.unsafePerformSyncAttempt | None | 0
+    size.take(1).runLast.unsafePerformSyncAttempt | None | 0
   }
 
   def description = s"$handle state"
