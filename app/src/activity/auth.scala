@@ -170,7 +170,7 @@ with HasPlus
     def backend = new Backend()(settings, res)
   }
 
-  override def machines = authMachine :: super.machines
+  override def machines = authMachine %:: super.machines
 
   override def onActivityResult(requestCode: Int, responseCode: Int,
     intent: Intent) = {
@@ -183,6 +183,6 @@ with HasPlus
   }
 
   def obtainToken() = {
-    sendAll(NonEmptyList(Reset, Fetch))
+    sendAll(MNes(Reset, Fetch))
   }
 }

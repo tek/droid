@@ -1,7 +1,12 @@
 package tryp
 package droid
 
-import scalaz._, Scalaz._, stream._, async._
+import scalaz.{stream, concurrent}, stream._, async._
+import scalaz.ValidationNel
+
+import cats._
+import cats.data._
+import cats.syntax.all._
 
 package object state
 extends droid.core.meta.Globals
@@ -34,4 +39,10 @@ with MiscEffectOps
   type Admission = PartialFunction[Message, Transit]
 
   type Preselection = Message ⇒ Admission
+
+  type Nes[A] = OneAnd[Streaming, A]
+  type MNes = Nes[Message]
+
+  def MNes(m: Message, t: Message*) =
+    OneAnd[Streaming, Message](m, Streaming.fromList(t.toList))
 }

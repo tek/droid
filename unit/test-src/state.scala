@@ -87,29 +87,40 @@ with tryp.Matchers
   """
 
   def machine = {
-    val med = new Mediator {
-      lazy val state = new State0 {}
+    val root = new Mediator
+    {
+      med ⇒
 
-      override def machines = state :: super.machines
+        val ag1 = new Agent {
+          def handle = "ag1"
+
+          lazy val state = new State1 {}
+
+          override def machines = state %:: super.machines
+
+          val mediator = med
+        }
+
+        val ag2: Agent = new Agent {
+          def handle = "ag2"
+
+          lazy val state = new State2 {}
+
+          override def machines = state %:: super.machines
+
+          val mediator = med
+        }
+
+        def handle = "med"
+
+        lazy val state = new State0 {}
+
+        override def machines = state %:: super.machines
+
+        override def sub = ag1 %:: ag2 %:: super.sub
     }
-    val ag1 = new Agent {
-      lazy val state = new State1 {}
-
-      override def machines = state :: super.machines
-
-      val mediator = med
-    }
-    val ag2 = new Agent {
-      lazy val state = new State2 {}
-
-      override def machines = state :: super.machines
-
-      val mediator = med
-    }
-    med.initMachines()
-    ag1.initMachines()
-    ag2.initMachines()
-    ag1.send(Go)
-    ag1.state.output.get will_== 0
+    root.initMachines()
+    root.ag1.send(Go)
+    root.ag1.state.output.get will_== 0
   }
 }

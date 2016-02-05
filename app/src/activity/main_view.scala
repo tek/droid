@@ -23,17 +23,17 @@ with ActivityAgent
     override def nativeBack() = mainView.nativeBack()
   }
 
-  override def machines = mainViewMachine :: super.machines
+  override def machines = mainViewMachine %:: super.machines
 
   def setContentView(v: View)
 
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
     mainActor
-    initView
+    initView()
   }
 
-  def initView = {
+  def initView() = {
     setContentView(Ui.get(mainLayout))
   }
 

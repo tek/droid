@@ -5,9 +5,11 @@ package state
 import shapeless._
 import shapeless.tag.@@
 
-import scalaz._, Scalaz._, concurrent.Strategy, stream.async
+import scalaz.concurrent.Strategy, scalaz.stream.async
 
-import cats.data.Streaming
+import cats._
+import cats.data._
+import cats.syntax.all._
 
 trait LogMachine
 extends SimpleMachine
@@ -45,12 +47,16 @@ extends AnyVal
 
 object Agent
 extends CachedPool
+{
+  case class AddSub(subs: Nes[Agent])
+  extends Message
+}
+import Agent._
 
 trait To
 
 trait Agent
-extends Logging
-with StateStrategy
+extends Machine
 {
   def mediator: Mediator
 
@@ -59,15 +65,11 @@ with StateStrategy
   implicit protected lazy val toMachines: MessageTopic @@ To =
     tag.apply[To](MessageTopic())
 
-  def machines: List[Machine] = Nil
+  def messageTopic = tag.apply[To](MessageTopic())
+
+  def machines: Streaming[Machine] = Streaming.Empty()
 
   def allMachines[A](f: Machine ⇒ A) = machines map(f)
-
-  def send(msg: Message) = sendAll(msg.wrapNel)
-
-  def sendAll(msgs: NonEmptyList[Message]) = {
-    messageIn.enqueueAll(msgs.toList) !? s"enqueue messages $msgs in $this"
-  }
 
   val ! = send _
 
@@ -75,7 +77,7 @@ with StateStrategy
 
   def machinesComm: Process[Task, Message] = {
     mediator.subscribe
-      .merge(messageIn.dequeue)
+      .merge(internalMessageIn.dequeue)
       .either(messageOut)
       .observeW(toMachines.publish)
       .stripW
@@ -83,7 +85,7 @@ with StateStrategy
   }
 
   def subMachinesComm = {
-    cats.Foldable[Streaming].foldMap(sub)(_.machinesComm)
+    sub.foldMap(_.machinesComm)
   }
 
   def isolatedMachinesComm = {
@@ -94,6 +96,14 @@ with StateStrategy
   protected def connectMachines() = {
     isolatedMachinesComm
       .infraFork("exchange with mediator")
+  }
+
+  def admit: Admission = {
+    case AddSub(subs) ⇒ addSub(subs)
+  }
+
+  def addSub(subs: Nes[Agent]): Transit = {
+    case s ⇒ s
   }
 
   def integrate = {
@@ -107,8 +117,6 @@ with StateStrategy
 
   protected def postRunMachines(): Unit = ()
 
-  lazy val messageIn = async.unboundedQueue[Message]
-
   def killMachines() = {
     allMachines(_.kill())
   }
@@ -121,7 +129,9 @@ with StateStrategy
     allMachines(_.waitIdle())
   }
 
-  lazy val fallbackMediator = new Mediator {}
+  lazy val fallbackMediator = new Mediator {
+    def handle = "fallbackMediator"
+  }
 }
 
 trait SolitaryAgent
@@ -143,5 +153,5 @@ extends Agent
 
   lazy val logMachine = new LogMachine {}
 
-  override def machines = logMachine :: super.machines
+  override def machines = logMachine %:: super.machines
 }

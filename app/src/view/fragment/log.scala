@@ -35,6 +35,8 @@ case class LogFragment()
 extends MainFragment
 with RecyclerFragment[LogAdapter]
 {
+  override def handle = "log"
+
   override val actors = Seq(LogActor.props)
 
   lazy val adapter = new LogAdapter

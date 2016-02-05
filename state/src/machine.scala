@@ -2,13 +2,20 @@ package tryp
 package droid
 package state
 
-import scalaz._, Scalaz._
 
 import shapeless._
 import shapeless.tag.@@
 
+import scalaz.syntax.apply._
+import scalaz.syntax.std.option._
+
+import scalaz.stream
 import stream.async
 import Process._
+
+import cats._
+import cats.data._
+import cats.syntax.all._
 
 import Zthulhu._
 
@@ -20,6 +27,7 @@ import Zthulhu._
 trait Machine
 extends Logging
 with StateStrategy
+with cats.syntax.StreamingSyntax
 {
   implicit def messageTopic: MessageTopic @@ To
 
@@ -27,7 +35,7 @@ with StateStrategy
 
   def admit: Admission
 
-  private[this] val internalMessageIn = async.unboundedQueue[Message]
+  protected[state] val internalMessageIn = async.unboundedQueue[Message]
 
   private[this] val externalMessageIn = async.unboundedQueue[Message]
 
@@ -35,8 +43,6 @@ with StateStrategy
     internalMessageIn.dequeue.logged(s"$description internal")
       .merge(messageTopic.subscribe.logged(s"$description external"))
   }
-
-  val messageOut = async.unboundedQueue[Message]
 
   private[this] val running = async.signalOf(true)
 
@@ -86,11 +92,12 @@ with StateStrategy
   def sendP(msg: Message) = emit(msg).to(internalMessageIn.enqueue)
 
   def send(msg: Message) = {
-    sendAll(msg.wrapNel)
+    sendAll(MNes(msg))
   }
 
-  def sendAll(msgs: NonEmptyList[Message]) = {
-    internalMessageIn.enqueueAll(msgs.toList) !? "enqueue state messages"
+  def sendAll(msgs: MNes) = {
+    internalMessageIn
+      .enqueueAll(msgs.toList) !? s"enqueue messages $msgs in $this"
   }
 
   // kill the state machine by
@@ -137,7 +144,7 @@ with StateStrategy
 
   override def toString = s"$description ($waitingTasks waiting)"
 
-  override val loggerName = s"state.$handle".some
+  override val loggerName: Option[String] = Some(s"state.$handle")
 
   lazy val internalMessage: Admission = {
     case SetInitialState(s) ⇒ setInitialState(s)

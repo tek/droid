@@ -68,6 +68,8 @@ case class GeofenceHandler(intent: PendingIntent)
 (implicit val context: Context)
 extends SolitaryAgent
 {
+  def handle = "geofence"
+
   // TODO connect
   def success = async.signalOf(false)
 
@@ -75,7 +77,7 @@ extends SolitaryAgent
 
   lazy val location = new LocationInterface {}
 
-  override def machines = location :: super.machines
+  override def machines = location %:: super.machines
 
   def setupProcess(client: GoogleApiClient,
     locations: NonEmptyList[GeofenceData]) = {

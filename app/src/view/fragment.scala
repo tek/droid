@@ -166,7 +166,7 @@ extends MainFragment
 {
   def showMachine: ShowMachine[A]
 
-  override def machines = showMachine :: super.machines
+  override def machines = showMachine %:: super.machines
 
   override def onViewStateRestored(state: Bundle) {
     super.onViewStateRestored(state)

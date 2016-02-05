@@ -28,7 +28,7 @@ with Macroid
     override def switchToIdleUi = fabView.fadeToFab
   }
 
-  override def machines = asyncMachine :: super.machines
+  override def machines = asyncMachine %:: super.machines
 
   val progress = slut[ProgressBar]
 

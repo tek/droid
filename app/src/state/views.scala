@@ -2,9 +2,12 @@ package tryp
 package droid
 package state
 
-import shapeless._
+import scalaz._, Scalaz._, concurrent._, stream._
+import android.widget._
 
-import concurrent.duration._
+import java.util.concurrent._
+
+import shapeless._
 
 trait UiDispatcher
 extends SimpleMachine
@@ -37,7 +40,7 @@ with HasContext
 
   lazy val uiMachine = new UiDispatcher {}
 
-  override def machines = uiMachine :: super.machines
+  override def machines = uiMachine %:: super.machines
 }
 
 trait HasActivityAgent
@@ -47,7 +50,7 @@ with ActivityAccess
   override implicit def uiCtx: AndroidUiContext =
     AndroidActivityUiContext.default
 
-  override def machines = activityMachine :: super.machines
+  override def machines = activityMachine %:: super.machines
 
   protected lazy val activityMachine = new SimpleDroidMachine
   {
@@ -74,6 +77,8 @@ with CallbackMixin
 {
   self: FragmentBase ⇒
 
+  def handle = "fragment"
+
   override implicit def uiCtx = AndroidFragmentUiContext.default(self)
 
   abstract override def onCreate(saved: Bundle) {
@@ -93,6 +98,8 @@ extends ActivityBase
 with HasActivityAgent
 with Mediator
 {
+  def handle = "activity"
+
   override def onCreate(saved: Bundle) {
     super.onCreate(saved)
     initMachines()

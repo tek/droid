@@ -15,6 +15,8 @@ with PlusInterfaceAccess
 {
   val drawerView = slut[RecyclerView]
 
+  override def handle = "drawer"
+
   override val actors = Seq(DrawerActor.props)
 
   def layout(state: Bundle) = {
