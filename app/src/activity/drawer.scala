@@ -47,9 +47,10 @@ with DrawerLayout.DrawerListener
   }
 
   override def belowToolbarLayout = {
+    val w: Float = res.dimen("drawer_width") getOrElse 500.dp
     l[DrawerLayout](
       contentLayout,
-      l[FrameLayout]() <~ RId.Drawer <~ dlp(app.R.dimen.drawer_width, ↕)
+      l[FrameLayout]() <~ RId.Drawer <~ dlp(w, ↕)
     ) <~ whore(drawer) <~ llp(↔, ↕) <~ D.listener(this)
   }
 

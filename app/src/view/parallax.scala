@@ -1,8 +1,9 @@
-package tryp.droid
+package tryp
+package droid
 
 import android.graphics.{Canvas, Rect}
 
-import tryp.droid._
+import iota._
 
 class ParallaxHeader(c: Context)
 extends RelativeLayout(c)
@@ -15,7 +16,7 @@ with ResourcesAccess
   var scroll = 0.0f
   def offset = scroll * scrollFactor()
   def clip = (scroll * (1.0f - scrollFactor())).toInt
-  lazy val headerHeight = app.R.dimen.header_height
+  lazy val headerHeight: Float = res.dimen("header_height").getOrElse(200.dp)
 
   def set(y: Int) {
     scroll = y.toFloat
