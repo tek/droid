@@ -7,7 +7,7 @@ import reflect.classTag
 import org.scalatest._
 import matchers._
 
-trait UnitScalatestSpec[A <: Activity with UnitActivity]
+trait UnitScalatestSpec[A <: Activity]
 extends FeatureSpec
 with RobolectricSuite
 with UnitSpec[A]

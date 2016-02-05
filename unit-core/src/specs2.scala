@@ -11,3 +11,6 @@ with BeforeEach
 with slick.ToActionExpectable
 with MustThrownExpectations
 with ContainsView
+{
+  def activityClass: Class[A]
+}
