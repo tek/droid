@@ -73,9 +73,9 @@ extends Machine
 
   val ! = send _
 
-  lazy val messageOut = machines foldMap(_.run())
+  lazy val messageOut = machines foldMap(_.run(toMachines.subscribe))
 
-  def machinesComm: Process[Task, Message] = {
+  def machinesComm: MProc = {
     mediator.subscribe
       .merge(internalMessageIn.dequeue)
       .either(messageOut)

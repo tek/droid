@@ -29,8 +29,6 @@ extends Logging
 with StateStrategy
 with cats.syntax.StreamingSyntax
 {
-  implicit def messageTopic: MessageTopic @@ To
-
   val S = Zthulhu
 
   def admit: Admission
@@ -38,11 +36,6 @@ with cats.syntax.StreamingSyntax
   protected[state] val internalMessageIn = async.unboundedQueue[Message]
 
   private[this] val externalMessageIn = async.unboundedQueue[Message]
-
-  private[this] def messageIn = {
-    internalMessageIn.dequeue.logged(s"$description internal")
-      .merge(messageTopic.subscribe.logged(s"$description external"))
-  }
 
   private[this] val running = async.signalOf(true)
 
@@ -68,10 +61,15 @@ with cats.syntax.StreamingSyntax
       .toMaybe
   }
 
-  private[this] def fsmProc(initial: BasicState): Process[Task, Message] = {
+  private[this] def interrupt = {
     term.discrete
       .merge(idle.when(quit.discrete))
-      .wye(messageIn)(stream.wye.interrupt)
+  }
+
+  private[this] def fsmProc(input: MProc, initial: BasicState): MProc = {
+    val in = internalMessageIn.dequeue.merge(input)
+    interrupt
+      .wye(in)(stream.wye.interrupt)
       .fsm(initial, uncurriedTransitions)
       .forkW(current.pipeIn)
       .separateMap(_.publish)(_.message)
@@ -80,13 +78,17 @@ with cats.syntax.StreamingSyntax
 
   val debugStates = false
 
-  def run(initial: BasicState = Pristine): Process[Task, Message] = {
+  def run(input: MProc = halt, initial: BasicState = Pristine) = {
     if (debugStates)
       current.discrete
         .map(z ⇒ log.debug(z.toString))
         .infraFork("debug state printer")
-    fsmProc(initial)
+    fsmProc(input, initial)
       .onComplete { running.setter(false).flatMap(_ ⇒ halt) }
+  }
+
+  def fork(input: MProc = halt, initial: BasicState = Pristine) = {
+    run(input, initial).infraFork(s"autonomous $this")
   }
 
   def sendP(msg: Message) = emit(msg).to(internalMessageIn.enqueue)

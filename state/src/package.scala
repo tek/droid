@@ -40,6 +40,8 @@ with MiscEffectOps
 
   type Preselection = Message ⇒ Admission
 
+  type MProc = Process[Task, Message]
+
   type Nes[A] = OneAnd[Streaming, A]
   type MNes = Nes[Message]
 

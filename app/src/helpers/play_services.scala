@@ -41,7 +41,7 @@ import PlayServices._
 trait PlayServices[A <: WithContext]
 extends DroidMachine[A]
 {
-  run(Disconnected)
+  fork(initial = Disconnected)
 
   class ConnectionCallbacks(owner: PlayServices[A])
   extends GoogleApiClient.OnConnectionFailedListener
