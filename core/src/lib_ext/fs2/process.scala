@@ -5,6 +5,7 @@ import java.util.concurrent._
 
 import ZS._
 import scalaz.Liskov.<~<
+import scalaz.concurrent.Strategy
 
 final class TaskProcessEffectOps[O](self: Process[Task, O])
 (implicit log: Logger)
@@ -15,7 +16,7 @@ extends ToTaskOps
   }
 
   def infraRunFor(desc: String, timeout: Duration) = {
-    self.run.infraRunFor(desc, timeout)
+    self.run.infraRunFor(desc, timeout)(Strategy.DefaultExecutorService)
   }
 
   def infraRunShort(desc: String)(implicit timeout: Duration = 5 seconds) = {
@@ -27,7 +28,7 @@ extends ToTaskOps
   }
 
   def infraRunLogFor(desc: String, timeout: Duration) = {
-    self.runLog.infraRunFor(desc, timeout)
+    self.runLog.infraRunFor(desc, timeout)(Strategy.DefaultExecutorService)
   }
 
   def peek()(implicit timeout: Duration = 5 seconds) = self.runLog.peek()

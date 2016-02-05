@@ -19,21 +19,32 @@ object TaskOps
   }
 }
 
+object ShortPool
+extends FixedPool
+{
+  val threads = 3
+}
+
 final class TaskOps[A](task: Task[A])(implicit log: Logger)
 {
   def infraRun(desc: String) = {
      TaskOps.infraResult(desc)(task.unsafePerformSyncAttempt)
   }
 
-  def infraRunFor(desc: String, timeout: Duration) = {
-     TaskOps.infraResult(desc)(task.unsafePerformSyncAttemptFor(timeout))
+  def infraRunFor(desc: String, timeout: Duration)
+  (implicit x: ExecutorService) = {
+     val res = Task.fork(task)(x)
+       .unsafePerformSyncAttemptFor(timeout)
+     TaskOps.infraResult(desc)(res)
   }
 
   def infraRunShort(desc: String)(implicit timeout: Duration = 5 seconds) = {
+    implicit val exec = ShortPool.executor
     infraRunFor(desc, timeout)
   }
 
-  def !?(desc: String) = infraRunShort(desc)
+  def !?(desc: String)(implicit timeout: Duration = 5 seconds) =
+    infraRunShort(desc)
 
   def fork(f: (Throwable \/ A) ⇒ Unit)(implicit x: ExecutorService) = {
     Task.fork(task)(x).unsafePerformAsync(f)
