@@ -113,3 +113,58 @@ with Mediator
 
   override lazy val mediator = this
 }
+
+trait ViewAgent
+extends HasActivityAgent
+with view.ExtViews
+{
+  def viewMachine: ViewMachine
+
+  def title: String
+
+  override def machines = viewMachine %:: super.machines
+
+  def safeView = {
+    val l = (viewMachine.layout.discrete |> Process.await1)
+      .runLast
+      .unsafePerformSyncAttemptFor(10 seconds) match {
+      case \/-(Some(l)) ⇒ l
+      case \/-(None) ⇒
+        log.error("no layout produced by ViewMachine")
+        dummyLayout
+      case -\/(error) ⇒
+        log.error(s"error creating layout in ViewMachine: $error")
+        dummyLayout
+      }
+    l.perform() unsafeTap { v ⇒
+      log.debug(s"setting view for fragment $title:\n${v.viewTree.drawTree}")
+    }
+  }
+
+  def dummyLayout = w[TextView] >>=
+    iota.text[TextView]("Couldn't load content")
+}
+
+abstract class AppStateActivityAgent(implicit a: AndroidActivityUiContext,
+  res: Resources)
+extends SolitaryAgent
+with ViewAgent
+{
+  override lazy val mediator = fallbackMediator
+
+  implicit val activity = a.activity
+
+  def title = "AppStateActivityAgent"
+
+  def start() = {
+    initMachines()
+    send(Create(Map(), None))
+    send(ViewMachine.SetLayout)
+  }
+
+  def setView() = {
+    iota.IO {
+      a.activity.setContentView(safeView)
+    } performMain()
+  }
+}

@@ -92,31 +92,11 @@ trait VSTrypFragment
 extends Fragment
 with FragmentBase
 with FragmentAgent
-with ExtViews
+with ViewAgent
 {
-  def dummyLayout = w[TextView] >>=
-    iota.text[TextView]("Couldn't load content")
-
-  def viewMachine: ViewMachine
-
-  override def machines = viewMachine :: super.machines
-
   override def onCreateView
   (inflater: LayoutInflater, container: ViewGroup, state: Bundle) = {
-    val l = (viewMachine.layout.discrete |> Process.await1)
-      .runLast
-      .unsafePerformSyncAttemptFor(10 seconds) match {
-      case \/-(Some(l)) ⇒ l
-      case \/-(None) ⇒
-        log.error("no layout produced by ViewMachine")
-        dummyLayout
-      case -\/(error) ⇒
-        log.error(s"error creating layout in ViewMachine: $error")
-        dummyLayout
-      }
-    l.perform() unsafeTap { v ⇒
-      log.debug(s"setting view for fragment $title:\n${v.viewTree.drawTree}")
-    }
+    safeView
   }
 }
 

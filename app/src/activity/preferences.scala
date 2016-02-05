@@ -67,18 +67,10 @@ with Preferences
     }
   }
 
+  def changeTheme(theme: String, restart: Boolean = true): Unit
+
   protected def prefError(key: String, value: Any) {
     Log.e("Invalid value for preference ${key}: ${value} (${value.getClass})")
-  }
-
-  def changeTheme(theme: String, restart: Boolean = true) {
-    res.themeId(theme) foreach(applyTheme(_, restart))
-  }
-
-  def applyTheme(id: Int, restart: Boolean = true) {
-    activity.getApplicationContext.setTheme(id)
-    activity.setTheme(id)
-    if (restart) activity.recreate
   }
 
   def popSettings {

@@ -46,6 +46,7 @@ with Drawer
 
 trait ViewActivity
 extends ActivityAgent
+with ViewAgent
 with Themes
 with Preferences
 with ExtViews
@@ -56,29 +57,23 @@ with ExtViews
 
   def title = "ViewActivity"
 
-  def dummyLayout = w[TextView] >>=
-    iota.text[TextView]("Couldn't load content")
+  override def onCreate(state: Bundle) = {
+    super.onCreate(state)
+    setContentView(safeView)
+  }
+}
 
-  val viewMachine: ViewMachine
-
-  override def machines = viewMachine :: super.machines
+class StateAppViewActivity
+extends Activity
+{
+  def stateApp = getApplication match {
+    case a: StateApplication ⇒ Some(a)
+    case _ ⇒ None
+  }
 
   override def onCreate(state: Bundle) = {
     super.onCreate(state)
-    val l = (viewMachine.layout.discrete |> Process.await1)
-      .runLast
-      .unsafePerformSyncAttemptFor(10 seconds) match {
-      case \/-(Some(l)) ⇒ l
-      case \/-(None) ⇒
-        log.error("no layout produced by ViewMachine")
-        dummyLayout
-      case -\/(error) ⇒
-        log.error(s"error creating layout in ViewMachine: $error")
-        dummyLayout
-      }
-    val view = l.perform() unsafeTap { v ⇒
-      log.debug(s"setting view for fragment $title:\n${v.viewTree.drawTree}")
-    }
-    setContentView(view)
+    stateApp foreach(_.setActivity(this))
+    Thread.sleep(2000)
   }
 }
