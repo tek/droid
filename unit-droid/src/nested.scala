@@ -35,8 +35,6 @@ extends TestViewActivity
   }
 
   lazy val nestedAgent = new Agent {
-    def mediator = NestedActivity.this
-
     lazy val nested2 = new SimpleViewMachine {
       lazy val tv = w[TextView] >>= tk
 

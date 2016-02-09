@@ -11,8 +11,12 @@ import Process._
 case class Zthulhu(state: BasicState = Pristine, data: Data = NoData)
 
 object Zthulhu
-extends CachedPool
+extends BoundedCachedPool
 {
+  def name = "zthulhu"
+
+  override def maxThreads = 3
+
   /* @param z current state machine
    * @param f (Z, M) ⇒ (Z, E), transforms a state and message into a new state
    * and a Process of effects of type E
@@ -26,26 +30,26 @@ extends CachedPool
    * error callbacks are invoked if the transition or effect throws an
    * exception and their results emitted
    */
-  def stateLoop[Z, E, M]
+  def transLoop[Z, E, M]
   (z: Z)
   (f: (Z, M) ⇒ Maybe[(Z, E)])
   (transError: (Z, M, Throwable) ⇒ E)
   : Writer1[Z, M, E] = {
     receive1 { (a: M) ⇒
       val (state, effect) =
-        Task(f(z, a)).unsafePerformSyncAttempt match {
+        Task(f(z, a)).runDefault match {
           case \/-(Just((nz, e))) ⇒ nz.just → e.just
           case \/-(Empty()) ⇒ Maybe.empty[Z] → Maybe.empty[E]
           case -\/(t) ⇒ Maybe.empty[Z] → transError(z, a, t).just
         }
       val w = state.cata(emitW, halt)
       val o = effect.cata(emitO, halt)
-      val l = stateLoop(state | z)(f)(transError)
+      val l = transLoop(state | z)(f)(transError)
       w ++ o ++ l
     }
   }
 
-  def fatalTransition(state: Zthulhu, cause: Message, t: Throwable) = {
+  def fatalTransition[Z](state: Z, cause: Message, t: Throwable) = {
     emit(LogFatal(s"transitioning $state for $cause", t).publish.fail)
   }
 
@@ -55,38 +59,38 @@ extends CachedPool
   // that extract those new messages from the side effects.
   // returns a writer that emits the states on the output side and the new
   // messages on the write side.
-  implicit class ProcessToZthulhu(source: Process[Task, Message])
+  implicit class MProcToZthulhu[Z](source: MProc)
   (implicit log: Logger)
   {
-    type Trans = (Zthulhu, Message) ⇒ Maybe[TransitResult]
+    type Trans = (Z, Message) ⇒ Maybe[(Z, Effect)]
 
-    def fsm(initial: BasicState, transition: Trans) = {
+    def fsm(initial: Z, transition: Trans) = {
       source
-        .pipe(stateLoop(Zthulhu(initial))(transition)(fatalTransition))
+        .pipe(transLoop(initial)(transition)(fatalTransition))
         .flatMapO(handleResult)
     }
+  }
 
-    // pipe the result computed by the (possibly effectful) processes produced
-    // by the state transition, then extract messages from the result.
-    // the effectful nature necessitates catching exceptions via the attempt()
-    // operation, which returns a writer with Throwables on the W side.
-    // those are transformed to Result instances, then joined with the
-    // successful results, also on the W side.
-    // the results are then disassembled into single Message instances.
-    def handleResult(effect: Process[Task, Result]) = {
-      effect
-        .attempt(t ⇒ emit(LogFatal("performing effect", t).publish.fail))
-        .mergeO
-        .mapO {
-          case scalaz.Success(trans) ⇒
-            log.debug(s"task succeeded with ${trans.show}")
-            List(trans)
-          case scalaz.Failure(transs) ⇒
-            log.debug(s"task failed with ${transs.show}")
-            transs.toList
-        }
-        .pipeO(process1.unchunk)
-    }
+  // pipe the result computed by the (possibly effectful) processes produced
+  // by the state transition, then extract messages from the result.
+  // the effectful nature necessitates catching exceptions via the attempt()
+  // operation, which returns a writer with Throwables on the W side.
+  // those are transformed to Result instances, then joined with the
+  // successful results, also on the W side.
+  // the results are then disassembled into single Message instances.
+  def handleResult(effect: Process[Task, Result])(implicit log: Logger) = {
+    effect
+      .attempt(t ⇒ emit(LogFatal("performing effect", t).publish.fail))
+      .mergeO
+      .mapO {
+        case scalaz.Success(trans) ⇒
+          log.debug(s"task succeeded with ${trans.show}")
+          List(trans)
+        case scalaz.Failure(transs) ⇒
+          log.debug(s"task failed with ${transs.show}")
+          transs.toList
+      }
+      .pipeO(process1.unchunk)
   }
 
   implicit def amendZthulhuWithEmptyEffects(z: Zthulhu): TransitResult =

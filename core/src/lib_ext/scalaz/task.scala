@@ -8,8 +8,19 @@ import Z._
 object TaskOps
 {
   def infraResult[A](desc: String)(res: Throwable \/ A)
-  (implicit log: Logger): Maybe[A] = {
+  (implicit log: Logger, ex: ExecutorService): Maybe[A] = {
+    ex match {
+      case _: PoolExecutor ⇒
+      case e ⇒
+        sys.error(s"invalid executor $e")
+    }
     res match {
+      case -\/(t: TimeoutException) ⇒
+        val threads = sys.allThreads.length
+        val e = s"timed out trying to $desc, executor: $ex, threads: $threads"
+        log.error(e)
+        PoolExecutor.logInfo()
+        Maybe.empty[A]
       case -\/(e) ⇒
         log.error(s"failed to $desc: $e")
         Maybe.empty[A]
@@ -22,18 +33,40 @@ object TaskOps
 object ShortPool
 extends FixedPool
 {
+  def name = "short tasks"
+
   val threads = 3
 }
 
-final class TaskOps[A](task: Task[A])(implicit log: Logger)
+object TimedPool
+extends BoundedCachedPool
+{
+  def name = "timed tasks"
+}
+
+object SyncPool
+extends CachedPool
+{
+  def name = "sync"
+}
+
+final class TaskOps[A](task: Task[A])
+{
+  def runDefault() = {
+    Task.fork(task)(SyncPool.executor).unsafePerformSyncAttempt
+  }
+}
+
+final class InfraTaskOps[A](task: Task[A])(implicit log: Logger)
 {
   def infraRun(desc: String) = {
-     TaskOps.infraResult(desc)(task.unsafePerformSyncAttempt)
+     implicit val e = SyncPool.executor
+     TaskOps.infraResult(desc)(Task.fork(task)(e).unsafePerformSyncAttempt)
   }
 
-  def infraRunFor(desc: String, timeout: Duration)
-  (implicit x: ExecutorService) = {
-     val res = Task.fork(task)(x)
+  def infraRunFor(desc: String, timeout: Duration) = {
+     implicit val ex = TimedPool.executor
+     val res = Task.fork(task)(ex)
        .unsafePerformSyncAttemptFor(timeout)
      TaskOps.infraResult(desc)(res)
   }
@@ -51,14 +84,12 @@ final class TaskOps[A](task: Task[A])(implicit log: Logger)
   }
 
   def infraFork(desc: String)(implicit x: ExecutorService) = {
-    task.unsafePerformAsync(TaskOps.infraResult[A](desc) _)
+    fork(TaskOps.infraResult[A](desc) _)(x)
   }
 
   def infraForkShort(desc: String)
   (implicit x: ExecutorService, timeout: Duration = 5 seconds) = {
-    task
-      .unsafePerformTimed(timeout)
-      .unsafePerformAsync(TaskOps.infraResult[A](desc) _)
+    new InfraTaskOps(task.unsafePerformTimed(timeout)).infraFork(desc)(x)
   }
 
   def peek() = task.unsafePerformSyncAttemptFor(5 seconds)
@@ -66,6 +97,9 @@ final class TaskOps[A](task: Task[A])(implicit log: Logger)
 
 trait ToTaskOps
 {
-  implicit def ToTaskOps[A](task: Task[A])(implicit log: Logger) =
+  implicit def ToTaskOps[A](task: Task[A]) =
     new TaskOps(task)
+
+  implicit def ToInfraTaskOps[A](task: Task[A])(implicit log: Logger) =
+    new InfraTaskOps(task)
 }

@@ -38,6 +38,10 @@ with MiscEffectOps
 
   type Admission = PartialFunction[Message, Transit]
 
+  type StateTransit = PartialFunction[Message, TransitResult]
+
+  type StateAdmission = PartialFunction[Zthulhu, StateTransit]
+
   type Preselection = Message ⇒ Admission
 
   type MProc = Process[Task, Message]
@@ -45,6 +49,6 @@ with MiscEffectOps
   type Nes[A] = OneAnd[Streaming, A]
   type MNes = Nes[Message]
 
-  def MNes(m: Message, t: Message*) =
-    OneAnd[Streaming, Message](m, Streaming.fromList(t.toList))
+  def Nes[A](m: A, t: A*) =
+    OneAnd[Streaming, A](m, Streaming.fromList(t.toList))
 }

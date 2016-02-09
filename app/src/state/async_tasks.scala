@@ -44,16 +44,16 @@ import AsyncTaskStateData._
 trait AsyncTasksMachine
 extends SimpleDroidMachine
 {
-  private[this] def execTask(msg: AsyncTask, data: AsyncTasksData, fade: Boolean) =
-  {
-    val optFade = if (fade) switchToAsyncUi.some else none
-    val t = Task {
-      msg.task.unsafePerformSyncAttempt
-        .fold(f ⇒ AsyncTaskFailure(f, msg.failure),
-          s ⇒ AsyncTaskSuccess(s, msg.success))
-    }
-    S(Running, AsyncTasksData(data.running :+ msg.task)) << optFade << t <<
-      msg.done
+  private[this] def execTask(msg: AsyncTask, data: AsyncTasksData,
+    fade: Boolean) = {
+      val optFade = if (fade) switchToAsyncUi.some else none
+      val t = Task {
+        msg.task.runDefault()
+          .fold(f ⇒ AsyncTaskFailure(f, msg.failure),
+            s ⇒ AsyncTaskSuccess(s, msg.success))
+      }
+      S(Running, AsyncTasksData(data.running :+ msg.task)) << optFade << t <<
+        msg.done
   }
 
   def startTask(msg: AsyncTask): Transit = {

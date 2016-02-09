@@ -11,8 +11,7 @@ import state._
 import UiActionTypes._
 
 abstract class ShowMachine[A <: Model: DecodeJson]
-(implicit db: tryp.slick.DbInfo, val ctx: AndroidUiContext,
-  val messageTopic: MessageTopic @@ To)
+(implicit db: tryp.slick.DbInfo, val ctx: AndroidUiContext)
 extends DroidMachine[AndroidUiContext]
 {
   case class Model(model: A)

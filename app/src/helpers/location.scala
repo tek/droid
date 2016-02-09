@@ -119,8 +119,7 @@ extends LocationsConcern
 
 import state._
 
-class LocationInterface(implicit val ctx: WithContext,
-  val messageTopic: MessageTopic @@ To)
+class LocationInterface(implicit val ctx: WithContext)
 extends PlayServices[WithContext]
 {
   def subHandle = "location"

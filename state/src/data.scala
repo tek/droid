@@ -58,7 +58,13 @@ extends Message
 trait InternalMessage
 extends Message
 
+case object MachineStarted
+extends InternalMessage
+
 case class SetInitialState(state: BasicState)
+extends InternalMessage
+
+case object QuitMachine
 extends InternalMessage
 
 case class LogError(description: String, msg: String)
@@ -90,7 +96,7 @@ extends Loggable
       case Unit ⇒ ""
       case _ ⇒ s" ($result)"
     }
-    s"successful effect: $description$result"
+    s"successful effect: $description$res"
   }
 }
 

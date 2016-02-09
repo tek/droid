@@ -42,7 +42,7 @@ import AuthStateData._
 @Publish(AuthorizeToken)
 abstract class AuthState
 (implicit val ctx: AuthStateUiI, res: Resources, plus: PlusInterface,
-  val messageTopic: MessageTopic @@ To, settings: Settings)
+  settings: Settings)
 extends DroidMachine[AuthStateUiI]
 {
   override def handle = "gplus"
@@ -183,6 +183,6 @@ with HasPlus
   }
 
   def obtainToken() = {
-    sendAll(MNes(Reset, Fetch))
+    sendAll(Nes(Reset, Fetch))
   }
 }

@@ -1,34 +1,79 @@
 package tryp
 package droid
 
+import concurrent.duration.FiniteDuration
+
 import java.util.concurrent._
 
 import ZS._
+import Process._
 import scalaz.Liskov.<~<
 import scalaz.concurrent.Strategy
+import scalaz.syntax.std.option._
+
+final class TaskProcessOps[O](self: Process[Task, O])
+extends ToTaskOps
+{
+  def headOption = self |> process1.awaitOption
+
+  def headOr[O2 >: O](alt: ⇒ O2) =
+      headOption
+      .map(_ getOrElse alt)
+
+  def timedHeadOr[O2 >: O](timeout: FiniteDuration, alt: ⇒ O2) = {
+    implicit val sched = Strategy.DefaultTimeoutScheduler
+    (time.sleep(timeout) ++ emit(alt))
+      .merge(self)
+      .take(1)
+  }
+
+  def value = self.runLast.map(_.toMaybe)
+
+  def valueOr(alt: ⇒ O) = self.runLast.map(_ | alt)
+}
+
+trait ToProcessOps0
+{
+  implicit def ToTaskProcessOps[A](v: Process[Task, A]) =
+    new TaskProcessOps(v)
+}
 
 final class TaskProcessEffectOps[O](self: Process[Task, O])
 (implicit log: Logger)
 extends ToTaskOps
+with ToProcessOps0
 {
   def infraFork(desc: String)(implicit x: ExecutorService) = {
     self.run.infraFork(desc)
   }
 
   def infraRunFor(desc: String, timeout: Duration) = {
-    self.run.infraRunFor(desc, timeout)(Strategy.DefaultExecutorService)
+    self.run.infraRunFor(desc, timeout)
   }
 
   def infraRunShort(desc: String)(implicit timeout: Duration = 5 seconds) = {
     self.run.infraRunShort(desc)
   }
 
+  def infraValueShortOr(alt: ⇒ O)(desc: String)
+  (implicit timeout: Duration = 5 seconds) =
+  {
+    self.valueOr(alt).infraRunShort(desc) | alt
+  }
+
+  def !?(desc: String)(implicit timeout: Duration = 5 seconds) =
+    infraRunShort(desc)
+
   def infraRunLogFork(desc: String)(implicit x: ExecutorService) = {
     self.runLog.infraFork(desc)
   }
 
   def infraRunLogFor(desc: String, timeout: Duration) = {
-    self.runLog.infraRunFor(desc, timeout)(Strategy.DefaultExecutorService)
+    self.runLog.infraRunFor(desc, timeout)
+  }
+
+  def infraRunLastFor(desc: String, timeout: Duration) = {
+    self.runLast.infraRunFor(desc, timeout).toOption.flatten
   }
 
   def peek()(implicit timeout: Duration = 5 seconds) = self.runLog.peek()
@@ -83,6 +128,7 @@ extends AnyVal
 }
 
 trait ToProcessOps
+extends ToProcessOps0
 {
   implicit def ToTaskProcessEffectOps[A](v: Process[Task, A])
   (implicit log: Logger) =

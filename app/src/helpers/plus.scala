@@ -20,8 +20,7 @@ object PlusInterface
 import PlusInterface._
 import PlayServices._
 
-class PlusInterface(implicit val ctx: StartActivity,
-  val messageTopic: MessageTopic @@ To)
+class PlusInterface(implicit val ctx: StartActivity)
 extends PlayServices[StartActivity]
 {
   def subHandle = "plus"

@@ -4,34 +4,41 @@ package droid
 object FixedStatePool
 extends FixedPool
 {
+  def name = "state"
+
   val threads = 20
 }
 
 trait FixedStateStrategy
-extends FixedStrategy
+extends ExecutionStrategy
 {
-  def fixedPool = FixedStatePool
+  def pool = FixedStatePool
 }
 
 object CachedStatePool
 extends CachedPool
+{
+  def name = "state"
+}
 
 trait CachedStateStrategy
-extends CachedStrategy
+extends ExecutionStrategy
 {
-  def cachedPool = CachedStatePool
+  def pool = CachedStatePool
 }
 
 object BoundedCachedStatePool
 extends BoundedCachedPool
 {
-  override def maxThreads = 3
+  def name = "state"
+
+  override def maxThreads = 10
 }
 
 trait BoundedCachedStateStrategy
-extends BoundedCachedStrategy
+extends ExecutionStrategy
 {
-  def cachedPool = BoundedCachedStatePool
+  def pool = BoundedCachedStatePool
 }
 
 trait StateStrategy

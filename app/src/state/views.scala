@@ -10,7 +10,7 @@ import java.util.concurrent._
 import shapeless._
 
 trait UiDispatcher
-extends SimpleMachine
+extends Machine
 {
   def handle = "ui"
 
@@ -33,7 +33,7 @@ extends SimpleViewMachine
 }
 
 trait HasContextAgent
-extends Agent
+extends RootAgent
 with HasContext
 {
   implicit def uiCtx: AndroidUiContext = AndroidContextUiContext.default
@@ -67,8 +67,6 @@ with ActivityAccess
       case Toast(id) ⇒ toast(id)
     }
   }
-
-  lazy val mediator = activitySub[ActivityAgent] getOrElse fallbackMediator
 }
 
 trait FragmentAgent
@@ -83,7 +81,7 @@ with CallbackMixin
 
   abstract override def onCreate(saved: Bundle) {
     super.onCreate(saved)
-    initMachines()
+    forkAgent()
     send(Create(self.arguments, Option(saved)))
   }
 
@@ -96,13 +94,13 @@ with CallbackMixin
 trait ActivityAgent
 extends ActivityBase
 with HasActivityAgent
-with Mediator
+with RootAgent
 {
   def handle = "activity"
 
   override def onCreate(saved: Bundle) {
     super.onCreate(saved)
-    initMachines()
+    forkAgent()
     send(Create(Map(), Option(saved)))
   }
 
@@ -110,8 +108,6 @@ with Mediator
     super.onResume()
     send(Resume)
   }
-
-  override lazy val mediator = this
 }
 
 trait ViewAgent
@@ -147,17 +143,15 @@ with view.ExtViews
 
 abstract class AppStateActivityAgent(implicit a: AndroidActivityUiContext,
   res: Resources)
-extends SolitaryAgent
+extends RootAgent
 with ViewAgent
 {
-  override lazy val mediator = fallbackMediator
-
   implicit val activity = a.activity
 
   def title = "AppStateActivityAgent"
 
   def start() = {
-    initMachines()
+    forkAgent()
     send(Create(Map(), None))
     send(ViewMachine.SetLayout)
   }

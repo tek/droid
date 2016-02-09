@@ -65,6 +65,5 @@ with ExtViews
 }
 
 abstract class SimpleViewMachine
-(implicit ctx: AndroidUiContext, val messageTopic: MessageTopic @@ To,
-  val res: Resources)
+(implicit ctx: AndroidUiContext, val res: Resources)
 extends ViewMachine

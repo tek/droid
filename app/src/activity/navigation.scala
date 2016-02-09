@@ -16,7 +16,7 @@ with HasContextAgent
 
   override def machines = navMachine %:: super.machines
 
-  override def postRunMachines() = {
+  override def postRunAgent() = {
     send(SetNav(navigation))
   }
 

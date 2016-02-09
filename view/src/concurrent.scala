@@ -5,25 +5,29 @@ package view
 object FixedIOPool
 extends FixedPool
 {
+  def name = "io"
+
   val threads = 20
 }
 
 trait FixedIOStrategy
-extends FixedStrategy
+extends ExecutionStrategy
 {
-  def fixedPool = FixedIOPool
+  def pool = FixedIOPool
 }
 
 object BoundedCachedIOPool
 extends BoundedCachedPool
 {
+  def name = "io"
+
   override def maxThreads = 3
 }
 
 trait BoundedCachedIOStrategy
-extends BoundedCachedStrategy
+extends ExecutionStrategy
 {
-  def cachedPool = BoundedCachedIOPool
+  def pool = BoundedCachedIOPool
 }
 
 trait IOStrategy

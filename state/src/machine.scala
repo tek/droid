@@ -33,11 +33,13 @@ with cats.syntax.StreamingSyntax
 
   def admit: Admission
 
-  protected[state] val internalMessageIn = async.unboundedQueue[Message]
+  def stateAdmit: StateAdmission = PartialFunction.empty
 
-  private[this] val externalMessageIn = async.unboundedQueue[Message]
+  protected val initialZ = Zthulhu()
 
-  private[this] val running = async.signalOf(true)
+  private[this] val internalMessageIn = async.unboundedQueue[Message]
+
+  private[this] val running = async.signalOf(false)
 
   private[this] val quit = async.signalOf(false)
 
@@ -53,20 +55,31 @@ with cats.syntax.StreamingSyntax
   }
 
   protected def uncurriedTransitions(z: Zthulhu, m: Message) = {
-    preselect(m)
-      .orElse(unmatchedMessage)
-      .lift(m)
-      .getOrElse(unmatchedState(m))
-      .lift(z)
+    byMessage(z, m)
+      .orElse(byState(z, m))
+      .orElse(unmatched(m).lift(z))
       .toMaybe
   }
 
-  private[this] def interrupt = {
+  protected def byMessage(z: Zthulhu, m: Message): Option[TransitResult] = {
+    preselect(m)
+      .orElse(unmatchedMessageType)
+      .lift(m)
+      .flatMap(_.lift(z))
+  }
+
+  protected def byState(z: Zthulhu, m: Message): Option[TransitResult] = {
+    stateAdmit
+      .lift(z)
+      .flatMap(_.lift(m))
+  }
+
+  protected def interrupt = {
     term.discrete
       .merge(idle.when(quit.discrete))
   }
 
-  private[this] def fsmProc(input: MProc, initial: BasicState): MProc = {
+  private[this] def fsmProc(input: MProc, initial: Zthulhu): MProc = {
     val in = internalMessageIn.dequeue.merge(input)
     interrupt
       .wye(in)(stream.wye.interrupt)
@@ -78,28 +91,37 @@ with cats.syntax.StreamingSyntax
 
   val debugStates = false
 
-  def run(input: MProc = halt, initial: BasicState = Pristine) = {
-    if (debugStates)
+  def run = runWith(halt, initialZ)
+
+  def runWithInput(input: MProc) = runWith(input, Zthulhu())
+
+  def runWithInitial(initial: Zthulhu) = runWith(halt, initial)
+
+  def runWith(input: MProc, initial: Zthulhu) = {
+    if (debugStates) {
       current.discrete
         .map(z ⇒ log.debug(z.toString))
         .infraFork("debug state printer")
-    fsmProc(input, initial)
-      .onComplete { running.setter(false).flatMap(_ ⇒ halt) }
+    }
+    sendP(MachineStarted).flatMap { _ ⇒
+      fsmProc(input, initial)
+        .onComplete { running.setter(false).flatMap(_ ⇒ halt) }
+    }
   }
 
-  def fork(input: MProc = halt, initial: BasicState = Pristine) = {
-    run(input, initial).infraFork(s"autonomous $this")
+  def fork(initial: Zthulhu) = {
+    runWithInitial(initial).infraFork(s"autonomous $this")
   }
 
   def sendP(msg: Message) = emit(msg).to(internalMessageIn.enqueue)
 
   def send(msg: Message) = {
-    sendAll(MNes(msg))
+    sendAll(Nes(msg))
   }
 
   def sendAll(msgs: MNes) = {
     internalMessageIn
-      .enqueueAll(msgs.toList) !? s"enqueue messages $msgs in $this"
+      .enqueueAll(msgs.toList) !? s"enqueue messages $msgs in $description"
   }
 
   // kill the state machine by
@@ -107,7 +129,6 @@ with cats.syntax.StreamingSyntax
   // 'interrupt', which listens asynchronously and terminates instantly
   def kill() = {
     term.set(true) !? "set signal term"
-    externalMessageIn.kill !? "kill external message queue"
     internalMessageIn.kill !? "kill internal message queue"
   }
 
@@ -123,8 +144,13 @@ with cats.syntax.StreamingSyntax
       .infraRunFor("wait for finished signal", 20 seconds)
   }
 
+  def waitForRunning(timeout: Duration = 20 seconds) = {
+    running.discrete.exists(a ⇒ a)
+      .infraRunFor(s"wait for $this to run", timeout)
+  }
+
   def waitIdle(timeout: Duration = 20 seconds) = {
-    log.trace(s"waiting for $this to idle")
+    log.trace(s"waiting for $this to idle ($waitingTasks)")
     idle.exists(a ⇒ a)
       .infraRunFor(s"wait for $this to idle", timeout)
   }
@@ -132,49 +158,58 @@ with cats.syntax.StreamingSyntax
   def finished = running.continuous.exists(!_)
 
   private[this] def size = {
-    externalMessageIn.size.discrete
-      .yipWith(internalMessageIn.size.discrete)(_ + _)
+    internalMessageIn.size.discrete
   }
 
   private[this] def waitingTasks = {
-    size.take(1).runLast.unsafePerformSyncAttempt | None | 0
+    size.headOr(0).infraValueShortOr(0)(s"waiting tasks in $description")
   }
 
   def description = s"$handle state"
 
+  override def toString = description
+
   def handle: String
 
-  override def toString = s"$description ($waitingTasks waiting)"
+  def info = s"$description ($waitingTasks waiting)"
 
   override val loggerName: Option[String] = Some(s"state.$handle")
 
   lazy val internalMessage: Admission = {
     case SetInitialState(s) ⇒ setInitialState(s)
+    case MachineStarted ⇒ setMachineRunning
+    case QuitMachine ⇒ quitMachine
   }
 
-  def setInitialState(s: BasicState): Transit = {
+  private[this] def setInitialState(s: BasicState): Transit = {
     case S(Pristine, d) ⇒ S(s, d)
   }
 
-  lazy val unmatchedMessage: Admission = {
-    case m if debugStates ⇒ {
-      case s ⇒
-        log.debug(s"unmatched message at $s: $m")
-        s
-    }
+  private[this] def setMachineRunning: Transit = {
+    case s ⇒
+      s << running.setter(true).effect("set running signal to true")
   }
 
-  def unmatchedState(m: Message): Transit = {
+  private[this] def quitMachine: Transit = {
+    case s ⇒
+      s << (quit.set(true) *> finished.run)
+  }
+
+  def unmatched(m: Message): Transit = {
     case s if debugStates ⇒
-      log.debug(s"unmatched state $s: $m")
+      log.debug(s"unmatched message at $s: $m")
       s
+  }
+
+  lazy val unmatchedMessageType: Admission = {
+    case m if debugStates ⇒ {
+      case s ⇒
+        log.debug(s"unmatched message type at $s: $m")
+        s
+    }
   }
 
   implicit def defaultPublishFilter[A <: Message] = new PublishFilter[A] {
     def allowed = false
   }
 }
-
-abstract class SimpleMachine
-(implicit val messageTopic: MessageTopic @@ To)
-extends Machine

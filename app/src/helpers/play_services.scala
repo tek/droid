@@ -41,7 +41,7 @@ import PlayServices._
 trait PlayServices[A <: WithContext]
 extends DroidMachine[A]
 {
-  fork(initial = Disconnected)
+  fork(initial = Zthulhu(state = Disconnected))
 
   class ConnectionCallbacks(owner: PlayServices[A])
   extends GoogleApiClient.OnConnectionFailedListener

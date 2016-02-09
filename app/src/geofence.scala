@@ -66,7 +66,7 @@ case class GeofenceInterface(apiClient: GoogleApiClient, intent: PendingIntent)
 
 case class GeofenceHandler(intent: PendingIntent)
 (implicit val context: Context)
-extends SolitaryAgent
+extends RootAgent
 {
   def handle = "geofence"
 

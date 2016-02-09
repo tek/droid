@@ -5,7 +5,7 @@ package state
 import cats.syntax.all._
 
 trait AppStateMachine
-extends SimpleMachine
+extends Machine
 
 object AppStateMachine
 {
@@ -25,7 +25,7 @@ import AppStateMachine._
 
 trait StateApplication
 extends Application
-with SolitaryAgent
+with RootAgent
 {
   self: android.app.Application ⇒
 
@@ -62,7 +62,7 @@ with SolitaryAgent
 
     abstract override def onCreate() {
       super.onCreate()
-      initMachines()
+      forkAgent()
       send(Create(Map(), None))
     }
 

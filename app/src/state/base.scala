@@ -12,7 +12,7 @@ extends Machine
 }
 
 abstract class SimpleDroidMachine
-(implicit val ctx: AndroidUiContext, val messageTopic: MessageTopic @@ To)
+(implicit val ctx: AndroidUiContext)
 extends DroidMachine[AndroidUiContext]
 
 trait ActivityDroidMachine

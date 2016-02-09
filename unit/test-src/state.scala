@@ -30,7 +30,7 @@ extends Message
 
 @Publish(Received0)
 trait State0
-extends SimpleMachine
+extends Machine
 {
   def handle = "state0"
 
@@ -43,7 +43,7 @@ extends SimpleMachine
 
 @Publish(Received1)
 trait State1
-extends SimpleMachine
+extends Machine
 {
   def handle = "state1"
 
@@ -64,7 +64,7 @@ extends SimpleMachine
 
 @Publish(Received2)
 trait State2
-extends SimpleMachine
+extends Machine
 {
   def handle = "state2"
 
@@ -87,7 +87,7 @@ with tryp.Matchers
   """
 
   def machine = {
-    val root = new Mediator
+    val root = new RootAgent
     {
       med ⇒
 
@@ -97,8 +97,6 @@ with tryp.Matchers
           lazy val state = new State1 {}
 
           override def machines = state %:: super.machines
-
-          val mediator = med
         }
 
         val ag2: Agent = new Agent {
@@ -107,8 +105,6 @@ with tryp.Matchers
           lazy val state = new State2 {}
 
           override def machines = state %:: super.machines
-
-          val mediator = med
         }
 
         def handle = "med"
