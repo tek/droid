@@ -22,7 +22,7 @@ extends DroidMachine[AndroidUiContext]
 
   override def description = s"state for show $handle"
 
-  override val loggerName = s"state.show.$handle".some
+  override def machinePrefix: List[String] = "show" :: super.machinePrefix
 
   def setupData(args: Map[String, String]) = {
     def errmsg(item: String) = {

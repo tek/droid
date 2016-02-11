@@ -94,4 +94,3 @@ extends MachineSpecBase
     state.runWithInitial(Zthulhu(state = S1))
   }
 }
-

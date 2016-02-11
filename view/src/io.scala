@@ -36,7 +36,7 @@ extends Logging
 with IOStrategy
 {
 
-  override val loggerName = Some("freeio")
+  override def loggerName = List("freeio")
 
   lazy val sig = async.signalOf[Maybe[A]](Maybe.Empty())
 

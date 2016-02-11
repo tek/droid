@@ -171,9 +171,15 @@ with cats.syntax.StreamingSyntax
 
   def handle: String
 
+  def machinePrefix: List[String] = List("mach")
+
+  def machineName: Unit Xor String = ().left
+
   def info = s"$description ($waitingTasks waiting)"
 
-  override val loggerName: Option[String] = Some(s"state.$handle")
+  override def loggerName = {
+    super.loggerName ::: machinePrefix ::: handle :: machineName.toList
+  }
 
   lazy val internalMessage: Admission = {
     case SetInitialState(s) ⇒ setInitialState(s)
