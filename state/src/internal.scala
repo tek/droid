@@ -78,7 +78,7 @@ extends BoundedCachedPool
   // those are transformed to Result instances, then joined with the
   // successful results, also on the W side.
   // the results are then disassembled into single Message instances.
-  def handleResult(effect: Process[Task, Result])(implicit log: Logger) = {
+  def handleResult(effect: Effect)(implicit log: Logger) = {
     effect
       .attempt(t ⇒ emit(LogFatal("performing effect", t).publish.fail))
       .mergeO

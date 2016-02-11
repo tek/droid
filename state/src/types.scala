@@ -124,6 +124,13 @@ extends ToOperationSyntax
         }
       }
     }
+
+  implicit def effectOperation =
+    new Operation[Effect] {
+      def result(eff: Effect) = {
+        FlatMapEffect(eff).internal.success
+      }
+  }
 }
 
 object Operation
@@ -225,6 +232,18 @@ extends StateEffectInstances0
 object StateEffect
 extends StateEffectInstances
 
+final class EffectOps(val self: Effect)
+extends AnyVal
+{
+  def fork(desc: String) = Fork(self, desc).internal.success
+}
+
+trait ToEffectOps
+extends Any
+{
+  implicit def ToEffectOps(eff: Effect) = new EffectOps(eff)
+}
+
 final class TaskEffectOps[A](val self: Task[A])
 extends AnyVal
 {
@@ -235,9 +254,18 @@ extends AnyVal
 
 final class ProcessEffectOps[A](val self: Process[Task, A])
 extends AnyVal
+with ToEffectOps
 {
   def effect(desc: String): Effect = {
     self map(a ⇒ EffectSuccessful(desc, a).internal.success)
+  }
+
+  def forkEffect(desc: String): Effect = {
+    effect(desc).fork(desc)
+  }
+
+  def chain[O: Operation](next: Process[Task, O]) = {
+    self map(_ ⇒ next: Effect)
   }
 }
 
@@ -253,7 +281,7 @@ trait MiscEffectOps
 
   def stateEffectProc[O](description: String)
   (effect: Process[Task, O]): Effect = {
-    effect map(a ⇒ EffectSuccessful(description, a).publish.success)
+    effect map(a ⇒ EffectSuccessful(description, a).internal.success)
   }
 
   def stateEffectTask[O](description: String)(effect: Task[O]) = {

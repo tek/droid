@@ -120,21 +120,24 @@ with view.ExtViews
 
   override def machines = viewMachine %:: super.machines
 
-  def safeView = {
-    val l = (viewMachine.layout.discrete |> Process.await1)
-      .runLast
-      .unsafePerformSyncAttemptFor(10 seconds) match {
-      case \/-(Some(l)) ⇒ l
-      case \/-(None) ⇒
-        log.error("no layout produced by ViewMachine")
-        dummyLayout
-      case -\/(error) ⇒
-        log.error(s"error creating layout in ViewMachine: $error")
-        dummyLayout
+  def safeViewIO: Process[Task, view.FreeIO[_ <: View]] = {
+    viewMachine.layout.discrete
+      .headOr(dummyLayout)
+  }
+
+  def safeViewP: Process[Task, View] = {
+    viewMachine.layout.discrete
+      .headOr(dummyLayout)
+      .map(_.perform())
+      .sideEffect { v ⇒
+        log.debug(s"setting view for $title:\n${v.viewTree.drawTree}")
       }
-    l.perform() unsafeTap { v ⇒
-      log.debug(s"setting view for fragment $title:\n${v.viewTree.drawTree}")
-    }
+  }
+
+  def safeView = {
+    safeViewP
+      .infraRunLastFor("obtain layout", 10 seconds)
+      .getOrElse(dummyLayout.perform())
   }
 
   def dummyLayout = w[TextView] >>=
@@ -150,15 +153,9 @@ with ViewAgent
 
   def title = "AppStateActivityAgent"
 
-  def start() = {
-    forkAgent()
-    send(Create(Map(), None))
-    send(ViewMachine.SetLayout)
-  }
+  def handle = "app_state_agent"
 
-  def setView() = {
-    iota.IO {
-      a.activity.setContentView(safeView)
-    } performMain()
+  def startP = {
+    publish(Create(Map(), None))
   }
 }

@@ -8,7 +8,7 @@ import android.view.Gravity
 
 import macroid.FullDsl._
 
-import cats.syntax.apply._
+import cats.syntax.cartesian._
 
 trait DrawerBase
 extends HasToolbar

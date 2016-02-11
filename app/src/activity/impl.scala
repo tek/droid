@@ -65,15 +65,22 @@ with ExtViews
 
 class StateAppViewActivity
 extends Activity
+with Logging
+with StateStrategy
 {
   def stateApp = getApplication match {
-    case a: StateApplication ⇒ Some(a)
-    case _ ⇒ None
+    case a: StateApplication ⇒ Maybe.just(a)
+    case _ ⇒ Maybe.empty
   }
 
   override def onCreate(state: Bundle) = {
     super.onCreate(state)
-    stateApp foreach(_.setActivity(this))
-    Thread.sleep(2000)
+    implicit val ctx: Context = this
+    stateApp.map(
+      _.setActivity(this)
+        .map(_.reify.flatMap(iota.kestrel(setContentView(_))))
+        .sideEffect(_.performMain())
+        .infraRunFor("obtain main view", 30 seconds)
+    )
   }
 }

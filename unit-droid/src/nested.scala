@@ -35,6 +35,8 @@ extends TestViewActivity
   }
 
   lazy val nestedAgent = new Agent {
+    def handle = "nested_agent"
+
     lazy val nested2 = new SimpleViewMachine {
       lazy val tv = w[TextView] >>= tk
 
@@ -48,7 +50,7 @@ extends TestViewActivity
       }
     }
 
-    override def machines = nested2 :: Nil
+    override def machines = nested2 %:: Streaming.Empty()
   }
 
   override def sub = Streaming.cons(nestedAgent, super.sub)

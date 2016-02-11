@@ -22,7 +22,7 @@ extends Logging
   implicit def freeIoBuilder(implicit log: Logger = log) =
     new IOBuilder[FreeIO]
     {
-      override def reify[A](fa: FreeIO[A])(c: Context): iota.IO[A] = {
+      override def reify[A](fa: FreeIO[A])(implicit c: Context): iota.IO[A] = {
         super.reify(fa)(c) >>= FreeIO.attachSignal(fa.sig)
       }
       def pure[A](f: IOCtor[A]) = FreeIO(f)

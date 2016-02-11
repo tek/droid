@@ -49,7 +49,6 @@ with TrypDroidSpec
   def stopActivity() {
     activity.finish()
     idleSync()
-    // setActivity(null)
   }
 
   def idleSync() {

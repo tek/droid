@@ -9,7 +9,7 @@ import org.robolectric.annotation.Config
 
 @Config(application = classOf[StateApplication])
 class AppStateSpec
-extends ActivitySpec[StateAppViewActivity]
+extends ActivitySpec[UnitActivity1]
 {
   def is = s2"""
   run $run
@@ -18,13 +18,11 @@ extends ActivitySpec[StateAppViewActivity]
   def before = {
   }
 
-  def activityClass = classOf[StateAppViewActivity]
+  def activityClass = classOf[UnitActivity1]
 
   sequential
 
   def run = {
-    Thread.sleep(1000)
-    activity.showViewTree()
-    1 === 1
+    activity willContain view[EditText]
   }
 }

@@ -43,13 +43,16 @@ object AndroidEffect
     }
   }
 
-  def reify[A](fa: F[A])(ctx: Context): IO[A] = {
+  def reify[A](fa: F[A])(implicit ctx: Context): IO[A] = {
     ctor(fa)(ctx)
   }
 
-  @op("perform")
   def perform[A](fa: F[A])()(implicit ctx: Context): A = {
-    reify(fa)(ctx).perform()
+    reify(fa).perform()
+  }
+
+  def performMain[A](fa: F[A])()(implicit ctx: Context): Future[A] = {
+    reify(fa).performMain()
   }
 
   def lift[A, B](f: Context ⇒ iota.IO[B]) = pure(f)
@@ -85,7 +88,7 @@ object reifySub
 extends Poly1
 {
   implicit def caseIOBuilder[A <: View, F[_]](implicit b: IOBuilder[F]) =
-    at[F[A]](fa ⇒ b.reify(fa) _)
+    at[F[A]](fa ⇒ (ctx: Context) ⇒ b.reify(fa)(ctx))
 }
 
 case class LayoutBuilder[A, F[_]](layout: Context ⇒ List[IOV] ⇒ IO[A])

@@ -21,6 +21,7 @@ with Exports
 
 trait Exports
 extends ToTaskOps
+with ToInfraTaskOps
 with ToProcessOps
 with AndroidTypes
 {

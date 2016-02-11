@@ -27,9 +27,16 @@ extends ToTaskOps
       .take(1)
   }
 
-  def value = self.runLast.map(_.toMaybe)
+  def value: Task[Maybe[O]] = self.runLast.map(_.toMaybe)
 
   def valueOr(alt: ⇒ O) = self.runLast.map(_ | alt)
+
+  def sideEffect(f: O ⇒ Unit): Process[Task, O] = {
+    self.map { o ⇒
+      f(o)
+      o
+    }
+  }
 }
 
 trait ToProcessOps0
@@ -38,17 +45,19 @@ trait ToProcessOps0
     new TaskProcessOps(v)
 }
 
-final class TaskProcessEffectOps[O](self: Process[Task, O])
+final class TaskProcessLoggerOps[O](self: Process[Task, O])
 (implicit log: Logger)
 extends ToTaskOps
+with ToInfraTaskOps
 with ToProcessOps0
 {
   def infraFork(desc: String)(implicit x: ExecutorService) = {
     self.run.infraFork(desc)
   }
 
-  def infraRunFor(desc: String, timeout: Duration) = {
-    self.run.infraRunFor(desc, timeout)
+  def infraRunFor(desc: String, timeout: Duration)
+  (implicit ex: ExecutorService) = {
+    self.run.infraRunFor(desc, timeout)(ex)
   }
 
   def infraRunShort(desc: String)(implicit timeout: Duration = 5 seconds) = {
@@ -68,11 +77,13 @@ with ToProcessOps0
     self.runLog.infraFork(desc)
   }
 
-  def infraRunLogFor(desc: String, timeout: Duration) = {
+  def infraRunLogFor(desc: String, timeout: Duration)
+  (implicit ex: ExecutorService) = {
     self.runLog.infraRunFor(desc, timeout)
   }
 
-  def infraRunLastFor(desc: String, timeout: Duration) = {
+  def infraRunLastFor(desc: String, timeout: Duration)
+  (implicit ex: ExecutorService) = {
     self.runLast.infraRunFor(desc, timeout).toOption.flatten
   }
 
@@ -130,9 +141,9 @@ extends AnyVal
 trait ToProcessOps
 extends ToProcessOps0
 {
-  implicit def ToTaskProcessEffectOps[A](v: Process[Task, A])
+  implicit def ToTaskProcessLoggerOps[A](v: Process[Task, A])
   (implicit log: Logger) =
-    new TaskProcessEffectOps(v)
+    new TaskProcessLoggerOps(v)
 
   implicit def ToWriterOps[F[_], W, O](v: Writer[F, W, O]) = new WriterOps(v)
 

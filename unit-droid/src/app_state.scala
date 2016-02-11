@@ -3,6 +3,7 @@ package droid
 package unit
 
 import android.widget._
+import android.view._
 
 import state._
 
@@ -15,20 +16,17 @@ class AppStateActivityAgent(implicit a: AndroidActivityUiContext,
   res: Resources)
 extends droid.state.AppStateActivityAgent
 {
-  implicit val activity = a.activity
-
-  def title = "AppStateActivityAgent"
-
   lazy val viewMachine =
     new AppStateSpecMachine {
-      lazy val layoutIO = l[FrameLayout](w[TextView] :: HNil)
+      lazy val layoutIO = l[FrameLayout](w[EditText] :: HNil)
     }
+}
 
-    override def machines = viewMachine :: super.machines
-
-    def setView() = {
-      iota.IO {
-        a.activity.setContentView(safeView)
-      } performMain()
-    }
+class UnitActivity1
+extends StateAppViewActivity
+{
+  override def onCreate(state: Bundle) {
+    super.onCreate(state)
+    requestWindowFeature(Window.FEATURE_NO_TITLE)
+  }
 }

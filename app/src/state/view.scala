@@ -42,25 +42,22 @@ with ExtViews
 
   def handle = "view"
 
+  override protected def initialZ = S(Initialized, Layout(layoutIO))
+
+  override protected def initialMessages = Process.emit(SetLayout)
+
   lazy val layout: async.mutable.Signal[FreeIO[_ <: View]] =
     async.signalUnset[FreeIO[_ <: View]]
 
   def layoutIO: FreeIO[_ <: View]
 
   def admit: Admission = {
-    case Create(_, _) ⇒ create
     case SetLayout ⇒ setLayout
-  }
-
-  val create: Transit = {
-    case S(Pristine, _) ⇒
-      val data = Layout(layoutIO)
-      S(Initialized, data) << SetLayout
   }
 
   val setLayout: Transit = {
     case s @ S(_, Layout(l)) ⇒
-      s << stateEffectTask("set layout signal")(layout.set(l))
+      s << layout.setter(l).effect("set layout signal")
   }
 }
 

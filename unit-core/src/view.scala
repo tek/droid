@@ -53,6 +53,16 @@ abstract class ViewChecker[A <: View]
   def check(a: A): (Boolean, String, String)
 }
 
+class TypedViewMatcher[A <: View: ClassTag]
+extends ViewChecker[A]
+{
+  def post(a: A) = a
+
+  def check(a: A) = {
+    (true, s"contains ${className[A]}", "")
+  }
+}
+
 class RecyclerViewMatcher(count: Int)
 extends ViewChecker[RecyclerView]
 {
@@ -75,6 +85,8 @@ extends SpecificationLike
   def nonEmptyRecycler(count: Int) = new RecyclerViewMatcher(count)
 
   def emptyRecycler = new RecyclerViewMatcher(0)
+
+  def view[A <: View: ClassTag] = new TypedViewMatcher[A]
 
   implicit def anyToContainsViewExpectable[A: RootView](a: ⇒ A) =
     new ContainsViewExpectable[A](a)

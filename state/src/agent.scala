@@ -50,18 +50,22 @@ extends AnyVal
   def publish = topic.publish
 }
 
-object Agent
+object AgentStateData
 {
   case class AddSub(subs: Nes[Agent])
+  extends Message
+
+  case object SubAdded
   extends Message
 
   case class AgentData(sub: List[Agent])
   extends Data
 }
-import Agent._
+import AgentStateData._
 
 trait To
 
+@Publish(SubAdded)
 trait Agent
 extends Machine
 {
@@ -83,9 +87,17 @@ extends Machine
 
   val ! = send _
 
+  protected def publishToP(to: TMT, msgs: MNes) = {
+    emitAll(msgs.toList).to(to.publish)
+  }
+
   protected def publishTo(to: TMT, dest: String, msgs: MNes) = {
-    emitAll(msgs.toList).to(to.publish) !?
+    publishToP(to, msgs) !?
       s"enqueue messages $msgs to $dest in $this"
+  }
+
+  def publish(head: Message, tail: Message*) = {
+    publishToP(publishDownIn, Nes(head, tail: _*))
   }
 
   def publishAll(msgs: MNes) = {
@@ -94,6 +106,10 @@ extends Machine
 
   def publishOne(msg: Message) = {
     publishAll(Nes(msg))
+  }
+
+  def publishLocal(msgs: MNes) = {
+    publishToP(publishLocalIn, msgs)
   }
 
   def publishLocalAll(msgs: MNes) = {
@@ -108,13 +124,15 @@ extends Machine
     machines foldMap(_.runWithInput(in))
 
   def agentMain(in: MProc): MProc = {
-    val down = publishDownIn.subscribe.merge(in)
-    val local = down.merge(publishLocalIn.subscribe)
+    val down = publishDownIn.subscribe
+      .merge(in)
+    val local = publishLocalIn.subscribe
+      .merge(down)
     val mainstream =
       machinesMessageOut(local)
         .merge(fixedSubAgents(down))
         .merge(dynamicSubAgents(down))
-        .merge(run)
+        .merge(runWithInput(down))
     interrupt.wye(mainstream)(stream.wye.interrupt)
   }
 
@@ -139,7 +157,7 @@ extends Machine
    * use 0.
    * 2. Initiate the sub agent adding procedure by sending AddSub
    * 3. Wait for the adding procedure to finish for at most @timeout:
-   *  a) Create a process that sleeps for @timeout, then emits false 
+   *  a) Create a process that sleeps for @timeout, then emits false
    *  b) Create a process that compares the count obtained in 1. with the
    *  current sub agent count
    *  c) Create a process that emits true when process b) becomes true
@@ -161,14 +179,20 @@ extends Machine
 
   def admit: Admission = {
     case AddSub(subs) ⇒ addSub(subs)
+    case SubAdded ⇒ {
+      case s ⇒
+        log.debug("sub agent added")
+        s
+    }
   }
 
   private[this] def addSub(add: Nes[Agent]): Transit = {
     case S(s, AgentData(sub)) ⇒
-      log.debug(s"Adding sub agents $add")
+      log.debug(s"adding sub agents $add")
       S(s, AgentData(sub ::: add.toList)) <<
         emitAll(add.toList).to(dynamicSubAgentsIn.enqueue)
-          .effect(s"enqueue sub agents in $description")
+          .effect(s"enqueue sub agents in $description") <<
+        SubAdded
   }
 
   def subAgentCountP = {
@@ -212,6 +236,7 @@ extends Agent
 
   def rootAgent = {
     agentMain(halt)
+      .sideEffect(m ⇒ log.debug(s"publishing $m in $this"))
       .to(publishDownIn.publish)
   }
 

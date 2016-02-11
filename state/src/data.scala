@@ -67,6 +67,13 @@ extends InternalMessage
 case object QuitMachine
 extends InternalMessage
 
+case class FlatMapEffect(eff: Effect)
+extends InternalMessage
+
+case class Fork(eff: Effect, message: String)
+extends InternalMessage
+with Loggable
+
 case class LogError(description: String, msg: String)
 extends Loggable
 {

@@ -55,36 +55,47 @@ final class TaskOps[A](task: Task[A])
   def runDefault() = {
     Task.fork(task)(SyncPool.executor).unsafePerformSyncAttempt
   }
+
+  def fork(f: (Throwable \/ A) ⇒ Unit)(implicit x: ExecutorService) = {
+    Task.fork(task)(x).unsafePerformAsync(f)
+  }
+}
+
+trait ToTaskOps
+{
+  implicit def ToTaskOps[A](task: Task[A]) =
+    new TaskOps(task)
 }
 
 final class InfraTaskOps[A](task: Task[A])(implicit log: Logger)
+extends ToTaskOps
 {
   def infraRun(desc: String) = {
      implicit val e = SyncPool.executor
      TaskOps.infraResult(desc)(Task.fork(task)(e).unsafePerformSyncAttempt)
   }
 
-  def infraRunFor(desc: String, timeout: Duration) = {
-     implicit val ex = TimedPool.executor
+  def infraRunFor(desc: String, timeout: Duration)
+  (implicit ex: ExecutorService) = {
+     // implicit val ex = TimedPool.executor
      val res = Task.fork(task)(ex)
        .unsafePerformSyncAttemptFor(timeout)
      TaskOps.infraResult(desc)(res)
   }
 
   def infraRunShort(desc: String)(implicit timeout: Duration = 5 seconds) = {
-    implicit val exec = ShortPool.executor
-    infraRunFor(desc, timeout)
+    implicit val ex = ShortPool.executor
+    infraRunFor(desc, timeout)(ex)
   }
 
   def !?(desc: String)(implicit timeout: Duration = 5 seconds) =
     infraRunShort(desc)
 
-  def fork(f: (Throwable \/ A) ⇒ Unit)(implicit x: ExecutorService) = {
-    Task.fork(task)(x).unsafePerformAsync(f)
-  }
-
   def infraFork(desc: String)(implicit x: ExecutorService) = {
-    fork(TaskOps.infraResult[A](desc) _)(x)
+    val f: Throwable \/ A ⇒ Unit =
+      TaskOps.infraResult[A](desc)(_)
+        .map(res ⇒ log.debug(s"forked process '$desc' completed with $res"))
+    task.fork(f)(x)
   }
 
   def infraForkShort(desc: String)
@@ -95,11 +106,8 @@ final class InfraTaskOps[A](task: Task[A])(implicit log: Logger)
   def peek() = task.unsafePerformSyncAttemptFor(5 seconds)
 }
 
-trait ToTaskOps
+trait ToInfraTaskOps
 {
-  implicit def ToTaskOps[A](task: Task[A]) =
-    new TaskOps(task)
-
   implicit def ToInfraTaskOps[A](task: Task[A])(implicit log: Logger) =
     new InfraTaskOps(task)
 }

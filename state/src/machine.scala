@@ -2,20 +2,21 @@ package tryp
 package droid
 package state
 
-
 import shapeless._
 import shapeless.tag.@@
 
-import scalaz.syntax.apply._
 import scalaz.syntax.std.option._
 
 import scalaz.stream
 import stream.async
 import Process._
+import scalaz.syntax.apply._
+import scalaz.syntax.show._
 
 import cats._
 import cats.data._
 import cats.syntax.all._
+import cats.std.all._
 
 import Zthulhu._
 
@@ -35,9 +36,13 @@ with cats.syntax.StreamingSyntax
 
   def stateAdmit: StateAdmission = PartialFunction.empty
 
-  protected val initialZ = Zthulhu()
+  protected def initialZ = Zthulhu()
+
+  protected def initialMessages: MProc = halt
 
   private[this] val internalMessageIn = async.unboundedQueue[Message]
+
+  private[this] val forkedEffectResults = async.unboundedQueue[Parcel]
 
   private[this] val running = async.signalOf(false)
 
@@ -80,11 +85,14 @@ with cats.syntax.StreamingSyntax
   }
 
   private[this] def fsmProc(input: MProc, initial: Zthulhu): MProc = {
-    val in = internalMessageIn.dequeue.merge(input)
+    val in = Nel(internalMessageIn.dequeue, input, initialMessages)
+      .reduce
+      .sideEffect(m ⇒ log.debug(s"processing ${m.show}"))
     interrupt
       .wye(in)(stream.wye.interrupt)
       .fsm(initial, uncurriedTransitions)
       .forkW(current.pipeIn)
+      .merge(forkedEffectResults.dequeue)
       .separateMap(_.publish)(_.message)
       .forkW(internalMessageIn.enqueue)
   }
@@ -93,7 +101,7 @@ with cats.syntax.StreamingSyntax
 
   def run = runWith(halt, initialZ)
 
-  def runWithInput(input: MProc) = runWith(input, Zthulhu())
+  def runWithInput(input: MProc) = runWith(input, initialZ)
 
   def runWithInitial(initial: Zthulhu) = runWith(halt, initial)
 
@@ -103,10 +111,8 @@ with cats.syntax.StreamingSyntax
         .map(z ⇒ log.debug(z.toString))
         .infraFork("debug state printer")
     }
-    sendP(MachineStarted).flatMap { _ ⇒
-      fsmProc(input, initial)
-        .onComplete { running.setter(false).flatMap(_ ⇒ halt) }
-    }
+    fsmProc(emit(MachineStarted) ++ input, initial)
+      .onComplete { running.setter(false).flatMap(_ ⇒ halt) }
   }
 
   def fork(initial: Zthulhu) = {
@@ -185,6 +191,8 @@ with cats.syntax.StreamingSyntax
     case SetInitialState(s) ⇒ setInitialState(s)
     case MachineStarted ⇒ setMachineRunning
     case QuitMachine ⇒ quitMachine
+    case FlatMapEffect(eff) ⇒ flatMapEffect(eff)
+    case Fork(eff, desc) ⇒ forkEffect(eff, desc)
   }
 
   private[this] def setInitialState(s: BasicState): Transit = {
@@ -199,6 +207,20 @@ with cats.syntax.StreamingSyntax
   private[this] def quitMachine: Transit = {
     case s ⇒
       s << (quit.set(true) *> finished.run)
+  }
+
+  private[this] def flatMapEffect(eff: Effect): Transit = {
+    case s ⇒
+      s << eff
+  }
+
+  def forkEffect(eff: Effect, desc: String): Transit = {
+    case s ⇒
+      Zthulhu.handleResult(eff)
+        .stripW
+        .to(forkedEffectResults.enqueue)
+        .infraFork(s"fork effect $desc")
+      s
   }
 
   def unmatched(m: Message): Transit = {
