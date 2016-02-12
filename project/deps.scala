@@ -20,7 +20,8 @@ extends tryp.AndroidDeps
     "macro-console" → macroConsole
   )
 
-  override def resolvers = super.resolvers ++ Map(
+  override def resolvers = Map(
+    "unit-core" → List(Resolver.bintrayRepo("tek", "releases")),
     "app" → List(Resolver.jcenterRepo)
   )
 
@@ -36,7 +37,8 @@ extends tryp.AndroidDeps
   )
 
   def state = ids(
-    pulsar("slick")
+    pulsar("slick"),
+    "tryp" %% "pulsar-jvm" % "+" % "test"
   )
 
   def view = ids(

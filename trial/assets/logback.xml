@@ -1,0 +1,25 @@
+<configuration>
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>target/log/droid-trial.log</file>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %-5level %logger{35} | %msg%n</pattern>
+    </encoder>
+  </appender>
+  <appender
+    name="LOGCAT"
+    class="ch.qos.logback.classic.android.LogcatAppender"
+    >
+    <tagEncoder>
+      <pattern>tryp</pattern>
+    </tagEncoder>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %-5level %logger{35} | %msg%n</pattern>
+    </encoder>
+  </appender>
+  <logger name="slick" level="warn" />
+  <logger name="tryp.state" level="debug" />
+  <root>
+    <appender-ref ref="FILE" />
+    <appender-ref ref="LOGCAT" />
+  </root>
+</configuration>

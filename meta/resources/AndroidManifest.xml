@@ -6,7 +6,7 @@
   android:versionName='@string/version_name'
   >
   <application
-    android:name='.Application'
+    android:name='${appClass}'
     android:label='${appName}'
     >
     <activity

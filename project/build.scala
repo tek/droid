@@ -10,7 +10,7 @@ import TrypBuildKeys._
 import Templates.autoImport._
 
 object DroidBuild
-extends tryp.AarsBuild("droid", deps = DroidDeps)
+extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 {
   override def defaultBuilder = { name: String ⇒
     super.defaultBuilder(name)
@@ -29,7 +29,9 @@ extends tryp.AarsBuild("droid", deps = DroidDeps)
 
   lazy val view = "view" / "iota wrappers" <<< core
 
-  lazy val state = "state" / "state machine" <<< view
+  lazy val state = ("state" / "state machine" <<< view)
+    .logback("tag" → "tryp")
+    .settingsV(logbackTemplate := metaRes.value / "unit" / "logback.xml")
 
   lazy val app = "app".transitive / "android commons" <<< state <<< view
 
@@ -46,6 +48,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps)
     .robotest
     .manifest(
       "appName" → "tryp",
+      "appClass" → ".Application",
       "minSdk" → "21",
       "targetSdk" → "21",
       "versionCode" → "1",
@@ -66,11 +69,28 @@ extends tryp.AarsBuild("droid", deps = DroidDeps)
 
   lazy val integration = "integration" <<< test
 
+  lazy val trial = adp("trial")
+    .debug
+    .manifest(
+      "appName" → "tryp",
+      "appClass" → "tryp.droid.trial.TApplication",
+      "minSdk" → "21",
+      "targetSdk" → "21",
+      "activityClass" → ".MainActivity",
+      "versionCode" → "1",
+      "extra" → ""
+    )
+    .settingsV(
+      aarModule := "trial",
+      manifestTokens += ("package" → androidPackage.value),
+      dexMaxHeap := "2048m"
+    )
+    .logback("tag" → "tryp") <<< app
+
   override def consoleImports = super.consoleImports + """
   import concurrent._
   import stream._
   import Process._
-  import scala.concurrent.duration._
   import shapeless._
   import tryp._
   """
