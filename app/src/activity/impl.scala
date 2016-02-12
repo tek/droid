@@ -73,6 +73,8 @@ with StateStrategy
     case _ ⇒ Maybe.empty
   }
 
+  protected def mainViewTimeout = 5 seconds
+
   override def onCreate(state: Bundle) = {
     super.onCreate(state)
     implicit val ctx: Context = this
@@ -80,7 +82,7 @@ with StateStrategy
       _.setActivity(this)
         .map(_.reify.flatMap(iota.kestrel(setContentView(_))))
         .sideEffect(_.performMain())
-        .infraRunFor("obtain main view", 30 seconds)
+        .infraRunFor("obtain main view", mainViewTimeout)
     )
   }
 }

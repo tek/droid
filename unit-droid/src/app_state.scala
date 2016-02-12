@@ -25,6 +25,8 @@ extends droid.state.AppStateActivityAgent
 class UnitActivity1
 extends StateAppViewActivity
 {
+  override protected def mainViewTimeout = 30 seconds
+
   override def onCreate(state: Bundle) {
     super.onCreate(state)
     requestWindowFeature(Window.FEATURE_NO_TITLE)
