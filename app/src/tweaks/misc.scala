@@ -11,7 +11,7 @@ import android.content.res.ColorStateList
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.widget.{RecyclerView,LinearLayoutManager,CardView}
 import android.support.v7.widget.StaggeredGridLayoutManager
-import android.support.v7.widget.{Toolbar ⇒ AToolbar}
+import android.support.v7.widget.{Toolbar => AToolbar}
 import android.support.v7.app.ActionBarDrawerToggle
 import android.text.{TextWatcher,TextUtils,Editable}
 import android.graphics.drawable.Drawable
@@ -35,9 +35,9 @@ import com.melnykov.fab.FloatingActionButton
 trait TweakHelpers
 extends Logging
 {
-  def nopT[A <: View] = Tweak[A](_ ⇒ ())
+  def nopT[A <: View] = Tweak[A](_ => ())
 
-  def errorT[A <: View, B](err: B) = Tweak[A] { t ⇒
+  def errorT[A <: View, B](err: B) = Tweak[A] { t =>
     log.error(s"error during Tweak preparation: $t")
   }
 
@@ -54,7 +54,7 @@ extends TweakHelpers
   case class Text(implicit c: Context, res: Resources,
     ns: ResourceNamespace = GlobalResourceNamespace)
   {
-    def ellipsize(lines: Int = 1) = Tweak[TextView] { v ⇒
+    def ellipsize(lines: Int = 1) = Tweak[TextView] { v =>
       if (lines > 0) v.setMaxLines(lines)
       v.setEllipsize(TextUtils.TruncateAt.END)
     }
@@ -63,7 +63,7 @@ extends TweakHelpers
       Tweak[TrypTextView](_.setShadow(color, radius, x, y))
 
     def size(name: String) =
-      res.i(name).map(a ⇒ Tweak[TextView](_.setTextSize(a)))
+      res.i(name).map(a => Tweak[TextView](_.setTextSize(a)))
 
     def literal(value: String) =
       Tweak[TextView](_.setText(value))
@@ -71,7 +71,7 @@ extends TweakHelpers
     def clear = literal("")
 
     def content(name: String) = {
-      res.s(name).map(a ⇒ literal(a))
+      res.s(name).map(a => literal(a))
     }
 
     def large = macroid.contrib.TextTweaks.large
@@ -86,10 +86,10 @@ extends TweakHelpers
 
     def minWidth(name: String) = {
       res.d(name, Some("min_width"))
-        .map(width ⇒ Tweak[TextView](_.setMinWidth(width.toInt)))
+        .map(width => Tweak[TextView](_.setMinWidth(width.toInt)))
     }
 
-    def color(name: String) = Tweak[TextView] { a ⇒
+    def color(name: String) = Tweak[TextView] { a =>
       res.c(name, Some("color")).foreach(a.setTextColor)
     }
   }
@@ -103,7 +103,7 @@ extends Text
 with ResourcesAccess
 {
   def imageRes(name: String)(implicit c: Context) = {
-    res.drawableId(name).map(a ⇒ Tweak[ImageView](_.setImageResource(a)))
+    res.drawableId(name).map(a => Tweak[ImageView](_.setImageResource(a)))
   }
 
   def imageResC(name: String)(implicit c: Context) = {
@@ -135,13 +135,13 @@ with ResourcesAccess
     implicit c: Context, ns: ResourceNamespace = GlobalResourceNamespace
   ) = {
     res.c(name, Some("bg"))
-      .map(col ⇒ Tweak[View](_.setBackgroundColor(col.toInt)))
+      .map(col => Tweak[View](_.setBackgroundColor(col.toInt)))
       .toOption
   }
 
   def cardBackgroundColor(color: String)(implicit c: Context) =
     res.c(color, Some("bg"))
-      .map(a ⇒ Tweak[CardView](_.setCardBackgroundColor(a)))
+      .map(a => Tweak[CardView](_.setCardBackgroundColor(a)))
 
   def checked(state: Boolean) = {
     Tweak[CheckBox](_.setChecked(state))
@@ -155,7 +155,7 @@ with ResourcesAccess
     Tweak[EditText](_.addTextChangedListener(listener))
   }
 
-  def watchText(cb: ⇒ Unit) = {
+  def watchText(cb: => Unit) = {
     val listener = new TextWatcher {
       def onTextChanged(cs: CharSequence, start: Int, count: Int, after: Int) {
         cb
@@ -172,15 +172,15 @@ with ResourcesAccess
   type canSetColor = View { def setColor(i: Int) }
 
   def color(name: String)(implicit c: Context) = 
-    res.c(name).map(a ⇒ Tweak[canSetColor](_.setColor(a)))
+    res.c(name).map(a => Tweak[canSetColor](_.setColor(a)))
 
   object Fab
   extends ResourcesAccess
   {
     def colors(normal: String, pressed: String)(implicit c: Context) =
-      Tweak[FloatingActionButton] { fab ⇒
-        res.c(normal).foreach(a ⇒ fab.setColorNormal(a))
-        res.c(pressed).foreach(a ⇒ fab.setColorPressed(a))
+      Tweak[FloatingActionButton] { fab =>
+        res.c(normal).foreach(a => fab.setColorNormal(a))
+        res.c(pressed).foreach(a => fab.setColorPressed(a))
       }
   }
 
@@ -199,7 +199,7 @@ with ResourcesAccess
 
   def indeterminate = Tweak[ProgressBar](_.setIndeterminate(true))
 
-  def transitionName(name: String) = Tweak[View] { v ⇒
+  def transitionName(name: String) = Tweak[View] { v =>
     TransitionManager.setTransitionName(v, name)
   }
 
@@ -213,17 +213,17 @@ with ResourcesAccess
 
   def parallaxScroll(y: Int) = Tweak[ParallaxHeader] { _.set(y) }
 
-  def longPress(dispatch: ⇒ Future[Any])
+  def longPress(dispatch: => Future[Any])
   (implicit a: Activity, log: Logger, ec: EC) = {
     val gl = new GestureDetector.SimpleOnGestureListener {
       override def onLongPress(e: MotionEvent) {
-        dispatch onFailure { case t ⇒
+        dispatch onFailure { case t =>
           log.error(t)("longPress")
         }
       }
     }
     val g = new GestureDetector(a, gl)
-    FuncOn.touch { (v: View, e: MotionEvent) ⇒ Ui(g.onTouchEvent(e)) }
+    FuncOn.touch { (v: View, e: MotionEvent) => Ui(g.onTouchEvent(e)) }
   }
 
   def imageCornerRadius(dist: Float) = Tweak[RoundedImageView] {
@@ -236,7 +236,7 @@ with ResourcesAccess
 
   def imageBorderColor(name: String)(implicit c: Context, ns: ResourceNamespace
     = GlobalResourceNamespace) =
-    Tweak[RoundedImageView] { a ⇒
+    Tweak[RoundedImageView] { a =>
       res.c(name, Some("border_color")).foreach(a.setBorderColor)
   }
 
@@ -288,7 +288,7 @@ with TweakHelpers
     _.getAdapter.notifyDataSetChanged
   }
 
-  def onScroll(callback: (ViewGroup, Int) ⇒ Unit)(implicit c: Context) = {
+  def onScroll(callback: (ViewGroup, Int) => Unit)(implicit c: Context) = {
     t {
       val listener = new RecyclerView.OnScrollListener {
         var height = 0
@@ -304,22 +304,22 @@ with TweakHelpers
   }
 
   def onScrollActor(actor: ActorSelection)(implicit c: Context) =
-    onScroll((view, y) ⇒ actor ! Messages.Scrolled(view, y))
+    onScroll((view, y) => actor ! Messages.Scrolled(view, y))
 
   def reverseLayout(implicit c: Context) = t {
     _.getLayoutManager match {
-      case m: LinearLayoutManager ⇒ m.setReverseLayout(true)
-      case m ⇒ Log.e(s"Used reverseLayout on incompatible type ${m.className}")
+      case m: LinearLayoutManager => m.setReverseLayout(true)
+      case m => Log.e(s"Used reverseLayout on incompatible type ${m.className}")
     }
   }
 
-  def scrollTop(implicit c: Context) = t { rv ⇒
+  def scrollTop(implicit c: Context) = t { rv =>
     rv.scrollToPosition(rv.getAdapter.getItemCount - 1)
   }
 
   def parallaxScroller(actor: ActorSelection)(implicit c: Context) = {
     val pad = res.dimen("header_height")
-      .map(a ⇒ padding(top = a.toInt))
+      .map(a => padding(top = a.toInt))
       .getOrElse(nopT)
     onScrollActor(actor) + Layout.noClipToPadding + pad
   }
@@ -340,13 +340,13 @@ extends ResourcesAccess
 
   def titleColor(name: String)(implicit c: Context) = {
     res.c(name)
-      .map { col ⇒
+      .map { col =>
         Tweak[AToolbar](_.setTitleTextColor(col))
       }
       .toOption
   }
 
-  def navButtonListener(callback: ⇒ Unit) = Tweak[AToolbar] {
+  def navButtonListener(callback: => Unit) = Tweak[AToolbar] {
     _.setNavigationOnClickListener(new android.view.View.OnClickListener {
       def onClick(v: View) = callback
     })
@@ -358,7 +358,7 @@ extends ResourcesAccess
 {
   type Toggle = ActionBarDrawerToggle
 
-  private def t(f: (DrawerLayout) ⇒ Unit) = Tweak[DrawerLayout](f)
+  private def t(f: (DrawerLayout) => Unit) = Tweak[DrawerLayout](f)
 
   def listener(l: DrawerLayout.DrawerListener) = t { _.setDrawerListener(l) }
 
@@ -377,8 +377,8 @@ case class InvTransformer(f: PartialFunction[View, Ui[Any]]) {
   def apply(w: View): Unit = {
     f.lift.apply(w).foreach(_.get)
     w.getParent match {
-      case v: View ⇒ apply(v)
-      case _ ⇒
+      case v: View => apply(v)
+      case _ =>
     }
   }
 }

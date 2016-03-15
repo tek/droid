@@ -71,7 +71,7 @@ extends ToOperationSyntax
   implicit def validationNelOperation[A: ParcelOperation] =
     new Operation[ValidationNel[String, A]] {
       def result(v: ValidationNel[String, A]): Result = {
-        v.bimap(_.map(e ⇒ LogError("from nel", e).publish), _.toParcel)
+        v.bimap(_.map(e => LogError("from nel", e).publish), _.toParcel)
       }
     }
 
@@ -87,7 +87,7 @@ extends ToOperationSyntax
 
   implicit def unitUiOperation = new ParcelOperation[Ui[Unit]] {
     def parcel(u: Ui[Unit]) = {
-      u map(_ ⇒ UiSuccessful("unit Ui").internal.success) toParcel
+      u map(_ => UiSuccessful("unit Ui").internal.success) toParcel
     }
   }
 
@@ -109,8 +109,8 @@ extends ToOperationSyntax
   implicit def tryOperation[A: Operation] = new Operation[Try[A]] {
     def result(t: Try[A]) = {
       t match {
-        case Success(a) ⇒ a.toResult
-        case Failure(e) ⇒ LogFatal("evaluating try", e).publish.fail
+        case Success(a) => a.toResult
+        case Failure(e) => LogFatal("evaluating try", e).publish.fail
       }
     }
   }
@@ -119,8 +119,8 @@ extends ToOperationSyntax
     new Operation[A \/ B] {
       def result(a: A \/ B) = {
         a match {
-          case -\/(e) ⇒ e.toParcel.fail
-          case \/-(r) ⇒ r.toResult
+          case -\/(e) => e.toParcel.fail
+          case \/-(r) => r.toResult
         }
       }
     }
@@ -248,7 +248,7 @@ final class TaskEffectOps[A](val self: Task[A])
 extends AnyVal
 {
   def effect(desc: String): Effect = {
-    self map(a ⇒ EffectSuccessful(desc, a).internal.success)
+    self map(a => EffectSuccessful(desc, a).internal.success)
   }
 }
 
@@ -257,7 +257,7 @@ extends AnyVal
 with ToEffectOps
 {
   def effect(desc: String): Effect = {
-    self map(a ⇒ EffectSuccessful(desc, a).internal.success)
+    self map(a => EffectSuccessful(desc, a).internal.success)
   }
 
   def forkEffect(desc: String): Effect = {
@@ -265,7 +265,7 @@ with ToEffectOps
   }
 
   def chain[O: Operation](next: Process[Task, O]) = {
-    self map(_ ⇒ next: Effect)
+    self map(_ => next: Effect)
   }
 }
 
@@ -273,22 +273,22 @@ trait MiscEffectOps
 {
   implicit lazy val uiMonad = new Monad[Ui]
   {
-    def point[A](a: ⇒ A): Ui[A] = Ui(a)
+    def point[A](a: => A): Ui[A] = Ui(a)
 
-    def bind[A, B](fa: Ui[A])(f: A ⇒ Ui[B]): Ui[B] =
+    def bind[A, B](fa: Ui[A])(f: A => Ui[B]): Ui[B] =
       fa flatMap f
   }
 
   def stateEffectProc[O](description: String)
   (effect: Process[Task, O]): Effect = {
-    effect map(a ⇒ EffectSuccessful(description, a).internal.success)
+    effect map(a => EffectSuccessful(description, a).internal.success)
   }
 
   def stateEffectTask[O](description: String)(effect: Task[O]) = {
     stateEffectProc(description)(Process.eval(effect))
   }
 
-  def stateEffect(description: String)(effect: ⇒ Unit) = {
+  def stateEffect(description: String)(effect: => Unit) = {
     stateEffectTask(description)(Task(effect))
   }
 

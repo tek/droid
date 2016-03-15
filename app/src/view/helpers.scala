@@ -9,7 +9,7 @@ import scalaz._
 import Scalaz._
 
 import android.widget.{AdapterView,TextView}
-import android.content.res.{Resources ⇒ AResources,Configuration}
+import android.content.res.{Resources => AResources,Configuration}
 import android.content.DialogInterface
 import android.view.inputmethod.InputMethodManager
 import android.app.{AlertDialog,DialogFragment,Dialog,PendingIntent}
@@ -36,18 +36,18 @@ with HasComm
 
   implicit def context: Context = activity
 
-  def uiThread(callback: ⇒ Unit) {
+  def uiThread(callback: => Unit) {
     val runner = new Runnable {
       def run = callback
     }
     Option(activity) foreach { _.runOnUiThread(runner) }
   }
 
-  def ui(callback: ⇒ Unit) = {
+  def ui(callback: => Unit) = {
     Ui(callback).run
   }
 
-  def uiBlock(callback: ⇒ Unit) {
+  def uiBlock(callback: => Unit) {
     Await.ready(ui(callback), Duration.Inf)
   }
 
@@ -56,8 +56,8 @@ with HasComm
       val id = res.layoutId(name)
         .getOrElse(sys.error(s"invalid layout name: $name"))
       activity.getLayoutInflater.inflate(id, null) match {
-        case view: A ⇒ view
-        case view ⇒ {
+        case view: A => view
+        case view => {
           throw new ClassCastException(
             s"Inflated layout ${name} resulted in wrong type " +
             s"'${view.className}'")
@@ -68,8 +68,8 @@ with HasComm
 
   implicit lazy val comm = {
     activity match {
-      case a: Akkativity ⇒ AkkativityCommunicator(a)
-      case _ ⇒ DummyCommunicator()
+      case a: Akkativity => AkkativityCommunicator(a)
+      case _ => DummyCommunicator()
     }
   }
 }
@@ -80,7 +80,7 @@ extends HasActivity
 trait Click
 extends ViewBasic
 {
-  def itemClickListen(view: AdapterView[_], callback: (View) ⇒ Unit) {
+  def itemClickListen(view: AdapterView[_], callback: (View) => Unit) {
     view.setOnItemClickListener(new AdapterView.OnItemClickListener {
       def onItemClick(parent: AdapterView[_], view: View, pos: Int, id: Long) {
         callback(view)
@@ -88,7 +88,7 @@ extends ViewBasic
     })
   }
 
-  def clickListen(view: View, callback: (View) ⇒ Unit) {
+  def clickListen(view: View, callback: (View) => Unit) {
     view.setOnClickListener(new android.view.View.OnClickListener {
       def onClick(view: View) = callback(view)
     })
@@ -129,7 +129,7 @@ extends ViewBasic
   }
 }
 
-class DialogListener(callback: () ⇒ Unit = () ⇒ ())
+class DialogListener(callback: () => Unit = () => ())
 extends DialogInterface.OnClickListener
 {
   def onClick(dialog: DialogInterface, id: Int) {
@@ -137,7 +137,7 @@ extends DialogInterface.OnClickListener
   }
 }
 
-class ConfirmDialog(message: String, callback: () ⇒ Unit)
+class ConfirmDialog(message: String, callback: () => Unit)
 extends DialogFragment
 with Basic
 {
@@ -146,10 +146,10 @@ with Basic
   override def onCreateDialog(state: Bundle): Dialog = {
     val builder = new AlertDialog.Builder(context)
     builder.setMessage(message)
-    res.string("yes").foreach { text ⇒
+    res.string("yes").foreach { text =>
       builder.setPositiveButton(text, new DialogListener(callback))
     }
-    res.string("no").foreach { text ⇒
+    res.string("no").foreach { text =>
       builder.setNegativeButton(text, new DialogListener)
     }
     builder.create
@@ -159,7 +159,7 @@ with Basic
 trait Confirm
 extends HasActivity
 {
-  def confirm(message: String, callback: () ⇒ Unit) {
+  def confirm(message: String, callback: () => Unit) {
     val dialog = new ConfirmDialog(message, callback)
     dialog.show(activity.getFragmentManager, "confirm")
   }
@@ -169,7 +169,7 @@ trait Snackbars
 extends HasActivity
 {
   import tryp.droid.Macroid._
-  import macroid.FullDsl.{toast ⇒ mToast,_}
+  import macroid.FullDsl.{toast => mToast,_}
 
   private implicit val ns = PrefixResourceNamespace("snackbar")
 
@@ -192,7 +192,7 @@ extends HasActivity
     mkToast(resName).foreach(_.run)
   }
 
-  def mkToast(resName: String) = res.s(resName).map(a ⇒ mToast(a) <~ fry)
+  def mkToast(resName: String) = res.s(resName).map(a => mToast(a) <~ fry)
 }
 
 trait Alarm

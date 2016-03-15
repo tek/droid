@@ -19,13 +19,13 @@ trait AndroidEffect[F[_, _]]
 object AndroidEffect
 {
   implicit lazy val func1AndroidEffect = new AndroidEffect[Function1] {
-    def curry[A, B](f: A ⇒ IO[B]) = c ⇒ f
+    def curry[A, B](f: A => IO[B]) = c => f
   }
 
   implicit lazy val ctransAndroidEffect =
-    new AndroidEffect[λ[(a, b) ⇒ Context ⇒ a ⇒ b]]
+    new AndroidEffect[λ[(a, b) => Context => a => b]]
     {
-      def curry[A, B](f: Context ⇒ A ⇒ IO[B]): IOCTrans[A, B] = f
+      def curry[A, B](f: Context => A => IO[B]): IOCTrans[A, B] = f
     }
 }
 
@@ -37,7 +37,7 @@ object AndroidEffect
   (f: C[D, IO[B]])
   (implicit eff: AndroidEffect[C], lis: scalaz.Liskov[A, D]): F[B] =
   {
-    lift { ctx ⇒
+    lift { ctx =>
       val curried = lis.apply _ andThen eff.curry(f)(ctx)
       ctor(fa)(ctx) >>= curried
     }
@@ -55,7 +55,7 @@ object AndroidEffect
     reify(fa).performMain()
   }
 
-  def lift[A, B](f: Context ⇒ iota.IO[B]) = pure(f)
+  def lift[A, B](f: Context => iota.IO[B]) = pure(f)
 
   def pure[A](f: IOCtor[A]): F[A]
 
@@ -88,17 +88,17 @@ object reifySub
 extends Poly1
 {
   implicit def caseIOBuilder[A <: View, F[_]](implicit b: IOBuilder[F]) =
-    at[F[A]](fa ⇒ (ctx: Context) ⇒ b.reify(fa)(ctx))
+    at[F[A]](fa => (ctx: Context) => b.reify(fa)(ctx))
 }
 
-case class LayoutBuilder[A, F[_]](layout: Context ⇒ List[IOV] ⇒ IO[A])
+case class LayoutBuilder[A, F[_]](layout: Context => List[IOV] => IO[A])
 (implicit builder: IOBuilder[F])
 {
   def apply[In <: HList, Out <: HList](vs: In)
   (implicit
     m: Mapper.Aux[reifySub.type, In, Out],
-    tta: ToTraversable.Aux[Out, List, Context ⇒ IOV]): F[A] = {
-      val f = { ctx: Context ⇒
+    tta: ToTraversable.Aux[Out, List, Context => IOV]): F[A] = {
+      val f = { ctx: Context =>
         val reifies = vs.map(reifySub).toList.map(_(ctx))
         layout(ctx)(reifies)
       }
@@ -139,7 +139,7 @@ extends AndroidMacros
       q"""
       iota.c[$aType] {
         val b = tryp.droid.view.LayoutBuilder[$aType, $fType](
-          ctx ⇒ sub ⇒ iota.l[$aType](sub: _*)(ctx))
+          ctx => sub => iota.l[$aType](sub: _*)(ctx))
         b($inner)
       }
       """

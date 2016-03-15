@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 
 import concurrent.duration._
 
-import com.squareup.okhttp.{Request ⇒ OkRequest, _}
+import com.squareup.okhttp.{Request => OkRequest, _}
 
 import scalaz._, Scalaz._
 
@@ -20,7 +20,7 @@ import SyncResult._
 
 object Backend
 {
-  lazy val client = (new OkHttpClient) tap { c ⇒
+  lazy val client = (new OkHttpClient) tap { c =>
       c.setConnectTimeout(10, TimeUnit.SECONDS)
       c.setWriteTimeout(10, TimeUnit.SECONDS)
       c.setReadTimeout(30, TimeUnit.SECONDS)
@@ -54,8 +54,8 @@ class Backend(implicit prefs: Settings, res: Resources)
   val mediaTypeJson = MediaType.parse("application/json")
 
   def request(req: Request)
-  (method: OkRequest.Builder ⇒ OkRequest.Builder) = {
-    authenticated { () ⇒ uncheckedRequest(req)(method) }
+  (method: OkRequest.Builder => OkRequest.Builder) = {
+    authenticated { () => uncheckedRequest(req)(method) }
   }
 
   def urlBuilder = (new HttpUrl.Builder)
@@ -64,14 +64,14 @@ class Backend(implicit prefs: Settings, res: Resources)
       .port(port)
 
   def uncheckedRequest(req: Request)
-  (method: OkRequest.Builder ⇒ OkRequest.Builder) = {
+  (method: OkRequest.Builder => OkRequest.Builder) = {
     val token = this.token
     val basic = urlBuilder.addPathSegment("user")
     val withParams = req.params.foldLeft(basic) {
-      case (builder, (k, v)) ⇒ builder addQueryParameter(k, v)
+      case (builder, (k, v)) => builder addQueryParameter(k, v)
     }
     val withPath = req.segments.foldLeft(withParams) {
-      (builder, seg) ⇒ builder addPathSegment(seg)
+      (builder, seg) => builder addPathSegment(seg)
     }
     val builder = (new OkRequest.Builder)
       .url(withPath.build)
@@ -96,11 +96,11 @@ class Backend(implicit prefs: Settings, res: Resources)
       .post(body)
       .build
     call(request) match {
-      case \/-(result) ⇒
+      case \/-(result) =>
         Log.i(s"Backend authentication successful: $result")
         token.update(result)
         result.successNel[String]
-      case -\/(err) ⇒
+      case -\/(err) =>
         Log.e(s"Backend authentication failed: $err")
         err.toString.failureNel[String]
     }
@@ -108,14 +108,14 @@ class Backend(implicit prefs: Settings, res: Resources)
 
   def ping() = {
     uncheckedRequest(Request.at("ping"))(identity) match {
-      case \/-(_) ⇒ true
-      case -\/(error) ⇒
+      case \/-(_) => true
+      case -\/(error) =>
         Log.e(s"Not authenticated at backend: $error (token: ${token()})")
         false
     }
   }
 
-  def authenticated[A](callback: () ⇒ A) = {
+  def authenticated[A](callback: () => A) = {
     if (!ping()) throw AuthError("backend auth failed")
     else callback()
   }
@@ -126,9 +126,9 @@ extends Backend
 with RestClient
 {
   def jsonRequest(req: Request)
-  (method: OkRequest.Builder ⇒ RequestBody ⇒ OkRequest.Builder) = {
+  (method: OkRequest.Builder => RequestBody => OkRequest.Builder) = {
     val body = RequestBody.create(mediaTypeJson, req.body getOrElse("{}"))
-    request(req)(r ⇒ method(r)(body))
+    request(req)(r => method(r)(body))
   }
 
   def post(req: Request) =
@@ -152,13 +152,13 @@ with HasComm
   (message: Any, messages: Any*): ResultsAction = {
     callback
       .recoverWith {
-        case AuthError(error) ⇒
+        case AuthError(error) =>
           val errmsg = s"not authed with backend: $error"
           val next = DBIO.from(comm.core ? message)
           messages.toList match {
-            case head :: tail ⇒
+            case head :: tail =>
               tryBackend(next andThen(callback))(head, tail)
-            case Nil ⇒
+            case Nil =>
               next andThen("fatal".syncFail(errmsg, false).wrapDbioSeq)
           }
       }

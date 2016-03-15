@@ -8,9 +8,9 @@ extends TrypActor[LogFragment]
   import TrypActor._
 
   def receive = receiveUi andThen {
-    case Messages.Log(_) ⇒
+    case Messages.Log(_) =>
       withUi { _.updateLog() }
-    case a ⇒
+    case a =>
       unhandled(a)
   }
 }

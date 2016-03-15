@@ -43,8 +43,8 @@ extends TestViewActivity
       lazy val layoutIO = l[FrameLayout](tv :: HNil)
 
       override def admit: Admission = {
-        case SetText(text) ⇒ {
-          case z ⇒
+        case SetText(text) => {
+          case z =>
             z << (tv.v >>= iota.text[TextView](text))
         }
       }

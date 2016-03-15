@@ -12,15 +12,15 @@ case class ServiceProxy[A <: ServiceBase: ClassTag](
   consumer: ServiceConsumer, name: String
 )
 {
-  def map[B](f: A ⇒ B) = {
+  def map[B](f: A => B) = {
     (connected option get) map(f)
   }
 
-  def flatMap[B](f: A ⇒ Option[B]) = {
+  def flatMap[B](f: A => Option[B]) = {
     (connected option get) flatMap(f)
   }
 
-  def foreach(f: A ⇒ Unit) = {
+  def foreach(f: A => Unit) = {
     (connected option get) foreach(f)
   }
 
@@ -44,11 +44,11 @@ trait ServiceConsumer extends CallbackMixin {
     override def onServiceConnected(className: ComponentName, binder:
       IBinder) {
         binder match {
-          case b: ServiceBase#TrypBinder ⇒ {
+          case b: ServiceBase#TrypBinder => {
             boundServices(name) = b.getService
             consumer.onConnectService(name)
           }
-          case _  ⇒ {
+          case _  => {
             Log.e("Received invalid binder in onServiceConnected!")
           }
         }
@@ -74,8 +74,8 @@ trait ServiceConsumer extends CallbackMixin {
 
   def service[A <: ServiceBase: ClassTag](name: String = "service"): A = {
     boundServices(name) match {
-      case s: A ⇒ s
-      case s ⇒ {
+      case s: A => s
+      case s => {
         throw new ClassCastException(
           s"Wrong service class for ${name}: ${s.getClass.getSimpleName}" +
             s" (wanted ${implicitly[ClassTag[A]].className})"

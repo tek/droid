@@ -16,11 +16,11 @@ extends ToTaskOps
 {
   def headOption = self |> process1.awaitOption
 
-  def headOr[O2 >: O](alt: ⇒ O2) =
+  def headOr[O2 >: O](alt: => O2) =
       headOption
       .map(_ getOrElse alt)
 
-  def timedHeadOr[O2 >: O](timeout: FiniteDuration, alt: ⇒ O2) = {
+  def timedHeadOr[O2 >: O](timeout: FiniteDuration, alt: => O2) = {
     implicit val sched = Strategy.DefaultTimeoutScheduler
     (time.sleep(timeout) ++ emit(alt))
       .merge(self)
@@ -29,10 +29,10 @@ extends ToTaskOps
 
   def value: Task[Maybe[O]] = self.runLast.map(_.toMaybe)
 
-  def valueOr(alt: ⇒ O) = self.runLast.map(_ | alt)
+  def valueOr(alt: => O) = self.runLast.map(_ | alt)
 
-  def sideEffect(f: O ⇒ Unit): Process[Task, O] = {
-    self.map { o ⇒
+  def sideEffect(f: O => Unit): Process[Task, O] = {
+    self.map { o =>
       f(o)
       o
     }
@@ -64,7 +64,7 @@ with ToProcessOps0
     self.run.infraRunShort(desc)
   }
 
-  def infraValueShortOr(alt: ⇒ O)(desc: String)
+  def infraValueShortOr(alt: => O)(desc: String)
   (implicit timeout: Duration = 5 seconds) =
   {
     self.valueOr(alt).infraRunShort(desc) | alt
@@ -90,7 +90,7 @@ with ToProcessOps0
   def peek()(implicit timeout: Duration = 5 seconds) = self.runLog.peek()
 
   def logged(desc: String): Process[Task, O] = {
-    self observe sink.lift(m ⇒ Task(log.trace(s"$desc delivering $m")))
+    self observe sink.lift(m => Task(log.trace(s"$desc delivering $m")))
   }
 }
 
@@ -104,23 +104,23 @@ extends AnyVal
   def merge[W2 >: W](implicit ev: O <~< W2): Process[F, W2] = self map(_.merge)
 
   def mergeO[W2 >: W](implicit ev: O <~< W2): Writer[F, Nothing, W2] =
-    self map(a ⇒ \/-(a.merge))
+    self map(a => \/-(a.merge))
 
   def mergeW[W2 >: W](implicit ev: O <~< W2): Writer[F, W2, Nothing] =
-    self map(a ⇒ -\/(a.merge))
+    self map(a => -\/(a.merge))
 }
 
 final class ProcessOps[F[_], O](val self: Process[F, O])
 extends AnyVal
 {
-  def separate(f: O ⇒ Boolean): Writer[F, O, O] = {
-    self map { a ⇒
+  def separate(f: O => Boolean): Writer[F, O, O] = {
+    self map { a =>
       if (f(a)) \/-(a)
       else -\/(a)
     }
   }
 
-  def separateMap[O2](f: O ⇒ Boolean)(g: O ⇒ O2): Writer[F, O2, O2] = {
+  def separateMap[O2](f: O => Boolean)(g: O => O2): Writer[F, O2, O2] = {
     separate(f) map(_.bimap(g, g))
   }
 }

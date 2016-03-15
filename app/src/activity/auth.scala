@@ -51,51 +51,51 @@ extends DroidMachine[AuthStateUiI]
   extends Data
 
   val admit: Admission = {
-    case Resume ⇒ resume
-    case Reset ⇒ reset
-    case Fetch ⇒ fetch
-    case AuthorizeToken(account, token) ⇒ auth(account, token)
-    case BackendAuthorized(token) ⇒ storeToken(token)
-    case RequestPermission(intent) ⇒ requestPermission(intent)
-    case FetchTokenFailed(error) ⇒ fetchTokenFailed(error)
+    case Resume => resume
+    case Reset => reset
+    case Fetch => fetch
+    case AuthorizeToken(account, token) => auth(account, token)
+    case BackendAuthorized(token) => storeToken(token)
+    case RequestPermission(intent) => requestPermission(intent)
+    case FetchTokenFailed(error) => fetchTokenFailed(error)
   }
 
   def resume: Transit = {
-    case S(Pristine, data) ⇒
+    case S(Pristine, data) =>
       if (backendTokenValid) S(Authed, BackendData(backendToken()))
       else S(Unauthed, data).<<(autoFetchAuthToken().option(Fetch))(StateEffect.optionStateEffect[Fetch.type](Operation.messageOperation[Fetch.type]))
   }
 
   def reset: Transit = {
-    case _ ⇒
+    case _ =>
       S(Unauthed, NoData) <<
         stateEffect("clear backend auth token") { backendToken() = "" }
   }
 
   def fetch: Transit = {
-    case s @ S(Unauthed, data) ⇒
+    case s @ S(Unauthed, data) =>
       S(Fetching, data) << fetchToken
   }
 
   def auth(account: String, plusToken: String): Transit = {
-    case S(Fetching, data) ⇒
+    case S(Fetching, data) =>
       S(Authing, data) << authorizePlusToken(account, plusToken) <<
         clearPlusToken(plusToken)
   }
 
   def storeToken(token: String): Transit = {
-    case S(_, data) ⇒
+    case S(_, data) =>
       S(Authed, BackendData(token)) << Toast("backend_auth_success") <<
         stateEffect("store backend auth token") { backendToken() = token }
   }
 
   def fetchTokenFailed(error: String): Transit = {
-    case S(_, _) ⇒
+    case S(_, _) =>
       S(Unauthed, NoData) << LogError("requesting plus token", error).toResult
   }
 
   def requestPermission(intent: Intent): Transit = {
-    case s @ S(Unauthed, data) ⇒
+    case s @ S(Unauthed, data) =>
       s << stateEffect("initiating plus permission request") {
         ctx.startActivity(intent, Plus.RC_TOKEN_FETCH)
     }
@@ -110,14 +110,14 @@ extends DroidMachine[AuthStateUiI]
 
   def tokenFromEmail(email: String): Result = {
     Try(plusToken(email)) match {
-      case Success(tkn) ⇒
+      case Success(tkn) =>
         AuthorizeToken(email, tkn).toResult
-      case Failure(t: UserRecoverableAuthException) ⇒
+      case Failure(t: UserRecoverableAuthException) =>
         NonEmptyList(
           FetchTokenFailed("insufficient permissions").toParcel,
           RequestPermission(t.getIntent).toParcel
         ).failure[Parcel]
-      case Failure(t) ⇒
+      case Failure(t) =>
         NonEmptyList(
           LogFatal("requesting plus token", t).toParcel,
           FetchTokenFailed("exception thrown").toParcel
@@ -164,13 +164,16 @@ with AppPreferences
 with ActivityAgent
 with ResourcesAccess
 with HasPlus
-{ act: Akkativity ⇒
+{ act: Akkativity =>
 
   lazy val authMachine = new AuthState {
     def backend = new Backend()(settings, res)
   }
 
   override def machines = authMachine %:: super.machines
+
+  // TODO in activity agent
+  // publishLocalOne(ActivityResult(requestCode))
 
   override def onActivityResult(requestCode: Int, responseCode: Int,
     intent: Intent) = {
@@ -183,6 +186,6 @@ with HasPlus
   }
 
   def obtainToken() = {
-    sendAll(Nes(Reset, Fetch))
+    publishLocalAll(Nes(Reset, Fetch))
   }
 }

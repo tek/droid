@@ -17,9 +17,9 @@ with ActorLogging
   import TrypActor._
 
   def receive = receiveUi andThen {
-    case Messages.MapReady(map) ⇒
+    case Messages.MapReady(map) =>
       ui(_.setMap(map))
-    case a ⇒
+    case a =>
       unhandled(a)
   }
 }

@@ -11,7 +11,7 @@ class Notification(
 {
   var text = ""
 
-  lazy val builder = new NotificationCompat.Builder(context) tap { bldr ⇒
+  lazy val builder = new NotificationCompat.Builder(context) tap { bldr =>
     val sb = TaskStackBuilder.create(context)
     sb.addParentStack(target)
     sb.addNextIntent(intent)

@@ -8,8 +8,8 @@ trait BundleExt
   implicit class BundleOps(bundle: Bundle) {
     def toMap = {
       bundle.keySet
-        .map { key ⇒ key → Option(bundle.getString(key)) }
-        .collect { case (key, Some(value)) ⇒ key → value }
+        .map { key => key -> Option(bundle.getString(key)) }
+        .collect { case (key, Some(value)) => key -> value }
         .toMap
     }
   }

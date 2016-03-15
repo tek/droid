@@ -19,12 +19,14 @@ extends view.IotaCombinators[TextView]
   def size[A <: TextView](points: Int): Kestrel[A] = {
     kestrel(_.setTextSize(TypedValue.COMPLEX_UNIT_SP, points))
   }
+
   def medium[A <: TextView]: Kestrel[A] = size(18)
+
   def large[A <: TextView]: Kestrel[A] = size(22)
 
   def minWidth[A <: TextView](name: String)(implicit res: Resources) = {
     res.d(name, Some("min_width"))
-      .map(w ⇒ kestrel((_: A).setMinWidth(w.toInt)))
+      .map(w => kestrel((_: A).setMinWidth(w.toInt)))
       .getOrElse(nopK)
   }
 
@@ -32,7 +34,7 @@ extends view.IotaCombinators[TextView]
     kestrel((_: EditText).addTextChangedListener(listener))
   }
 
-  def watchText(cb: ⇒ Unit) = {
+  def watchText(cb: => Unit) = {
     val listener = new TextWatcher {
       def onTextChanged(cs: CharSequence, start: Int, count: Int, after: Int) {
         cb

@@ -17,7 +17,7 @@ extends TrypActivityActor[SpecActivity]
 with ActorLogging
 {
   def receive = receiveUi andThen {
-    case a ⇒
+    case a =>
       receiveBasic(a)
   }
 }
@@ -34,7 +34,7 @@ with UnitActivity
     Navigation.simple(NavigationTarget("test", frag))
   }
 
-  def frag: () ⇒ Fragment = ???
+  def frag: () => Fragment = ???
 }
 
 abstract class TestViewActivity

@@ -1,12 +1,12 @@
 package tryp.droid
 
-import scalaz.{Plus ⇒ _, _}, Scalaz._, concurrent._, stream._
+import scalaz.{Plus => _, _}, Scalaz._, concurrent._, stream._
 
 import shapeless.tag.@@
 
 import com.google.android.gms
 import gms.common.ConnectionResult
-import gms.common.{api ⇒ gapi}
+import gms.common.{api => gapi}
 import gms.plus
 import gapi.GoogleApiClient
 
@@ -30,19 +30,19 @@ extends PlayServices[StartActivity]
   override def admit = plusAdmit orElse basicAdmit
 
   val plusAdmit: Admission = {
-    case ConnectionFailed(result) ⇒ failed(result)
-    case SignOut ⇒ signOut
+    case ConnectionFailed(result) => failed(result)
+    case SignOut => signOut
   }
 
   def failed(result: ConnectionResult): Transit = {
-    case s ⇒
+    case s =>
       s << stateEffect("start plus sign-in activity") {
         ctx.resolveResult(result, Plus.RC_SIGN_IN)
       }
   }
 
   def signOut: Transit = {
-    case s ⇒
+    case s =>
       s << stateEffect("sign out of gplus") {
         apiClient foreach(plus.Plus.AccountApi.clearDefaultAccount)
     } << Disconnect

@@ -5,7 +5,7 @@ package unit
 import slick.TestFileDbInfo
 
 trait UnitApplication
-{ self: Application ⇒
+{ self: Application =>
 
   override def setupEnv() = {
     setEnv(tryp.meta.UnitTestEnv)

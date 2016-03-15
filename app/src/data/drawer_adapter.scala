@@ -48,16 +48,16 @@ with Macroid
 
   override def getItemViewType(position: Int) = {
     items(position) match {
-      case t: NavigationTarget ⇒ 0
-      case h: GPlusHeader ⇒ 1
-      case b: DrawerButton ⇒ 2
+      case t: NavigationTarget => 0
+      case h: GPlusHeader => 1
+      case b: DrawerButton => 2
     }
   }
 
   def onCreateViewHolder(parent: ViewGroup, viewType: Int) = {
     viewType match {
-      case 1 ⇒ gPlusHolder
-      case _ ⇒ navHolder
+      case 1 => gPlusHolder
+      case _ => navHolder
     }
   }
 
@@ -91,9 +91,9 @@ with Macroid
 
   def onBindViewHolder(holder: DrawerViewHolder, position: Int) {
     items(position) match {
-      case t: NavigationTarget ⇒ bindNavTarget(holder, t)
-      case h: GPlusHeader ⇒ bindGPlusHeader(holder, h)
-      case b: DrawerButton ⇒ bindButton(holder, b)
+      case t: NavigationTarget => bindNavTarget(holder, t)
+      case h: GPlusHeader => bindGPlusHeader(holder, h)
+      case b: DrawerButton => bindButton(holder, b)
     }
   }
 
@@ -110,31 +110,31 @@ with Macroid
 
   def bindGPlusHeader(holder: DrawerViewHolder, header: GPlusHeader) = {
     holder match {
-      case GPlusHeaderHolder(view, name, email, avatar) ⇒
+      case GPlusHeaderHolder(view, name, email, avatar) =>
         plus.oneAccount
-          .map { account ⇒
+          .map { account =>
             val cover = account.coverDrawable.infraRun("set plus cover").join
-              .map { cover ⇒
+              .map { cover =>
                 cover.setColorFilter(Color.argb(80, 0, 0, 0),
                   PorterDuff.Mode.DARKEN)
                 view <~ bg(cover)
               }
             val photo = account.photoDrawable.infraRun("set plus photo").join
-              .map { photo ⇒
+              .map { photo =>
                 avatar <~ imageDrawableC(photo)
               }
             val actions = List(
-              name <~ account.name.map { n ⇒ txt.literal(n) },
-              email <~ account.email.map { n ⇒ txt.literal(n) }
+              name <~ account.name.map { n => txt.literal(n) },
+              email <~ account.email.map { n => txt.literal(n) }
             ) ++ cover.toList ++ photo.toList
             Ui.sequence(actions: _*).run
           }
           .runLog
           .unsafePerformAsync {
-            case -\/(err) ⇒ log.error(err)("bindGPlusHeader")
-            case _ ⇒
+            case -\/(err) => log.error(err)("bindGPlusHeader")
+            case _ =>
           }
-      case _ ⇒
+      case _ =>
         sys.error(s"Invalid view holder for GPlusHeader: ${holder.className}")
     }
   }

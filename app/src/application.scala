@@ -7,7 +7,7 @@ import android.content.pm.ApplicationInfo
 import tryp.slick.DroidDbInfo
 
 trait ApplicationI
-{ self: android.app.Application ⇒
+{ self: android.app.Application =>
 
   def onCreate()
   protected def attachBaseContext(base: Context)
@@ -16,7 +16,7 @@ trait ApplicationI
 trait TrypApplication
 extends HasContext
 with ApplicationI
-{ self: android.app.Application ⇒
+{ self: android.app.Application =>
 
   val useDb = true
 
@@ -51,7 +51,7 @@ with ApplicationI
 trait Application
 extends TrypApplication
 {
-  self: android.app.Application ⇒
+  self: android.app.Application =>
 
   def context = getApplicationContext
 

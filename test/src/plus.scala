@@ -5,7 +5,7 @@ package test
 import scalaz._, Scalaz._, concurrent._
 
 import com.google.android.gms
-import gms.common.{api ⇒ gapi}
+import gms.common.{api => gapi}
 import gapi.GoogleApiClient
 
 import droid.state._
@@ -27,7 +27,7 @@ trait MockPlusInterface
 extends PlusInterface
 {
   override def connect: Transit = {
-    case s ⇒ s << ConnectionEstablished
+    case s => s << ConnectionEstablished
   }
 
   override def apiConnected(data: Bundle) {
@@ -39,7 +39,7 @@ extends PlusInterface
 trait AuthStateMock
 extends ActivityAgent
 with AuthIntegration
-{ act: TrypActivity ⇒
+{ act: TrypActivity =>
 
   override implicit lazy val plus: PlusInterface = new MockPlusInterface {}
 

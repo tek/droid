@@ -31,14 +31,14 @@ class Theme(implicit internal: ThemeInternal)
     styledAttribute(name, _.getColorStateList(0))
   }
 
-  def styledAttribute[T](name: String, getter: TypedArray ⇒ T) = {
+  def styledAttribute[T](name: String, getter: TypedArray => T) = {
     styledAttributes(List(name), getter)
   }
 
   def styledAttributes[T]
-  (names: List[String], getter: TypedArray ⇒ T): Throwable Xor T = {
-    internal.styledAttrs(names) flatMap { attrs ⇒
-      Xor.catchNonFatal(getter(attrs)) tap(_ ⇒ attrs.recycle)
+  (names: List[String], getter: TypedArray => T): Throwable Xor T = {
+    internal.styledAttrs(names) flatMap { attrs =>
+      Xor.catchNonFatal(getter(attrs)) tap(_ => attrs.recycle)
     }
   }
 }
@@ -77,8 +77,8 @@ extends ThemeInternal
 {
   def styledAttrs(names: List[String]): Throwable Xor TypedArray = {
     names.traverseU(attrId)
-    .leftMap(a ⇒ new Throwable(a))
-    .flatMap { attrIds ⇒
+    .leftMap(a => new Throwable(a))
+    .flatMap { attrIds =>
       Xor.catchNonFatal {
         context.obtainStyledAttributes(attrIds.toArray)
       }

@@ -7,7 +7,7 @@ import java.util.{Timer, TimerTask}
 
 import ScalazGlobals._
 
-case class Ticker(seconds: Rx[Double])(callback: ⇒ Unit)
+case class Ticker(seconds: Rx[Double])(callback: => Unit)
 {
   val millis = Rx { (((seconds() <= 0) ? 1.0 | seconds()) * 1000).toInt }
   val timer = new Timer
@@ -22,13 +22,13 @@ case class Ticker(seconds: Rx[Double])(callback: ⇒ Unit)
       task = Some(t)
     }
     catch {
-      case ex: IllegalStateException ⇒
+      case ex: IllegalStateException =>
         Log.e(s"Couldn't start Ticker: ${ex}")
     }
   }
 
   def stop() {
-    task foreach { t ⇒
+    task foreach { t =>
       t.cancel
       task = None
     }

@@ -10,9 +10,9 @@ extends TrypActor[DrawerFragment]
   addParameter("navigation", { _.setNavigation _ })
 
   def receive = receiveUi andThen {
-    case Messages.Navigation(_) ⇒
+    case Messages.Navigation(_) =>
       withUi { _.navigated() }
-    case a ⇒
+    case a =>
       unhandled(a)
   }
 }

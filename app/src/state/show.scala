@@ -34,10 +34,10 @@ extends DroidMachine[AndroidUiContext]
       .nelM(errmsg("model"))
       .orElse {
         args.get(Keys.dataId)
-          .flatMap(id ⇒ Try(ObjectId(id)).toOption)
+          .flatMap(id => Try(ObjectId(id)).toOption)
           .toDbioSuccess
           .nelM(errmsg("dataId"))
-          .nelFlatMap { a ⇒
+          .nelFlatMap { a =>
             fetchData(a) nelM(s"fetchData failed for $a")
           }
       }
@@ -52,29 +52,29 @@ extends DroidMachine[AndroidUiContext]
 
   def create(args: Map[String, String], state: Option[Bundle])
   : Transit = {
-    case S(Pristine, data) ⇒
+    case S(Pristine, data) =>
       S(Initializing, data) << setupData(args)
   }
 
   val resume: Transit = {
-    case s @ S(_, _) ⇒
+    case s @ S(_, _) =>
       s
   }
 
   def model(m: A): Transit = {
-    case S(Initializing, data) ⇒
+    case S(Initializing, data) =>
       S(Initialized, Model(m)) << Update
   }
 
   def update: Transit = {
-    case s @ S(Initialized, Model(m)) ⇒
+    case s @ S(Initialized, Model(m)) =>
       s << updateData(m) << fetchDetails(m)
   }
 
   val admit: Admission = {
-    case Create(args, state) ⇒ create(args, state)
-    case Resume ⇒ resume
-    case Update ⇒ update
-    case SetModel(m) ⇒ model(m)
+    case Create(args, state) => create(args, state)
+    case Resume => resume
+    case Update => update
+    case SetModel(m) => model(m)
   }
 }

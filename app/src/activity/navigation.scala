@@ -53,13 +53,13 @@ with HasContextAgent
     send(Target(target))
   }
 
-  def loadFragment(name: String, ctor: () ⇒ Fragment) {
+  def loadFragment(name: String, ctor: () => Fragment) {
     val target = new NavigationTarget(name, ctor)
     navigate(target)
   }
 
   override def loadShowFragment[A <: SyncModel: ClassTag]
-  (model: A, ctor: () ⇒ ShowFragment[A]) {
+  (model: A, ctor: () => ShowFragment[A]) {
     val target = new ShowNavigationTarget("Details", ctor, model)
     navigate(target)
   }

@@ -21,11 +21,11 @@ with Preferences
     val value = prfs.getAll.get(key)
     val validated = validatePreference(key, value)
     if (validated != value) {
-      prefs.edit { editor ⇒
+      prefs.edit { editor =>
         value match {
-          case s: String ⇒ editor.putString(key, s)
-          case b: Boolean ⇒ editor.putBoolean(key, b)
-          case _ ⇒
+          case s: String => editor.putString(key, s)
+          case b: Boolean => editor.putBoolean(key, b)
+          case _ =>
         }
       }
     }
@@ -51,7 +51,7 @@ with Preferences
   }
 
   def setupPreferences() = {
-    res.xmlId("user_preferences") foreach { id ⇒
+    res.xmlId("user_preferences") foreach { id =>
       PreferenceManager.setDefaultValues(activity, id, false)
     }
   }
@@ -59,11 +59,11 @@ with Preferences
   def changePref(key: String, value: Any) {
     prefs.change(key, value)
     key match {
-      case "pref_theme" ⇒ value match {
-        case s: String ⇒ changeTheme(s)
-        case _ ⇒ prefError(key, value)
+      case "pref_theme" => value match {
+        case s: String => changeTheme(s)
+        case _ => prefError(key, value)
       }
-      case _ ⇒
+      case _ =>
     }
   }
 

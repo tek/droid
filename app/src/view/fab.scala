@@ -18,7 +18,7 @@ trait Fab
 extends HasActivityAgent
 with Transitions
 with Macroid
-{ fabView ⇒
+{ fabView =>
 
   import CommonWidgets._
 
@@ -32,7 +32,7 @@ with Macroid
 
   val progress = slut[ProgressBar]
 
-  def fabCorner(icon: String)(contentView: ⇒ Ui[View]) = {
+  def fabCorner(icon: String)(contentView: => Ui[View]) = {
     val geom = rlp(↧, ↦) + margin(right = 16 dp, bottom = 48 dp)
     RL(rlp(↔, ↕), metaName("fab corner container"))(
       content(contentView) <~ metaName("content view"),
@@ -61,7 +61,7 @@ with Macroid
   }
 
   def progressUi = w[ProgressBar] <~ indeterminate <~ hide <~
-    res.dimen("fab_width").map(a ⇒ Width(a.toInt)).toOption <~ whore(progress)
+    res.dimen("fab_width").map(a => Width(a.toInt)).toOption <~ whore(progress)
 
   def fabUi(icon: String) = {
     fab() <~
@@ -77,13 +77,13 @@ with Macroid
   // completion, 'snack' is shown as a toast, if nonempty.
   // TODO queue into Process
   def fabAsyncF[A, B]
-  (success: ⇒ Option[String] = None, failure: ⇒ Option[String] = None)
+  (success: => Option[String] = None, failure: => Option[String] = None)
   (f: Future[B]) = {
     fabAsync(success, failure)(f.task)
   }
 
   def fabAsync[A, B]
-  (success: ⇒ Option[String] = None, failure: ⇒ Option[String] = None)
+  (success: => Option[String] = None, failure: => Option[String] = None)
   (task: Task[B]) = {
     send(AsyncTask(task, success, failure))
   }

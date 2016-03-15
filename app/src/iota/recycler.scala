@@ -35,7 +35,7 @@ with ResourcesAccess
 
   def dataChanged = k(_.getAdapter.notifyDataSetChanged)
 
-  def onScroll(callback: (ViewGroup, Int) ⇒ Unit) = k { v ⇒
+  def onScroll(callback: (ViewGroup, Int) => Unit) = k { v =>
     val listener = new RecyclerView.OnScrollListener {
       var height = 0
 
@@ -49,22 +49,22 @@ with ResourcesAccess
   }
 
   def onScrollActor(actor: ActorSelection) =
-    onScroll((view, y) ⇒ actor ! Messages.Scrolled(view, y))
+    onScroll((view, y) => actor ! Messages.Scrolled(view, y))
 
   // def reverseLayout = ck {
   //   _.getLayoutManager match {
-  //     case m: LinearLayoutManager ⇒ m.setReverseLayout(true)
-  //     case m ⇒ Log.e(s"Used reverseLayout on incompatible type ${m.className}")
+  //     case m: LinearLayoutManager => m.setReverseLayout(true)
+  //     case m => Log.e(s"Used reverseLayout on incompatible type ${m.className}")
   //   }
   // }
 
-  // def scrollTop = ck { rv ⇒
+  // def scrollTop = ck { rv =>
   //   rv.scrollToPosition(rv.getAdapter.getItemCount - 1)
   // }
 
   @ckw def rvPad = {
     res.dimen("header_height")
-      .map(a ⇒ (ctx: Context) ⇒ padding[Principal](top = a.toInt))
+      .map(a => (ctx: Context) => padding[Principal](top = a.toInt))
       .getOrElse(nopK)
   }
 

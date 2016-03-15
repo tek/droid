@@ -56,13 +56,13 @@ with TrypDroidSpec
     instr.waitForIdleSync()
   }
 
-  def waitFor(timeout: Int)(predicate: ⇒ Boolean) {
+  def waitFor(timeout: Int)(predicate: => Boolean) {
     solo.waitForCondition(new Condition {
       override def isSatisfied: Boolean = predicate
     }, timeout)
   }
 
-  def assertion(isTrue: ⇒ Boolean, msg: ⇒ String) = assert(isTrue, msg)
+  def assertion(isTrue: => Boolean, msg: => String) = assert(isTrue, msg)
 
   def enterText(text: String, id: Int = 0) {
     activity.viewOfType[EditText] foreach {
@@ -72,7 +72,7 @@ with TrypDroidSpec
 
   implicit class ViewAssertions[A: droid.SearchView](target: A) {
     def recycler = {
-      target.viewOfType[RecyclerView] effect { r ⇒
+      target.viewOfType[RecyclerView] effect { r =>
         idleSync()
         r.measure(0, 0)
         r.layout(0, 0, 100, 10000)
@@ -82,7 +82,7 @@ with TrypDroidSpec
     def nonEmptyRecycler(count: Long) = {
       assertWM {
         recycler
-          .map(r ⇒ s"recycler childcount ${r.getChildCount} != $count")
+          .map(r => s"recycler childcount ${r.getChildCount} != $count")
           .getOrElse("recycler doesn't exist")
       } { recycler exists(_.getChildCount == count) }
       recycler

@@ -9,10 +9,10 @@ import iota._
 trait IOTypes
 {
   type IOV = IO[View]
-  type IOTrans[A, B] = A ⇒ IO[B]
+  type IOTrans[A, B] = A => IO[B]
   type IOCtor[A] = IOTrans[Context, A]
-  type IOCTrans[A, B] = Context ⇒ IOTrans[A, B]
-  type CF[A, B] = Context ⇒ A ⇒ B
+  type IOCTrans[A, B] = Context => IOTrans[A, B]
+  type CF[A, B] = Context => A => B
   type CK[A] = CF[A, IO[A]]
 }
 
@@ -25,11 +25,11 @@ trait IOInstances
       x.perform()
     }
 
-    def coflatMap[A, B](fa: IO[A])(f: IO[A] ⇒ B): IO[B] = {
+    def coflatMap[A, B](fa: IO[A])(f: IO[A] => B): IO[B] = {
       pure(f(fa))
     }
 
-    def flatMap[A, B](fa: IO[A])(f: A ⇒ IO[B]): IO[B] = {
+    def flatMap[A, B](fa: IO[A])(f: A => IO[B]): IO[B] = {
       fa.flatMap(f)
     }
   }

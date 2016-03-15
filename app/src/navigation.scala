@@ -11,7 +11,7 @@ sealed trait DrawerItem
   def title: String
 }
 
-case class NavigationTarget(title: String, fragment: () ⇒ Fragment,
+case class NavigationTarget(title: String, fragment: () => Fragment,
   home: Boolean = false)
 extends DrawerItem
 {
@@ -20,7 +20,7 @@ extends DrawerItem
 }
 
 class ShowNavigationTarget[A <: SyncModel: ClassTag](title: String,
-  fragment: () ⇒ ShowFragment[A], model: A)
+  fragment: () => ShowFragment[A], model: A)
 extends NavigationTarget(title, fragment)
 {
   override def create[A: FragmentManagement: HasActivityF]
@@ -33,7 +33,7 @@ case class Navigation(drawerItems: NonEmptyList[DrawerItem])
   val current: Var[Maybe[NavigationTarget]] = Var(Maybe.Empty())
 
   lazy val targets = drawerItems.toList collect {
-    case n: NavigationTarget ⇒ n
+    case n: NavigationTarget => n
   }
 
   def isCurrent(target: NavigationTarget) = current().exists(_ == target)

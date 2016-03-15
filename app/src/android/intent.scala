@@ -5,13 +5,13 @@ final class IntentOps(intent: Intent)
 {
   def extrasSafe: Params = {
     Option(intent)
-      .flatMap(i ⇒ Option(i.getExtras))
+      .flatMap(i => Option(i.getExtras))
       .map(_.toMap)
       .getOrElse(Map())
   }
 
   def storeExtras(extras: Params) = {
-    extras foreach { case (k, v) ⇒ intent.putExtra(k, v) }
+    extras foreach { case (k, v) => intent.putExtra(k, v) }
   }
 }
 

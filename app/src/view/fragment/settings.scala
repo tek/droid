@@ -11,6 +11,6 @@ with DefaultStrategy
   override def onCreate(state: Bundle) {
     super.onCreate(state)
     res.xmlId("user_preferences")
-      .foreach(a ⇒ addPreferencesFromResource(a.value))
+      .foreach(a => addPreferencesFromResource(a.value))
   }
 }

@@ -34,8 +34,8 @@ trait AkkaClient extends AkkaComponent
 
   def akkativity = {
     activity match {
-      case a: Akkativity ⇒ Some(a)
-      case _ ⇒
+      case a: Akkativity => Some(a)
+      case _ =>
         Log.e(s"No Akkativity access in $this")
         None
     }
@@ -53,14 +53,14 @@ trait AkkaClient extends AkkaComponent
 
   def attach() {
     val msg = TrypActor.AttachUi(this)
-    actors foreach { props ⇒
+    actors foreach { props =>
       selectActor(props.actorName) ! msg
     }
   }
 
   def detach() {
     val msg = TrypActor.DetachUi(this)
-    actors foreach { p ⇒
+    actors foreach { p =>
       selectActor(p.actorName) ! msg
     }
   }
@@ -70,7 +70,7 @@ trait Akkativity
 extends AkkaComponent
 with CallbackMixin
 { self: Activity
-  with HasActivity ⇒
+  with HasActivity =>
 
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
@@ -95,7 +95,7 @@ with CallbackMixin
 
   def createActor(props: Props) = {
     val name = props.actorName
-    name → actorSystem.actorOf(props, name)
+    name -> actorSystem.actorOf(props, name)
   }
 
   lazy val coreActor = actorSystem.actorOf(coreActorProps, "core")
@@ -109,7 +109,7 @@ trait AkkaFragment
 extends AkkaClient
 with CallbackMixin
 { self: Fragment
-  with tryp.droid.FragmentBase ⇒
+  with tryp.droid.FragmentBase =>
 
   abstract override def onStart() {
     attach()
@@ -148,48 +148,48 @@ with AkkaComponent
   lazy val noUiError =
     new java.lang.RuntimeException("No Ui attached to actor")
 
-  def withUi(f: A ⇒ Ui[Any]) = {
-    attachedUi.fold(Future.failed[Any](noUiError)) { comp ⇒
+  def withUi(f: A => Ui[Any]) = {
+    attachedUi.fold(Future.failed[Any](noUiError)) { comp =>
       f(comp).run
     }
   }
 
-  def ui(f: A ⇒ Any) = withUi { u ⇒ Ui(f(u)) }
+  def ui(f: A => Any) = withUi { u => Ui(f(u)) }
 
   def receiveUi: PartialFunction[Any, Any] = {
-    case a @ AttachUi(f: A) ⇒ {
+    case a @ AttachUi(f: A) => {
       attachedUi = Some(f)
       inject()
       a
     }
-    case d @ DetachUi(f: A) if Some(f) == attachedUi ⇒ {
+    case d @ DetachUi(f: A) if Some(f) == attachedUi => {
       attachedUi = None
       d
     }
-    case x ⇒ x
+    case x => x
   }
 
   override def unhandled(a: Any) {
     a match {
-      case Messages.Inject(attr, value) ⇒
+      case Messages.Inject(attr, value) =>
         updateParameter(attr, value)
-      case AttachUi(_) ⇒
-      case DetachUi(_) ⇒
-      case a ⇒ Log.w(s"Unhandled message in ${this.className}: ${a}")
+      case AttachUi(_) =>
+      case DetachUi(_) =>
+      case a => Log.w(s"Unhandled message in ${this.className}: ${a}")
     }
   }
 
   val parameters: MMap[String, Any] = MMap()
-  val parameterDispatch: MMap[String, (Any ⇒ Unit)] = MMap()
+  val parameterDispatch: MMap[String, (Any => Unit)] = MMap()
 
   protected def addParameter[B: ClassTag](name: String,
-    dispatch: A ⇒ (B ⇒ Ui[Any]))
+    dispatch: A => (B => Ui[Any]))
     {
-    val setter: Any ⇒ Unit = { v ⇒
+    val setter: Any => Unit = { v =>
       v match {
-        case b: B ⇒
-          withUi { a ⇒ dispatch(a)(b) }
-        case _ ⇒
+        case b: B =>
+          withUi { a => dispatch(a)(b) }
+        case _ =>
           Log.e(s"Wrong parameter type in ${this.className} for ${name}")
       }
     }
@@ -209,7 +209,7 @@ with AkkaComponent
 
   protected def inject() {
     parameterDispatch foreach {
-      case (name, setter) ⇒ parameters remove(name) foreach(setter)
+      case (name, setter) => parameters remove(name) foreach(setter)
     }
   }
 }
@@ -228,19 +228,19 @@ extends TrypActor[A]
 
   def receiveBasic(m: Any) = {
     m match {
-      case Back(result) ⇒
-        ui { _.back() } onComplete { _ ⇒
+      case Back(result) =>
+        ui { _.back() } onComplete { _ =>
           result foreach { mainActor ! Messages.Result(_) }
         }
-      case Navigation(target) ⇒
+      case Navigation(target) =>
         ui { _.navigate(target) }
       case Transitions(sets) ⇒
         ui { _.addTransitions(sets) }
       case ShowDetails(data) ⇒
         ui(_.showDetails(data))
-      case Toast(id) ⇒
+      case Toast(id) =>
         ui(_.toast(id))
-      case a ⇒ unhandled(a)
+      case a => unhandled(a)
     }
   }
 }
@@ -254,13 +254,13 @@ extends TrypActivityActor[A]
 
   override def receiveBasic(m: Any) = {
     m match {
-      case ToolbarTitle(title) ⇒
+      case ToolbarTitle(title) =>
         withUi(_.toolbarTitle(title))
-      case ToolbarView(view) ⇒
+      case ToolbarView(view) =>
         ui { _.toolbarView(view) }
       case DrawerClick(action) ⇒
         ui(_.drawerClick(action))
-      case a ⇒ super.receiveBasic(a)
+      case a => super.receiveBasic(a)
     }
   }
 }
@@ -269,15 +269,15 @@ class AkkaAndroidLogger extends Actor {
   import akka.event.Logging._
 
   def receive = {
-    case Error(cause, logSource, logClass, message) ⇒
+    case Error(cause, logSource, logClass, message) =>
       Log.e(s"$message [$logSource]: $cause")
-    case Warning(logSource, logClass, message) ⇒
+    case Warning(logSource, logClass, message) =>
       Log.w(s"$message [$logSource]")
-    case Info(logSource, logClass, message) ⇒
+    case Info(logSource, logClass, message) =>
       Log.i(s"$message [$logSource]")
-    case Debug(logSource, logClass, message) ⇒
+    case Debug(logSource, logClass, message) =>
       Log.d(s"$message [$logSource]")
-    case InitializeLogger(_) ⇒
+    case InitializeLogger(_) =>
       Log.d("Logging started")
       sender ! LoggerInitialized
   }

@@ -21,8 +21,8 @@ extends Machine
   lazy val output = async.signalOf(-1)
 
   def admit: Admission = {
-    case Go ⇒ {
-      case s ⇒
+    case Go => {
+      case s =>
         s << output.set(0)
     }
   }

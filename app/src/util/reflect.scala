@@ -9,8 +9,8 @@ object Reflect
       val f = obj.getClass.getDeclaredField(name)
       f.setAccessible(true)
       f.get(obj) match {
-        case a: A ⇒ Some(a)
-        case _ ⇒ None
+        case a: A => Some(a)
+        case _ => None
       }
     }
   }

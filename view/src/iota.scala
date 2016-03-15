@@ -21,11 +21,11 @@ extends AndroidMacros
   import c.universe._
   import c.Expr
 
-  def contextKestrel[A, B](f: Expr[A ⇒ B])
-  : Expr[Context ⇒ AppFunc[IO, A, A]] = {
+  def contextKestrel[A, B](f: Expr[A => B])
+  : Expr[Context => AppFunc[IO, A, A]] = {
     Expr {
       q"""
-      { (ctx: $actx) ⇒
+      { (ctx: $actx) =>
         implicit val ${TermName(c.freshName)} = ctx
         iota.kestrel($f)
       }
@@ -50,7 +50,7 @@ with AndroidMacros
         else List(q"iota.kestrel[Principal, Any](${m.rhs})")
       q"""
       def ${m.name}[..${m.tparams}](...${m.vparamss}): CK[Principal] =
-        (ctx: $actx) ⇒ {
+        (ctx: $actx) => {
           implicit val ${TermName(c.freshName)} = ctx
           ..$impl
         }
@@ -101,9 +101,9 @@ import scalaz.Liskov.<~<
   (implicit lis: A <~< B, other: ChainKestrel[G]): CK[A] = {
     val c1 = curry(fa)
     val c2 = other.curry(gb)
-    (ctx: Context) ⇒ {
+    (ctx: Context) => {
       val (k1, k2) = (c1(ctx), c2(ctx))
-      k1 >=> { a ⇒ k2(lis(a)); IO(a) }
+      k1 >=> { a => k2(lis(a)); IO(a) }
     }
   }
 
@@ -114,7 +114,7 @@ trait ChainKestrelInstances
 {
   implicit lazy val chainPlainKestrel = new ChainKestrel[Kestrel] {
 
-    def curry[A](fa: Kestrel[A]) = ctx ⇒ fa
+    def curry[A](fa: Kestrel[A]) = ctx => fa
   }
 
   implicit def chainContextKestrel =
@@ -126,7 +126,7 @@ trait ChainKestrelInstances
 object ChainKestrel
 extends ChainKestrelInstances
 {
-  def ckZero[A]: CK[A] = (ctx: Context) ⇒ kestrel((_: A) ⇒ ())
+  def ckZero[A]: CK[A] = (ctx: Context) => kestrel((_: A) => ())
 }
 
 object CKInstances
@@ -146,8 +146,8 @@ trait IotaCombinators[A]
 
   implicit def ckMonoid[A] = CKInstances.ckMonoid[A]
 
-  protected def k[B]: (Principal ⇒ B) ⇒ CK[Principal] =
-    kestrel[Principal, B] _ andThen { a ⇒ (ctx: Context) ⇒ a }
+  protected def k[B]: (Principal => B) => CK[Principal] =
+    kestrel[Principal, B] _ andThen { a => (ctx: Context) => a }
 
-  protected def nopK = k(_ ⇒ ())
+  protected def nopK = k(_ => ())
 }

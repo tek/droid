@@ -1,7 +1,7 @@
 package tryp
 package droid
 
-import com.google.android.gms.maps.{MapFragment ⇒ AMapFragment,_}
+import com.google.android.gms.maps.{MapFragment => AMapFragment,_}
 
 import macroid.Contexts
 

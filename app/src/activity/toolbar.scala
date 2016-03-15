@@ -13,9 +13,9 @@ import ScalazGlobals._
 trait HasToolbar
 extends MainView
 { self: ActionBarActivity
-  with Akkativity ⇒
+  with Akkativity =>
 
-    import tryp.droid.tweaks.{Toolbar ⇒ T}
+    import tryp.droid.tweaks.{Toolbar => T}
 
   abstract override def onCreate(state: Bundle) {
     super.onCreate(state)
@@ -36,7 +36,7 @@ extends MainView
 
   def toolbarLayout = {
     val t = theme.dimension("actionBarSize")
-      .map(a ⇒ T.minHeight(a.toInt)).toOption
+      .map(a => T.minHeight(a.toInt)).toOption
     l[Toolbar](l[FrameLayout]() <~ RId.toolbar <~ ↔) <~
       whore(toolbar) <~
       bgCol("toolbar") <~

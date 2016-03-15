@@ -13,7 +13,7 @@ extends ActivityBase
 with Transitions
 with ActivityAgent
 {
-  mainView: Akkativity ⇒
+  mainView: Akkativity =>
 
   val content = slut[FrameLayout]
 
@@ -51,7 +51,7 @@ with ActivityAgent
   }
 
   def loadShowFragment[A <: SyncModel: ClassTag]
-  (model: A, ctor: () ⇒ ShowFragment[A]) {
+  (model: A, ctor: () => ShowFragment[A]) {
     send(LoadUi(showFrag(this, model, ctor, RId.content)))
   }
 

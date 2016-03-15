@@ -47,19 +47,19 @@ extends Machine
   lazy val output = async.signalOf(-1)
 
   def admit: Admission = {
-    case Go ⇒ {
-      case S(S1, d) ⇒
+    case Go => {
+      case S(S1, d) =>
         S(S2, d) << output.set(1) << Step1
     }
-    case Step1 ⇒ {
-      case s @ S(S2, d) ⇒
+    case Step1 => {
+      case s @ S(S2, d) =>
         S(S3, d) << output.set(0) << Step2
     }
   }
 
   override def stateAdmit: StateAdmission = {
-    case s @ S(S3, d) ⇒ {
-      case Step2 ⇒
+    case s @ S(S3, d) => {
+      case Step2 =>
         S(S4, d) << Step3 << QuitMachine
     }
   }

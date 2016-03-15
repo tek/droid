@@ -11,8 +11,8 @@ with Logging
 
   def systemService[B: ClassTag](a: A)(name: String) = {
     context(a).getSystemService(name) match {
-      case a: B ⇒ a
-      case _ ⇒ {
+      case a: B => a
+      case _ => {
         throw new ClassCastException(
           s"Wrong class for ${implicitly[ClassTag[B]].className}!"
         )

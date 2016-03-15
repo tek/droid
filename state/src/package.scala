@@ -42,7 +42,7 @@ with MiscEffectOps
 
   type StateAdmission = PartialFunction[Zthulhu, StateTransit]
 
-  type Preselection = Message ⇒ Admission
+  type Preselection = Message => Admission
 
   type MProc = Process[Task, Message]
 

@@ -22,24 +22,24 @@ extends Machine
   def handle = "log"
 
   def logError(msg: String): Transit = {
-    case s ⇒
+    case s =>
       log.error(msg)
       s
   }
 
   def logInfo(msg: String): Transit = {
-    case s ⇒
+    case s =>
       log.info(msg)
       s
   }
 
   val admit: Admission = {
-    case m: LogError ⇒ logError(m.message)
-    case m: LogFatal ⇒ logError(m.message)
-    case m: LogInfo ⇒ logInfo(m.message)
-    case UnknownResult(msg) ⇒ logInfo(msg.toString)
-    case m: EffectSuccessful ⇒ logInfo(m.message)
-    case m: Loggable ⇒ logInfo(m.toString)
+    case m: LogError => logError(m.message)
+    case m: LogFatal => logError(m.message)
+    case m: LogInfo => logInfo(m.message)
+    case UnknownResult(msg) => logInfo(msg.toString)
+    case m: EffectSuccessful => logInfo(m.message)
+    case m: Loggable => logInfo(m.toString)
   }
 }
 
@@ -83,7 +83,7 @@ extends Machine
 
   def machines: Streaming[Machine] = Streaming.Empty()
 
-  def allMachines[A](f: Machine ⇒ A) = machines map(f)
+  def allMachines[A](f: Machine => A) = machines map(f)
 
   val ! = send _
 
@@ -171,23 +171,23 @@ extends Machine
       .headOr(0)
       .either(sendP(AddSub(Nes(sub))))
       .stripO
-      .flatMap { before ⇒
+      .flatMap { before =>
         emit(true).when(subAgentCountP.map(_ >= before + 1))
       }
       .timedHeadOr(timeout, false)
   }
 
   def admit: Admission = {
-    case AddSub(subs) ⇒ addSub(subs)
-    case SubAdded ⇒ {
-      case s ⇒
+    case AddSub(subs) => addSub(subs)
+    case SubAdded => {
+      case s =>
         log.debug("sub agent added")
         s
     }
   }
 
   private[this] def addSub(add: Nes[Agent]): Transit = {
-    case S(s, AgentData(sub)) ⇒
+    case S(s, AgentData(sub)) =>
       log.debug(s"adding sub agents $add")
       S(s, AgentData(sub ::: add.toList)) <<
         emitAll(add.toList).to(dynamicSubAgentsIn.enqueue)
@@ -198,7 +198,7 @@ extends Machine
   def subAgentCountP = {
     current.discrete
       .map {
-        case S(_, AgentData(sub)) ⇒
+        case S(_, AgentData(sub)) =>
           sub.length
       }
   }
@@ -236,7 +236,7 @@ extends Agent
 
   def rootAgent = {
     agentMain(halt)
-      .sideEffect(m ⇒ log.debug(s"publishing $m in $this"))
+      .sideEffect(m => log.debug(s"publishing $m in $this"))
       .to(publishDownIn.publish)
   }
 

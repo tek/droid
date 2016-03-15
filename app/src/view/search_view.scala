@@ -44,21 +44,21 @@ final class SearchView[A: RootView](a: A)
 
   def findId(id: Int)(implicit res: Resources): Xor[Throwable, View] = {
     Option(searcher.findViewById(id)) match {
-      case Some(v) ⇒ Xor.right[Throwable, View](v)
-      case _ ⇒ invalidId(id.toString)
+      case Some(v) => Xor.right[Throwable, View](v)
+      case _ => invalidId(id.toString)
     }
   }
 
   def viewsOfType[B <: View: ClassTag]: Seq[B] = {
     a.root match {
-      case v: B ⇒ Seq(v)
-      case layout: ViewGroup ⇒
+      case v: B => Seq(v)
+      case layout: ViewGroup =>
         layout.children map {
-          case v: B ⇒ Seq(v)
-          case sub: ViewGroup ⇒ sub.viewsOfType[B]
-          case _ ⇒ Nil
+          case v: B => Seq(v)
+          case sub: ViewGroup => sub.viewsOfType[B]
+          case _ => Nil
         } flatten
-      case _ ⇒ Nil
+      case _ => Nil
     }
   }
 
@@ -68,9 +68,9 @@ final class SearchView[A: RootView](a: A)
 
   def viewTree: Tree[View] = {
     a.root match {
-      case vg: ViewGroup ⇒
+      case vg: ViewGroup =>
         (vg: View).node(vg.children map(_.viewTree): _*)
-      case v ⇒
+      case v =>
         v.leaf
     }
   }

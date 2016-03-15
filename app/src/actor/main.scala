@@ -10,25 +10,25 @@ extends TrypActor[MainFragment]
   var lastResult: Option[Any] = None
 
   def receive = receiveUi andThen {
-    case Messages.Back(result) ⇒
+    case Messages.Back(result) =>
       withUi { _.back() } onComplete {
-        case Failure(_) ⇒
+        case Failure(_) =>
           core ! Messages.Back(result)
-        case Success(_) ⇒
+        case Success(_) =>
           result foreach { self ! Messages.Result(_) }
       }
-    case Messages.DataLoaded() ⇒
+    case Messages.DataLoaded() =>
       ui { _.dataLoaded() }
-    case Messages.Scrolled(view, dy) ⇒
+    case Messages.Scrolled(view, dy) =>
       ui { _.scrolled(view, dy) }
-    case Messages.Result(data: Any) ⇒
+    case Messages.Result(data: Any) =>
       lastResult = Some(data)
-    case AttachUi(_) ⇒
-      lastResult foreach { r ⇒
+    case AttachUi(_) =>
+      lastResult foreach { r =>
         ui { _.result(r) }
         lastResult = None
       }
-    case a ⇒
+    case a =>
       unhandled(a)
   }
 }

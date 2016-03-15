@@ -44,14 +44,14 @@ extends ListAdapter
   }
 
   protected def setAttrs(view: View, item: Map[String, String]) {
-    attrs.foreach(attr ⇒ {
+    attrs.foreach(attr => {
       label(view, attr) foreach { _.setText(item(attr)) }
     })
   }
 
   protected def newView: View = {
     res.layoutId(layoutName)
-      .map(name ⇒ activity.getLayoutInflater.inflate(name, null))
+      .map(name => activity.getLayoutInflater.inflate(name, null))
       .getOrElse(new View(activity))
   }
 
@@ -109,9 +109,9 @@ with DefaultStrategy
     new Filter {
       def publishResults(q: CharSequence, results: Filter.FilterResults) {
         results.values match {
-          case v: Seq[B] ⇒
+          case v: Seq[B] =>
             Ui(updateVisibleData(v)).run
-          case v ⇒ {
+          case v => {
             Log.e(s"Error casting filtering results in ${this.className}")
           }
         }
@@ -119,7 +119,7 @@ with DefaultStrategy
 
       def performFiltering(constraint: CharSequence) = {
         val values = items filter { filterItem(_, constraint) }
-        new Filter.FilterResults tap { result ⇒
+        new Filter.FilterResults tap { result =>
           result.count = values.length
           result.values = values
         }
@@ -165,7 +165,7 @@ with FrameLayoutCombinators
   }
 
   def onBindViewHolder(holder: StringHolder, position: Int) {
-    items(position) foreach { s ⇒
+    items(position) foreach { s =>
       val io = holder.content >>= text[TextView](s)
       io.unsafePerformIOMain()
     }

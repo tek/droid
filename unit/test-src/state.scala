@@ -35,8 +35,8 @@ extends Machine
   def handle = "state0"
 
   def admit: Admission = {
-    case Received2 ⇒ {
-      case s ⇒ s  << Received0
+    case Received2 => {
+      case s => s  << Received0
     }
   }
 }
@@ -50,14 +50,14 @@ extends Machine
   lazy val output = async.signalOf(-1)
 
   def admit: Admission = {
-    case Go ⇒ {
-      case s ⇒ s << Received1
+    case Go => {
+      case s => s << Received1
     }
-    case Received0 ⇒ {
-      case s ⇒ s << output.set(0) << Set0
+    case Received0 => {
+      case s => s << output.set(0) << Set0
     }
-    case Set1 ⇒ {
-      case s ⇒ s << output.set(1)
+    case Set1 => {
+      case s => s << output.set(1)
     }
   }
 }
@@ -69,11 +69,11 @@ extends Machine
   def handle = "state2"
 
   def admit: Admission = {
-    case Received1 ⇒ {
-      case s ⇒ s << Received2
+    case Received1 => {
+      case s => s << Received2
     }
-    case Set0 ⇒ {
-      case s ⇒ s << Set1
+    case Set0 => {
+      case s => s << Set1
     }
   }
 }
@@ -89,7 +89,7 @@ with tryp.Matchers
   def machine = {
     val root = new RootAgent
     {
-      med ⇒
+      med =>
 
         val ag1 = new Agent {
           def handle = "ag1"

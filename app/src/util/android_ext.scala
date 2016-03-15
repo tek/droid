@@ -13,7 +13,7 @@ trait AndroidExt
 {
   implicit class ViewGroupExt(vg: ViewGroup) {
     def children: Seq[View] = {
-      (0 until vg.getChildCount) map { i ⇒ vg.getChildAt(i) }
+      (0 until vg.getChildCount) map { i => vg.getChildAt(i) }
     }
   }
 
@@ -22,7 +22,7 @@ trait AndroidExt
   {
     def context = view.getContext
 
-    def clickListen(callback: View ⇒ Unit) {
+    def clickListen(callback: View => Unit) {
       view.setOnClickListener(new android.view.View.OnClickListener {
         def onClick(v: View) = callback(v)
       })
@@ -65,10 +65,10 @@ trait AndroidExt
     }
 
     def edit: Option[EditText] = {
-      picker.children.find(_.isInstanceOf[EditText]) map { v ⇒
+      picker.children.find(_.isInstanceOf[EditText]) map { v =>
         v match {
-          case edit: EditText ⇒ edit
-          case _ ⇒ null
+          case edit: EditText => edit
+          case _ => null
         }
       }
     }

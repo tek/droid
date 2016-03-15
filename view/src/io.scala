@@ -8,14 +8,14 @@ import cats._
 import cats.data._
 import Func._
 
-import scalaz.{Tree ⇒ STree, _}, Scalaz._, concurrent._, stream._, Process._
+import scalaz.{Tree => STree, _}, Scalaz._, concurrent._, stream._, Process._
 import async.mutable._
 
 object FreeIO
 extends Logging
 {
   def attachSignal[A](sig: Signal[Maybe[A]])(implicit log: Logger) =
-    iota.kestrel[A, Unit] { a ⇒
+    iota.kestrel[A, Unit] { a =>
       sig.set(a.just).infraRunShort("set signal for FreeIO")
     }
 
@@ -48,7 +48,7 @@ with IOStrategy
 }
 
 case class ViewStream[A](view: Process[Task, iota.IO[A]]) {
-  def >>=[B](f: A ⇒ iota.IO[B]): ViewStream[B] = ViewStream(view map(_ >>= f))
+  def >>=[B](f: A => iota.IO[B]): ViewStream[B] = ViewStream(view map(_ >>= f))
 
   def unsafePerformIOMain(timeout: Duration = Duration.Inf) =
     view

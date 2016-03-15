@@ -8,7 +8,7 @@ import scalaz._, Scalaz._, concurrent._, stream._, Process._
 import shapeless.tag.@@
 
 import com.google.android.gms.location._
-import LocationServices.{FusedLocationApi ⇒ LocApi}
+import LocationServices.{FusedLocationApi => LocApi}
 import com.google.android.gms.common._
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.common.api._
@@ -60,7 +60,7 @@ with tryp.droid.Preferences
   def locations = apiClient.isConnected option apiClient
 
   def lastLocation = {
-    locations flatMap { client ⇒ Option(LocApi.getLastLocation(client)) }
+    locations flatMap { client => Option(LocApi.getLastLocation(client)) }
     }
 
   def requestLocationUpdates(intent: PendingIntent) {
@@ -88,7 +88,7 @@ with CallbackMixin
   }
 }
 
-case class LocationTask(callback: (Location) ⇒ Unit)
+case class LocationTask(callback: (Location) => Unit)
 (implicit val context: Context)
 extends LocationsConcern
 {

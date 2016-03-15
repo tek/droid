@@ -8,21 +8,21 @@ object DroidDeps
 extends tryp.AndroidDeps
 {
   override def deps = super.deps ++ Map(
-    "core" → core,
-    "state" → state,
-    "view" → view,
-    "app" → app,
-    "test" → test,
-    "unit-core" → unitCore,
-    "unit" → unit,
-    "integration" → integration,
-    "logback" → logback,
-    "macro-console" → macroConsole
+    "core" -> core,
+    "state" -> state,
+    "view" -> view,
+    "app" -> app,
+    "test" -> test,
+    "unit-core" -> unitCore,
+    "unit" -> unit,
+    "integration" -> integration,
+    "logback" -> logback,
+    "macro-console" -> macroConsole
   )
 
   override def resolvers = Map(
-    "unit-core" → List(Resolver.bintrayRepo("tek", "releases")),
-    "app" → List(Resolver.jcenterRepo)
+    "unit-core" -> List(Resolver.bintrayRepo("tek", "releases")),
+    "app" -> List(Resolver.jcenterRepo)
   )
 
   def pulsar(pro: String) = {

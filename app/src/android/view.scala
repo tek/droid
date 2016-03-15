@@ -23,8 +23,8 @@ final class ViewOps[A <: View: ClassTag](v: A)(implicit res: Resources)
 
   def meta: ViewMetadata = {
     metaKey.map(_.value).map(v.getTag) match {
-      case Xor.Right(m: ViewMetadata) ⇒ m
-      case _ ⇒ inferMetadata
+      case Xor.Right(m: ViewMetadata) => m
+      case _ => inferMetadata
     }
   }
 
@@ -51,7 +51,7 @@ case class LinearLayoutMetadata(dir: String, detail: Option[String],
   extra: Params = Map())
 extends LayoutMetadata
 {
-  def suf = detail some(s ⇒ s": $s") none("")
+  def suf = detail some(s => s": $s") none("")
 
   def desc = s"$dir linear$suf"
 }
@@ -66,7 +66,7 @@ extends ToViewOps
 {
   def extraInfo(v: View) = {
     v.some collect {
-      case tv: TextView ⇒ tv.getText
+      case tv: TextView => tv.getText
     }
   }
 

@@ -100,8 +100,8 @@ extends Loggable
 {
   lazy val message = {
     val res = result match {
-      case Unit ⇒ ""
-      case _ ⇒ s" ($result)"
+      case Unit => ""
+      case _ => s" ($result)"
     }
     s"successful effect: $description$res"
   }

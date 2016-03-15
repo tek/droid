@@ -18,7 +18,7 @@ extends BoundedCachedPool
   override def maxThreads = 3
 
   /* @param z current state machine
-   * @param f (Z, M) ⇒ (Z, E), transforms a state and message into a new state
+   * @param f (Z, M) => (Z, E), transforms a state and message into a new state
    * and a Process of effects of type E
    *
    * first, receive one item of type M representing a Message
@@ -32,15 +32,15 @@ extends BoundedCachedPool
    */
   def transLoop[Z, E, M]
   (z: Z)
-  (f: (Z, M) ⇒ Maybe[(Z, E)])
-  (transError: (Z, M, Throwable) ⇒ E)
+  (f: (Z, M) => Maybe[(Z, E)])
+  (transError: (Z, M, Throwable) => E)
   : Writer1[Z, M, E] = {
-    receive1 { (a: M) ⇒
+    receive1 { (a: M) =>
       val (state, effect) =
         Task(f(z, a)).runDefault match {
-          case \/-(Just((nz, e))) ⇒ nz.just → e.just
-          case \/-(Empty()) ⇒ Maybe.empty[Z] → Maybe.empty[E]
-          case -\/(t) ⇒ Maybe.empty[Z] → transError(z, a, t).just
+          case \/-(Just((nz, e))) => nz.just -> e.just
+          case \/-(Empty()) => Maybe.empty[Z] -> Maybe.empty[E]
+          case -\/(t) => Maybe.empty[Z] -> transError(z, a, t).just
         }
       val w = state.cata(emitW, halt)
       val o = effect.cata(emitO, halt)
@@ -62,7 +62,7 @@ extends BoundedCachedPool
   implicit class MProcToZthulhu[Z](source: MProc)
   (implicit log: Logger)
   {
-    type Trans = (Z, Message) ⇒ Maybe[(Z, Effect)]
+    type Trans = (Z, Message) => Maybe[(Z, Effect)]
 
     def fsm(initial: Z, transition: Trans) = {
       source
@@ -80,13 +80,13 @@ extends BoundedCachedPool
   // the results are then disassembled into single Message instances.
   def handleResult(effect: Effect)(implicit log: Logger) = {
     effect
-      .attempt(t ⇒ emit(LogFatal("performing effect", t).publish.fail))
+      .attempt(t => emit(LogFatal("performing effect", t).publish.fail))
       .mergeO
       .mapO {
-        case scalaz.Success(trans) ⇒
+        case scalaz.Success(trans) =>
           log.debug(s"task succeeded with ${trans.show}")
           List(trans)
-        case scalaz.Failure(transs) ⇒
+        case scalaz.Failure(transs) =>
           log.debug(s"task failed with ${transs.show}")
           transs.toList
       }

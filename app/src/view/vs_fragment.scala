@@ -33,6 +33,6 @@ extends SimpleViewMachine
 
 trait RecyclerVSFragment[A <: RecyclerView.Adapter[_]]
 extends VSTrypFragment
-{ outer ⇒
+{ outer =>
 
 }

@@ -52,11 +52,11 @@ with ExtViews
   def layoutIO: FreeIO[_ <: View]
 
   def admit: Admission = {
-    case SetLayout ⇒ setLayout
+    case SetLayout => setLayout
   }
 
   val setLayout: Transit = {
-    case s @ S(_, Layout(l)) ⇒
+    case s @ S(_, Layout(l)) =>
       s << layout.setter(l).effect("set layout signal")
   }
 }

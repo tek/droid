@@ -12,7 +12,7 @@ import android.view.ViewGroup.LayoutParams._
 import android.graphics.drawable.Drawable
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
-import android.support.v7.widget.{Toolbar ⇒ AToolbar}
+import android.support.v7.widget.{Toolbar => AToolbar}
 
 import macroid._
 import macroid.FullDsl._
@@ -83,12 +83,12 @@ extends Misc
     val rules = ListBuffer[Rule]()
     var width = Width(WRAP_CONTENT)
     var height = Height(WRAP_CONTENT)
-    params foreach { param ⇒
+    params foreach { param =>
       param match {
-        case r: Rule ⇒ rules += r
-        case w: Width ⇒ width = w
-        case h: Height ⇒ height = h
-        case p ⇒ throw new Exception(
+        case r: Rule => rules += r
+        case w: Width => width = w
+        case h: Height => height = h
+        case p => throw new Exception(
           s"Invalid parameter for relative layout: ${p}[${p.getClass}]")
       }
     }
@@ -98,7 +98,7 @@ extends Misc
   // robolectric chokes on the Rule class due to two $ in the name
   def relative(params: Any*) = {
     val (width, height, rules) = extractRlParams(params: _*)
-    if (TrypEnv.unit) Tweak[View] { _ ⇒ () }
+    if (TrypEnv.unit) Tweak[View] { _ => () }
     else lp[RuleRelativeLayout](width.value, height.value, rules: _*)
   }
 
@@ -127,7 +127,7 @@ extends Misc
   }
 
   def tweakSum[A <: View](tweaks: Tweak[A]*): Tweak[A] = {
-    tweaks.foldLeft(Tweak[A](a ⇒ Unit))((a, b) ⇒ a + b)
+    tweaks.foldLeft(Tweak[A](a => Unit))((a, b) => a + b)
   }
 
   def foreground(res: Drawable) = Tweak[FrameLayout](_.setForeground(res))
@@ -148,7 +148,7 @@ extends Misc
 
   def contentPadding(
     left: Int = 0, top: Int = 0, right: Int = 0, bottom: Int = 0, all: Int = -1
-  ) = Tweak[CardView] { v ⇒
+  ) = Tweak[CardView] { v =>
     if (all == -1)
       v.setContentPadding(left, top, right, bottom)
     else
@@ -174,7 +174,7 @@ extends Misc
     FL(selectableFg.toList: _*)(ui: _*)
   }
 
-  def dispatchFrame(dispatch: ⇒ Unit)(ui: Ui[View]*)(implicit a: Activity) = {
+  def dispatchFrame(dispatch: => Unit)(ui: Ui[View]*)(implicit a: Activity) = {
     clickFrame(ui: _*) <~ On.click {
       dispatch
       Ui.nop
@@ -210,10 +210,10 @@ extends Misc
   }
 
   def frag[A: FragmentManagement: HasContextF]
-  (parent: A, ctor: ⇒ Fragment, id: RId = RId.next, tag: String = "") = {
+  (parent: A, ctor: => Fragment, id: RId = RId.next, tag: String = "") = {
     val t = tag.isEmpty ? id.value.toString | tag
     Ui(
-      (new FrameLayout(parent.context)) tap { fl ⇒
+      (new FrameLayout(parent.context)) tap { fl =>
         fl.setId(id.value)
         parent.replaceFragment(id, ctor, false, t, false)
       }
@@ -224,7 +224,7 @@ extends Misc
 
   def showFrag
   [A <: SyncModel: ClassTag, B: FragmentManagement: HasActivityF]
-  (parent: B, model: A, ctor: () ⇒ ShowFragment[A], id: RId = RId.next)
+  (parent: B, model: A, ctor: () => ShowFragment[A], id: RId = RId.next)
    =
   {
     frag(parent, ShowFragment(model)(ctor())(parent.activity), id,
@@ -234,9 +234,9 @@ extends Misc
   import android.view.ViewGroup.LayoutParams._
 
   def margin(left: Int = 0, top: Int = 0, right: Int = 0, bottom: Int = 0,
-    all: Int = -1) = Tweak[View] { v ⇒
+    all: Int = -1) = Tweak[View] { v =>
     v.getLayoutParams match {
-      case m: android.view.ViewGroup.MarginLayoutParams ⇒
+      case m: android.view.ViewGroup.MarginLayoutParams =>
         if (all >= 0) {
           m.topMargin = all
           m.bottomMargin = all
@@ -248,7 +248,7 @@ extends Misc
           m.rightMargin = right
           m.leftMargin = left
         }
-      case a ⇒ Log.e(s"Could not apply margin to ${v} layout params (${a})")
+      case a => Log.e(s"Could not apply margin to ${v} layout params (${a})")
     }
   }
 }

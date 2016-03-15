@@ -7,12 +7,12 @@ import scala.language.higherKinds
 
 import macroid.util.Effector
 
-case class Screw[-A](f: A ⇒ Unit) {
+case class Screw[-A](f: A => Unit) {
   def apply(w: A) = {
     f(w)
   }
 
-  def +[A1 <: A](that: Screw[A1]): Screw[A1] = Screw { x ⇒
+  def +[A1 <: A](that: Screw[A1]): Screw[A1] = Screw { x =>
     this(x)
     that(x)
   }
@@ -36,7 +36,7 @@ object CanScrew {
   (implicit effector: Effector[F], canScrew: CanScrew[W, T, R]) =
     new CanScrew[F[W], T, F[W]] {
       def screw(f: F[W], t: T) = {
-        effector.foreach(f) { w ⇒
+        effector.foreach(f) { w =>
           canScrew.screw(w, t)
           Ui.nop
         }

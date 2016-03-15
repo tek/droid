@@ -25,7 +25,7 @@ class RIdGen(start: Int) extends Dynamic {
     ids.getOrElse(tag, {
       counter += 1
       val id = new RId(counter, tag)
-      ids += tag → id
+      ids += tag -> id
       id
     })
   }

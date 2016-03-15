@@ -4,7 +4,7 @@ package core
 
 import reflect.macros.blackbox
 
-import android.content.res.{Resources ⇒ AResources}
+import android.content.res.{Resources => AResources}
 import android.content.Context
 
 import simulacrum._
@@ -36,7 +36,7 @@ object ResId
 
   implicit def stringResId = new ResId[String] {
     def typed(a: String, defType: String)(implicit res: ResourcesInternal) = {
-      res.identifier(defType, a) map(a ⇒ a: RId)
+      res.identifier(defType, a) map(a => a: RId)
     }
   }
 }
@@ -51,7 +51,7 @@ trait ResourcesInternal
   def resourceName(id: Int): String
 
   def res[B](id: Int, defType: String)
-  (callback: AResources ⇒ Int ⇒ B): Throwable Xor B
+  (callback: AResources => Int => B): Throwable Xor B
 }
 
 object ResourcesInternal
@@ -88,9 +88,9 @@ extends ResourcesInternal
   def resourceName(_id: Int) = resources.getResourceName(_id)
 
   def res[B](id: Int, defType: String)
-  (callback: AResources ⇒ Int ⇒ B): Throwable Xor B = {
+  (callback: AResources => Int => B): Throwable Xor B = {
     Xor.catchNonFatal(callback(resources)(id)) recoverWith {
-      case e: AResources.NotFoundException ⇒
+      case e: AResources.NotFoundException =>
         val msg = s"no resource found for $defType id '$id'"
         Log.e(msg)
         Xor.left(new Throwable(msg))
@@ -112,10 +112,10 @@ class Resources(implicit internal: ResourcesInternal,
   }
 
   def res[A: ResId, B](id: A, defType: String)
-  (callback: AResources ⇒ (Int ⇒ B)): Throwable Xor B =
+  (callback: AResources => (Int => B)): Throwable Xor B =
     for {
-      id ← typedId(id, defType) leftMap(a ⇒ new Throwable(a))
-      r ← internal.res(id, defType)(callback)
+      id <- typedId(id, defType) leftMap(a => new Throwable(a))
+      r <- internal.res(id, defType)(callback)
     } yield r
 
   def integer[A: ResId](_id: A) = res(_id, "integer")(_.getInteger _)
@@ -148,19 +148,19 @@ class Resources(implicit internal: ResourcesInternal,
     namespaced(name, suffix, bool[String])
   }
 
-  def namespaced[A](name: String, suffix: Option[String], getter: String ⇒ A) =
+  def namespaced[A](name: String, suffix: Option[String], getter: String => A) =
   {
     Try(getter(ns.format(name, suffix))) recoverWith {
-      case e: InvalidResource if (ns != global) ⇒
+      case e: InvalidResource if (ns != global) =>
         Try(getter(global.format(name, suffix)))
-      case e ⇒ Failure(e)
+      case e => Failure(e)
     } recoverWith {
-      case e: InvalidResource ⇒
+      case e: InvalidResource =>
         Failure(InvalidResource(
           s"Couldn't resolve attr '${name}' with suffix '${suffix}' in " +
           s"namespace ${ns}")
         )
-      case e ⇒ Failure(e)
+      case e => Failure(e)
     } get
   }
 

@@ -49,22 +49,22 @@ extends SimpleDroidMachine
       val optFade = if (fade) switchToAsyncUi.some else none
       val t = Task {
         msg.task.runDefault()
-          .fold(f ⇒ AsyncTaskFailure(f, msg.failure),
-            s ⇒ AsyncTaskSuccess(s, msg.success))
+          .fold(f => AsyncTaskFailure(f, msg.failure),
+            s => AsyncTaskSuccess(s, msg.success))
       }
       S(Running, AsyncTasksData(data.running :+ msg.task)) << optFade << t <<
         msg.done
   }
 
   def startTask(msg: AsyncTask): Transit = {
-    case S(Idle, f @ AsyncTasksData(_)) ⇒
+    case S(Idle, f @ AsyncTasksData(_)) =>
       execTask(msg, f, true)
-    case S(Running, f @ AsyncTasksData(_)) ⇒
+    case S(Running, f @ AsyncTasksData(_)) =>
       execTask(msg, f, false)
   }
 
   def taskDone(msg: AsyncTaskDone): Transit = {
-    case S(Running, AsyncTasksData(tasks)) ⇒
+    case S(Running, AsyncTasksData(tasks)) =>
       val remaining = tasks filterNot(_ == msg.task)
       if (remaining.isEmpty)
         S(Idle, AsyncTasksData(Nil)) << switchToIdleUi
@@ -73,24 +73,24 @@ extends SimpleDroidMachine
   }
 
   def taskSuccess(msg: AsyncTaskSuccess): Transit = {
-    case s ⇒ s << AsyncTaskResult(msg.result) << msg.toast.map(Toast(_))
+    case s => s << AsyncTaskResult(msg.result) << msg.toast.map(Toast(_))
   }
 
   def taskFail(msg: AsyncTaskFailure): Transit = {
-    case s ⇒ s << LogFatal("executing async task", msg.error) <<
+    case s => s << LogFatal("executing async task", msg.error) <<
       msg.toast.map(Toast(_))
   }
 
   val create: Transit = {
-    case S(Pristine, _) ⇒ S(Idle, AsyncTasksData(Nil))
+    case S(Pristine, _) => S(Idle, AsyncTasksData(Nil))
   }
 
   val admit: Admission = {
-    case Create(_, _) ⇒ create
-    case m: AsyncTask ⇒ startTask(m)
-    case m: AsyncTaskDone ⇒ taskDone(m)
-    case m: AsyncTaskSuccess ⇒ taskSuccess(m)
-    case m: AsyncTaskFailure ⇒ taskFail(m)
+    case Create(_, _) => create
+    case m: AsyncTask => startTask(m)
+    case m: AsyncTaskDone => taskDone(m)
+    case m: AsyncTaskSuccess => taskSuccess(m)
+    case m: AsyncTaskFailure => taskFail(m)
   }
 
   def switchToAsyncUi: Effect = Nop

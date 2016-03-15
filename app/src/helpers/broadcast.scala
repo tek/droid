@@ -69,7 +69,7 @@ extends BroadcastBase
   protected def broadcast(message: String, payload: Option[Params] = None)
   {
     val intent = new Intent(message)
-    payload foreach { _ foreach { case (k, v) ⇒ intent.putExtra(k, v) } }
+    payload foreach { _ foreach { case (k, v) => intent.putExtra(k, v) } }
     broadcastManager.sendBroadcast(intent)
   }
 }

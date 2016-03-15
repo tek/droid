@@ -55,8 +55,8 @@ with cats.syntax.StreamingSyntax
   private[this] def idle: Process[Task, Boolean] = size map(_ == 0)
 
   protected def preselect: Preselection = {
-    case m: InternalMessage ⇒ internalMessage
-    case m: Message ⇒ admit
+    case m: InternalMessage => internalMessage
+    case m: Message => admit
   }
 
   protected def uncurriedTransitions(z: Zthulhu, m: Message) = {
@@ -87,7 +87,7 @@ with cats.syntax.StreamingSyntax
   private[this] def fsmProc(input: MProc, initial: Zthulhu): MProc = {
     val in = Nel(internalMessageIn.dequeue, input, initialMessages)
       .reduce
-      .sideEffect(m ⇒ log.debug(s"processing ${m.show}"))
+      .sideEffect(m => log.debug(s"processing ${m.show}"))
     interrupt
       .wye(in)(stream.wye.interrupt)
       .fsm(initial, uncurriedTransitions)
@@ -108,11 +108,11 @@ with cats.syntax.StreamingSyntax
   def runWith(input: MProc, initial: Zthulhu) = {
     if (debugStates) {
       current.discrete
-        .map(z ⇒ log.debug(z.toString))
+        .map(z => log.debug(z.toString))
         .infraFork("debug state printer")
     }
     fsmProc(emit(MachineStarted) ++ input, initial)
-      .onComplete { running.setter(false).flatMap(_ ⇒ halt) }
+      .onComplete { running.setter(false).flatMap(_ => halt) }
   }
 
   def fork(initial: Zthulhu) = {
@@ -143,7 +143,7 @@ with cats.syntax.StreamingSyntax
   // only emitted when the 'idle' signal is true
   // 'idle' is set when no messages are queued
   // *> combines the two Task instances via Apply.apply2
-  // roughly equivalent to a flatMap(_ ⇒ b)
+  // roughly equivalent to a flatMap(_ => b)
   def join() = {
     log.trace(s"terminating $this")
     (quit.set(true) *> finished.run)
@@ -151,13 +151,13 @@ with cats.syntax.StreamingSyntax
   }
 
   def waitForRunning(timeout: Duration = 20 seconds) = {
-    running.discrete.exists(a ⇒ a)
+    running.discrete.exists(a => a)
       .infraRunFor(s"wait for $this to run", timeout)
   }
 
   def waitIdle(timeout: Duration = 20 seconds) = {
     log.trace(s"waiting for $this to idle ($waitingTasks)")
-    idle.exists(a ⇒ a)
+    idle.exists(a => a)
       .infraRunFor(s"wait for $this to idle", timeout)
   }
 
@@ -188,34 +188,34 @@ with cats.syntax.StreamingSyntax
   }
 
   lazy val internalMessage: Admission = {
-    case SetInitialState(s) ⇒ setInitialState(s)
-    case MachineStarted ⇒ setMachineRunning
-    case QuitMachine ⇒ quitMachine
-    case FlatMapEffect(eff) ⇒ flatMapEffect(eff)
-    case Fork(eff, desc) ⇒ forkEffect(eff, desc)
+    case SetInitialState(s) => setInitialState(s)
+    case MachineStarted => setMachineRunning
+    case QuitMachine => quitMachine
+    case FlatMapEffect(eff) => flatMapEffect(eff)
+    case Fork(eff, desc) => forkEffect(eff, desc)
   }
 
   private[this] def setInitialState(s: BasicState): Transit = {
-    case S(Pristine, d) ⇒ S(s, d)
+    case S(Pristine, d) => S(s, d)
   }
 
   private[this] def setMachineRunning: Transit = {
-    case s ⇒
+    case s =>
       s << running.setter(true).effect("set running signal to true")
   }
 
   private[this] def quitMachine: Transit = {
-    case s ⇒
+    case s =>
       s << (quit.set(true) *> finished.run)
   }
 
   private[this] def flatMapEffect(eff: Effect): Transit = {
-    case s ⇒
+    case s =>
       s << eff
   }
 
   def forkEffect(eff: Effect, desc: String): Transit = {
-    case s ⇒
+    case s =>
       Zthulhu.handleResult(eff)
         .stripW
         .to(forkedEffectResults.enqueue)
@@ -224,14 +224,14 @@ with cats.syntax.StreamingSyntax
   }
 
   def unmatched(m: Message): Transit = {
-    case s if debugStates ⇒
+    case s if debugStates =>
       log.debug(s"unmatched message at $s: $m")
       s
   }
 
   lazy val unmatchedMessageType: Admission = {
-    case m if debugStates ⇒ {
-      case s ⇒
+    case m if debugStates => {
+      case s =>
         log.debug(s"unmatched message type at $s: $m")
         s
     }

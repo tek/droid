@@ -17,8 +17,8 @@ with Logging
 
   def systemService[A: ClassTag](name: String) = {
     context.getSystemService(name) match {
-      case a: A ⇒ a
-      case _ ⇒ {
+      case a: A => a
+      case _ => {
         throw new ClassCastException(
           s"Wrong class for ${implicitly[ClassTag[A]].className}!"
         )
@@ -32,8 +32,8 @@ extends HasActivity
 {
   def activitySub[A <: ActivityBase: ClassTag]: Option[A] = {
     activity match {
-      case a: A ⇒ Option[A](a)
-      case _ ⇒ None
+      case a: A => Option[A](a)
+      case _ => None
     }
   }
 }

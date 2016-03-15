@@ -15,12 +15,12 @@ extends Machine
   def handle = "ui"
 
   val admit: Admission = {
-    case UiTask(ui, timeout) ⇒ {
-      case s ⇒
+    case UiTask(ui, timeout) => {
+      case s =>
         s << Task(scala.concurrent.Await.result(ui.run, timeout))
     }
-    case ViewStreamTask(io, timeout) ⇒ {
-      case s ⇒
+    case ViewStreamTask(io, timeout) => {
+      case s =>
         s << io.unsafePerformIOMain(timeout).effect("perform ViewStream IO")
     }
   }
@@ -59,12 +59,12 @@ with ActivityAccess
     def handle = "activity"
 
     def toast(id: String): Transit = {
-      case s ⇒
+      case s =>
         s << uiCtx.notify(id)
     }
 
     val admit: Admission = {
-      case Toast(id) ⇒ toast(id)
+      case Toast(id) => toast(id)
     }
   }
 }
@@ -73,7 +73,7 @@ trait FragmentAgent
 extends HasActivityAgent
 with CallbackMixin
 {
-  self: FragmentBase ⇒
+  self: FragmentBase =>
 
   def handle = "fragment"
 
@@ -129,7 +129,7 @@ with view.ExtViews
     viewMachine.layout.discrete
       .headOr(dummyLayout)
       .map(_.perform())
-      .sideEffect { v ⇒
+      .sideEffect { v =>
         log.debug(s"setting view for $title:\n${v.viewTree.drawTree}")
       }
   }

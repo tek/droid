@@ -39,7 +39,7 @@ object OI
 
 // @typeclass abstract class CIO[F[_]: OI]
 // {
-//   def map[A, B](fa: F[A])(f: Context ⇒ A ⇒ B): F[B]
+//   def map[A, B](fa: F[A])(f: Context => A => B): F[B]
 // }
 
 @typeclass trait OICtor[A]
@@ -47,7 +47,7 @@ object OI
 
 }
 
-case class OIA[A: ClassTag, B](ctor: B ⇒ A)
+case class OIA[A: ClassTag, B](ctor: B => A)
 
 trait LOIABase[A, B]
 {
@@ -75,7 +75,7 @@ extends AndroidMacros
     val cType = weakTypeOf[C]
     Expr[OIA[A, C]] {
       q"""
-      tryp.droid.view.OIA((ctx: $cType) ⇒ new $aType(ctx))
+      tryp.droid.view.OIA((ctx: $cType) => new $aType(ctx))
       """
     }
   }
@@ -84,7 +84,7 @@ extends AndroidMacros
   (inner: Expr[Any]*): Expr[LOIABase[A, C]] = {
     val aType = weakTypeOf[A]
     val sub = inner.foldLeft(q"shapeless.HNil": Tree) {
-      case (z, v) ⇒ q"$v :: $z"
+      case (z, v) => q"$v :: $z"
     }
     Expr[LOIABase[A, C]] {
       q"""
@@ -94,6 +94,6 @@ extends AndroidMacros
   }
 }
 
-case class ConIO[A](f: Context ⇒ A)
+case class ConIO[A](f: Context => A)
 
-case class ActIO[A](f: Activity ⇒ A)
+case class ActIO[A](f: Activity => A)

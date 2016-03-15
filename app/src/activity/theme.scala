@@ -8,7 +8,7 @@ import rx._
 trait Themes
 extends ActivityBase
 {
-  self: Preferences ⇒
+  self: Preferences =>
 
     private var themeInitialized = false
 

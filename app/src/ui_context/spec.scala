@@ -8,7 +8,7 @@ import com.google.android.gms.auth.GoogleAuthUtil
 trait WithContext
 extends AndroidUiContext
 {
-  def context[A](cb: Context ⇒ A): Option[A]
+  def context[A](cb: Context => A): Option[A]
   def contextO: Option[Context]
 }
 
@@ -16,7 +16,7 @@ trait DefaultWithContext
 extends AndroidContextUiContext
 with WithContext
 {
-  def context[A](cb: Context ⇒ A) = Some(cb(context))
+  def context[A](cb: Context => A) = Some(cb(context))
   def contextO = aContext.some
 }
 

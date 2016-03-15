@@ -27,7 +27,7 @@ with test.TrypDroidSpec
 
   lazy val activity = Robolectric.setupActivity(activityClass)
 
-  override def assertion(isTrue: ⇒ Boolean, message: ⇒ String) =
+  override def assertion(isTrue: => Boolean, message: => String) =
     assert(isTrue, message)
 }
 
@@ -45,7 +45,7 @@ extends TrivialImplTestHelpers
 
   implicit class ViewAssertions[A: RootView](target: A) {
     def recycler = {
-      target.viewOfType[RecyclerView] effect { r ⇒
+      target.viewOfType[RecyclerView] effect { r =>
         sync()
         r.measure(0, 0)
         r.layout(0, 0, 100, 10000)
@@ -55,7 +55,7 @@ extends TrivialImplTestHelpers
     def nonEmptyRecycler(count: Long) = {
       assertWM {
         recycler
-          .map(r ⇒ s"recycler childcount ${r.getChildCount} != $count")
+          .map(r => s"recycler childcount ${r.getChildCount} != $count")
           .getOrElse("recycler doesn't exist")
       } { recycler exists { _.getChildCount == count } }
       recycler

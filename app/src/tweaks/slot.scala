@@ -18,15 +18,15 @@ case class Slot[A <: View](var target: Option[A] = None)
 
   def <~~(s: Snail[A])(implicit ec: EC) = target <~~ s
 
-  def foreach(f: A ⇒ Unit) {
+  def foreach(f: A => Unit) {
     target foreach f
   }
 
-  def map[B](f: A ⇒ B) = {
+  def map[B](f: A => B) = {
     target map f
   }
 
-  def some[B](f: A ⇒ B) = {
+  def some[B](f: A => B) = {
     target some(f)
   }
 }
@@ -46,7 +46,7 @@ trait Slots
 {
   def slut[A <: View] = new Slot[A]()
 
-  def whore[A <: View](pimp: Slot[A]) = Tweak[A](w ⇒ pimp.target = Some(w))
+  def whore[A <: View](pimp: Slot[A]) = Tweak[A](w => pimp.target = Some(w))
 }
 
 object Slots

@@ -36,7 +36,7 @@ extends FragmentHelpers
   def rootFragmentManager(a: A) = a.activity.getFragmentManager
 
   def checkFrame[B: ResId](a: A)(name: B, check: Boolean = true)
-  (f: ⇒ Unit)
+  (f: => Unit)
   {
     if (!check || a.viewExists(name))
       f
@@ -51,7 +51,7 @@ extends FragmentHelpers
   def replaceFragment[B: ResId](a: A)(name: B, fragment: Fragment,
     backStack: Boolean, tag: String, check: Boolean = true)
     {
-      a.res.id(name) foreach { id ⇒
+      a.res.id(name) foreach { id =>
         moveFragment(a)(name, fragment, backStack, tag, check) {
           _.replace(id, fragment, tag)
         }
@@ -62,7 +62,7 @@ extends FragmentHelpers
   // found
   // Return true if the fragment has been inserted
   // TODO allow overriding the check for existence for back stack fragments
-  def replaceFragmentIf(a: A)(name: RId, fragment: ⇒ Fragment,
+  def replaceFragmentIf(a: A)(name: RId, fragment: => Fragment,
     backStack: Boolean, tag: String) =
   {
     val frag = findFragment(a)(tag)
@@ -94,7 +94,7 @@ extends FragmentHelpers
   def addFragment[B: ResId](a: A)(name: B, fragment: Fragment,
     backStack: Boolean, tag: String, check: Boolean = true)
   {
-      a.res.id(name) foreach { id ⇒
+      a.res.id(name) foreach { id =>
         moveFragment(a)(name, fragment, backStack, tag, check) {
           _.add(id, fragment, tag)
         }
@@ -103,7 +103,7 @@ extends FragmentHelpers
 
   def moveFragment[B: ResId](a: A)(name: B, fragment: Fragment,
     backStack: Boolean, tag: String, check: Boolean = true)
-  (move: FragmentTransaction ⇒ Unit)
+  (move: FragmentTransaction => Unit)
   {
     checkFrame(a)(name, check) {
       val trans = childFragmentManager(a).beginTransaction
@@ -115,12 +115,12 @@ extends FragmentHelpers
     }
   }
 
-  def addFragmentUnchecked[B <: Fragment: ClassTag](a: A)(ctor: ⇒ B) {
+  def addFragmentUnchecked[B <: Fragment: ClassTag](a: A)(ctor: => B) {
     val name = fragmentName[B]
     addFragment(a)(RId(name), ctor, false, Tag(name), false)
   }
 
-  def addFragmentIf[B <: Fragment: ClassTag](a: A)(ctor: ⇒ B) {
+  def addFragmentIf[B <: Fragment: ClassTag](a: A)(ctor: => B) {
     val name = fragmentName[B]
     if (!fragmentExists[B](a))
       replaceFragment(a)(RId(name), ctor, false, Tag(name))
@@ -146,11 +146,11 @@ extends FragmentHelpers
     tags
       .lift(0)
       .flatMap(findFragment(a))
-      .flatMap { frag ⇒
+      .flatMap { frag =>
       frag.findNestedFrag(tags.tail) orElse {
         frag match {
-          case f: B ⇒ Some(f)
-          case _ ⇒ None
+          case f: B => Some(f)
+          case _ => None
         }
       }
     }

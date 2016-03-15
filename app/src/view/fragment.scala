@@ -83,7 +83,7 @@ with FragmentAgent
 
   def resLayout(inflater: LayoutInflater, container: ViewGroup) = {
     layoutRes
-      .some(id ⇒ Ui(inflater.inflate(id, container, false)))
+      .some(id => Ui(inflater.inflate(id, container, false)))
       .none(RL()())
   }
 }
@@ -157,18 +157,18 @@ extends MainFragment
 object ShowFragment
 extends ActivityContexts
 {
-  def apply[A <: SyncModel](model: A)(ctor: ⇒ ShowFragment[A])
+  def apply[A <: SyncModel](model: A)(ctor: => ShowFragment[A])
   (implicit a: Activity) = {
     val inst = ctor
     macroid.FragmentBuilder(Ui(inst), new Bundle)
-      .pass(Keys.dataId → model.id, Keys.model → model.simpleJson.spaces2)
+      .pass(Keys.dataId -> model.id, Keys.model -> model.simpleJson.spaces2)
       .factory.get
   }
 }
 
 trait RecyclerFragment[A <: RecyclerView.Adapter[_]]
 {
-  self: FragmentBase ⇒
+  self: FragmentBase =>
 
   def adapter: A
 

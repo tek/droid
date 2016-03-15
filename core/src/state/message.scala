@@ -74,14 +74,14 @@ extends Loggable
 trait MessageInstances
 {
   implicit def messageShow[A <: Message] = Show.shows[A] {
-    case res: Loggable ⇒ s"${res.className}(${res.message})"
-    case a ⇒ a.toString
+    case res: Loggable => s"${res.className}(${res.message})"
+    case a => a.toString
   }
 
   type MProc = Process[Task, Message]
 
   implicit lazy val mProcMonoid =
-    Monoid.instance[MProc]((a, b) ⇒ a.merge(b), Process.halt)
+    Monoid.instance[MProc]((a, b) => a.merge(b), Process.halt)
 
   implicit lazy val mProcMonoidNon: algebra.Monoid[MProc] =
     new algebra.Monoid[MProc] {
@@ -180,15 +180,15 @@ extends MacroMetadata
 
   def hlistTypes(tp: Type): List[Type] = {
     tp match {
-      case a if a =:= typeOf[HNil] ⇒
+      case a if a =:= typeOf[HNil] =>
         Nil
-      case a if a <:< typeOf[HList] ⇒
+      case a if a <:< typeOf[HList] =>
         a.typeArgs match {
-          case List(h, t) ⇒ h :: hlistTypes(t)
-          case t ⇒
+          case List(h, t) => h :: hlistTypes(t)
+          case t =>
             abort(s"invalid type params for MessageFilter: $t ($tp)")
         }
-      case _ ⇒
+      case _ =>
         abort(s"MessageFilter params must be HList, got $tp")
     }
   }
@@ -196,12 +196,12 @@ extends MacroMetadata
   def pub[A <: HList: c.WeakTypeTag] = {
     val tp = weakTypeOf[A]
     val anyVerdict = q"""
-    implicit def default[A] = at[A](_ ⇒ false)
+    implicit def default[A] = at[A](_ => false)
     """
-    val verdicts = hlistTypes(tp) map { t ⇒
+    val verdicts = hlistTypes(tp) map { t =>
       val name = TermName(s"${t.typeSymbol.name.d}")
       q"""
-      implicit def $name = at[$t](_ ⇒ true)
+      implicit def $name = at[$t](_ => true)
       """
     }
     q"""

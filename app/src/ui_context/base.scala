@@ -7,7 +7,7 @@ import macroid._
 
 import tryp.UiContext
 
-case class FragmentBuilder(ctor: () ⇒ Fragment, id: RId,
+case class FragmentBuilder(ctor: () => Fragment, id: RId,
   tagO: Option[String] = None)
   {
     def apply() = ctor()
@@ -18,7 +18,7 @@ case class FragmentBuilder(ctor: () ⇒ Fragment, id: RId,
 class ActionMacroidOps[A](a: AnyAction[A])
 {
   def uiBlocking(implicit dbInfo: DbInfo, ec: EC) = {
-    Ui.nop.flatMap { _ ⇒
+    Ui.nop.flatMap { _ =>
       a.!!
       Ui.nop
     }
@@ -93,7 +93,6 @@ with Transitions
 with TrypActivityAccess
 with HasSettings
 with Input
-with tweaks.TweakHelpers
 {
   override def loadFragment(fragment: FragmentBuilder) = {
     Ui {
@@ -105,7 +104,7 @@ with tweaks.TweakHelpers
 
   override def transitionFragment(fragment: FragmentBuilder) = {
     settings.app.bool("view_transitions", true)().fold(trypActivity, None)
-      .some { a ⇒
+      .some { a =>
         Ui[String] {
           implicit val fm = FragmentManagement.activityFragmentManagement[Activity]
           val ui = Macroid.frag(
@@ -114,7 +113,7 @@ with tweaks.TweakHelpers
           "Transition successful"
         }
       }
-      .none(loadFragment(fragment) map(_ ⇒ "Cannot transition fragment"))
+      .none(loadFragment(fragment) map(_ => "Cannot transition fragment"))
   }
 
   override def failure[E: Show](e: NonEmptyList[E]) = {
@@ -170,7 +169,7 @@ class UiOps[A](ui: Ui[A])
     Log.d(s"running the Ui")
     Ui.run(ui)
       .flatMap(handleUiResult)
-      .andThen { case Failure(e) ⇒ uiError(e) }
+      .andThen { case Failure(e) => uiError(e) }
   }
 
   def handleUiResult(a: A) = {
@@ -202,8 +201,8 @@ extends ToUiOps
   def attemptUi: Unit = {
     Log.d(s"running action")
     a.!.task unsafePerformAsync {
-      case \/-(r) ⇒ handleActionResult(r)
-      case -\/(e) ⇒ dbError(e)
+      case \/-(r) => handleActionResult(r)
+      case -\/(e) => dbError(e)
     }
   }
 

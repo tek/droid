@@ -1,6 +1,6 @@
 package tryp.droid
 
-import scala.collection.mutable.{Set ⇒ MSet}
+import scala.collection.mutable.{Set => MSet}
 import scala.concurrent.ExecutionContext
 
 import android.widget._
@@ -38,7 +38,7 @@ extends WidgetBase[A](transName)
   def <~~[B <: Snail[A]](t: B)(implicit ec: ExecutionContext) = ui <~~ t
 }
 
-case class Layout[A <: ViewGroup](view: (Ui[View]*) ⇒ Ui[A], transName: String,
+case class Layout[A <: ViewGroup](view: (Ui[View]*) => Ui[A], transName: String,
   transition: Transition, duration: Long = 300)
 (implicit a: Activity)
 extends WidgetBase[A](transName)
@@ -96,7 +96,7 @@ with Macroid
   implicit class `Slot transition helper`[A <: ViewGroup](root: Slot[A])
   {
     def transitionTo(trans: FragmentTransition, view: Ui[View]) {
-      root some { r ⇒
+      root some { r =>
         trans.go(r, view.get)
       } none(sys.error("no ui root set for transition!"))
     }
@@ -122,7 +122,7 @@ with Macroid
 
   implicit class `Transition operator`(t: Transition) {
     def ++(other: Transition) = {
-      (new TransitionSet) tap { s ⇒
+      (new TransitionSet) tap { s =>
         s.addTransition(t)
         s.addTransition(other)
       }
@@ -162,7 +162,7 @@ class Widgets(implicit a: Activity)
     Widget(view, transName, transition)
   }
 
-  def layout[A <: ViewGroup](view: (Ui[View]*) ⇒ Ui[A], transName: String,
+  def layout[A <: ViewGroup](view: (Ui[View]*) => Ui[A], transName: String,
     transition: Transition, duration: Long = 300) =
   {
     addTransitionSet(transName, transition, duration)

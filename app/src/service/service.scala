@@ -39,8 +39,8 @@ with ServiceCommon
   {
     start
     Task(handleIntent(intent)).unsafePerformAsync {
-      case -\/(err) ⇒ log.error(err)(s"starting intent $intent")
-      case _ ⇒
+      case -\/(err) => log.error(err)(s"starting intent $intent")
+      case _ =>
     }
     Service.START_STICKY
   }

@@ -22,7 +22,7 @@ with view.meta.Exports
       w[TextView] :: w[Spinner] :: HNil
     )
     val kest = kestrel[FrameLayout, Unit](_.setForeground(null))
-    val vgk: CK[View] = ctx ⇒ kestrel[View, Unit](a ⇒ ())
+    val vgk: CK[View] = ctx => kestrel[View, Unit](a => ())
     val ks = kest >>= vgk
     val rl2 = rl >>= ks
     val tv = iota.text[TextView]("")

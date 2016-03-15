@@ -15,8 +15,8 @@ trait ProxyBase {
   def extractView(args: Any*): Option[View] = {
     args.lift(0) flatMap {
       _ match {
-        case v: View ⇒ Some(v)
-        case _ ⇒ None
+        case v: View => Some(v)
+        case _ => None
       }
     }
   }
@@ -46,13 +46,13 @@ extends ToSearchView
   def findtAt[B: ResId, C <: View: ClassTag](root: View)
   (name: B): TypedResult[C] = {
     findAt(root)(name) match {
-      case Xor.Right(c: C) ⇒
+      case Xor.Right(c: C) =>
         Xor.Right(c)
-      case Xor.Right(a) ⇒
+      case Xor.Right(a) =>
         val tpe = className[C]
         Xor.Left(
           new Throwable(s"couldn't cast view $a to specified type $tpe"))
-        case Xor.Left(t) ⇒ Xor.Left(t)
+        case Xor.Left(t) => Xor.Left(t)
     }
   }
 
@@ -67,7 +67,7 @@ extends ToSearchView
   def textView[B: ResId]
   (name: B, root: Option[View] = None): TypedResult[TextView] = {
     // implicit val c = context(a)
-    val finder = root.map(b ⇒ findtAt[B, TextView](b) _)
+    val finder = root.map(b => findtAt[B, TextView](b) _)
       .getOrElse(findt[B, TextView] _)
     finder(name)
   }
@@ -83,7 +83,7 @@ extends ToSearchView
   with ProxyBase
   {
     def applyDynamic(name: String)(args: Any*): SearchResult = {
-      val finder = extractView(args).map(b ⇒ findAt[String](b) _) |
+      val finder = extractView(args).map(b => findAt[String](b) _) |
         find[String] _
       finder(name)
     }
@@ -99,7 +99,7 @@ extends ToSearchView
   {
     def applyDynamic[B <: View: ClassTag](name: String)
     (args: Any*): TypedResult[B] = {
-      val finder = extractView(args).map(b ⇒ findtAt[String, B](b) _) |
+      val finder = extractView(args).map(b => findtAt[String, B](b) _) |
         findt[String, B] _
       finder(name)
     }

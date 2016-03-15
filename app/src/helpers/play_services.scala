@@ -5,7 +5,7 @@ import scalaz._, Scalaz._, stream._, Process._
 
 import com.google.android.gms
 import gms.common.{ConnectionResult, GooglePlayServicesUtil}
-import gms.common.{api ⇒ gapi}
+import gms.common.{api => gapi}
 import gapi.GoogleApiClient
 
 import state._
@@ -81,7 +81,7 @@ extends DroidMachine[A]
   protected lazy val apiClient = builder.map(_.build)
 
   def builder = {
-    ctx context { context ⇒
+    ctx context { context =>
       new GoogleApiClient.Builder(context)
         .addApi(api)
         .addConnectionCallbacks(connectionCallbacks)
@@ -114,17 +114,17 @@ extends DroidMachine[A]
   }
 
   val basicAdmit: Admission = {
-    case Connect ⇒ connect
-    case ConnectionEstablished ⇒ connectionEstablished
-    case ConnectionLost ⇒ connectionLost
-    case ConnectionFailed(_) ⇒ connectionLost
-    case Disconnect ⇒ disconnect
+    case Connect => connect
+    case ConnectionEstablished => connectionEstablished
+    case ConnectionLost => connectionLost
+    case ConnectionFailed(_) => connectionLost
+    case Disconnect => disconnect
   }
 
   def admit = basicAdmit
 
   def connect: Transit = {
-    case S(Disconnected, d) ⇒
+    case S(Disconnected, d) =>
       S(Connecting, d) <<
         stateEffect("connecting play services") {
           apiClient foreach(_.connect())
@@ -132,7 +132,7 @@ extends DroidMachine[A]
   }
 
   def disconnect: Transit = {
-    case S(_, d) ⇒
+    case S(_, d) =>
       S(Disconnected, d) <<
         stateEffect("disconnecting play services") {
           apiClient foreach(_.disconnect())
@@ -140,12 +140,12 @@ extends DroidMachine[A]
   }
 
   def connectionEstablished: Transit = {
-    case S(_, d) ⇒
+    case S(_, d) =>
       S(Connected, d) << isConnected.set(true).effect("set signal isConnected")
   }
 
   def connectionLost: Transit = {
-    case S(_, d) ⇒
+    case S(_, d) =>
       S(Disconnected, d)
   }
 }

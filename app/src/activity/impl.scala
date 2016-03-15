@@ -41,7 +41,7 @@ abstract class TrypDrawerActivity
 extends TrypDefaultActivity
 with Drawer
 {
-  self: HasContextAgent ⇒
+  self: HasContextAgent =>
 }
 
 trait ViewActivity
@@ -69,8 +69,8 @@ with Logging
 with StateStrategy
 {
   def stateApp = getApplication match {
-    case a: StateApplication ⇒ Maybe.just(a)
-    case _ ⇒ Maybe.empty
+    case a: StateApplication => Maybe.just(a)
+    case _ => Maybe.empty
   }
 
   protected def mainViewTimeout = 5 seconds
@@ -82,7 +82,7 @@ with StateStrategy
       _.setActivity(this)
         .map(_.reify.flatMap(iota.kestrel(setContentView(_))))
         .sideEffect(_.performMain())
-        .infraRunFor("obtain main view", mainViewTimeout)
+        .infraRunFor("set main view", mainViewTimeout)
     )
   }
 }

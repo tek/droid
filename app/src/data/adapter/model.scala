@@ -46,7 +46,7 @@ with ToUiValidationNelActionOps
   }
 
   def onBindViewHolder(holder: SimpleModelViewHolder, position: Int) {
-    items.lift(position) foreach { item ⇒
+    items.lift(position) foreach { item =>
       Ui.run(
         holder.root <~ On.click { enhance(holder, item) },
         holder.name <~ txt.literal(item.name),

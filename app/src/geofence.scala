@@ -15,7 +15,7 @@ case class GeofenceInterface(apiClient: GoogleApiClient, intent: PendingIntent)
 {
   def request(locations: Seq[GeofenceData]) = {
     val builder = new GeofencingRequest.Builder
-    locations foreach { loc ⇒ builder.addGeofence(geofence(loc)) }
+    locations foreach { loc => builder.addGeofence(geofence(loc)) }
     Task(GeofencingApi.addGeofences(apiClient, builder.build, intent))
       .map(attachResultCallback("installed", locations))
   }
@@ -42,11 +42,11 @@ case class GeofenceInterface(apiClient: GoogleApiClient, intent: PendingIntent)
   def reportGeofenceResult(status: Status, action: String) {
     import GeofenceStatusCodes._
     status.getStatusCode match {
-      case GEOFENCE_NOT_AVAILABLE ⇒ Log.e("Geofence service down")
-      case GEOFENCE_TOO_MANY_GEOFENCES ⇒ Log.e("Too many geofences (>100)")
-      case GEOFENCE_TOO_MANY_PENDING_INTENTS ⇒
+      case GEOFENCE_NOT_AVAILABLE => Log.e("Geofence service down")
+      case GEOFENCE_TOO_MANY_GEOFENCES => Log.e("Too many geofences (>100)")
+      case GEOFENCE_TOO_MANY_PENDING_INTENTS =>
         Log.e("Too many pending geofence intents (>5)")
-      case _ ⇒ Log.i(s"Geofences $action successfully")
+      case _ => Log.i(s"Geofences $action successfully")
     }
   }
 
@@ -88,10 +88,10 @@ extends RootAgent
 
   def setup(locations: Seq[GeofenceData]) = {
     locations match {
-      case head :: tail ⇒
+      case head :: tail =>
         location.oneClient
-          .flatMap(c ⇒ setupProcess(c, NonEmptyList(head, tail: _*)))
-      case _ ⇒
+          .flatMap(c => setupProcess(c, NonEmptyList(head, tail: _*)))
+      case _ =>
         log.debug("called GeofenceHandler.setup() with empty location list")
         halt
     }

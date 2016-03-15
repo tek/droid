@@ -24,24 +24,24 @@ extends Matcher[A]
   def apply[C <: A](e: Expectable[C]): MatchResult[C] = {
     sync()
     (e.value: A).viewOfType[B] map(checker.post) match {
-      case Some(v) ⇒
+      case Some(v) =>
         val (success, ok, ko) = checker.check(v)
         result(success, ok, ko, e)
-      case None ⇒
+      case None =>
         failure(s"does not contain ${className[B]}", e)
     }
   }
 }
 
-final class ContainsViewExpectable[A: RootView](a: ⇒ A)
-extends TrypExpectable(() ⇒ a)
+final class ContainsViewExpectable[A: RootView](a: => A)
+extends TrypExpectable(() => a)
 with ValueChecksBase
 {
-  def contains[B <: View: ClassTag](m: ⇒ ViewChecker[B]) = {
+  def contains[B <: View: ClassTag](m: => ViewChecker[B]) = {
     applyMatcher(ContainsViewMatcher(m))
   }
 
-  def willContain[B <: View: ClassTag](m: ⇒ ViewChecker[B]) = {
+  def willContain[B <: View: ClassTag](m: => ViewChecker[B]) = {
     applyMatcher(ContainsViewMatcher(m).eventually)
   }
 }
@@ -88,6 +88,6 @@ extends SpecificationLike
 
   def view[A <: View: ClassTag] = new TypedViewMatcher[A]
 
-  implicit def anyToContainsViewExpectable[A: RootView](a: ⇒ A) =
+  implicit def anyToContainsViewExpectable[A: RootView](a: => A) =
     new ContainsViewExpectable[A](a)
 }
