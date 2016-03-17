@@ -78,6 +78,7 @@ with StateStrategy
   override def onCreate(state: Bundle) = {
     super.onCreate(state)
     implicit val ctx: Context = this
+    Thread.sleep(1000)
     stateApp.map(
       _.setActivity(this)
         .map(_.reify.flatMap(iota.kestrel(setContentView(_))))

@@ -9,11 +9,11 @@ import iota._
 trait IOTypes
 {
   type IOV = IO[View]
-  type IOTrans[A, B] = A => IO[B]
-  type IOCtor[A] = IOTrans[Context, A]
-  type IOCTrans[A, B] = Context => IOTrans[A, B]
+  type IOF[A, B] = A => IO[B]
+  type ConIO[A] = view.Con[IO[A]]
+  type ConIOF[A, B] = view.Con[IOF[A, B]]
   type CF[A, B] = Context => A => B
-  type CK[A] = CF[A, IO[A]]
+  type CK[A] = ConIOF[A, A]
 }
 
 trait IOInstances

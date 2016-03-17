@@ -16,7 +16,7 @@ trait FrameLayoutCombinators
 extends IotaCombinators[FrameLayout]
 with ResourcesAccess
 {
-  def foreground(draw: Drawable): CK[FrameLayout] = k(_.setForeground(draw))
+  def foreground(draw: Drawable): CK[FrameLayout] = kk(_.setForeground(draw))
 
   @ckwf def selectableFg = {
     res.theme.drawable("selectableItemBackground")

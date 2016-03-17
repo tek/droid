@@ -89,6 +89,10 @@ with RootAgent
       super.onCreate()
     }
 
+    // FIXME deadlock when publishing messages in the returned Process
+    // FIXME also deadlocks when called before machine is running
+    // TODO before publishing, wait for machine to fire up
+    // or even better: find out why this deadlocks
     def setActivity(act: Activity) = {
       publishAll(Nes(SetActivity(act), SetAgent(defaultAgent)))
       machine.mainView.dequeue.take(1)

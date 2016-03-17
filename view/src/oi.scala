@@ -37,16 +37,6 @@ object OI
   }
 }
 
-// @typeclass abstract class CIO[F[_]: OI]
-// {
-//   def map[A, B](fa: F[A])(f: Context => A => B): F[B]
-// }
-
-@typeclass trait OICtor[A]
-{
-
-}
-
 case class OIA[A: ClassTag, B](ctor: B => A)
 
 trait LOIABase[A, B]
@@ -94,6 +84,19 @@ extends AndroidMacros
   }
 }
 
-case class ConIO[A](f: Context => A)
+case class Con[A](f: Context => A)
+{
+  def apply(implicit c: Context) = f(c)
+}
 
-case class ActIO[A](f: Activity => A)
+trait ConFunctions
+{
+  implicit def cfToCon[A, B](a: CF[A, B]): Con[A => B] = Con(a)
+
+  implicit def iofToCon[A, B](a: A => B): Con[A => B] = cfToCon(c => a)
+}
+
+object Con
+extends ConFunctions
+
+case class Act[A](f: Activity => A)

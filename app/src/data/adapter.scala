@@ -157,12 +157,13 @@ with FrameLayoutCombinators
   def onCreateViewHolder(parent: ViewGroup, viewType: Int) = {
     val tv = w[TextView]
     val v = c[FrameLayout](
-      l[FrameLayout](tv :: HNil) >>=
-        lp[FrameLayout](MATCH_PARENT, MATCH_PARENT) >>= nopK >>=
-          selectableFg
+      l[FrameLayout](tv :: HNil) >>-
+        lp[FrameLayout](MATCH_PARENT, MATCH_PARENT) >>- selectableFg
     )
     StringHolder(v.perform(), tv.v)
   }
+
+  import iota.std.TextCombinators.text
 
   def onBindViewHolder(holder: StringHolder, position: Int) {
     items(position) foreach { s =>

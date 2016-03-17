@@ -5,5 +5,6 @@ package tryp {
     package object meta extends GlobalsBase
     package object helpers extends TrypDroidGlobals
     package object tweaks extends TrypDroidGlobals
+    package object io extends TrypDroidGlobals
   }
 }

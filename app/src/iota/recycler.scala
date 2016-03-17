@@ -33,9 +33,9 @@ with ResourcesAccess
 
   @ck def divider = _.addItemDecoration(new DividerItemDecoration(ctx, null))
 
-  def dataChanged = k(_.getAdapter.notifyDataSetChanged)
+  def dataChanged = kp(_.getAdapter.notifyDataSetChanged)
 
-  def onScroll(callback: (ViewGroup, Int) => Unit) = k { v =>
+  def onScroll(callback: (ViewGroup, Int) => Unit) = kp { v =>
     val listener = new RecyclerView.OnScrollListener {
       var height = 0
 
@@ -48,7 +48,7 @@ with ResourcesAccess
     v.setOnScrollListener(listener)
   }
 
-  def onScrollActor(actor: ActorSelection) =
+  def onScrollActor(actor: ActorSelection): CK[Principal] =
     onScroll((view, y) => actor ! Messages.Scrolled(view, y))
 
   // def reverseLayout = ck {
@@ -62,14 +62,14 @@ with ResourcesAccess
   //   rv.scrollToPosition(rv.getAdapter.getItemCount - 1)
   // }
 
-  @ckw def rvPad = {
-    res.dimen("header_height")
-      .map(a => (ctx: Context) => padding[Principal](top = a.toInt))
-      .getOrElse(nopK)
+  def rvPad(implicit res: Resources) = {
+    resK[Principal, Float](res.d("header_height", None))(
+      h => padding[Principal](top = h.toInt).unit[Principal])
   }
 
-  def parallaxScroller(actor: ActorSelection) = {
-    onScrollActor(actor) >>= noClipToPadding >>= rvPad
+  def parallaxScroller[A <: Principal](actor: ActorSelection)
+  (implicit res: Resources) = {
+    onScrollActor(actor) >>- noClipToPadding >>- rvPad
   }
 }
 

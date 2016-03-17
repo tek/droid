@@ -96,7 +96,7 @@ import scalaz.Liskov.<~<
 
 @typeclass trait ChainKestrel[F[_]]
 {
-  @op(">>=", alias = true)
+  @op(">>-", alias = true)
   def chain[A, B, G[_]](fa: F[A])(gb: G[B])
   (implicit lis: A <~< B, other: ChainKestrel[G]): CK[A] = {
     val c1 = curry(fa)
@@ -114,7 +114,7 @@ trait ChainKestrelInstances
 {
   implicit lazy val chainPlainKestrel = new ChainKestrel[Kestrel] {
 
-    def curry[A](fa: Kestrel[A]) = ctx => fa
+    def curry[A](fa: Kestrel[A]) = (ctx: Context) => fa
   }
 
   implicit def chainContextKestrel =
@@ -136,18 +136,47 @@ object CKInstances
   implicit def ckMonoid[A] = new Monoid[CK[A]] {
     def empty = ChainKestrel.ckZero[A]
 
-    def combine(x: CK[A], y: CK[A]) = x >>= y
+    def combine(x: CK[A], y: CK[A]) = x >>- y
   }
 }
 
-trait IotaCombinators[A]
+final class KestrelOps[A](fa: Kestrel[A])
 {
-  type Principal = A
+  def ck[B <: A]: CK[B] = {
+    Con(ctx => a => { fa(a); IO(a) })
+  }
 
-  implicit def ckMonoid[A] = CKInstances.ckMonoid[A]
+  def unit[B <: A]: B => Unit = a => { fa(a); () }
+}
 
-  protected def k[B]: (Principal => B) => CK[Principal] =
-    kestrel[Principal, B] _ andThen { a => (ctx: Context) => a }
+trait CombinatorBase
+{
+  def k[A, B](f: Context => A => B): ConIOF[A, A] =
+    Con(ctx => a => iota.IO { f(ctx)(a); a })
 
-  protected def nopK = k(_ => ())
+  implicit def ToKestrelOps[A](fa: Kestrel[A]) = new KestrelOps(fa)
+}
+
+trait IotaCombinators[P]
+extends CombinatorBase
+{
+  protected type Principal = P
+
+  protected implicit def ckMonoid[P] = CKInstances.ckMonoid[P]
+
+  protected def kk[A <: P, B](f: Principal => B) = {
+    k[A, B](ctx => a => f(a: P))
+  }
+
+  protected def kp[B](f: Principal => B) = {
+    kk[P, B](f)
+  }
+
+  protected def nopK[A <: P] = kk[A, Unit](_ => ())
+
+  def resK[A <: P, B](res: Throwable Xor B)(impl: B => P => Unit): CK[A] = {
+    res
+      .map(r => kk[A, Unit](impl(r)))
+      .getOrElse(nopK[A])
+  }
 }

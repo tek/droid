@@ -10,6 +10,8 @@ import shapeless._
 
 import cats.data.Streaming
 
+import iota.std.TextCombinators.text
+
 trait NestedSpecMachine
 extends SimpleViewMachine
 
@@ -25,7 +27,7 @@ import NestedActivity._
 class NestedActivity
 extends TestViewActivity
 {
-  val tk = iota.text[TextView](NestedActivity.text)
+  val tk = text[TextView](NestedActivity.text)
 
   lazy val nested1 = new SimpleViewMachine
   {
@@ -43,9 +45,9 @@ extends TestViewActivity
       lazy val layoutIO = l[FrameLayout](tv :: HNil)
 
       override def admit: Admission = {
-        case SetText(text) => {
+        case SetText(content) => {
           case z =>
-            z << (tv.v >>= iota.text[TextView](text))
+            z << (tv.v >>= text[TextView](content))
         }
       }
     }

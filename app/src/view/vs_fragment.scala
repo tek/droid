@@ -19,9 +19,9 @@ extends SimpleViewMachine
   def recyclerConf: CK[RecyclerView]
 
   def recycler =
-    w[RecyclerView] >>=
-      recyclerAdapter(adapter) >>=
-      recyclerConf >>=
+    w[RecyclerView] >>-
+      recyclerAdapter(adapter) >>-
+      recyclerConf >>-
       recyclerLayout
 
   def recyclerLayout: CK[RecyclerView] = linear

@@ -1,18 +1,20 @@
 package tryp
 package droid
+package io
 
 import android.util.TypedValue
 import android.widget._
 import android.text.{TextWatcher,TextUtils,Editable}
 
 import iota._
+import iota.std.TextCombinators
 
-object TextCombinators
+package object text
 extends view.IotaCombinators[TextView]
 {
   def hintR[A <: TextView](resName: String)(implicit res: Resources) = {
     res.s(resName, Some("hint"))
-      .map(hint)
+      .map(TextCombinators.hint)
       .getOrElse(nopK)
   }
 
@@ -48,5 +50,5 @@ extends view.IotaCombinators[TextView]
     textWatcher(listener)
   }
 
-  def clear[A <: TextView] = text[A]("")
+  def clear[A <: TextView] = TextCombinators.text[A]("")
 }

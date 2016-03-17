@@ -25,13 +25,13 @@ extends Logging
       override def reify[A](fa: FreeIO[A])(implicit c: Context): iota.IO[A] = {
         super.reify(fa)(c) >>= FreeIO.attachSignal(fa.sig)
       }
-      def pure[A](f: IOCtor[A]) = FreeIO(f)
+      def pure[A](f: Con[iota.IO[A]]) = FreeIO(f)
 
       def ctor[A](fa: FreeIO[A]) = fa.ctor
     }
 }
 
-case class FreeIO[A](ctor: IOCtor[A])
+case class FreeIO[A](ctor: Con[iota.IO[A]])
 extends Logging
 with IOStrategy
 {
@@ -48,7 +48,7 @@ with IOStrategy
 }
 
 case class ViewStream[A](view: Process[Task, iota.IO[A]]) {
-  def >>=[B](f: A => iota.IO[B]): ViewStream[B] = ViewStream(view map(_ >>= f))
+  def >>=[B](f: IOF[A, B]): ViewStream[B] = ViewStream(view map(_ >>= f))
 
   def unsafePerformIOMain(timeout: Duration = Duration.Inf) =
     view
@@ -58,6 +58,7 @@ case class ViewStream[A](view: Process[Task, iota.IO[A]]) {
 }
 
 trait ExtViews
+extends ConFunctions
 {
   def w[A <: View]: FreeIO[A] = macro ViewM.w[A, FreeIO]
 

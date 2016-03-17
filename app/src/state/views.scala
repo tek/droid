@@ -140,8 +140,9 @@ with view.ExtViews
       .getOrElse(dummyLayout.perform())
   }
 
-  def dummyLayout = w[TextView] >>=
-    iota.text[TextView]("Couldn't load content")
+  import iota.std.TextCombinators.text
+
+  def dummyLayout = w[TextView] >>= text("Couldn't load content")
 }
 
 abstract class AppStateActivityAgent(implicit a: AndroidActivityUiContext,

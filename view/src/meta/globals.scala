@@ -15,3 +15,4 @@ with view.ChainKestrelInstances
 with view.ChainKestrel.ToChainKestrelOps
 with IOTypes
 with IOInstances
+with view.ConFunctions

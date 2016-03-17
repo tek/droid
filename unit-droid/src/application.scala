@@ -20,3 +20,14 @@ with state.StateApplication
     new AppStateActivityAgent
   }
 }
+
+class MainViewStateApplication
+extends Application
+with state.StateApplication
+{
+  def defaultAgent(a: Activity) = {
+    implicit val uiCtx = AndroidActivityUiContext.default(a)
+    implicit val res = droid.core.Resources.fromContext(a)
+    new MainViewAA
+  }
+}

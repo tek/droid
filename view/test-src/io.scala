@@ -8,25 +8,25 @@ import shapeless._
 
 import iota._
 
+import iota.std.TextCombinators.text
+
 class IOTest
-extends SpecBase
+extends Spec
 with ExtViews
 with view.meta.Exports
 {
   def is = s2"""
-  foo $foo
+  building $building
   """
 
-  def foo = {
-    val rl = l[FrameLayout](
-      w[TextView] :: w[Spinner] :: HNil
-    )
-    val kest = kestrel[FrameLayout, Unit](_.setForeground(null))
-    val vgk: CK[View] = ctx => kestrel[View, Unit](a => ())
+  def building = {
+    val t = w[TextView]
+    val rl = l[FrameLayout](w[TextView] :: w[Spinner] :: HNil)
+    val kest = kestrel((_: FrameLayout).setForeground(null))
+    val vgk: CK[View] = ctx => kestrel((a: View) => ())
     val ks = kest >>= vgk
-    val rl2 = rl >>= ks
-    val tv = iota.text[TextView]("")
-    w[TextView] >>= tv
+    val rl2 = rl >>- ks
+    w[TextView] >>= text("")
     1 === 1
   }
 }

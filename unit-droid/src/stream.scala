@@ -13,7 +13,7 @@ import view._
 trait SpecViewMachine
 extends SimpleViewMachine
 {
-  import TextCombinators._
+  import io.text._
   import iota._
 
   import android.view.ViewGroup.LayoutParams._

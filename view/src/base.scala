@@ -11,36 +11,26 @@ import simulacrum._
 import shapeless._
 import shapeless.ops.hlist._
 
-trait AndroidEffect[F[_, _]]
-{
-  def curry[A, B](f: F[A, IO[B]]): IOCTrans[A, B]
-}
-
-object AndroidEffect
-{
-  implicit lazy val func1AndroidEffect = new AndroidEffect[Function1] {
-    def curry[A, B](f: A => IO[B]) = c => f
-  }
-
-  implicit lazy val ctransAndroidEffect =
-    new AndroidEffect[λ[(a, b) => Context => a => b]]
-    {
-      def curry[A, B](f: Context => A => IO[B]): IOCTrans[A, B] = f
-    }
-}
-
 @typeclass trait IOBuilder[F[_]]
 {
-  @op(">>=", alias = true)
-  def flatMap[A, B, C[_, _], D]
+  @op(">>-", alias = true)
+  def flatMap[A, B]
   (fa: F[A])
-  (f: C[D, IO[B]])
-  (implicit eff: AndroidEffect[C], lis: scalaz.Liskov[A, D]): F[B] =
+  (f: ConIOF[A, B])
+  : F[B] =
   {
     lift { ctx =>
-      val curried = lis.apply _ andThen eff.curry(f)(ctx)
-      ctor(fa)(ctx) >>= curried
+      ctor(fa)(ctx) >>= f(ctx)
     }
+  }
+
+  @op(">>=", alias = true)
+  def flatMapK[A, B]
+  (fa: F[A])
+  (f: A => IO[B])
+  : F[B] =
+  {
+    flatMap(fa)(Con(c => f))
   }
 
   def reify[A](fa: F[A])(implicit ctx: Context): IO[A] = {
@@ -55,30 +45,30 @@ object AndroidEffect
     reify(fa).performMain()
   }
 
-  def lift[A, B](f: Context => iota.IO[B]) = pure(f)
+  def lift[A, B](f: Context => iota.IO[B]) = pure(Con(f))
 
-  def pure[A](f: IOCtor[A]): F[A]
+  def pure[A](f: ConIO[A]): F[A]
 
-  def ctor[A](fa: F[A]): IOCtor[A]
+  def ctor[A](fa: F[A]): ConIO[A]
 }
 
 trait IOBase[A]
 {
-  def ctor: IOCtor[A]
+  def ctor: ConIO[A]
 }
 
-case class Widget[A <: View](ctor: IOCtor[A])
+case class Widget[A <: View](ctor: ConIO[A])
 extends IOBase[A]
 
-case class Layout[A <: ViewGroup](ctor: IOCtor[A])
+case class Layout[A <: ViewGroup](ctor: ConIO[A])
 extends IOBase[A]
 
-case class SimpleIO[A](ctor: IOCtor[A])
+case class SimpleIO[A](ctor: ConIO[A])
 
 object SimpleIO
 {
   implicit def simpleIoBuilder = new IOBuilder[SimpleIO] {
-    def pure[A](f: IOCtor[A]) = SimpleIO(f)
+    def pure[A](f: ConIO[A]) = SimpleIO(f)
 
     def ctor[A](fa: SimpleIO[A]) = fa.ctor
   }
@@ -91,7 +81,7 @@ extends Poly1
     at[F[A]](fa => (ctx: Context) => b.reify(fa)(ctx))
 }
 
-case class LayoutBuilder[A, F[_]](layout: Context => List[IOV] => IO[A])
+case class LayoutBuilder[A, F[_]](layout: ConIOF[List[IOV], A])
 (implicit builder: IOBuilder[F])
 {
   def apply[In <: HList, Out <: HList](vs: In)
@@ -102,7 +92,7 @@ case class LayoutBuilder[A, F[_]](layout: Context => List[IOV] => IO[A])
         val reifies = vs.map(reifySub).toList.map(_(ctx))
         layout(ctx)(reifies)
       }
-      builder.pure(f)
+      builder.pure(Con(f))
   }
 }
 
@@ -126,7 +116,7 @@ extends AndroidMacros
     val ctor = internal.typeRef(pre, sym, List(aType))
     Expr[F[A]] {
       q"""
-      new $ctor(iota.w[$aType](_))
+      new $ctor(tryp.droid.view.Con(iota.w[$aType](_)))
       """
     }
   }
@@ -139,7 +129,7 @@ extends AndroidMacros
       q"""
       iota.c[$aType] {
         val b = tryp.droid.view.LayoutBuilder[$aType, $fType](
-          ctx => sub => iota.l[$aType](sub: _*)(ctx))
+          tryp.droid.view.Con(ctx => sub => iota.l[$aType](sub: _*)(ctx)))
         b($inner)
       }
       """

@@ -1,12 +1,12 @@
 package tryp
 package droid
 
-import macroid.FullDsl._
-
 import MainViewMessages._
 
 import cats._
 import cats.syntax.apply._
+
+import state._
 
 trait MainView
 extends ActivityBase
@@ -14,6 +14,8 @@ with Transitions
 with ActivityAgent
 {
   mainView: Akkativity =>
+
+  import macroid.FullDsl._
 
   val content = slut[FrameLayout]
 
@@ -78,6 +80,68 @@ with ActivityAgent
   def canGoBack = this.backStackNonEmpty
 
   lazy val mainActor = createActor(MainActor.props)._2
+
+  def showDetails(data: Model) {}
+}
+
+import iota._
+import io.text._
+import io.misc._
+
+import iota.std.TextCombinators._
+
+import shapeless._
+
+trait ASMainView
+extends AppStateActivityAgent
+{
+  mainView: ASMainView =>
+
+  lazy val mainViewMachine = new MainViewMachine {
+    def handle = "mainview"
+    override def description = "main view state"
+    override def nativeBack() = mainView.nativeBack()
+  }
+
+  lazy val viewMachine = new SimpleViewMachine {
+    lazy val contentLayout = {
+      val c = w[FrameLayout] >>- metaName("content frame") >>-
+        id[View](Aid.content)
+      l[FrameLayout](c :: HNil) >>- metaName("root frame") >>- bgCol("main")
+    }
+
+    lazy val layoutIO = contentLayout
+  }
+
+  override def machines = mainViewMachine %:: super.machines
+
+  // def loadFragment(fragment: Fragment) = {
+  //   val f = frag(this, fragment, RId.content)
+  //   send(LoadUi(f))
+  // }
+
+  // def loadShowFragment[A <: SyncModel: ClassTag]
+  // (model: A, ctor: () => ShowFragment[A]) {
+  //   send(LoadUi(showFrag(this, model, ctor, RId.content)))
+  // }
+
+  // def contentLoaded() {}
+
+  // override def onBackPressed() {
+  //   mainActor ! Messages.Back()
+  // }
+
+  def back() {
+    send(Back)
+  }
+
+  def nativeBack() {
+    // super.onBackPressed()
+  }
+
+  def canGoBack = {
+    // this.backStackNonEmpty
+  }
 
   def showDetails(data: Model) {}
 }
