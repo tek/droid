@@ -13,14 +13,13 @@ import view._
 package object misc
 extends IotaCombinators[android.view.View]
 {
-  def bgCol[A <: View](name: String)(implicit res: Resources): CK[A] = {
-    resK(res.c(name, Some("bg")))(
-      col => (_: View).setBackgroundColor(col.toInt))
+  @ck def bgCol[A <: View](name: String) = { (v: View) =>
+    res.c(name, Some("bg"))
+      .foreach(col => v.setBackgroundColor(col.toInt))
   }
 
-  def meta[A <: View](data: ViewMetadata)(implicit res: Resources) =
-    kk[A, Unit](_.storeMeta(data).unsafePerformIO)
+  @ck def meta[A <: View](data: ViewMetadata) =
+    _.storeMeta(data).unsafePerformIO
 
-  def metaName[A <: View](name: String)(implicit res: Resources) =
-    meta[A](SimpleViewMetadata(name))
+  def metaName[A <: View](name: String) = meta[A](SimpleViewMetadata(name))
 }

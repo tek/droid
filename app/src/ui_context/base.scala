@@ -1,7 +1,7 @@
 package tryp
 package droid
 
-import scalaz._, Scalaz._
+import scalaz._, syntax.show._, syntax.nel._, syntax.traverse._
 
 import macroid._
 
@@ -104,7 +104,7 @@ with Input
 
   override def transitionFragment(fragment: FragmentBuilder) = {
     settings.app.bool("view_transitions", true)().fold(trypActivity, None)
-      .some { a =>
+      .map { a =>
         Ui[String] {
           implicit val fm = FragmentManagement.activityFragmentManagement[Activity]
           val ui = Macroid.frag(
@@ -113,7 +113,7 @@ with Input
           "Transition successful"
         }
       }
-      .none(loadFragment(fragment) map(_ => "Cannot transition fragment"))
+      .getOrElse(loadFragment(fragment) map(_ => "Cannot transition fragment"))
   }
 
   override def failure[E: Show](e: NonEmptyList[E]) = {
@@ -126,6 +126,11 @@ with Input
 
   override def hideKeyboard() = {
     super[Input].hideKeyboard()
+  }
+
+  def startActivity(cls: Class[_ <: Activity]) = {
+    val intent = new Intent(activity, cls)
+    activity.startActivity(intent)
   }
 }
 

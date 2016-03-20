@@ -10,7 +10,7 @@ import iota._
 import state._
 
 trait RecyclerViewMachine[A <: RecyclerView.Adapter[_]]
-extends SimpleViewMachine
+extends ViewMachine
 {
   import RecyclerCombinators._
 

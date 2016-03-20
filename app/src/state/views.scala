@@ -27,7 +27,7 @@ extends Machine
 }
 
 trait DummyViewMachine
-extends SimpleViewMachine
+extends ViewMachine
 {
   def layoutIO = w[View]
 }
@@ -126,8 +126,7 @@ with view.ExtViews
   }
 
   def safeViewP: Process[Task, View] = {
-    viewMachine.layout.discrete
-      .headOr(dummyLayout)
+    safeViewIO
       .map(_.perform())
       .sideEffect { v =>
         log.debug(s"setting view for $title:\n${v.viewTree.drawTree}")
@@ -145,9 +144,21 @@ with view.ExtViews
   def dummyLayout = w[TextView] >>= text("Couldn't load content")
 }
 
+trait ASAAgentBase
+extends RootAgent
+{
+  def safeViewIO: Process[Task, view.FreeIO[_ <: View]]
+
+  def startP = {
+    publish(Create(Map(), None))
+  }
+
+  def activityClass: Class[_ <: Activity] = classOf[StateAppViewActivity]
+}
+
 abstract class AppStateActivityAgent(implicit a: AndroidActivityUiContext,
   res: Resources)
-extends RootAgent
+extends ASAAgentBase
 with ViewAgent
 {
   implicit val activity = a.activity
@@ -155,8 +166,33 @@ with ViewAgent
   def title = "AppStateActivityAgent"
 
   def handle = "app_state_agent"
+}
 
-  def startP = {
-    publish(Create(Map(), None))
+trait FreeViewAgent
+extends Agent
+with view.ExtViews
+{
+  def viewMachine: ViewMachine
+
+  def title: String
+
+  override def machines = viewMachine %:: super.machines
+
+  import iota.std.TextCombinators.text
+
+  def dummyLayout = w[TextView] >>= text("Couldn't load content")
+
+  def safeViewIO: Process[Task, view.FreeIO[_ <: View]] = {
+    viewMachine.layout.discrete
+      .headOr(dummyLayout)
   }
+}
+
+trait ActAgent
+extends ASAAgentBase
+with FreeViewAgent
+{
+  def title = "ActAgent"
+
+  def handle = "act_agent"
 }

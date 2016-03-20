@@ -6,7 +6,6 @@ import scala.collection.convert.wrapAll._
 import scala.concurrent.Await
 
 import scalaz._
-import Scalaz._
 
 import android.widget.{AdapterView,TextView}
 import android.content.res.{Resources => AResources,Configuration}

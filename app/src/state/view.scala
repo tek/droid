@@ -34,8 +34,6 @@ trait ViewMachine
 extends Machine
 with ExtViews
 {
-  implicit def res: Resources
-
   import ViewMachine._
 
   val Aid = iota.Id
@@ -60,7 +58,3 @@ with ExtViews
       s << layout.setter(l).effect("set layout signal")
   }
 }
-
-abstract class SimpleViewMachine
-(implicit ctx: AndroidUiContext, val res: Resources)
-extends ViewMachine

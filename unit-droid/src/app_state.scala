@@ -10,7 +10,7 @@ import state._
 import shapeless._
 
 trait AppStateSpecMachine
-extends SimpleViewMachine
+extends ViewMachine
 
 class AppStateActivityAgent(implicit a: AndroidActivityUiContext,
   res: Resources)
@@ -30,5 +30,14 @@ extends StateAppViewActivity
   override def onCreate(state: Bundle) {
     super.onCreate(state)
     requestWindowFeature(Window.FEATURE_NO_TITLE)
+  }
+}
+
+trait StateAppSpec[A <: Activity]
+extends ActivitySpec[A]
+{
+  def stateApp = application match {
+    case a: state.StateApplication => a
+    case a => sys.error(s"app is not StateApplication: ${a.className}")
   }
 }

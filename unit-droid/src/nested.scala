@@ -13,7 +13,7 @@ import cats.data.Streaming
 import iota.std.TextCombinators.text
 
 trait NestedSpecMachine
-extends SimpleViewMachine
+extends ViewMachine
 
 object NestedActivity
 {
@@ -29,7 +29,7 @@ extends TestViewActivity
 {
   val tk = text[TextView](NestedActivity.text)
 
-  lazy val nested1 = new SimpleViewMachine
+  lazy val nested1 = new ViewMachine
   {
     lazy val tv = w[TextView] >>= tk
 
@@ -39,7 +39,7 @@ extends TestViewActivity
   lazy val nestedAgent = new Agent {
     def handle = "nested_agent"
 
-    lazy val nested2 = new SimpleViewMachine {
+    lazy val nested2 = new ViewMachine {
       lazy val tv = w[TextView] >>= tk
 
       lazy val layoutIO = l[FrameLayout](tv :: HNil)

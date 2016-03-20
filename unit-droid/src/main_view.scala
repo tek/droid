@@ -10,14 +10,24 @@ import state._
 import shapeless._
 
 trait MVViewMachine
-extends SimpleViewMachine
+extends ViewMachine
 
-class MainViewAA(implicit a: AndroidActivityUiContext,
-  res: Resources)
-extends droid.state.AppStateActivityAgent
+class MainViewAA
+extends ASMainView
+
+class MainView2
+extends ActAgent
 {
-  lazy val viewMachine =
-    new MVViewMachine {
-      lazy val layoutIO = l[FrameLayout](w[EditText] :: HNil)
+  import io.misc._
+
+  lazy val viewMachine = new ViewMachine {
+    lazy val content = l[FrameLayout](
+      w[EditText] :: HNil
+      ) >>- metaName("content frame")
+
+    lazy val layoutIO = {
+      l[FrameLayout](content :: HNil) >>- metaName("root frame") >>-
+        bgCol("main")
     }
+  }
 }

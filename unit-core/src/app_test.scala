@@ -24,8 +24,9 @@ with test.TrypDroidSpec
 
   lazy val activityCtrl = Robolectric.buildActivity(activityClass)
 
-
   lazy val activity = Robolectric.setupActivity(activityClass)
+
+  def application = activity.getApplication
 
   override def assertion(isTrue: => Boolean, message: => String) =
     assert(isTrue, message)

@@ -115,7 +115,7 @@ with tryp.Matchers
 
         override def sub = ag1 %:: ag2 %:: super.sub
     }
-    root.initMachines()
+    root.runAgent()
     root.ag1.send(Go)
     root.ag1.state.output.get will_== 0
   }

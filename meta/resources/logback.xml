@@ -17,7 +17,7 @@
     </encoder>
   </appender>
   <logger name="slick" level="warn" />
-  <logger name="tryp.state" level="debug" />
+  <logger name="tryp.state" level="warn" />
   <root>
     <appender-ref ref="FILE" />
     <appender-ref ref="LOGCAT" />

@@ -55,6 +55,9 @@ object AgentStateData
   case class AddSub(subs: Nes[Agent])
   extends Message
 
+  case class StopSub(subs: Nes[Agent])
+  extends Message
+
   case object SubAdded
   extends Message
 
@@ -179,9 +182,10 @@ extends Machine
 
   def admit: Admission = {
     case AddSub(subs) => addSub(subs)
+    case StopSub(subs) => stopSub(subs)
     case SubAdded => {
       case s =>
-        log.debug("sub agent added")
+        log.debug("subagent added")
         s
     }
   }
@@ -192,7 +196,13 @@ extends Machine
       S(s, AgentData(sub ::: add.toList)) <<
         emitAll(add.toList).to(dynamicSubAgentsIn.enqueue)
           .effect(s"enqueue sub agents in $description") <<
-        SubAdded
+            SubAdded
+  }
+
+  private[this] def stopSub(agents: Nes[Agent]): Transit = {
+    case S(s, AgentData(sub)) =>
+      agents map(_.join())
+      S(s, AgentData(sub filter agents.contains))
   }
 
   def subAgentCountP = {

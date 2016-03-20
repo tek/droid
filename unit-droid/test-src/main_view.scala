@@ -6,10 +6,14 @@ import android.support.v7.widget.RecyclerView
 import android.widget._
 
 import org.robolectric.annotation.Config
+import org.robolectric.Shadows
+
+import state._
+import AppState._
 
 @Config(application = classOf[MainViewStateApplication])
 class MainViewSpec
-extends ActivitySpec[UnitActivity1]
+extends StateAppSpec[UnitActivity1]
 {
   def is = s2"""
   run $run
@@ -23,6 +27,9 @@ extends ActivitySpec[UnitActivity1]
   sequential
 
   def run = {
-    activity willContain view[EditText]
+    val v = new MainView2
+    stateApp.publishOne(StartActivity(v))
+    Some(Shadows.shadowOf(activity).getNextStartedActivity()) must
+      beSome.eventually
   }
 }

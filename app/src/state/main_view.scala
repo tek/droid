@@ -4,6 +4,7 @@ package droid
 import macroid.FullDsl._
 
 import state._
+import view._
 
 import scalaz._, Scalaz._
 
@@ -27,26 +28,36 @@ object MainViewMessages
 import MainViewMessages._
 
 trait MainViewMachine
-extends SimpleDroidMachine
+extends Machine
 {
+  import AppState._
+
   override def description = "main view state"
 
   val admit: Admission = {
+    case LoadUi(ui) => loadUi(ui)
     case LoadFragment(fragment, tag) => loadFragment(fragment, tag)
     case ContentLoaded(view) => contentLoaded(view)
     case Back => back
   }
 
+  def loadUi(ui: Ui[View]): Transit = {
+    case s =>
+      s
+  }
+
   def loadFragment(fragment: () => Fragment, tag: String): Transit = {
     case s =>
-      s << ctx
-        .transitionFragment(FragmentBuilder(fragment, RId.content, tag.some))
-        .toResult
+      s << ContextTask(
+        _.transitionFragment(FragmentBuilder(fragment, RId.content, tag.some))
+          .toResult
+      )
   }
 
   def contentLoaded(view: Ui[View]): Transit = {
-    case s => s <<
+    case s => s << ContextTask(ctx =>
       LogInfo(s"Loaded content view:\n${ctx.showViewTree(view.get)}")
+    )
   }
 
   def back: Transit = {

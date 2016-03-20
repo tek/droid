@@ -20,11 +20,6 @@ import cats.std.all._
 
 import Zthulhu._
 
-// TODO
-// merge topic with accept, providing input of only those types specified as
-// params
-// for export, try to create a macro that divides the messages at compile-time,
-// maybe via class annotation
 trait Machine
 extends Logging
 with StateStrategy
@@ -130,7 +125,7 @@ with cats.syntax.StreamingSyntax
       .enqueueAll(msgs.toList) !? s"enqueue messages $msgs in $description"
   }
 
-  // kill the state machine by
+  // kill the state machine
   // the 'term' signal is woven into the main process using the wye combinator
   // 'interrupt', which listens asynchronously and terminates instantly
   def kill() = {

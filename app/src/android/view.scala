@@ -3,7 +3,7 @@ package droid
 
 import android.widget._
 
-import scalaz._, Scalaz._, effect.IO
+import scalaz._, effect.IO
 
 import cats.data.Xor
 
@@ -51,7 +51,7 @@ case class LinearLayoutMetadata(dir: String, detail: Option[String],
   extra: Params = Map())
 extends LayoutMetadata
 {
-  def suf = detail some(s => s": $s") none("")
+  def suf = detail.map(s => s": $s") | ""
 
   def desc = s"$dir linear$suf"
 }
@@ -65,7 +65,7 @@ trait ViewInstances
 extends ToViewOps
 {
   def extraInfo(v: View) = {
-    v.some collect {
+    Some(v) collect {
       case tv: TextView => tv.getText
     }
   }

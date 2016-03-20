@@ -11,7 +11,7 @@ import droid.state._
 import view._
 
 trait SpecViewMachine
-extends SimpleViewMachine
+extends ViewMachine
 {
   import io.text._
   import iota._

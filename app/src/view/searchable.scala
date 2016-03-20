@@ -9,8 +9,6 @@ import simulacrum._
 
 import cats.data.Xor
 
-import scalaz.syntax.std.option._
-
 trait ProxyBase {
   def extractView(args: Any*): Option[View] = {
     args.lift(0) flatMap {

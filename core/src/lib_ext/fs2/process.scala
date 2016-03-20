@@ -9,7 +9,6 @@ import ZS._
 import Process._
 import scalaz.Liskov.<~<
 import scalaz.concurrent.Strategy
-import scalaz.syntax.std.option._
 
 final class TaskProcessOps[O](self: Process[Task, O])
 extends ToTaskOps
@@ -27,7 +26,7 @@ extends ToTaskOps
       .take(1)
   }
 
-  def value: Task[Maybe[O]] = self.runLast.map(_.toMaybe)
+  def value: Task[Option[O]] = self.runLast
 
   def valueOr(alt: => O) = self.runLast.map(_ | alt)
 

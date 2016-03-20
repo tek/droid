@@ -7,32 +7,12 @@ import reflect.macros.blackbox
 import cats._
 import cats.data._
 import cats.syntax.foldable._
-import Func._
 
 import scalaz.Liskov.<~<
 
 import simulacrum._
 
 import iota._
-
-class IotaM(val c: blackbox.Context)
-extends AndroidMacros
-{
-  import c.universe._
-  import c.Expr
-
-  def contextKestrel[A, B](f: Expr[A => B])
-  : Expr[Context => AppFunc[IO, A, A]] = {
-    Expr {
-      q"""
-      { (ctx: $actx) =>
-        implicit val ${TermName(c.freshName)} = ctx
-        iota.kestrel($f)
-      }
-      """
-    }
-  }
-}
 
 trait IotaAnnBase
 extends SimpleMethodAnnotation
@@ -42,18 +22,30 @@ with AndroidMacros
 
   import c.universe._
 
+  /* if the supplied TypeDef is a subtype of View, like A <: FrameLayout,
+   * return it as Some
+   */
+  def extractViewType(tp: TypeDef) = {
+    val checked = c.Expr(c.typecheck(tp.rhs))
+    val isView = checked.actualType.baseType(symbolOf[View]) != NoType
+    isView.opt(tp)
+  }
+
   def templ(ann: MethodAnnottee, wrap: Boolean) = {
     val m = ann.method
+    val tpe = m.tparams.headOption
+      .flatMap(extractViewType)
+    val name = tpe.map(_.name.toTypeName) | TypeName("Principal")
     MethodAnnottee {
       val impl =
         if(wrap) List(q"val x = ${m.rhs}", q"x(ctx)")
-        else List(q"iota.kestrel[Principal, Any](${m.rhs})")
+        else List(q"iota.kestrel[$name, Any](${m.rhs})")
       q"""
-      def ${m.name}[..${m.tparams}](...${m.vparamss}): CK[Principal] =
-        (ctx: $actx) => {
-          implicit val ${TermName(c.freshName)} = ctx
-          ..$impl
-        }
+      def ${m.name}[..${m.tparams}](...${m.vparamss}): CK[$name] =
+        Con(implicit ctx => {
+          implicit val res = tryp.droid.core.Resources.fromContext
+            ..$impl
+        })
       """
     }
   }

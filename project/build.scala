@@ -87,9 +87,11 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
     )
     .logback("tag" -> "tryp") <<< app
 
-  override def consoleImports = super.consoleImports + """
-  import concurrent._
-  import stream._
+
+  override def consoleImports = """
+  import cats._, data._, syntax.all._, std.all._
+  import scalaz.concurrent._
+  import scalaz.stream._
   import Process._
   import shapeless._
   import tryp._
