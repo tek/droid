@@ -2,14 +2,16 @@ package tryp
 package droid
 package trial
 
+import state._
+
 class TApplication
 extends android.app.Application
-// with state.StateApplication
-with droid.Application
+with StateApplication
+with MultiDexApplication
 {
   override val useDb = false
 
-  // def context = getApplicationContext
-
   def name = "tryp"
+
+  def initialAgent = new TMainViewAgent
 }

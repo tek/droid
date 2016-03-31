@@ -2,10 +2,9 @@ package tryp
 package droid
 package core
 
-import reflect.macros.whitebox.Context
-import annotation.StaticAnnotation
+import reflect.macros.whitebox
 
-class IOBaseAnnotation(val c: Context)
+class IOBaseAnnotation(val c: whitebox.Context)
 extends Annotation
 {
   import c.universe._
@@ -22,7 +21,7 @@ extends Annotation
 }
 
 class IOBase
-extends StaticAnnotation
+extends scala.annotation.StaticAnnotation
 {
   def macroTransform(annottees: Any*) = macro IOBaseAnnotation.process
 }

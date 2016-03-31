@@ -7,11 +7,10 @@ import concurrent.duration._
 
 import com.squareup.okhttp.{Request => OkRequest, _}
 
-import scalaz._, Scalaz._
+import scalaz.syntax.validation._
+import scalaz.syntax.foldable._
 
 import argonaut._, Argonaut._
-
-import akka.pattern.ask
 
 import _root_.slick.dbio.DBIO
 
@@ -96,11 +95,11 @@ class Backend(implicit prefs: Settings, res: Resources)
       .post(body)
       .build
     call(request) match {
-      case \/-(result) =>
+      case Right(result) =>
         Log.i(s"Backend authentication successful: $result")
         token.update(result)
         result.successNel[String]
-      case -\/(err) =>
+      case Left(err) =>
         Log.e(s"Backend authentication failed: $err")
         err.toString.failureNel[String]
     }
@@ -108,8 +107,8 @@ class Backend(implicit prefs: Settings, res: Resources)
 
   def ping() = {
     uncheckedRequest(Request.at("ping"))(identity) match {
-      case \/-(_) => true
-      case -\/(error) =>
+      case Right(_) => true
+      case Left(error) =>
         Log.e(s"Not authenticated at backend: $error (token: ${token()})")
         false
     }
@@ -144,38 +143,38 @@ with RestClient
     jsonRequest(req) { _.delete _ }
 }
 
-trait BackendAccess
-extends DbAccess
-with HasComm
-{
-  def tryBackend(callback: ResultsAction)
-  (message: Any, messages: Any*): ResultsAction = {
-    callback
-      .recoverWith {
-        case AuthError(error) =>
-          val errmsg = s"not authed with backend: $error"
-          val next = DBIO.from(comm.core ? message)
-          messages.toList match {
-            case head :: tail =>
-              tryBackend(next andThen(callback))(head, tail)
-            case Nil =>
-              next andThen("fatal".syncFail(errmsg, false).wrapDbioSeq)
-          }
-      }
-  }
+// trait BackendAccess
+// extends DbAccess
+// with HasComm
+// {
+//   def tryBackend(callback: ResultsAction)
+//   (message: Any, messages: Any*): ResultsAction = {
+//     callback
+//       .recoverWith {
+//         case AuthError(error) =>
+//           val errmsg = s"not authed with backend: $error"
+//           val next = DBIO.from(comm.core ? message)
+//           messages.toList match {
+//             case head :: tail =>
+//               tryBackend(next andThen(callback))(head, tail)
+//             case Nil =>
+//               next andThen("fatal".syncFail(errmsg, false).wrapDbioSeq)
+//           }
+//       }
+//   }
 
-  def backendAuthenticated(callback: ResultsAction) = {
-    tryBackend(callback)(
-      Messages.AuthBackend(), Messages.Toast("backend_auth_failed"))
-  }
-}
+//   def backendAuthenticated(callback: ResultsAction) = {
+//     tryBackend(callback)(
+//       Messages.AuthBackend(), Messages.Toast("backend_auth_failed"))
+//   }
+// }
 
-class DroidBackendSync(syncExclude: List[String])
-(implicit val comm: Communicator, val ec: EC)
-extends BackendAccess
-{
-  def process(schema: SyncSchema)
-  (implicit ec: EC, rest: RestClient): ResultsAction = {
-    backendAuthenticated { BackendSync(syncExclude)(schema) }
-  }
-}
+// class DroidBackendSync(syncExclude: List[String])
+// (implicit val comm: Communicator, val ec: EC)
+// extends BackendAccess
+// {
+//   def process(schema: SyncSchema)
+//   (implicit ec: EC, rest: RestClient): ResultsAction = {
+//     backendAuthenticated { BackendSync(syncExclude)(schema) }
+//   }
+// }

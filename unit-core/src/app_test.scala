@@ -2,20 +2,15 @@ package tryp
 package droid
 package unit
 
+import view._
+
 import android.support.v7.widget.RecyclerView
 
 import org.robolectric.Robolectric
 import org.robolectric.shadows.ShadowLog
 
-trait UnitActivity
-extends test.TrypTestActivity
-{
-  override def changeTheme(theme: String, restart: Boolean = true) { }
-}
-
 trait UnitSpec[A <: Activity]
 extends TrypSpecExt
-with HasContext
 with test.TrypDroidSpec
 {
   ShadowLog.stream = System.out
@@ -24,7 +19,7 @@ with test.TrypDroidSpec
 
   lazy val activityCtrl = Robolectric.buildActivity(activityClass)
 
-  lazy val activity = Robolectric.setupActivity(activityClass)
+  implicit lazy val activity = Robolectric.setupActivity(activityClass)
 
   def application = activity.getApplication
 

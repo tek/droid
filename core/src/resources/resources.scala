@@ -5,11 +5,8 @@ package core
 import reflect.macros.blackbox
 
 import android.content.res.{Resources => AResources}
-import android.content.Context
 
 import simulacrum._
-
-import cats.data.Xor
 
 @typeclass trait ResId[A]
 {

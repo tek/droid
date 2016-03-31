@@ -33,27 +33,27 @@ extends PlusInterface
   override def apiConnected(data: Bundle) {
   }
 
-  override def account = client map(new MockPlusAccount(_))
+  override def account = client map(_.map(new MockPlusAccount(_)))
 }
 
-trait AuthStateMock
-extends ActivityAgent
-with AuthIntegration
-{ act: TrypActivity =>
+// trait AuthStateMock
+// extends FreeActivityAgent
+// with AuthIntegration
+// {
 
-  override implicit lazy val plus: PlusInterface = new MockPlusInterface {}
+//   override implicit lazy val plus: PlusInterface = new MockPlusInterface {}
 
-  override lazy val authMachine = new AuthState {
-    def activity = act
+//   override lazy val authMachine = new AuthState {
+//     def activity = act
 
-    def backend = new Backend()(settings, res)
+//     def backend = new Backend()(settings, res)
 
-    override def plusToken(email: String) = "mock_plus_token"
+//     override def plusToken(email: String) = "mock_plus_token"
 
-    override def clearPlusToken(token: String) = Nop
+//     override def clearPlusToken(token: String) = Nop
 
-    override def authorizePlusToken(account: String, plusToken: String) = {
-      AuthStateData.BackendAuthorized(MockData.authToken)
-    }
-  }
-}
+//     override def authorizePlusToken(account: String, plusToken: String) = {
+//       AuthStateData.BackendAuthorized(MockData.authToken)
+//     }
+//   }
+// }

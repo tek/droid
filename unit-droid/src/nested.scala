@@ -2,6 +2,11 @@ package tryp
 package droid
 package unit
 
+import state._
+import state.core._
+import view._
+import view.core._
+
 import android.widget._
 
 import state._
@@ -33,7 +38,7 @@ extends TestViewActivity
   {
     lazy val tv = w[TextView] >>= tk
 
-    lazy val layoutIO = l[FrameLayout](tv :: HNil)
+    lazy val layoutIO = l[FrameLayout](tv)
   }
 
   lazy val nestedAgent = new Agent {
@@ -42,12 +47,13 @@ extends TestViewActivity
     lazy val nested2 = new ViewMachine {
       lazy val tv = w[TextView] >>= tk
 
-      lazy val layoutIO = l[FrameLayout](tv :: HNil)
+      lazy val layoutIO = l[FrameLayout](tv)
 
       override def admit: Admission = {
         case SetText(content) => {
           case z =>
-            z << (tv.v >>= text[TextView](content))
+            z
+            // z << (tv.v >>- text[TextView](content))
         }
       }
     }
@@ -61,9 +67,9 @@ extends TestViewActivity
     new NestedSpecMachine {
       lazy val layoutIO =
         l[FrameLayout](
-          w[TextView] ::
-          nested1.layoutIO ::
-          nestedAgent.nested2.layoutIO ::
-          HNil)
+          w[TextView],
+          nested1.layoutIO,
+          nestedAgent.nested2.layoutIO
+        )
     }
 }

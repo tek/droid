@@ -1,7 +1,9 @@
 package tryp
 package droid
 
+import state.core._
 import state._
+import view.core._
 import view._
 
 import shapeless._
@@ -10,14 +12,16 @@ import android.widget.{BaseAdapter,TextView,Filterable,Filter}
 import android.support.v7.widget.RecyclerView
 import android.view.ViewGroup.LayoutParams._
 
+import cats._
+
 import ViewExports._
 
 abstract class ListAdapter(implicit val activity: Activity)
 extends BaseAdapter
-with tryp.droid.Confirm
-with ActivityContexts
-with Macroid
+with Confirm
 with DefaultStrategy
+with ResourcesAccess
+with Logging
 {
   def items: Seq[AnyRef]
 
@@ -72,11 +76,9 @@ abstract class RecyclerAdapter[A <: RecyclerView.ViewHolder, B: ClassTag](
   implicit val activity: Activity
 )
 extends RecyclerView.Adapter[A]
-with ActivityContexts
-with tryp.droid.HasActivity
 with Filterable
-with AkkaAdapter
 with DefaultStrategy
+with Logging
 {
   def items: Seq[B]
 
@@ -93,7 +95,7 @@ with DefaultStrategy
     applyFilter
   }
 
-  def applyFilter = Ui(getFilter.filter(currentFilter))
+  def applyFilter = IO((c: Context) => getFilter.filter(currentFilter))
 
   def updateVisibleData(newItems: Seq[B]) {
     visibleItems = sort(newItems)
@@ -110,7 +112,9 @@ with DefaultStrategy
       def publishResults(q: CharSequence, results: Filter.FilterResults) {
         results.values match {
           case v: Seq[B] =>
-            Ui(updateVisibleData(v)).run
+            // Ui(updateVisibleData(v)).run
+            IO((c: Context) => updateVisibleData(v))
+              .main() !? "update visible data"
           case v => {
             Log.e(s"Error casting filtering results in ${this.className}")
           }
@@ -144,31 +148,35 @@ extends RecyclerAdapter[A, B]
   }
 }
 
-case class StringHolder(view: View, content: ViewStream[TextView])
+case class StringHolder(view: View, content: ViewStream[TextView, Context])
 extends RecyclerView.ViewHolder(view)
 
 trait StringRecyclerAdapter
 extends SimpleRecyclerAdapter[StringHolder, String]
-with ExtViews
-with FrameLayoutCombinators
+with Views[Context, StreamIO]
 {
   import iota._
+  import view.io.frame._
 
   def onCreateViewHolder(parent: ViewGroup, viewType: Int) = {
     val tv = w[TextView]
+    val lay = l[FrameLayout](tv)
     val v = c[FrameLayout](
-      l[FrameLayout](tv :: HNil) >>-
-        lp[FrameLayout](MATCH_PARENT, MATCH_PARENT) >>- selectableFg
+      (lay >>= lp[FrameLayout](MATCH_PARENT, MATCH_PARENT)) >>-
+        selectableFg
     )
-    StringHolder(v.perform(), tv.v)
+    val layout =
+      v.unsafePerformIO !? "create layout for string recycler item" getOrElse(
+        new FrameLayout(activity))
+    StringHolder(layout, tv.v)
   }
 
   import iota.std.TextCombinators.text
 
   def onBindViewHolder(holder: StringHolder, position: Int) {
-    items(position) foreach { s =>
-      val io = holder.content >>= text[TextView](s)
-      io.unsafePerformIOMain()
-    }
+    // items(position) foreach { s =>
+    //   val io = holder.content >>= text[TextView](s)
+    //   io.unsafePerformMain()
+    // }
   }
 }

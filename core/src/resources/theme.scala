@@ -4,12 +4,11 @@ package core
 
 import reflect.macros.blackbox
 
-import android.content.Context
-import android.content.res.{TypedArray,ColorStateList}
+import android.content.res.{TypedArray, ColorStateList}
 import android.graphics.drawable.Drawable
 
 import cats._
-import cats.data.{NonEmptyList, OneAnd, Validated, ValidatedNel, Xor}
+import cats.data.{NonEmptyList, OneAnd, Validated, ValidatedNel}
 import cats.std.list._
 import cats.syntax.traverse._
 
@@ -76,7 +75,7 @@ class AndroidThemeInternal(implicit context: Context, res: ResourcesInternal)
 extends ThemeInternal
 {
   def styledAttrs(names: List[String]): Throwable Xor TypedArray = {
-    names.traverseU(attrId)
+    new cats.syntax.TraverseOps(names).traverseU(attrId)
     .leftMap(a => new Throwable(a))
     .flatMap { attrIds =>
       Xor.catchNonFatal {

@@ -1,9 +1,9 @@
-package tryp.droid.tweaks
+// package tryp.droid.tweaks
 
-trait All
-extends Layout
-with Misc
-with Slots
+// trait All
+// extends Layout
+// with Misc
+// with Slots
 
-object All
-extends All
+// object All
+// extends All

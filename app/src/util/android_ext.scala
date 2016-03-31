@@ -1,5 +1,5 @@
-package tryp.droid
-package meta
+package tryp
+package droid
 
 import scala.math.min
 
@@ -11,23 +11,6 @@ import tryp.droid.util._
 
 trait AndroidExt
 {
-  implicit class ViewGroupExt(vg: ViewGroup) {
-    def children: Seq[View] = {
-      (0 until vg.getChildCount) map { i => vg.getChildAt(i) }
-    }
-  }
-
-  implicit class ViewExt(val view: View)
-  extends tryp.droid.Basic
-  {
-    def context = view.getContext
-
-    def clickListen(callback: View => Unit) {
-      view.setOnClickListener(new android.view.View.OnClickListener {
-        def onClick(v: View) = callback(v)
-      })
-    }
-  }
 
   // TODO subclass NumberPicker
   // search for preselect value in current value list

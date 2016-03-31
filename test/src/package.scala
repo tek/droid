@@ -1,3 +1,6 @@
-package tryp.droid {
-  package object test extends meta.Globals
-}
+package tryp
+package droid
+package test
+
+object `package`
+extends droid.Exports

@@ -2,10 +2,13 @@ package tryp
 package droid
 package trial
 
+import android.support.v7.widget.RecyclerView
+import android.widget._
+
+import shapeless._
+
 import view._
 import state._
-
-import android.support.v7.widget.RecyclerView
 
 trait MainViewMachine
 extends RecyclerViewMachine[StringRecyclerAdapter]
@@ -14,7 +17,7 @@ with RecyclerCombinators
   def recyclerConf = nopK
 }
 
-class MainActivity
+class MainActivity2
 extends Activity
 with ViewActivity
 {

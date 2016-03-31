@@ -1,6 +1,9 @@
 package tryp
 package droid
 
+import core._
+import view._
+
 import reflect.classTag
 
 import android.app.{FragmentManager, FragmentTransaction}
@@ -8,7 +11,6 @@ import android.app.{FragmentManager, FragmentTransaction}
 import ScalazGlobals._
 
 import simulacrum._
-import core._
 
 trait FragmentHelpers
 {
@@ -164,12 +166,14 @@ extends FragmentHelpers
 
 object FragmentManagement
 {
-  implicit def fragmentFragmentManagement[A <: Fragment] =
+  implicit def fragmentFragmentManagement[A <: Fragment]
+  : FragmentManagement[A] =
     new FragmentManagement[A] {
       def childFragmentManager(a: A) = a.getChildFragmentManager
     }
 
-  implicit def activityFragmentManagement[A <: Activity] =
+  implicit def activityFragmentManagement[A <: Activity]
+  : FragmentManagement[A] =
     new FragmentManagement[A] {
       def childFragmentManager(a: A) = a.getFragmentManager
     }

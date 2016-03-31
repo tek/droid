@@ -1,11 +1,7 @@
 package tryp
-package droid.meta
+package droid
 
-import akka.actor.ActorSelection
-
-import tryp.droid.Messages
-
-import tryp.meta._
+// import akka.actor.ActorSelection
 
 trait AndroidLog
 extends LogInterface
@@ -43,7 +39,7 @@ extends LogInterface
 
   def log(message: String) {
     InternalLog.buffer += tryp.Time.nowHms + " -- " + message
-    InternalLog.actor foreach { _ ! Messages.Log(message) }
+    // InternalLog.actor foreach { _ ! Messages.Log(message) }
   }
 
   abstract override def dImpl(message: String) = {
@@ -73,7 +69,7 @@ with InternalLog
 {
   var buffer = Buffer[String]()
 
-  var actor: Option[ActorSelection] = None
+  // var actor: Option[ActorSelection] = None
 
   override def dImpl(m: String) = super.dImpl(m)
   override def iImpl(m: String) = super.iImpl(m)

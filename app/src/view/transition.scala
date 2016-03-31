@@ -1,4 +1,10 @@
-package tryp.droid
+package tryp
+package droid
+
+import state._
+import state.core._
+import view._
+import view.core._
 
 import scala.collection.mutable.{Set => MSet}
 import scala.concurrent.ExecutionContext
@@ -6,44 +12,40 @@ import scala.concurrent.ExecutionContext
 import android.widget._
 import android.view.Gravity
 
-import macroid._
-import macroid.FullDsl._
-
 import android.transitions.everywhere._
 
 import com.melnykov.fab.FloatingActionButton
 
-import Macroid._
-
 class WidgetBase[A <: View](transName: String)
 {
-  val ui = slut[A]
+  // val ui = slut[A]
 
-  def tweak = transitionName(transName)
+  // def tweak = transitionName(transName)
 
-  def <~[B <: Tweak[A]](t: B) = ui <~ t
+  // def <~[B <: Tweak[A]](t: B) = ui <~ t
 }
 
-case class Widget[A <: View](view: Ui[A], transName: String,
+case class Widget[A <: View](view: IO[A, Context], transName: String,
   transition: Transition, duration: Long = 300)
 (implicit a: Activity)
 extends WidgetBase[A](transName)
 {
-  lazy val create = view <~ ui
+  // lazy val create = view <~ ui
 
-  lazy val get = create <~ tweak
+  // lazy val get = create <~ tweak
 
-  def apply() = get
+  // def apply() = get
 
-  def <~~[B <: Snail[A]](t: B)(implicit ec: ExecutionContext) = ui <~~ t
+  // def <~~[B <: Snail[A]](t: B)(implicit ec: ExecutionContext) = ui <~~ t
 }
 
-case class Layout[A <: ViewGroup](view: (Ui[View]*) => Ui[A], transName: String,
-  transition: Transition, duration: Long = 300)
+case class Layout[A <: ViewGroup](view: (IO[View, Context]*) => IO[A, Context],
+  transName: String, transition: Transition, duration: Long = 300)
 (implicit a: Activity)
 extends WidgetBase[A](transName)
 {
-  def apply(children: Ui[View]*) = view(children: _*) <~ ui
+  def apply(children: IO[View, Context]*) = view(children: _*)
+  // <~ ui
 }
 
 object TransitionSets
@@ -78,41 +80,36 @@ case class FragmentTransition()
 }
 
 trait Transitions
-extends HasActivity
-with Macroid
+extends Views[Context, IO]
 {
-  val uiRoot = slut[ViewGroup]
+  // def attachRoot(root: IO[ViewGroup, Context]) = {
+  //   root <~ uiRoot
+  // }
 
-  def attachRoot(root: Ui[ViewGroup]) = {
-    root <~ uiRoot
-  }
-
-  def transition(newView: Ui[View]) {
-    uiRoot transitionTo(transitions, newView)
-  }
+  // def transition(newView: IO[View, Context]) {
+  //   uiRoot transitionTo(transitions, newView)
+  // }
 
   val transitions = FragmentTransition()
 
-  implicit class `Slot transition helper`[A <: ViewGroup](root: Slot[A])
-  {
-    def transitionTo(trans: FragmentTransition, view: Ui[View]) {
-      root some { r =>
-        trans.go(r, view.get)
-      } none(sys.error("no ui root set for transition!"))
-    }
-  }
+  // implicit class `Slot transition helper`[A <: ViewGroup](root: Slot[A])
+  // {
+  //   def transitionTo(trans: FragmentTransition, view: IO[View, Context]) {
+  //     root some { r =>
+  //       trans.go(r, view.get)
+  //     } none(sys.error("no ui root set for transition!"))
+  //   }
+  // }
 
-  import macroid.CanTweak
+  // implicit def `View is tweakable with Widget`[A <: View, B <: Widget[A]] =
+  //   new CanTweak[A, B, A] {
+  //     def tweak(v: A, w: B) = v <~ w.tweak <~ w.ui
+  //   }
 
-  implicit def `View is tweakable with Widget`[A <: View, B <: Widget[A]] =
-    new CanTweak[A, B, A] {
-      def tweak(v: A, w: B) = v <~ w.tweak <~ w.ui
-    }
-
-  implicit def `VG is tweakable with Layout`[A <: ViewGroup, B <: Layout[A]] =
-    new CanTweak[A, B, A] {
-      def tweak(v: A, w: B) = v <~ w.tweak <~ w.ui
-    }
+  // implicit def `VG is tweakable with Layout`[A <: ViewGroup, B <: Layout[A]] =
+  //   new CanTweak[A, B, A] {
+  //     def tweak(v: A, w: B) = v <~ w.tweak <~ w.ui
+  //   }
 
   def addTransitions(set: Seq[TransitionSet]) {
     if (transitions.isEmpty)
@@ -129,14 +126,16 @@ with Macroid
     }
   }
 
+  implicit def act: Activity
+
   object CommonWidgets
   extends Widgets
   {
-    private def pxCtor(c: Ui[View]*) = l[ParallaxHeader](c: _*)
+    // private def pxCtor(c: IO[View, Context]*) = l[ParallaxHeader](c: _*)
 
-    val header = layout(pxCtor _, "header", slideTop)
+    // val header = layout(pxCtor _, "header", slideTop)
 
-    val content = layout(FL(), "content", fade, duration = 400)
+    // val content = layout(FL(), "content", fade, duration = 400)
 
     val fab = widget(w[FloatingActionButton], "fab", move ++ slideRight,
       duration = 400)
@@ -144,6 +143,7 @@ with Macroid
 }
 
 class Widgets(implicit a: Activity)
+extends Views[Context, IO]
 {
   val transitionSet = MSet[Transition]()
 
@@ -155,15 +155,15 @@ class Widgets(implicit a: Activity)
     transition.addTarget(transName)
   }
 
-  def widget[A <: View](view: Ui[A], transName: String = "widget",
+  def widget[A <: View](view: IO[A, Context], transName: String = "widget",
     transition: Transition = new TransitionSet, duration: Long = 300) =
   {
     addTransitionSet(transName, transition, duration)
     Widget(view, transName, transition)
   }
 
-  def layout[A <: ViewGroup](view: (Ui[View]*) => Ui[A], transName: String,
-    transition: Transition, duration: Long = 300) =
+  def layout[A <: ViewGroup](view: (IO[View, Context]*) => IO[A, Context],
+    transName: String, transition: Transition, duration: Long = 300) =
   {
     addTransitionSet(transName, transition, duration)
     new Layout[A](view, transName, transition)
@@ -195,8 +195,7 @@ class Widgets(implicit a: Activity)
   }
 
   def text(transName: String = "widget",
-    transition: Transition = new TransitionSet, duration: Long = 300)
-  (implicit a: macroid.ContextWrapper) =
+    transition: Transition = new TransitionSet, duration: Long = 300) =
   {
     widget(w[TextView], transName, transition, duration)
   }

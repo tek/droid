@@ -22,9 +22,9 @@ extends ViewMachine
 
   lazy val layoutIO = {
     l[FrameLayout](
-      (l[RelativeLayout](search :: HNil) >>=
+      (l[RelativeLayout](search) >>=
         lp[RelativeLayout](MATCH_PARENT, MATCH_PARENT)
-        ) :: HNil
+        )
       )
     }
 }
@@ -32,6 +32,10 @@ extends ViewMachine
 case class SpecFragment()
 extends VSTrypFragment
 {
+  def title = "spec fragment"
+
+  def handle = "spec_frag"
+
   lazy val viewMachine: SpecViewMachine = new SpecViewMachine {}
 }
 

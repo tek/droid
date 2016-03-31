@@ -1,5 +1,6 @@
 package tryp
 package droid
+package core
 
 import concurrent.duration.FiniteDuration
 
@@ -35,6 +36,10 @@ extends ToTaskOps
       f(o)
       o
     }
+  }
+
+  def availableOrHalt = {
+    self.take(1).either(constant(0)).take(3).stripO
   }
 }
 
@@ -109,8 +114,15 @@ extends AnyVal
     self map(a => -\/(a.merge))
 }
 
+trait ToWriterOps
+extends Any
+{
+  implicit def ToWriterOps[F[_], W, O](v: Writer[F, W, O]) = new WriterOps(v)
+}
+
 final class ProcessOps[F[_], O](val self: Process[F, O])
 extends AnyVal
+with ToWriterOps
 {
   def separate(f: O => Boolean): Writer[F, O, O] = {
     self map { a =>
@@ -119,8 +131,18 @@ extends AnyVal
     }
   }
 
+  def separateCollect[O2](f: PartialFunction[O, O2]): Writer[F, O, O2] = {
+    import scalaz.syntax.std.option._
+    self map { a => f.lift(a).toRightDisjunction(a) }
+  }
+
   def separateMap[O2](f: O => Boolean)(g: O => O2): Writer[F, O2, O2] = {
     separate(f) map(_.bimap(g, g))
+  }
+
+  def forkTo[O2](sink: Sink[F, O2])(f: PartialFunction[O, O2]) = {
+    separateCollect(f)
+      .forkO(sink)
   }
 }
 
@@ -139,12 +161,11 @@ extends AnyVal
 
 trait ToProcessOps
 extends ToProcessOps0
+with ToWriterOps
 {
   implicit def ToTaskProcessLoggerOps[A](v: Process[Task, A])
   (implicit log: Logger) =
     new TaskProcessLoggerOps(v)
-
-  implicit def ToWriterOps[F[_], W, O](v: Writer[F, W, O]) = new WriterOps(v)
 
   implicit def ToProcessOps[F[_], O](v: Process[F, O]) = new ProcessOps(v)
 

@@ -1,6 +1,8 @@
 package tryp
 package droid
 
+import view._
+
 import simulacrum._
 
 @typeclass trait BasicF[A]

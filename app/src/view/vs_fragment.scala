@@ -1,22 +1,25 @@
 package tryp
 package droid
 
+import state._
+import state.core._
+import view._
+import view.core._
+
 import android.support.v7.widget.RecyclerView
 
 import shapeless._
 
 import iota._
 
-import state._
-
 trait RecyclerViewMachine[A <: RecyclerView.Adapter[_]]
 extends ViewMachine
 {
-  import RecyclerCombinators._
+  import io.recycler._
 
   def adapter: A
 
-  def recyclerConf: CK[RecyclerView]
+  def recyclerConf: CK[RecyclerView, StreamIO]
 
   def recycler =
     w[RecyclerView] >>-
@@ -24,11 +27,11 @@ extends ViewMachine
       recyclerConf >>-
       recyclerLayout
 
-  def recyclerLayout: CK[RecyclerView] = linear
+  def recyclerLayout: CK[RecyclerView, StreamIO] = linear
 
-  def layoutIO = l[FrameLayout](recycler :: HNil)
+  def layoutIO = l[FrameLayout](recycler)
 
-  def update() { Ui(adapter.notifyDataSetChanged()).run }
+  // def update() { Ui(adapter.notifyDataSetChanged()).run }
 }
 
 trait RecyclerVSFragment[A <: RecyclerView.Adapter[_]]

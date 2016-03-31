@@ -1,8 +1,8 @@
-package tryp.droid
+// package tryp.droid
 
-trait Screws
-extends Screwing
-with MenuScrews
+// trait Screws
+// extends Screwing
+// with MenuScrews
 
-object Screws
-extends Screws
+// object Screws
+// extends Screws

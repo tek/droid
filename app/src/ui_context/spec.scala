@@ -1,86 +1,91 @@
-package tryp.droid
+// package tryp.droid
 
-import scalaz._, Scalaz._, concurrent._
+// import scalaz._, Scalaz._, concurrent._
 
-import com.google.android.gms.common.ConnectionResult
-import com.google.android.gms.auth.GoogleAuthUtil
+// import com.google.android.gms.common.ConnectionResult
+// import com.google.android.gms.auth.GoogleAuthUtil
 
-trait WithContext
-extends AndroidUiContext
-{
-  def context[A](cb: Context => A): Option[A]
-  def contextO: Option[Context]
-}
+// import view._
+// import view.core._
+// import state._
+// import state.core._
 
-trait DefaultWithContext
-extends AndroidContextUiContext
-with WithContext
-{
-  def context[A](cb: Context => A) = Some(cb(context))
-  def contextO = aContext.some
-}
+// abstract class WithContext[F[_, _]: ConsIO]
+// extends Android[F]
+// {
+//   def context[A](cb: Context => A): Option[A]
+//   def contextO: Option[Context]
+// }
 
-object WithContext
-{
-  implicit def default(implicit c: Context) =
-    new DefaultWithContext {
-      def context = c
-    }
-}
+// abstract class DefaultWithContext[F[_, _]: ConsIO]
+// extends ContextAndroid[F]
+// with WithContext[F]
+// {
+//   def context[A](cb: Context => A) = Some(cb(context))
+//   def contextO = aContext.some
+// }
 
-trait StartActivity
-extends AndroidUiContext
-with WithContext
-{
-  def startActivity(intent: Intent, code: Int): Unit
-  def resolveResult(result: ConnectionResult, code: Int): Unit
-}
+// object WithContext
+// {
+//   implicit def default[F[_, _]: ConsIO](implicit c: Context) =
+//     new DefaultWithContexttrait {
+//       def context = c
+//     }
+// }
 
-trait DefaultStartActivity
-extends HasActivity
-with StartActivity
-with DefaultWithContext
-{
-  def startActivity(intent: Intent, code: Int) = {
-    activity.startActivityForResult(intent, code)
-  }
+// abstract class StartActivity[F[_, _]: ConsIO]
+// extends Android[F]
+// with WithContext[F]
+// {
+//   def startActivity(intent: Intent, code: Int): Unit
+//   def resolveResult(result: ConnectionResult, code: Int): Unit
+// }
 
-  def resolveResult(result: ConnectionResult, code: Int) = {
-    result.startResolutionForResult(activity, code)
-  }
-}
+// abstract class DefaultStartActivity[F[_, _]: ConsIO]
+// extends HasActivity[F]
+// with StartActivity[F]
+// with DefaultWithContext[F]
+// {
+//   def startActivity(intent: Intent, code: Int) = {
+//     activity.startActivityForResult(intent, code)
+//   }
 
-object StartActivity
-{
-  implicit def default(implicit a: Activity) =
-    new AndroidActivityUiContext with DefaultStartActivity {
-      def activity = a
-    }
-}
+//   def resolveResult(result: ConnectionResult, code: Int) = {
+//     result.startResolutionForResult(activity, code)
+//   }
+// }
 
-trait AuthStateUiI
-extends StartActivity
-with AndroidUiContext
-{
-  def plusToken(email: String, scope: String): String
-  def clearPlusToken(token: String): Unit
-}
+// object StartActivity
+// {
+//   implicit def default[F[_, _]: ConsIO](implicit a: Activity) =
+//     new AndroidActivityUiContext[F] with DefaultStartActivity[F] {
+//       def activity = a
+//     }
+// }
 
-trait AuthStateUiContext
-extends DefaultStartActivity
-with AndroidActivityUiContext
-with AuthStateUiI
-{
-  def plusToken(email: String, scope: String): String =
-    GoogleAuthUtil.getToken(activity, email, scope)
+// abstract class AuthStateUiI[F[_, _]: ConsIO]
+// extends StartActivity[F]
+// with Android[F]
+// {
+//   def plusToken(email: String, scope: String): String
+//   def clearPlusToken(token: String): Unit
+// }
 
-  def clearPlusToken(token: String) = GoogleAuthUtil.clearToken(context, token)
-}
+// abstract class AuthStateUiContext[F[_, _]: ConsIO]
+// extends DefaultStartActivity[F]
+// with AndroidActivityUiContext[F]
+// with AuthStateUiI[F]
+// {
+//   def plusToken(email: String, scope: String): String =
+//     GoogleAuthUtil.getToken(activity, email, scope)
 
-object AuthStateUiI
-{
-  implicit def default(implicit a: Activity) =
-    new AuthStateUiContext {
-      def activity = a
-    }
-}
+//   def clearPlusToken(token: String) = GoogleAuthUtil.clearToken(context, token)
+// }
+
+// object AuthStateUiI
+// {
+//   implicit def default[F[_, _]: ConsIO](implicit a: Activity) =
+//     new AuthStateUiContext[F] {
+//       def activity = a
+//     }
+// }

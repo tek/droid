@@ -1,10 +1,10 @@
-package tryp.droid
+// package tryp.droid
 
-trait Macroid
-extends tryp.droid.tweaks.All
-with MacroidExt
-{
-  type Slot[A <: View] = tweaks.Slot[A]
-}
+// trait Macroid
+// extends tryp.droid.tweaks.All
+// with MacroidExt
+// {
+//   type Slot[A <: View] = tweaks.Slot[A]
+// }
 
-object Macroid extends Macroid
+// object Macroid extends Macroid

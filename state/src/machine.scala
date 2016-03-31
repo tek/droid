@@ -2,30 +2,31 @@ package tryp
 package droid
 package state
 
-import shapeless._
-import shapeless.tag.@@
-
-import scalaz.syntax.std.option._
+import core._
+import view.core._
+import view._
 
 import scalaz.stream
 import stream.async
-import Process._
+
+import scalaz.syntax.std.option._
 import scalaz.syntax.apply._
 import scalaz.syntax.show._
 
 import cats._
-import cats.data._
-import cats.syntax.all._
 import cats.std.all._
 
-import Zthulhu._
+case class MachineTerminated(z: Machine)
+extends Message
 
 trait Machine
 extends Logging
 with StateStrategy
 with cats.syntax.StreamingSyntax
 {
-  val S = Zthulhu
+  import Process._
+
+  lazy val S = Zthulhu
 
   def admit: Admission
 
@@ -35,7 +36,7 @@ with cats.syntax.StreamingSyntax
 
   protected def initialMessages: MProc = halt
 
-  private[this] val internalMessageIn = async.unboundedQueue[Message]
+  protected val internalMessageIn = async.unboundedQueue[Message]
 
   private[this] val forkedEffectResults = async.unboundedQueue[Parcel]
 
@@ -65,7 +66,9 @@ with cats.syntax.StreamingSyntax
     preselect(m)
       .orElse(unmatchedMessageType)
       .lift(m)
+      .sideEffect(_ => log.debug(s"accepted $m"))
       .flatMap(_.lift(z))
+      .sideEffect(_ => log.debug(s"transitioned by $m"))
   }
 
   protected def byState(z: Zthulhu, m: Message): Option[TransitResult] = {
@@ -82,17 +85,20 @@ with cats.syntax.StreamingSyntax
   private[this] def fsmProc(input: MProc, initial: Zthulhu): MProc = {
     val in = Nel(internalMessageIn.dequeue, input, initialMessages)
       .reduce
-      .sideEffect(m => log.debug(s"processing ${m.show}"))
+      .sideEffect(m => log.trace(s"processing ${m.show}"))
     interrupt
       .wye(in)(stream.wye.interrupt)
       .fsm(initial, uncurriedTransitions)
       .forkW(current.pipeIn)
       .merge(forkedEffectResults.dequeue)
-      .separateMap(_.publish)(_.message)
-      .forkW(internalMessageIn.enqueue)
+      .forkTo(internalMessageIn.enqueue) {
+        case Internal(m) =>
+          p(s"$description found Internal: $m")
+          m
+      }
   }
 
-  val debugStates = false
+  def debugStates = false
 
   def run = runWith(halt, initialZ)
 
@@ -145,6 +151,11 @@ with cats.syntax.StreamingSyntax
       .infraRunFor("wait for finished signal", 20 seconds)
   }
 
+  def isRunning = {
+    running.continuous.take(1)
+      .infraValueShortOr(false)(s"check whether $description is running")
+  }
+
   def waitForRunning(timeout: Duration = 20 seconds) = {
     running.discrete.exists(a => a)
       .infraRunFor(s"wait for $this to run", timeout)
@@ -182,57 +193,88 @@ with cats.syntax.StreamingSyntax
     super.loggerName ::: machinePrefix ::: handle :: machineName.toList
   }
 
-  lazy val internalMessage: Admission = {
+  final def internalMessage: Admission = {
     case SetInitialState(s) => setInitialState(s)
-    case MachineStarted => setMachineRunning
+    case MachineStarted => machineStarted
     case QuitMachine => quitMachine
-    case FlatMapEffect(eff) => flatMapEffect(eff)
+    case FlatMapEffect(eff, _) => flatMapEffect(eff)
     case Fork(eff, desc) => forkEffect(eff, desc)
+    case Async(task, desc) => asyncTask(task, desc)
+    case PublishMessage(msg) => publishMessage(msg)
+    case prc: Parcel => { s => s << prc }
   }
 
   private[this] def setInitialState(s: BasicState): Transit = {
     case S(Pristine, d) => S(s, d)
   }
 
-  private[this] def setMachineRunning: Transit = {
-    case s =>
-      s << running.setter(true).effect("set running signal to true")
-  }
+  private[this] def machineStarted: Transit =
+      _ << setMachineRunning << initialEffects
 
-  private[this] def quitMachine: Transit = {
-    case s =>
-      s << (quit.set(true) *> finished.run)
-  }
+  private[this] def setMachineRunning =
+    running.setter(true).stateSideEffect("signal <running>")
 
-  private[this] def flatMapEffect(eff: Effect): Transit = {
-    case s =>
-      s << eff
-  }
+  protected def initialEffects: Effect = halt
+
+  private[this] def quitMachine: Transit =
+    _ << (quit.set(true) *> finished.run)
+
+  private[this] def flatMapEffect(eff: Effect): Transit = _ << eff
 
   def forkEffect(eff: Effect, desc: String): Transit = {
     case s =>
       Zthulhu.handleResult(eff)
         .stripW
         .to(forkedEffectResults.enqueue)
-        .infraFork(s"fork effect $desc")
+        .infraFork(s"fork effect: $desc")
       s
   }
 
+  def asyncTask(task: Task[_], desc: String): Transit = {
+    case s =>
+      task.unsafePerformSyncAttempt match {
+        case scalaz.\/-(result) =>
+          log.debug(s"async task '$desc' succeeded: $result")
+        case scalaz.-\/(err) => 
+          log.error(s"async task '$desc' failed: $err")
+      }
+      s
+  }
+
+  def publishMessage(msg: Message): Transit = _ << msg.publish
+
   def unmatched(m: Message): Transit = {
     case s if debugStates =>
-      log.debug(s"unmatched message at $s: $m")
+      log.trace(s"unmatched message at $s: $m")
       s
   }
 
   lazy val unmatchedMessageType: Admission = {
     case m if debugStates => {
       case s =>
-        log.debug(s"unmatched message type at $s: $m")
+        log.trace(s"unmatched message type at $s: $m")
         s
     }
   }
 
-  implicit def defaultPublishFilter[A <: Message] = new PublishFilter[A] {
-    def allowed = false
+  protected def broadcast(msg: Message) = {
+    send(PublishMessage(msg))
   }
+
+  def instance_PublishFilter_IOTask[F[_, _]: PerformIO, A: Operation, C]
+  : PublishFilter[IOTask[F, A, C]] = new PublishFilter[IOTask[F, A, C]] {
+    def allowed = true
+  }
+
+  def instance_PublishFilter_IOFun[A <: IOFun]
+  : PublishFilter[A] = new PublishFilter[A] {
+    def allowed = {
+      p("pf iofun")
+      true
+    }
+  }
+
+  def con[A](f: Context => A) = ConsIO[StreamIO].pure[A, Context](f)
+  def act[A](f: Activity => A) = ConsIO[StreamIO].pure[A, Activity](f)
+  def res[A](f: Resources => A) = ConsIO[StreamIO].pure[A, Resources](f)
 }

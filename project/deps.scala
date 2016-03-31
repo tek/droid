@@ -9,8 +9,10 @@ extends tryp.AndroidDeps
 {
   override def deps = super.deps ++ Map(
     "core" -> core,
-    "state" -> state,
+    "state-core" -> stateCore,
+    "view-core" -> viewCore,
     "view" -> view,
+    "service" -> service,
     "app" -> app,
     "test" -> test,
     "unit-core" -> unitCore,
@@ -30,34 +32,41 @@ extends tryp.AndroidDeps
   }
 
   def core = ids(
-    pulsar("macros"),
-    ad(aar("org.macroid" %% "macroid" % "2.0.0-M4"), "macroid/macroid",
-      "core").no,
+    pulsar("slick"),
     dd("tryp" %% "pulsar-unit-core" % "+" % "test", "tek/pulsar", "unit-core")
   )
 
-  def state = ids(
-    pulsar("slick"),
+  def stateCore = ids(
     "tryp" %% "pulsar-jvm" % "+" % "test"
   )
 
-  def view = ids(
+  def viewCore = ids(
     "com.hanhuy.android" %% "iota" % "+"
   )
 
-  def app = ids(
+  def view = ids(
+    aar("com.android.support" % "support-v4" % "21.+"),
     aar("com.android.support" % "appcompat-v7" % "21.+"),
     aar("com.android.support" % "palette-v7" % "21.+"),
     aar("com.android.support" % "recyclerview-v7" % "21.+"),
     aar("com.android.support" % "cardview-v7" % "21.+"),
-    "com.google.android.gms" % "play-services-maps" % "+",
-    "com.google.android.gms" % "play-services-location" % "+",
-    "com.google.android.gms" % "play-services-plus" % "+",
-    "com.typesafe.akka" %% "akka-actor" % "2.3.+",
+    aar("com.android.support" % "support-v13" % "21.+"),
+    aar("com.google.android.gms" % "play-services-basement" % "+"),
+    aar("com.google.android.gms" % "play-services-base" % "+")
+  )
+
+  def service = ids(
+    aar("com.google.android.gms" % "play-services-maps" % "+"),
+    aar("com.google.android.gms" % "play-services-location" % "+"),
+    aar("com.google.android.gms" % "play-services-plus" % "+")
+  )
+
+  def app = ids(
+    aar("com.android.support" % "support-v13" % "21.+"),
+    aar("com.android.support" % "support-v4" % "21.+"),
     "com.scalarx" %% "scalarx" % "+",
     "com.github.andkulikov" % "transitions-everywhere" % "+",
     "com.melnykov" % "floatingactionbutton" % "+",
-    "com.android.support" % "support-v13" % "21.+",
     "com.makeramen" % "roundedimageview" % "+",
     "com.squareup.okhttp" % "okhttp" % "+"
   )

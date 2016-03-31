@@ -1,7 +1,9 @@
 package tryp
 package droid
 
-import akka.util.Timeout
+import slick._
+
+// import akka.util.Timeout
 
 object DbMeta
 {
@@ -19,7 +21,7 @@ extends Logging
 {
   implicit def dbInfo = DbMeta.dbInfo
 
-  implicit val dbTimeout = Timeout(5 seconds)
+  // implicit val dbTimeout = Timeout(5 seconds)
 
   implicit def ec: EC
 

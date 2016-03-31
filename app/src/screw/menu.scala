@@ -1,46 +1,46 @@
-package tryp.droid
+// package tryp.droid
 
-import android.view.MenuItem
+// import android.view.MenuItem
 
-trait MenuScrews
-{
-  lazy val nopMenu = Screw[MenuItem](_ => ())
+// trait MenuScrews
+// {
+//   lazy val nopMenu = Screw[MenuItem](_ => ())
 
-  protected case class Menu(implicit c: Context, ns: ResourceNamespace)
-  extends tryp.droid.ResourcesAccess
-  {
-    val always = MenuItem.SHOW_AS_ACTION_ALWAYS
-    val collapse = MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW
-    val ifRoom = MenuItem.SHOW_AS_ACTION_IF_ROOM
-    val never = MenuItem.SHOW_AS_ACTION_NEVER
-    val withText = MenuItem.SHOW_AS_ACTION_WITH_TEXT
+//   protected case class Menu(implicit c: Context, ns: ResourceNamespace)
+//   extends tryp.droid.ResourcesAccess
+//   {
+//     val always = MenuItem.SHOW_AS_ACTION_ALWAYS
+//     val collapse = MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW
+//     val ifRoom = MenuItem.SHOW_AS_ACTION_IF_ROOM
+//     val never = MenuItem.SHOW_AS_ACTION_NEVER
+//     val withText = MenuItem.SHOW_AS_ACTION_WITH_TEXT
 
-    def icon(name: String) = {
-      theme.drawable(name)
-        .map(a => Screw[MenuItem](_.setIcon(a)))
-        .getOrElse(nopMenu)
-    }
+//     def icon(name: String) = {
+//       theme.drawable(name)
+//         .map(a => Screw[MenuItem](_.setIcon(a)))
+//         .getOrElse(nopMenu)
+//     }
 
-    def show(flags: Int) = Screw[MenuItem](_.setShowAsAction(flags))
+//     def show(flags: Int) = Screw[MenuItem](_.setShowAsAction(flags))
 
-    def id(i: RId) = Screw[MenuItem] { m =>
-      val intent = new Intent
-      intent.putExtra("menu_id", i.value)
-      m.setIntent(intent)
-    }
+//     def id(i: RId) = Screw[MenuItem] { m =>
+//       val intent = new Intent
+//       intent.putExtra("menu_id", i.value)
+//       m.setIntent(intent)
+//     }
 
-    def click(f: => Unit) = Screw[MenuItem] {
-      _.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener {
-        def onMenuItemClick(item: MenuItem) = {
-          f
-          true
-        }
-      })
-    }
-  }
+//     def click(f: => Unit) = Screw[MenuItem] {
+//       _.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener {
+//         def onMenuItemClick(item: MenuItem) = {
+//           f
+//           true
+//         }
+//       })
+//     }
+//   }
 
-  def mnu(implicit c: Context, ns: ResourceNamespace) = Menu()
-}
+//   def mnu(implicit c: Context, ns: ResourceNamespace) = Menu()
+// }
 
-object MenuScrews
-extends MenuScrews
+// object MenuScrews
+// extends MenuScrews

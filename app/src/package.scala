@@ -1,10 +1,16 @@
-package tryp {
-  import droid.meta.TrypDroidGlobals
-  package object droid extends TrypDroidGlobals
-  package droid {
-    package object meta extends GlobalsBase
-    package object helpers extends TrypDroidGlobals
-    package object tweaks extends TrypDroidGlobals
-    package object io extends TrypDroidGlobals
-  }
+package tryp
+package droid
+
+trait Exports
+extends ToIntentOps
+with view.BuilderOps
+with view.Exports
+with state.Exports
+with ViewExports
+with AndroidExt
+
+object `package`
+extends Exports
+{
+  // def Fragments = tryp.droid.Classes.fragments
 }

@@ -1,146 +1,129 @@
-package tryp
-package droid
+// package tryp
+// package droid
 
-import MainViewMessages._
+// import cats._
+// import cats.syntax.apply._
 
-import cats._
-import cats.syntax.apply._
+// import state._
+// import state.core._
+// import view._
+// import view.core._
 
-import state._
+// import MainViewMessages._
 
-trait MainView
-extends ActivityBase
-with Transitions
-with ActivityAgent
-{
-  mainView: Akkativity =>
+// trait FreeMainViewMachine
+// extends Machine
+// {
+//   import AppState._
 
-    import macroid.FullDsl._
+//   override def description = "main view state"
 
-    val content = slut[FrameLayout]
+//   val admit: Admission = {
+//     case LoadMUi(ui) => loadUi(ui)
+//     case LoadFragment(fragment, tag) => loadFragment(fragment, tag)
+//     case ContentLoaded(view) => contentLoaded(view)
+//     case Back => back
+//   }
 
-    lazy val mainViewMachine = new MainViewMachine {
-      def handle = "mainview"
-      override def description = "main view state"
-      override def nativeBack() = mainView.nativeBack()
-    }
+//   def loadUi(ui: Ui[View]): Transit = {
+//     case s =>
+//       s
+//   }
 
-    override def machines = mainViewMachine %:: super.machines
+//   def loadFragment(fragment: () => Fragment, tag: String): Transit = {
+//     case s =>
+//       s << ContextTask(
+//         _.transitionFragment(FragmentBuilder(fragment, RId.content, Some(tag)))
+//           .toResult
+//       )
+//   }
 
-    def setContentView(v: View)
+//   def contentLoaded(view: Ui[View]): Transit = {
+//     case s => s << ContextTask(ctx =>
+//       LogInfo(s"Loaded content view:\n${ctx.showViewTree(view.get)}")
+//     )
+//   }
 
-    abstract override def onCreate(state: Bundle) {
-      super.onCreate(state)
-      mainActor
-      initView()
-    }
+//   def back: Transit = {
+//     case s =>
+//       s << Ui { nativeBack() }
+//   }
 
-    def initView() = {
-      setContentView(Ui.get(mainLayout))
-    }
+//   def nativeBack(): Unit = ()
+// }
 
-    def mainLayout = contentLayout
+// trait MainView
+// extends ActivityBase
+// with Transitions
+// with FreeActivityAgent
+// {
+//   mainView: Akkativity =>
 
-    def contentLayout: Ui[ViewGroup] = {
-      val tw = List(bgCol("main"), Some(metaName("root frame"))).flatten
-      attachRoot(FL(tw: _*)(
-        l[FrameLayout]() <~ content <~ RId.content <~ metaName("content frame")))
-    }
+//     import macroid.FullDsl._
 
-    def loadFragment(fragment: Fragment) = {
-      val f = frag(this, fragment, RId.content)
-      send(LoadUi(f))
-    }
+//     val content = slut[FrameLayout]
 
-    def loadShowFragment[A <: SyncModel: ClassTag]
-    (model: A, ctor: () => ShowFragment[A]) {
-      send(LoadUi(showFrag(this, model, ctor, RId.content)))
-    }
+//     lazy val mainViewMachine = new FreeMainViewMachine {
+//       def handle = "mainview"
+//       override def description = "main view state"
+//       override def nativeBack() = mainView.nativeBack()
+//     }
 
-    def contentLoaded() {}
+//     override def machines = mainViewMachine %:: super.machines
 
-    // This is the entry point for back actions, when the actual back key or
-    // the drawer toggle had been pressed. Any manual back initiation should also
-    // call this.
-    // The main actor can have its own back stack, so it is asked first. If it
-    // declines or the message cannot be dispatched, it is sent back here and
-    // dispatched to back() below.
-    override def onBackPressed() {
-      mainActor ! Messages.Back()
-    }
+//     def setContentView(v: View)
 
-    def back() {
-      send(Back)
-    }
+//     abstract override def onCreate(state: Bundle) {
+//       super.onCreate(state)
+//       mainActor
+//       initView()
+//     }
 
-    def nativeBack() {
-      super.onBackPressed()
-    }
+//     def initView() = {
+//       setContentView(Ui.get(mainLayout))
+//     }
 
-    def canGoBack = this.backStackNonEmpty
+//     def mainLayout = contentLayout
 
-    lazy val mainActor = createActor(MainActor.props)._2
+//     def contentLayout: Ui[ViewGroup] = {
+//       val tw = List(bgCol("main"), Some(metaName("root frame"))).flatten
+//       attachRoot(FL(tw: _*)(
+//         l[FrameLayout]() <~ content <~ RId.content <~ metaName("content frame")))
+//     }
 
-    def showDetails(data: Model) {}
-}
+//     def loadFragment(fragment: Fragment) = {
+//       val f = frag(this, fragment, RId.content)
+//       send(LoadMUi(f))
+//     }
 
-import iota._
-import io.text._
-import io.misc._
+//     def loadShowFragment[A <: SyncModel: ClassTag]
+//     (model: A, ctor: () => ShowFragment[A]) {
+//       send(LoadMUi(showFrag(this, model, ctor, RId.content)))
+//     }
 
-import iota.std.TextCombinators._
+//     def contentLoaded() {}
 
-import shapeless._
+//     // This is the entry point for back actions, when the actual back key or
+//     // the drawer toggle had been pressed. Any manual back initiation should also
+//     // call this.
+//     // The main actor can have its own back stack, so it is asked first. If it
+//     // declines or the message cannot be dispatched, it is sent back here and
+//     // dispatched to back() below.
+//     override def onBackPressed() {
+//       mainActor ! Messages.Back()
+//     }
 
-trait ASMainView
-extends ActAgent { agent =>
+//     def back() {
+//       send(Back)
+//     }
 
-  lazy val mainViewMachine = new MainViewMachine {
-    def handle = "mainview"
-    override def description = "main view state"
-    override def nativeBack() = agent.nativeBack()
-  }
+//     def nativeBack() {
+//       super.onBackPressed()
+//     }
 
-  lazy val viewMachine = new ViewMachine {
-    lazy val content = w[FrameLayout] >>- metaName("content frame")
+//     def canGoBack = this.backStackNonEmpty
 
-    lazy val contentLayout = {
-      l[FrameLayout](content :: HNil) >>- metaName("root frame") >>-
-        bgCol("main")
-    }
+//     lazy val mainActor = createActor(MainActor.props)._2
 
-    lazy val layoutIO = contentLayout
-  }
-
-  override def machines = mainViewMachine %:: super.machines
-
-  // def loadFragment(fragment: Fragment) = {
-  //   val f = frag(this, fragment, RId.content)
-  //   send(LoadUi(f))
-  // }
-
-  // def loadShowFragment[A <: SyncModel: ClassTag]
-  // (model: A, ctor: () => ShowFragment[A]) {
-  //   send(LoadUi(showFrag(this, model, ctor, RId.content)))
-  // }
-
-  // def contentLoaded() {}
-
-  // override def onBackPressed() {
-  //   mainActor ! Messages.Back()
-  // }
-
-  def back() {
-    send(Back)
-  }
-
-  def nativeBack() {
-    // super.onBackPressed()
-  }
-
-  def canGoBack = {
-    // this.backStackNonEmpty
-  }
-
-  def showDetails(data: Model) {}
-}
+//     def showDetails(data: Model) {}
+// }

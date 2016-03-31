@@ -1,22 +1,22 @@
-package tryp.droid
+// package tryp.droid
 
-import akka.actor.Props
+// import akka.actor.Props
 
-class DrawerActor
-extends TrypActor[DrawerFragment]
-{
-  import TrypActor._
+// class DrawerActor
+// extends TrypActor[DrawerFragment]
+// {
+//   import TrypActor._
 
-  addParameter("navigation", { _.setNavigation _ })
+//   addParameter("navigation", { _.setNavigation _ })
 
-  def receive = receiveUi andThen {
-    case Messages.Navigation(_) =>
-      withUi { _.navigated() }
-    case a =>
-      unhandled(a)
-  }
-}
+//   def receive = receiveUi andThen {
+//     case Messages.Navigation(_) =>
+//       withUi { _.navigated() }
+//     case a =>
+//       unhandled(a)
+//   }
+// }
 
-object DrawerActor {
-  def props = Props(new DrawerActor)
-}
+// object DrawerActor {
+//   def props = Props(new DrawerActor)
+// }

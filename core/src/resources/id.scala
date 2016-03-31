@@ -6,10 +6,6 @@ import android.view._
 
 import scala.language.dynamics
 
-import macroid.FullDsl._
-import macroid.CanTweak
-import macroid.Ui
-
 case class RId(value: Int, tag: String)
 
 class RIdGen(start: Int) extends Dynamic {
@@ -39,11 +35,6 @@ object RId extends RIdGen(1000)
 
   implicit def `RId from Int`(value: Int): RId = new RId(value, "from Int")
   implicit def `Int from RId`(id: RId) = id.value
-
-  implicit def `Widget is tweakable with RId`[W <: View] =
-    new CanTweak[W, RId, W] {
-      def tweak(w: W, i: RId) = Ui { w.setId(i.value); w }
-    }
 }
 
 object Tag extends Dynamic

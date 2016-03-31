@@ -1,7 +1,6 @@
-package tryp
-package droid
+// package tryp
+// package droid
 
-trait ActivityBase
-extends Activity
-with Macroid
-with Screws
+// trait ActivityBase
+// extends Activity
+// with Screws

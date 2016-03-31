@@ -1,17 +1,16 @@
 package tryp
 package droid
 
-import scalaz.syntax.std.all._
-
-import shapeless.tag.@@
-
 import rx._
 import rx.ops._
 
 import com.google.android.gms.common.Scopes
 import com.google.android.gms.auth.UserRecoverableAuthException
 
+import view._
+import view.core._
 import state._
+import state.core._
 import ZS._
 
 object AuthStateData
@@ -41,9 +40,7 @@ import AuthStateData._
 
 @Publish(AuthorizeToken)
 abstract class AuthState
-(implicit val ctx: AuthStateUiI, res: Resources, plus: PlusInterface,
-  settings: Settings)
-extends DroidMachine[AuthStateUiI]
+extends Machine
 {
   override def handle = "gplus"
 
@@ -63,7 +60,7 @@ extends DroidMachine[AuthStateUiI]
   def resume: Transit = {
     case S(Pristine, data) =>
       if (backendTokenValid) S(Authed, BackendData(backendToken()))
-      else S(Unauthed, data).<<(autoFetchAuthToken().option(Fetch))(StateEffect.optionStateEffect[Fetch.type](Operation.messageOperation[Fetch.type]))
+      else S(Unauthed, data) << autoFetchAuthToken().opt(Fetch)
   }
 
   def reset: Transit = {
@@ -74,7 +71,8 @@ extends DroidMachine[AuthStateUiI]
 
   def fetch: Transit = {
     case s @ S(Unauthed, data) =>
-      S(Fetching, data) << fetchToken
+      S(Fetching, data)
+      // << fetchToken
   }
 
   def auth(account: String, plusToken: String): Transit = {
@@ -96,22 +94,20 @@ extends DroidMachine[AuthStateUiI]
 
   def requestPermission(intent: Intent): Transit = {
     case s @ S(Unauthed, data) =>
-      s << stateEffect("initiating plus permission request") {
-        ctx.startActivity(intent, Plus.RC_TOKEN_FETCH)
-    }
+      s << act(_.startActivityForResult(intent, Plus.RC_TOKEN_FETCH))
   }
 
-  // FIXME blocking indefinitely if the connection failed
-  def fetchToken: Process[Task, Result] = {
-    val err = FetchTokenFailed("Plus account name unavailable").toResult
-    plus.oneAccount
-      .map(_.email cata(tokenFromEmail, err))
-  }
+  // // FIXME blocking indefinitely if the connection failed
+  // def fetchToken = {
+  //   val err = FetchTokenFailed("Plus account name unavailable").toResult
+  //   plus.oneAccount
+  //     .map(_.map(_.email cata(tokenFromEmail, err)))
+  // }
 
   def tokenFromEmail(email: String): Result = {
     Try(plusToken(email)) match {
       case Success(tkn) =>
-        AuthorizeToken(email, tkn).toResult
+        IOTask(tkn.map(AuthorizeToken(email, _).toResult)).internal.success
       case Failure(t: UserRecoverableAuthException) =>
         NonEmptyList(
           FetchTokenFailed("insufficient permissions").toParcel,
@@ -125,20 +121,21 @@ extends DroidMachine[AuthStateUiI]
     }
   }
 
-  def serverClientId = res.string("gplus_oauth_server_client_id")
+  def serverClientId = res(_.string("gplus_oauth_server_client_id"))
 
   val scopes = Scopes.PLUS_LOGIN
 
   def scope = s"oauth2:server:client_id:$serverClientId:api_scope:$scopes"
 
-  def plusToken(email: String) = ctx.plusToken(email, scope)
+  def plusToken(email: String) = con(_.plusToken(email, scope))
 
   def backend: Backend
 
   def backendToken = backend.token
 
   lazy val autoFetchAuthToken =
-    settings.app.bool("auto_fetch_auth_token", true)
+    () => true
+  //   settings.app.bool("auto_fetch_auth_token", true)
 
   def authorizePlusToken(account: String, plusToken: String): Effect = {
     Task {
@@ -147,7 +144,7 @@ extends DroidMachine[AuthStateUiI]
   }
 
   def clearPlusToken(token: String) =
-    stateEffect("clear plus token") { ctx.clearPlusToken(token) }
+    con(_.clearPlusToken(token))
 
   def plusTokenResolved(success: Boolean) {
     if (success) send(Fetch)
@@ -159,15 +156,12 @@ extends DroidMachine[AuthStateUiI]
 }
 
 trait AuthIntegration
-extends ActivityBase
-with AppPreferences
-with ActivityAgent
-with ResourcesAccess
-with HasPlus
-{ act: Akkativity =>
+extends Agent
+{
 
   lazy val authMachine = new AuthState {
-    def backend = new Backend()(settings, res)
+    def backend = null
+    // def backend = new Backend()(settings, res)
   }
 
   override def machines = authMachine %:: super.machines
@@ -175,15 +169,15 @@ with HasPlus
   // TODO in activity agent
   // publishLocalOne(ActivityResult(requestCode))
 
-  override def onActivityResult(requestCode: Int, responseCode: Int,
-    intent: Intent) = {
-    Log.i(s"activity result: request $requestCode, response $responseCode")
-    val ok = responseCode == android.app.Activity.RESULT_OK
-    if (requestCode == Plus.RC_SIGN_IN)
-      plus.send(PlayServices.Connect)
-    else if (requestCode == Plus.RC_TOKEN_FETCH)
-      authMachine.plusTokenResolved(ok)
-  }
+  // override def onActivityResult(requestCode: Int, responseCode: Int,
+  //   intent: Intent) = {
+  //   Log.i(s"activity result: request $requestCode, response $responseCode")
+  //   val ok = responseCode == android.app.Activity.RESULT_OK
+  //   if (requestCode == Plus.RC_SIGN_IN)
+  //     plus.send(PlayServices.Connect)
+  //   else if (requestCode == Plus.RC_TOKEN_FETCH)
+  //     authMachine.plusTokenResolved(ok)
+  // }
 
   def obtainToken() = {
     publishLocalAll(Nes(Reset, Fetch))

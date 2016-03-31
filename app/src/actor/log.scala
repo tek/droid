@@ -1,20 +1,20 @@
-package tryp.droid
+// package tryp.droid
 
-import akka.actor.Props
+// import akka.actor.Props
 
-class LogActor
-extends TrypActor[LogFragment]
-{
-  import TrypActor._
+// class LogActor
+// extends TrypActor[LogFragment]
+// {
+//   import TrypActor._
 
-  def receive = receiveUi andThen {
-    case Messages.Log(_) =>
-      withUi { _.updateLog() }
-    case a =>
-      unhandled(a)
-  }
-}
+//   def receive = receiveUi andThen {
+//     case Messages.Log(_) =>
+//       withUi { _.updateLog() }
+//     case a =>
+//       unhandled(a)
+//   }
+// }
 
-object LogActor {
-  def props = Props(new LogActor)
-}
+// object LogActor {
+//   def props = Props(new LogActor)
+// }

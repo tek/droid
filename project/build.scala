@@ -16,6 +16,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
     super.defaultBuilder(name)
       .manifest("minSdkVersion" -> "14")
       .settingsV(
+        fork := true,
         manifestTemplate := metaRes.value / "aar" / manifestName,
         manifestTokens ++= Map(
           "package" -> androidPackage.value,
@@ -27,13 +28,26 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val core = "core" / "android basics"
 
-  lazy val view = "view" / "iota wrappers" <<< core
+  lazy val viewCore = "view-core" / "context abstraction core" <<< core
 
-  lazy val state = ("state" / "state machine" <<< view)
+  lazy val stateCore = ("state-core" / "state machine core" <<< core)
     .logback("tag" -> "tryp")
-    .settingsV(logbackTemplate := metaRes.value / "unit" / "logback.xml")
+    .settingsV(
+      logbackTemplate := metaRes.value / "unit" / "logback.xml",
+      generateLogback := false,
+      generateLogback in Test := true
+    )
 
-  lazy val app = "app".transitive / "android commons" <<< state <<< view
+  lazy val view = 
+    "view" / "view IO streaming and iota wrappers" <<< viewCore <<< stateCore
+
+  lazy val state = "state" / "state machine" <<< view
+
+  lazy val service = 
+    "service" / "machines providing services" <<< state
+
+  lazy val app =
+    "app".multidexDeps / "android commons" <<< service
 
   lazy val logback = "logback" / "logback deps" <<< app
 
@@ -70,22 +84,29 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
   lazy val integration = "integration" <<< test
 
   lazy val trial = adp("trial")
-    .debug
+    .protify
+    .settingsV(apkbuildDebug ~= { a ⇒ a(true); a })
     .manifest(
-      "appName" -> "tryp",
+      "appName" -> "tryp trial",
       "appClass" -> "tryp.droid.trial.TApplication",
-      "minSdk" -> "21",
-      "targetSdk" -> "21",
-      "activityClass" -> ".MainActivity",
+      "minSdk" -> "22",
+      "targetSdk" -> "22",
+      "activityClass" -> "tryp.droid.StateAppActivity",
       "versionCode" -> "1",
+      "versionName" -> "1.0",
       "extra" -> ""
     )
     .settingsV(
       aarModule := "trial",
+      manifestTemplate := metaRes.value / "trial" / manifestName,
       manifestTokens += ("package" -> androidPackage.value),
       dexMaxHeap := "2048m"
     )
-    .logback("tag" -> "tryp") <<< app
+    .logback("tag" -> "tryp")
+    .multidex(
+      "tryp/droid/trial/TApplication.class",
+      "tryp/droid/StateAppActivity.class"
+    ) <<< logback
 
 
   override def consoleImports = """

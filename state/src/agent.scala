@@ -7,14 +7,15 @@ import concurrent.duration.FiniteDuration
 import shapeless._
 import shapeless.tag.@@
 
-import scalaz.concurrent.Strategy, scalaz.stream
-import stream._
+import scalaz.stream.{async, wye, merge, process1}
 import Process._
 import ScalazGlobals._
 
 import cats._
 import cats.data._
 import cats.syntax.all._
+
+import droid.state.core._
 
 trait LogMachine
 extends Machine
@@ -62,7 +63,7 @@ object AgentStateData
   extends Message
 
   case class AgentData(sub: List[Agent])
-  extends Data
+  extends core.Data
 }
 import AgentStateData._
 
@@ -74,21 +75,27 @@ extends Machine
 {
   def sub: Streaming[Agent] = Streaming.Empty()
 
-  type TMT = MessageTopic @@ To
+  type TMT = Topic[Message] @@ To
 
-  private[this] val dynamicSubAgentsIn = async.unboundedQueue[Agent]
+  def mkTopic = async.topic[Message]()(strat)
 
-  protected val publishDownIn = tag[To](MessageTopic())
+  private[this] lazy val dynamicSubAgentsIn = async.unboundedQueue[Agent]
 
-  private[this] val publishLocalIn = tag[To](MessageTopic())
+  private[this] lazy val scheduledMessages = async.unboundedQueue[Message]
 
-  override protected val initialZ = Zthulhu(data = AgentData(Nil))
+  protected lazy val publishDownIn = tag[To](mkTopic)
+
+  private[this] lazy val publishLocalIn = tag[To](mkTopic)
+
+  override protected lazy val initialZ = Zthulhu(data = AgentData(Nil))
 
   def machines: Streaming[Machine] = Streaming.Empty()
 
   def allMachines[A](f: Machine => A) = machines map(f)
 
   val ! = send _
+
+  override def machinePrefix = super.machinePrefix :+ "ag"
 
   protected def publishToP(to: TMT, msgs: MNes) = {
     emitAll(msgs.toList).to(to.publish)
@@ -123,20 +130,52 @@ extends Machine
     publishLocalAll(Nes(msg))
   }
 
+  def scheduleAll(msgs: MNes) = {
+    if (isRunning) publishAll(msgs)
+    else {
+      scheduledMessages
+        .enqueueAll(msgs.toList) !? s"schedule messages $msgs in $description"
+    }
+  }
+
+  def scheduleOne(msg: Message) = {
+    scheduleAll(Nes(msg))
+  }
+
   def machinesMessageOut(in: MProc) =
     machines foldMap(_.runWithInput(in))
 
+  // def machinesMessageOut(in: MProc) =
+  //   (this %:: machines) foldMap(_.runWithInput(in))
+
   def agentMain(in: MProc): MProc = {
     val down = publishDownIn.subscribe
+      // .sideEffect(a => log.debug(s"pdi: $a"))
       .merge(in)
     val local = publishLocalIn.subscribe
+      // .sideEffect(a => log.debug(s"pli: $a"))
       .merge(down)
     val mainstream =
       machinesMessageOut(local)
         .merge(fixedSubAgents(down))
         .merge(dynamicSubAgents(down))
         .merge(runWithInput(down))
-    interrupt.wye(mainstream)(stream.wye.interrupt)
+        .forkTo(publishLocalIn.publish) {
+          case ToLocal(m) =>
+            p(s"$description found ToLocal: $m")
+            m
+        }
+        .forkTo(internalMessageIn.enqueue) {
+          case ToAgent(m) =>
+            p(s"$description found ToAgent: $m")
+            m
+        }
+        .forkTo(publishDownIn.publish) {
+          case ToSub(m) =>
+            p(s"$description found ToSub: $m")
+            m
+        }
+    interrupt.wye(mainstream)(wye.interrupt)
   }
 
   def fixedSubAgents(in: MProc) = {
@@ -144,7 +183,7 @@ extends Machine
   }
 
   private[this] def dynamicSubAgents(in: MProc) = {
-    nondeterminism.njoin(0, 0)(dynamicSubAgentsRunner(in))
+    merge.mergeN(dynamicSubAgentsRunner(in))
   }
 
   private[this] def dynamicSubAgentsRunner(in: MProc) = {
@@ -183,11 +222,6 @@ extends Machine
   def admit: Admission = {
     case AddSub(subs) => addSub(subs)
     case StopSub(subs) => stopSub(subs)
-    case SubAdded => {
-      case s =>
-        log.debug("subagent added")
-        s
-    }
   }
 
   private[this] def addSub(add: Nes[Agent]): Transit = {
@@ -195,7 +229,7 @@ extends Machine
       log.debug(s"adding sub agents $add")
       S(s, AgentData(sub ::: add.toList)) <<
         emitAll(add.toList).to(dynamicSubAgentsIn.enqueue)
-          .effect(s"enqueue sub agents in $description") <<
+          .stateSideEffect(s"enqueue sub agents in $description") <<
             SubAdded
   }
 
@@ -218,7 +252,20 @@ extends Machine
       .infraRunFor(s"wait for sub agent count $num in $this", timeout)
   }
 
-  protected def postRunAgent(): Unit = ()
+  /** dequeueAvailable blocks until at least one element is queued.
+   * Therefore, dequeue nondeterministically and remove the dummy values,
+   * which results in a discrete Process that may or may not contain a Seq.
+   * If this isn't done like this, `headOr` will block if the queue is empty.
+   */
+  override protected def initialEffects: Effect = {
+    val messages = scheduledMessages.dequeueAvailable.availableOrHalt
+    (messages.headOr(Nil) |> process1.unchunk)
+      .map {
+        case prc: Parcel => prc
+        case m => (m: Parcel)
+      }
+      .stateEffect
+  }
 
   def killMachines() = {
     allMachines(_.kill())
@@ -231,22 +278,23 @@ extends Machine
   def waitMachines() = {
     allMachines(_.waitIdle())
   }
-
-  lazy val fallbackRootAgent = new RootAgent {
-    def handle = "fallbackMediator"
-  }
 }
 
 trait RootAgent
 extends Agent
 {
-  lazy val logMachine = new LogMachine {}
+  // lazy val logMachine = new LogMachine {}
 
-  override def machines = logMachine %:: super.machines
+  // override def machines = logMachine %:: super.machines
 
   def rootAgent = {
     agentMain(halt)
-      .sideEffect(m => log.debug(s"publishing $m in $this"))
+      .collect {
+        case ToRoot(m) =>
+          // p(s"$description found ToRoot: $m")
+          m
+      }
+      .sideEffect(m => log.debug(s"publishing $m"))
       .to(publishDownIn.publish)
   }
 
@@ -259,4 +307,6 @@ extends Agent
     forkAgent()
     postRunAgent()
   }
+
+  protected def postRunAgent(): Unit = ()
 }

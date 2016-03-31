@@ -1,53 +1,53 @@
-package tryp.droid.tweaks
+// package tryp.droid.tweaks
 
-import scalaz._, Scalaz._
+// import scalaz._, Scalaz._
 
-import macroid._
+// import macroid._
 
-import tryp.droid.WidgetBase
+// import tryp.droid.WidgetBase
 
-case class Slot[A <: View](var target: Option[A] = None)
-{
-  def <~(t: Tweak[A]) = target <~ t
+// case class Slot[A <: View](var target: Option[A] = None)
+// {
+//   def <~(t: Tweak[A]) = target <~ t
 
-  def <~(w: WidgetBase[A]) = target <~ w.tweak
+//   def <~(w: WidgetBase[A]) = target <~ w.tweak
 
-  def <~(t: Option[Tweak[A]]) = target <~ t
+//   def <~(t: Option[Tweak[A]]) = target <~ t
 
-  def <~(t: Maybe[Tweak[A]]) = target <~ t.toOption
+//   def <~(t: Maybe[Tweak[A]]) = target <~ t.toOption
 
-  def <~~(s: Snail[A])(implicit ec: EC) = target <~~ s
+//   def <~~(s: Snail[A])(implicit ec: EC) = target <~~ s
 
-  def foreach(f: A => Unit) {
-    target foreach f
-  }
+//   def foreach(f: A => Unit) {
+//     target foreach f
+//   }
 
-  def map[B](f: A => B) = {
-    target map f
-  }
+//   def map[B](f: A => B) = {
+//     target map f
+//   }
 
-  def some[B](f: A => B) = {
-    target some(f)
-  }
-}
+//   def some[B](f: A => B) = {
+//     target some(f)
+//   }
+// }
 
-object Slot
-extends Slots
-{
-  implicit def `Option from Slot`[A <: View](s: Slot[A]) = s.target
+// object Slot
+// extends Slots
+// {
+//   implicit def `Option from Slot`[A <: View](s: Slot[A]) = s.target
 
-  implicit def `Widget is tweakable with Slot`[W <: View] =
-    new CanTweak[W, Slot[W], W] {
-      def tweak(w: W, s: Slot[W]) = w <~ whore(s)
-    }
-}
+//   implicit def `Widget is tweakable with Slot`[W <: View] =
+//     new CanTweak[W, Slot[W], W] {
+//       def tweak(w: W, s: Slot[W]) = w <~ whore(s)
+//     }
+// }
 
-trait Slots
-{
-  def slut[A <: View] = new Slot[A]()
+// trait Slots
+// {
+//   def slut[A <: View] = new Slot[A]()
 
-  def whore[A <: View](pimp: Slot[A]) = Tweak[A](w => pimp.target = Some(w))
-}
+//   def whore[A <: View](pimp: Slot[A]) = Tweak[A](w => pimp.target = Some(w))
+// }
 
-object Slots
-extends Slots
+// object Slots
+// extends Slots

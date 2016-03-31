@@ -12,18 +12,17 @@ import shapeless._
 trait AppStateSpecMachine
 extends ViewMachine
 
-class AppStateActivityAgent(implicit a: AndroidActivityUiContext,
-  res: Resources)
-extends droid.state.AppStateActivityAgent
+class Agent1
+extends ActivityAgent
 {
   lazy val viewMachine =
     new AppStateSpecMachine {
-      lazy val layoutIO = l[FrameLayout](w[EditText] :: HNil)
+      lazy val layoutIO = l[FrameLayout](w[EditText])
     }
 }
 
-class UnitActivity1
-extends StateAppViewActivity
+class StateAppUnitActivity
+extends StateAppActivity
 {
   override protected def mainViewTimeout = 30 seconds
 
@@ -33,9 +32,11 @@ extends StateAppViewActivity
   }
 }
 
-trait StateAppSpec[A <: Activity]
-extends ActivitySpec[A]
+trait StateAppSpec
+extends ActivitySpec[StateAppUnitActivity]
 {
+  def activityClass = classOf[StateAppUnitActivity]
+
   def stateApp = application match {
     case a: state.StateApplication => a
     case a => sys.error(s"app is not StateApplication: ${a.className}")

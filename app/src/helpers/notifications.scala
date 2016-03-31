@@ -11,7 +11,8 @@ class Notification(
 {
   var text = ""
 
-  lazy val builder = new NotificationCompat.Builder(context) tap { bldr =>
+  lazy val builder = {
+    val bldr = new NotificationCompat.Builder(context)
     val sb = TaskStackBuilder.create(context)
     sb.addParentStack(target)
     sb.addNextIntent(intent)
@@ -19,6 +20,7 @@ class Notification(
     bldr.setContentIntent(pIntent)
     bldr.setContentTitle(title)
     bldr.setSmallIcon(icon)
+    bldr
   }
 
   lazy val intent = new Intent(context, target)
@@ -50,11 +52,10 @@ class Notification(
 }
 
 trait Notifications
-extends Basic
 {
   def createNotification(
     target: Class[_], icon: Int, title: String, id: Int = 1
-  ) = {
+  )(implicit context: Context) = {
     new Notification(context, target, icon, title, id)
   }
 }

@@ -11,6 +11,7 @@ with BeforeEach
 with slick.ToActionExpectable
 with MustThrownExpectations
 with ContainsView
+with tryp.Matchers
 {
   def activityClass: Class[A]
 }

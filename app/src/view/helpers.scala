@@ -1,11 +1,11 @@
 package tryp
 package droid
 
-import scala.language.dynamics
-import scala.collection.convert.wrapAll._
-import scala.concurrent.Await
+// import scala.language.dynamics
+// import scala.collection.convert.wrapAll._
+// import scala.concurrent.Await
 
-import scalaz._
+// import scalaz._
 
 import android.widget.{AdapterView,TextView}
 import android.content.res.{Resources => AResources,Configuration}
@@ -16,117 +16,100 @@ import android.app.{FragmentManager,FragmentTransaction,AlarmManager}
 import android.support.v4.content.WakefulBroadcastReceiver
 import android.os.{Vibrator,SystemClock}
 
-import macroid._
-import macroid.support.FragmentApi
+// import util._
 
-import util._
+// trait HasActivity
+// extends Basic
+// {
+//   implicit def activity: Activity
 
-trait ActivityContexts {
-  implicit def toActivityContextWrapper(implicit activity: Activity) =
-    ContextWrapper(activity)
-}
+//   implicit def context: Context = activity
 
-trait HasActivity
-extends Basic
-with ActivityContexts
-with HasComm
-{
-  implicit def activity: Activity
+//   def uiThread(callback: => Unit) {
+//     val runner = new Runnable {
+//       def run = callback
+//     }
+//     Option(activity) foreach { _.runOnUiThread(runner) }
+//   }
 
-  implicit def context: Context = activity
+//   def ui(callback: => Unit) = {
+//     Ui(callback).run
+//   }
 
-  def uiThread(callback: => Unit) {
-    val runner = new Runnable {
-      def run = callback
-    }
-    Option(activity) foreach { _.runOnUiThread(runner) }
-  }
+//   def uiBlock(callback: => Unit) {
+//     Await.ready(ui(callback), Duration.Inf)
+//   }
 
-  def ui(callback: => Unit) = {
-    Ui(callback).run
-  }
+//   def inflateLayout[A <: View: ClassTag](name: String): Ui[A] = {
+//     Ui {
+//       val id = res.layoutId(name)
+//         .getOrElse(sys.error(s"invalid layout name: $name"))
+//       activity.getLayoutInflater.inflate(id, null) match {
+//         case view: A => view
+//         case view => {
+//           throw new ClassCastException(
+//             s"Inflated layout ${name} resulted in wrong type " +
+//             s"'${view.className}'")
+//         }
+//       }
+//     }
+//   }
+// }
 
-  def uiBlock(callback: => Unit) {
-    Await.ready(ui(callback), Duration.Inf)
-  }
+// trait ViewBasic
+// extends HasActivity
 
-  def inflateLayout[A <: View: ClassTag](name: String): Ui[A] = {
-    Ui {
-      val id = res.layoutId(name)
-        .getOrElse(sys.error(s"invalid layout name: $name"))
-      activity.getLayoutInflater.inflate(id, null) match {
-        case view: A => view
-        case view => {
-          throw new ClassCastException(
-            s"Inflated layout ${name} resulted in wrong type " +
-            s"'${view.className}'")
-        }
-      }
-    }
-  }
+// trait Click
+// extends ViewBasic
+// {
+//   def itemClickListen(view: AdapterView[_], callback: (View) => Unit) {
+//     view.setOnItemClickListener(new AdapterView.OnItemClickListener {
+//       def onItemClick(parent: AdapterView[_], view: View, pos: Int, id: Long) {
+//         callback(view)
+//       }
+//     })
+//   }
 
-  implicit lazy val comm = {
-    activity match {
-      case a: Akkativity => AkkativityCommunicator(a)
-      case _ => DummyCommunicator()
-    }
-  }
-}
+//   def clickListen(view: View, callback: (View) => Unit) {
+//     view.setOnClickListener(new android.view.View.OnClickListener {
+//       def onClick(view: View) = callback(view)
+//     })
+//   }
+// }
 
-trait ViewBasic
-extends HasActivity
+// trait Geometry
+// extends ViewBasic
+// {
+//   def resources: AResources
 
-trait Click
-extends ViewBasic
-{
-  def itemClickListen(view: AdapterView[_], callback: (View) => Unit) {
-    view.setOnItemClickListener(new AdapterView.OnItemClickListener {
-      def onItemClick(parent: AdapterView[_], view: View, pos: Int, id: Long) {
-        callback(view)
-      }
-    })
-  }
+//   def viewPos(view: View): Array[Int] = {
+//     val data = Array[Int](0, 0)
+//     view.getLocationOnScreen(data)
+//     data
+//   }
 
-  def clickListen(view: View, callback: (View) => Unit) {
-    view.setOnClickListener(new android.view.View.OnClickListener {
-      def onClick(view: View) = callback(view)
-    })
-  }
-}
+//   def isPortraitMode {
+//     activity.getResources.getConfiguration.orientation ==
+//       Configuration.ORIENTATION_PORTRAIT
+//   }
+// }
 
-trait Geometry
-extends ViewBasic
-{
-  def resources: AResources
+// trait Input
+// extends ViewBasic
+// {
+//   import android.content.Context
 
-  def viewPos(view: View): Array[Int] = {
-    val data = Array[Int](0, 0)
-    view.getLocationOnScreen(data)
-    data
-  }
+//   def inputMethodManager =
+//     systemService[InputMethodManager](Context.INPUT_METHOD_SERVICE)
 
-  def isPortraitMode {
-    activity.getResources.getConfiguration.orientation ==
-      Configuration.ORIENTATION_PORTRAIT
-  }
-}
-
-trait Input
-extends ViewBasic
-{
-  import android.content.Context
-
-  def inputMethodManager =
-    systemService[InputMethodManager](Context.INPUT_METHOD_SERVICE)
-
-  def hideKeyboard() = {
-    Ui {
-      inputMethodManager
-        .hideSoftInputFromWindow(activity.root.getWindowToken, 0)
-      "keyboard successfully hidden"
-    }
-  }
-}
+//   def hideKeyboard() = {
+//     Ui {
+//       inputMethodManager
+//         .hideSoftInputFromWindow(activity.root.getWindowToken, 0)
+//       "keyboard successfully hidden"
+//     }
+//   }
+// }
 
 class DialogListener(callback: () => Unit = () => ())
 extends DialogInterface.OnClickListener
@@ -137,11 +120,10 @@ extends DialogInterface.OnClickListener
 }
 
 class ConfirmDialog(message: String, callback: () => Unit)
+(implicit context: Context)
 extends DialogFragment
-with Basic
+with ResourcesAccess
 {
-  override implicit def context: Context = getActivity
-
   override def onCreateDialog(state: Bundle): Dialog = {
     val builder = new AlertDialog.Builder(context)
     builder.setMessage(message)
@@ -156,72 +138,69 @@ with Basic
 }
 
 trait Confirm
-extends HasActivity
 {
-  def confirm(message: String, callback: () => Unit) {
+  def confirm(message: String, callback: () => Unit)
+  (implicit activity: Activity) {
     val dialog = new ConfirmDialog(message, callback)
     dialog.show(activity.getFragmentManager, "confirm")
   }
 }
 
-trait Snackbars
-extends HasActivity
-{
-  import tryp.droid.Macroid._
-  import macroid.FullDsl.{toast => mToast,_}
+// trait Snackbars
+// extends HasActivity
+// {
+//   private implicit val ns = PrefixResourceNamespace("snackbar")
 
-  private implicit val ns = PrefixResourceNamespace("snackbar")
+//   // def snackbar(resName: String) = {
+//   //   txt.content(resName).foreach(snackbarImpl)
+//   // }
 
-  def snackbar(resName: String) = {
-    txt.content(resName).foreach(snackbarImpl)
-  }
+//   // def snackbarLiteral(message: String) = {
+//   //   snackbarImpl(txt.literal(message))
+//   // }
 
-  def snackbarLiteral(message: String) = {
-    snackbarImpl(txt.literal(message))
-  }
+//   // def snackbarImpl(message: Tweak[TextView]) = {
+//   //   val v = LL()(w[TextView] <~ message)
+//   //   Ui.run {
+//   //     mToast(v) <~ fry
+//   //   }
+//   // }
 
-  def snackbarImpl(message: Tweak[TextView]) = {
-    val v = LL()(w[TextView] <~ message)
-    Ui.run {
-      mToast(v) <~ fry
-    }
-  }
+//   // def toast(resName: String) {
+//   //   mkToast(resName).foreach(_.run)
+//   // }
 
-  def toast(resName: String) {
-    mkToast(resName).foreach(_.run)
-  }
+//   // def mkToast(resName: String) = res.s(resName).map(a => mToast(a) <~ fry)
+// }
 
-  def mkToast(resName: String) = res.s(resName).map(a => mToast(a) <~ fry)
-}
+// trait Alarm
+// extends Basic
+// {
+//   import android.content.Context
 
-trait Alarm
-extends Basic
-{
-  import android.content.Context
+//   def alarmManager = systemService[AlarmManager](Context.ALARM_SERVICE)
 
-  def alarmManager = systemService[AlarmManager](Context.ALARM_SERVICE)
+//   def scheduleRepeatingWakeAlarm[A <: WakefulBroadcastReceiver: ClassTag]
+//   (interval: Duration, name: String, initial: Option[Duration] = None) =
+//   {
+//     val initialInterval = (initial | 10.seconds).toMillis
+//     alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+//       SystemClock.elapsedRealtime() + initialInterval, interval.toMillis,
+//       alarmIntent[A](name))
+//   }
 
-  def scheduleRepeatingWakeAlarm[A <: WakefulBroadcastReceiver: ClassTag]
-  (interval: Duration, name: String, initial: Option[Duration] = None) =
-  {
-    val initialInterval = (initial | 10.seconds).toMillis
-    alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-      SystemClock.elapsedRealtime() + initialInterval, interval.toMillis,
-      alarmIntent[A](name))
-  }
+//   def cancelAlarm[A <: WakefulBroadcastReceiver: ClassTag](name: String) {
+//     alarmManager.cancel(alarmIntent[A](name))
+//   }
 
-  def cancelAlarm[A <: WakefulBroadcastReceiver: ClassTag](name: String) {
-    alarmManager.cancel(alarmIntent[A](name))
-  }
+//   def alarmIntent[A <: WakefulBroadcastReceiver: ClassTag](name: String) =
+//   {
+//     val intent = new Intent(context, implicitly[ClassTag[A]].runtimeClass)
+//     intent.putExtra(Keys.intentSource, Values.wakeAlarm)
+//     intent.putExtra(Keys.alarmPurpose, name)
+//     PendingIntent.getBroadcast(context, name.hashCode, intent,
+//       PendingIntent.FLAG_UPDATE_CURRENT)
+//   }
 
-  def alarmIntent[A <: WakefulBroadcastReceiver: ClassTag](name: String) =
-  {
-    val intent = new Intent(context, implicitly[ClassTag[A]].runtimeClass)
-    intent.putExtra(Keys.intentSource, Values.wakeAlarm)
-    intent.putExtra(Keys.alarmPurpose, name)
-    PendingIntent.getBroadcast(context, name.hashCode, intent,
-      PendingIntent.FLAG_UPDATE_CURRENT)
-  }
-
-  def vibrator = systemService[Vibrator](Context.VIBRATOR_SERVICE)
-}
+//   def vibrator = systemService[Vibrator](Context.VIBRATOR_SERVICE)
+// }

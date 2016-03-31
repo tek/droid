@@ -2,13 +2,14 @@ package tryp
 package droid
 package unit
 
+import state.core._
+import state._
+
 import org.specs2._, specification._, matcher._, concurrent._
 
-import scalaz._, Scalaz._, scalaz.concurrent._, stream.async
+import scalaz._, Scalaz._, scalaz.concurrent._, stream._
 
 import shapeless.HNil
-
-import droid.state._
 
 case object Go
 extends Message
@@ -22,21 +23,23 @@ extends Message
 case object Received2
 extends Message
 
+case object Received3
+extends Message
+
 case object Set0
 extends Message
 
 case object Set1
 extends Message
 
-@Publish(Received0)
 trait State0
 extends Machine
 {
   def handle = "state0"
 
   def admit: Admission = {
-    case Received2 => {
-      case s => s  << Received0
+    case Received3 => {
+      case s => s << Received0.publish
     }
   }
 }
@@ -62,7 +65,6 @@ extends Machine
   }
 }
 
-@Publish(Received2)
 trait State2
 extends Machine
 {
@@ -70,7 +72,7 @@ extends Machine
 
   def admit: Admission = {
     case Received1 => {
-      case s => s << Received2
+      case s => s << Received2.toLocal
     }
     case Set0 => {
       case s => s << Set1
@@ -78,45 +80,69 @@ extends Machine
   }
 }
 
-class MediationSpec
-extends Specification
-with tryp.Matchers
+@Publish(Received3)
+trait State3
+extends Machine
 {
+  def handle = "state3"
+
+  def admit: Admission = {
+    case Received2 => {
+      case s => s << Received3 << Set1.toAgent
+    }
+  }
+}
+
+class AgentSpec
+extends tryp.Spec
+with FixedPool
+{
+  val name = "foo"
+  val threads = 10
+
   def is = s2"""
   machine $machine
   """
 
-  def machine = {
-    val root = new RootAgent
-    {
-      med =>
+  lazy val root = new RootAgent {
+      val ag1 = new Agent {
+        def handle = "ag1"
 
-        val ag1 = new Agent {
-          def handle = "ag1"
-
-          lazy val state = new State1 {}
-
-          override def machines = state %:: super.machines
-        }
-
-        val ag2: Agent = new Agent {
-          def handle = "ag2"
-
-          lazy val state = new State2 {}
-
-          override def machines = state %:: super.machines
-        }
-
-        def handle = "med"
-
-        lazy val state = new State0 {}
+        lazy val state = new State1 {}
 
         override def machines = state %:: super.machines
+      }
 
-        override def sub = ag1 %:: ag2 %:: super.sub
-    }
+      val ag2 = new Agent {
+        def handle = "ag2"
+
+        lazy val output = async.signalOf(-1)
+
+        lazy val state2 = new State2 {}
+
+        lazy val state3 = new State3 {}
+
+        override def machines = state2 %:: state3 %:: super.machines
+
+        override def admit: Admission = {
+          case Set1 => {
+            case s => s << output.set(1)
+          }
+        }
+      }
+
+      def handle = "root"
+
+      lazy val state = new State0 {}
+
+      override def machines = state %:: super.machines
+
+      override def sub = ag1 %:: ag2 %:: super.sub
+  }
+
+  def machine = {
     root.runAgent()
-    root.ag1.send(Go)
-    root.ag1.state.output.get will_== 0
+    root.ag1.scheduleOne(Go.publish)
+    (root.ag2.output.get will_== 1) and (root.ag1.state.output.get will_== 0)
   }
 }

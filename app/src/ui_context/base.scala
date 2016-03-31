@@ -1,232 +1,156 @@
-package tryp
-package droid
+// package tryp
+// package droid
 
-import scalaz._, syntax.show._, syntax.nel._, syntax.traverse._
+// import view._
+// import view.core._
+// import state._
 
-import macroid._
+// import scalaz._, syntax.show._, syntax.nel._, syntax.traverse._
 
-import tryp.UiContext
+// abstract class HasActivityAndroid[F[_, _]: ConsIO]
+// extends ContextAndroid[F]
+// with ResourcesAccess
+// with Snackbars
+// with Transitions
+// with TrypActivityAccess
+// with HasSettings
+// with Input
+// {
+//   override def loadFragment(fragment: FragmentBuilder) = {
+//     IO {
+//       // activity.replaceFragment(
+//       //   fragment.id, fragment(), false, fragment.tag, false)
+//       "fragment loaded successfully"
+//     }
+//   }
 
-case class FragmentBuilder(ctor: () => Fragment, id: RId,
-  tagO: Option[String] = None)
-  {
-    def apply() = ctor()
+//   override def transitionFragment(fragment: FragmentBuilder) = {
+//     settings.app.bool("view_transitions", true)().fold(trypActivity, None)
+//       .map { a =>
+//         IO[String] {
+//           implicit val fm = FragmentManagement.activityFragmentManagement[Activity]
+//           val ui = Macroid.frag(
+//             activity, fragment(), fragment.id, fragment.tag)
+//           a.transition(ui)
+//           "Transition successful"
+//         }
+//       }
+//       .getOrElse(loadFragment(fragment) map(_ => "Cannot transition fragment"))
+//   }
 
-    def tag = tagO | id.tag
-  }
+//   override def failure[E: Show](e: NonEmptyList[E]) = {
+//     Log.d(s"handling failure in activity: $e")
+//     snackbarLiteral(e.map(_.show).toList.mkString("\n"))
+//   }
 
-class ActionMacroidOps[A](a: AnyAction[A])
-{
-  def uiBlocking(implicit dbInfo: DbInfo, ec: EC) = {
-    Ui.nop.flatMap { _ =>
-      a.!!
-      Ui.nop
-    }
-  }
-}
+//   // override def notify(id: String) = mkToast(id).getOrElse(IO.nop)
 
-trait ToActionMacroidOps
-{
-  implicit def ToActionMacroidOps[A](a: AnyAction[A]) = new ActionMacroidOps(a)
-}
+//   override def hideKeyboard() = {
+//     super[Input].hideKeyboard()
+//   }
 
-object UiActionTypes
-{ type ActionResult[E, A] = ValidationNel[E, A]
-  type ValidationAction[E, A] = AnyAction[ActionResult[E, A]]
-  type UiActionResult[E, A] = ActionResult[E, Ui[A]]
-  type UiAction[E, A] = ValidationAction[E, Ui[A]]
-  type Action[A] = ValidationAction[String, A]
-}
-import UiActionTypes._
+//   def startActivity(cls: Class[_ <: Activity]): Int = {
+//     val intent = new Intent(activity, cls)
+//     activity.startActivity(intent)
+//   }
+// }
 
-trait AndroidUiContext
-extends UiContext[Ui]
-with ViewExports
-{
-  def loadFragment(fragment: FragmentBuilder): Ui[String]
+// abstract class ActivityAndroid[F[_, _]: ConsIO]
+// extends HasActivityAndroid[F]
+// {
+//   def getFragmentManager = activity.getFragmentManager
+// }
 
-  def transitionFragment(fragment: FragmentBuilder): Ui[String]
+// class DefaultActivityAndroid[F[_, _]: ConsIO](implicit val activity: Activity)
+// extends ActivityAndroid[F]
 
-  def showViewTree(view: View): String
+// object ActivityAndroid
+// {
+//   def default[F[_, _]: ConsIO](implicit a: Activity) = 
+//     new DefaultActivityAndroid[F]
+// }
 
-  def hideKeyboard(): Ui[String]
-}
+// abstract class FragmentAndroid[F[_, _]: ConsIO]
+// extends HasActivityAndroid[F]
+// {
+//   val fragment: Fragment
 
-trait AndroidContextUiContext
-extends AndroidUiContext
-with HasContext
-with ResourcesAccess
-with Logging
-{
-  def aContext = context
+//   def getFragmentManager = fragment.getChildFragmentManager
+// }
 
-  def showViewTree(view: View): String = {
-    view.viewTree.drawTree
-  }
+// class DefaultFragmentAndroid[F[_, _]: ConsIO](implicit val fragment: Fragment)
+// extends FragmentAndroid[F]
+// {
+//   val activity = fragment.activity
+// }
 
-  override def notify(id: String): Ui[Any] = Ui(log.info(id))
+// object FragmentAndroid
+// {
+//   def default[F[_, _]: ConsIO](implicit f: Fragment) = 
+//     new DefaultFragmentAndroid[F]
+// }
 
-  def loadFragment(fragment: FragmentBuilder) = {
-    Ui("AndroidContextUiContext cannot handle fragments")
-  }
+// // class IOOps[A](ui: IO[A])
+// // (implicit ctx: AndroidUiContext, ec: EC)
+// // {
+// //   def attemptIO = {
+// //     Log.d(s"running the IO")
+// //     IO.run(ui)
+// //       .flatMap(handleIOResult)
+// //       .andThen { case Failure(e) => uiError(e) }
+// //   }
 
-  def transitionFragment(fragment: FragmentBuilder) = {
-    loadFragment(fragment)
-  }
+// //   def handleIOResult(a: A) = {
+// //     Log.d(s"handling IO result $a")
+// //     Future.successful(a)
+// //   }
 
-  def hideKeyboard() = Ui("Cannot hide keyboard without activity")
-}
+// //   def uiError(e: Throwable) = {
+// //     Log.d(s"logging IO error")
+// //     ctx.uiError(e)
+// //   }
+// // }
 
-class DefaultAndroidContextUiContext(implicit val context: Context)
-extends AndroidContextUiContext
+// // trait ToIOOps
+// // {
+// //   implicit def ToIOOps[A](a: IO[A])
+// //   (implicit ctx: AndroidUiContext, ec: EC, info: DbInfo) = {
+// //     new IOOps(a)
+// //   }
+// // }
 
-object AndroidContextUiContext
-{
-  def default(implicit c: Context) = new DefaultAndroidContextUiContext
-}
+// // TODO replace Log with Writer
+// // at the end of the universe, send written items to generic log, may be
+// // snackbars, stdout or android etc.
+// // class IOValidationNelActionOps[E: Show, A](a: IOAction[E, A])
+// // (implicit ctx: AndroidUiContext, ec: EC, info: DbInfo)
+// // extends ToIOOps
+// // {
+// //   def attemptIO: Unit = {
+// //     Log.d(s"running action")
+// //     a.!.task unsafePerformAsync {
+// //       case \/-(r) => handleActionResult(r)
+// //       case -\/(e) => dbError(e)
+// //     }
+// //   }
 
-trait AndroidHasActivityUiContext
-extends AndroidContextUiContext
-with ResourcesAccess
-with Snackbars
-with Transitions
-with TrypActivityAccess
-with HasSettings
-with Input
-{
-  override def loadFragment(fragment: FragmentBuilder) = {
-    Ui {
-      // activity.replaceFragment(
-      //   fragment.id, fragment(), false, fragment.tag, false)
-      "fragment loaded successfully"
-    }
-  }
+// //   def handleActionResult(result: IOActionResult[E, A]) = {
+// //     Log.d(s"handling action result: $result")
+// //     result fold(ctx.failure(_), _.attemptIO)
+// //   }
 
-  override def transitionFragment(fragment: FragmentBuilder) = {
-    settings.app.bool("view_transitions", true)().fold(trypActivity, None)
-      .map { a =>
-        Ui[String] {
-          implicit val fm = FragmentManagement.activityFragmentManagement[Activity]
-          val ui = Macroid.frag(
-            activity, fragment(), fragment.id, fragment.tag)
-          a.transition(ui)
-          "Transition successful"
-        }
-      }
-      .getOrElse(loadFragment(fragment) map(_ => "Cannot transition fragment"))
-  }
+// //   def dbError(e: Throwable) = {
+// //     Log.d(s"logging db error")
+// //     ctx.dbError(e)
+// //   }
+// // }
 
-  override def failure[E: Show](e: NonEmptyList[E]) = {
-    Log.d(s"handling failure in activity: $e")
-    snackbarLiteral(e.map(_.show).toList.mkString("\n"))
-  }
+// // trait ToIOValidationNelActionOps
+// // {
+// //   implicit def ToIOValidationNelActionOps[E: Show, A]
+// //   (a: IOAction[E, A])
+// //   (implicit ec: EC, info: DbInfo, ctx: AndroidUiContext) = {
+// //     new IOValidationNelActionOps(a)
+// //   }
+// // }
 
-  // TODO split in notifyLiteral and notifyRes or similar
-  override def notify(id: String) = mkToast(id).getOrElse(Ui.nop)
-
-  override def hideKeyboard() = {
-    super[Input].hideKeyboard()
-  }
-
-  def startActivity(cls: Class[_ <: Activity]) = {
-    val intent = new Intent(activity, cls)
-    activity.startActivity(intent)
-  }
-}
-
-trait AndroidActivityUiContext
-extends AndroidHasActivityUiContext
-{
-  def getFragmentManager = activity.getFragmentManager
-}
-
-class DefaultAndroidActivityUiContext(implicit val activity: Activity)
-extends AndroidActivityUiContext
-
-object AndroidActivityUiContext
-{
-  def default(implicit a: Activity) = new DefaultAndroidActivityUiContext
-}
-
-trait AndroidFragmentUiContext
-extends AndroidHasActivityUiContext
-{
-  val fragment: Fragment
-
-  def getFragmentManager = fragment.getChildFragmentManager
-}
-
-class DefaultAndroidFragmentUiContext(implicit val fragment: Fragment)
-extends AndroidFragmentUiContext
-{
-  val activity = fragment.activity
-}
-
-object AndroidFragmentUiContext
-{
-  def default(implicit f: Fragment) = new DefaultAndroidFragmentUiContext
-}
-
-class UiOps[A](ui: Ui[A])
-(implicit ctx: AndroidUiContext, ec: EC)
-{
-  def attemptUi = {
-    Log.d(s"running the Ui")
-    Ui.run(ui)
-      .flatMap(handleUiResult)
-      .andThen { case Failure(e) => uiError(e) }
-  }
-
-  def handleUiResult(a: A) = {
-    Log.d(s"handling Ui result $a")
-    Future.successful(a)
-  }
-
-  def uiError(e: Throwable) = {
-    Log.d(s"logging Ui error")
-    ctx.uiError(e)
-  }
-}
-
-trait ToUiOps
-{
-  implicit def ToUiOps[A](a: Ui[A])
-  (implicit ctx: AndroidUiContext, ec: EC, info: DbInfo) = {
-    new UiOps(a)
-  }
-}
-
-// TODO replace Log with Writer
-// at the end of the universe, send written items to generic log, may be
-// snackbars, stdout or android etc.
-class UiValidationNelActionOps[E: Show, A](a: UiAction[E, A])
-(implicit ctx: AndroidUiContext, ec: EC, info: DbInfo)
-extends ToUiOps
-{
-  def attemptUi: Unit = {
-    Log.d(s"running action")
-    a.!.task unsafePerformAsync {
-      case \/-(r) => handleActionResult(r)
-      case -\/(e) => dbError(e)
-    }
-  }
-
-  def handleActionResult(result: UiActionResult[E, A]) = {
-    Log.d(s"handling action result: $result")
-    result fold(ctx.failure(_), _.attemptUi)
-  }
-
-  def dbError(e: Throwable) = {
-    Log.d(s"logging db error")
-    ctx.dbError(e)
-  }
-}
-
-trait ToUiValidationNelActionOps
-{
-  implicit def ToUiValidationNelActionOps[E: Show, A]
-  (a: UiAction[E, A])
-  (implicit ec: EC, info: DbInfo, ctx: AndroidUiContext) = {
-    new UiValidationNelActionOps(a)
-  }
-}

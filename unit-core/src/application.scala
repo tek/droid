@@ -1,17 +1,17 @@
-package tryp
-package droid
-package unit
+// package tryp
+// package droid
+// package unit
 
-import slick.TestFileDbInfo
+// import slick.TestFileDbInfo
 
-trait UnitApplication
-{ self: Application =>
+// trait UnitApplication
+// { self: Application =>
 
-  override def setupEnv() = {
-    setEnv(tryp.meta.UnitTestEnv)
-  }
+//   override def setupEnv() = {
+//     setEnv(tryp.meta.UnitTestEnv)
+//   }
 
-  override def setupDbInfo(name: String) = {
-    DbMeta.setDbInfo(TestFileDbInfo(name))
-  }
-}
+//   override def setupDbInfo(name: String) = {
+//     DbMeta.setDbInfo(TestFileDbInfo(name))
+//   }
+// }

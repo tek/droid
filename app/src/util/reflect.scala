@@ -1,4 +1,5 @@
-package tryp.droid
+package tryp
+package droid
 
 // used in loki.integration to access spinner fields
 object Reflect

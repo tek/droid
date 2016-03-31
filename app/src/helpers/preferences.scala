@@ -1,4 +1,5 @@
-package tryp.droid
+package tryp
+package droid
 
 import scala.collection.convert.wrapAll._
 
@@ -209,8 +210,9 @@ object PrefFacades
 }
 
 trait Preferences
-extends HasContext
 {
+  def context: Context
+
   private def userPrefs =
     PreferenceManager.getDefaultSharedPreferences(context)
 
@@ -218,8 +220,9 @@ extends HasContext
 }
 
 trait AppPreferences
-extends HasContext
 {
+  def context: Context
+
   private def applicationPrefs =
     context.getSharedPreferences("app_state",
       android.content.Context.MODE_PRIVATE)

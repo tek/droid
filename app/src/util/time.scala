@@ -1,4 +1,5 @@
-package tryp.droid
+package tryp
+package droid
 
 import rx._
 import rx.ops._

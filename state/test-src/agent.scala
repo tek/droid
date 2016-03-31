@@ -2,6 +2,8 @@ package tryp
 package droid
 package state
 
+import state.core._
+
 import org.specs2._, specification._, matcher._, concurrent._
 
 import scalaz._, Scalaz._, scalaz.concurrent._, stream.async
@@ -29,11 +31,12 @@ extends Machine
 }
 
 class AgentSpec
-extends Specification
-with tryp.Matchers
+extends tryp.Spec
 with CachedPool
 {
   def name = "spec"
+
+  override def retries = 2
 
   def is = sequential ^ s2"""
   start a subagent dynamically $subAgent

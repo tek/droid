@@ -10,10 +10,12 @@ import org.robolectric.Shadows
 
 import state._
 import AppState._
+import MainViewMessages.LoadUi
 
 @Config(application = classOf[MainViewStateApplication])
 class MainViewSpec
-extends StateAppSpec[UnitActivity1]
+extends StateAppSpec
+with ResourcesAccess
 {
   def is = s2"""
   run $run
@@ -22,14 +24,16 @@ extends StateAppSpec[UnitActivity1]
   def before = {
   }
 
-  def activityClass = classOf[UnitActivity1]
-
   sequential
 
   def run = {
-    val v = new MainView2
-    stateApp.publishOne(StartActivity(v))
-    Some(Shadows.shadowOf(activity).getNextStartedActivity()) must
-      beSome.eventually
+    activity
+    Thread.sleep(5000)
+    stateApp.publishOne(LoadUi(new Agent3))
+    activity willContain view[EditText]
+    // val v = new MainViewAA2
+    // stateApp.publishOne(StartActivity(v))
+    // Some(Shadows.shadowOf(activity).getNextStartedActivity()) must
+    //   beSome.eventually
   }
 }
