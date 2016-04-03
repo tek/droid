@@ -16,9 +16,6 @@ extends ActivitySpec[NestedActivity]
   change $change
   """
 
-  def before = {
-  }
-
   def activityClass = classOf[NestedActivity]
 
   val text = Random.string(10)

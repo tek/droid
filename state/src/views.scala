@@ -2,7 +2,7 @@ package tryp
 package droid
 package state
 
-import scalaz._, Scalaz._, concurrent._, stream._
+import scalaz._, Scalaz._, concurrent._, stream._, Process._
 import android.widget._
 
 import core._
@@ -46,17 +46,13 @@ with Views[Context, StreamIO]
 
   import iota.std.TextCombinators.text
 
-  def dummyLayout: StreamIO[View, Context] = 
+  def dummyLayout: StreamIO[View, Context] =
     (w[TextView] >>= text("Couldn't load content")) map(a => a: View)
 
   def viewIO = viewMachine.layout.discrete.take(1)
 
   def safeViewIO: Process[Task, StreamIO[View, Context]] = {
-    p("safeViewIO called")
     viewIO.availableOrHalt
-      .sideEffect { v =>
-        p(s"safeViewIO: $v")
-      }
   }
 }
 
@@ -83,27 +79,24 @@ extends ViewAgent
   }
 }
 
-@Publish(AppState.StartActivity)
+import AppState.{StartActivity, ActivityAgentStarted}
+
+@Publish(StartActivity)
 trait ActivityAgentBase
 extends RootAgent
 
 trait ActivityAgent
 extends ActivityAgentBase
-with ViewAgent
-{
+with ViewAgent { aa =>
   lazy val activityMachine = new Machine {
     def handle = "activity"
 
     def admit: Admission = {
-      case Create(_, _) => {
-        s =>
-          p(s"create $description")
-          s
-      }
+      case Create(_, _) => { s => s }
     }
 
     override def initialMessages = super.initialMessages ++
-      Process.emit(PublishMessage(AppState.ActivityAgentStarted(ActivityAgent.this)))
+      emit(PublishMessage(ActivityAgentStarted(aa)))
   }
 
   override def machines = activityMachine %:: super.machines

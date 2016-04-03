@@ -160,21 +160,9 @@ extends Machine
         .merge(fixedSubAgents(down))
         .merge(dynamicSubAgents(down))
         .merge(runWithInput(down))
-        .forkTo(publishLocalIn.publish) {
-          case ToLocal(m) =>
-            p(s"$description found ToLocal: $m")
-            m
-        }
-        .forkTo(internalMessageIn.enqueue) {
-          case ToAgent(m) =>
-            p(s"$description found ToAgent: $m")
-            m
-        }
-        .forkTo(publishDownIn.publish) {
-          case ToSub(m) =>
-            p(s"$description found ToSub: $m")
-            m
-        }
+        .forkTo(publishLocalIn.publish) { case ToLocal(m) => m }
+        .forkTo(internalMessageIn.enqueue) { case ToAgent(m) => m }
+        .forkTo(publishDownIn.publish) { case ToSub(m) => m }
     interrupt.wye(mainstream)(wye.interrupt)
   }
 
@@ -283,17 +271,13 @@ extends Machine
 trait RootAgent
 extends Agent
 {
-  // lazy val logMachine = new LogMachine {}
+  lazy val logMachine = new LogMachine {}
 
-  // override def machines = logMachine %:: super.machines
+  override def machines = logMachine %:: super.machines
 
   def rootAgent = {
     agentMain(halt)
-      .collect {
-        case ToRoot(m) =>
-          // p(s"$description found ToRoot: $m")
-          m
-      }
+      .collect { case ToRoot(m) => m }
       .sideEffect(m => log.debug(s"publishing $m"))
       .to(publishDownIn.publish)
   }

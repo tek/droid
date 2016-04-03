@@ -20,12 +20,7 @@ extends ActivitySpec[StateAppActivity]
   run $run
   """
 
-  def before = {
-  }
-
   def activityClass = classOf[StateAppActivity]
 
-  def run = {
-    activity willContain view[EditText]
-  }
+  def run = activity willContain view[EditText]
 }

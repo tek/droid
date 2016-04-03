@@ -50,7 +50,7 @@ trait StreamIOInstances
       def pure[A](a: A) = StreamIO(Monad[IO[?, C]].pure(a))
 
       def flatMap[A, B](fa: StreamIO[A, C])(f: A => StreamIO[B, C]) = {
-        StreamIO(IO(c => f(fa.run(c)).run(c)))
+        StreamIO(IO(c => f(fa.run(c)).io(c)))
       }
     }
 
@@ -69,7 +69,7 @@ trait StreamIOInstances
     new ApplyKestrel[StreamIO] {
       def combineRun[A, B >: A, C](fa: StreamIO[A, C])
       (fb: B => StreamIO[B, C]): C => A =
-        IO.instance_ApplyKestrel_IO.combineRun[A, B, C](fa.run)(b => fb(b).run)
+        IO.instance_ApplyKestrel_IO.combineRun[A, B, C](fa.io)(b => fb(b).io)
     }
 }
 
@@ -91,7 +91,6 @@ with StreamIOFunctions
   def attachSignal[A, C](sig: Signal[Option[A]])(implicit log: Logger) =
     K[A, C, IO] { a =>
       IO[A, C] { ctx =>
-        p(s"setting signal: $a")
         sig.set(Some(a)) !? "set signal for StreamIO"
         a
       }

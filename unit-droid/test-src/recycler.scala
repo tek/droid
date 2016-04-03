@@ -14,8 +14,6 @@ class RecyclerSpec
   add $add
   """
 
-  def before = ()
-
   val text = Random.string(10)
 
   lazy val recFrag = frag[RecyclerSpecFragment]("test").getA
@@ -37,8 +35,6 @@ extends ActivitySpec[RecyclerActivity]
   empty $empty
   add $add
   """
-
-  def before = ()
 
   def activityClass = classOf[RecyclerActivity]
 

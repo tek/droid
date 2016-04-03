@@ -23,15 +23,16 @@ import MainViewMessages.LoadUi
 trait MVViewMachine
 extends ViewMachine
 
-class MainView1
+case class MainView1()
 extends MainViewAgent
 {
   override def handle = "mv1"
+}
 
-  implicit val sched = stream.DefaultScheduler
-
-//   override def initialMessages =
-//     time.sleep(2 seconds) ++ emit(LoadUi(new Agent3).publish)
+case class MainView2()
+extends MainViewAgent
+{
+  override def handle = "mv2"
 }
 
 class Agent3

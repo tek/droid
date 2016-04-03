@@ -91,11 +91,7 @@ with cats.syntax.StreamingSyntax
       .fsm(initial, uncurriedTransitions)
       .forkW(current.pipeIn)
       .merge(forkedEffectResults.dequeue)
-      .forkTo(internalMessageIn.enqueue) {
-        case Internal(m) =>
-          p(s"$description found Internal: $m")
-          m
-      }
+      .forkTo(internalMessageIn.enqueue) { case Internal(m) => m }
   }
 
   def debugStates = false
@@ -235,7 +231,7 @@ with cats.syntax.StreamingSyntax
       task.unsafePerformSyncAttempt match {
         case scalaz.\/-(result) =>
           log.debug(s"async task '$desc' succeeded: $result")
-        case scalaz.-\/(err) => 
+        case scalaz.-\/(err) =>
           log.error(s"async task '$desc' failed: $err")
       }
       s
@@ -268,10 +264,7 @@ with cats.syntax.StreamingSyntax
 
   def instance_PublishFilter_IOFun[A <: IOFun]
   : PublishFilter[A] = new PublishFilter[A] {
-    def allowed = {
-      p("pf iofun")
-      true
-    }
+    def allowed = true
   }
 
   def con[A](f: Context => A) = ConsIO[StreamIO].pure[A, Context](f)

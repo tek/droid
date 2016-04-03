@@ -5,6 +5,8 @@ package unit
 import android.widget._
 import android.view._
 
+import org.robolectric.annotation.Config
+
 import state._
 
 import shapeless._
@@ -32,7 +34,8 @@ extends StateAppActivity
   }
 }
 
-trait StateAppSpec
+@Config(application = classOf[MainViewStateApplication])
+abstract class StateAppSpec
 extends ActivitySpec[StateAppUnitActivity]
 {
   def activityClass = classOf[StateAppUnitActivity]

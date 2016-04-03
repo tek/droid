@@ -319,7 +319,7 @@ extends PerformIOExecution
 
     def mainUnit(timeout: Duration = Duration.Inf)(implicit c: C): Task[Unit] =
     {
-      main(timeout) map(_ => ())
+      main(timeout).void
     }
   }
 

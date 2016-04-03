@@ -14,8 +14,6 @@ with DefaultStrategy
   signal $signal
   """
 
-  def before = ()
-
   val text = Random.string(10)
 
   def signal = {

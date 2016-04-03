@@ -27,3 +27,6 @@ with ViewActivity
 abstract class ActivitySpec[A <: Activity]
 extends UnitSpecs2Spec[A]
 with Matchers
+{
+  def before = ()
+}
