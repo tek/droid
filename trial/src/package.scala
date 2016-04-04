@@ -1,4 +1,6 @@
-package tryp.droid {
-  package object trial
-  extends tryp.droid.meta.TrypDroidGlobals
-}
+package tryp
+package droid
+package trial
+
+object `package`
+extends Exports

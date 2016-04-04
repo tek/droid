@@ -2,17 +2,19 @@ package tryp
 package droid
 package trial
 
+import view.core._
+import view._
+import state.core._
+import state._
+import state._
+import io.recycler._
+
 import android.support.v7.widget.RecyclerView
 import android.widget._
 
-import shapeless._
-
-import view._
-import state._
-
 trait MainViewMachine
-extends RecyclerViewMachine[StringRecyclerAdapter]
-with RecyclerCombinators
+extends CKCombinators[RecyclerView, StreamIO]
+with RecyclerViewMachine[StringRecyclerAdapter]
 {
   def recyclerConf = nopK
 }

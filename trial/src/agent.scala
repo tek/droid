@@ -12,11 +12,12 @@ import iota._, iota.std.TextCombinators._
 
 import scalaz.stream.Process._
 
-import view._
+import view.{StartActivity =>_, _}
 import state._
 import io.misc._
 import io.text._
 import MainViewMessages.LoadUi
+import AppState._
 
 class TAgent
 extends ActivityAgent
@@ -25,12 +26,12 @@ extends ActivityAgent
     lazy val but = w[Button] >>= large >>= text("agent 2") >>=
       hook.onClick { (v: View) =>
         IO {
-          broadcast(AppState.StartActivity(new TAgent2))
+          broadcast(StartActivity(new TAgent2))
         }
       }
 
     lazy val layoutIO = {
-      l[FrameLayout](but :: HNil) >>- metaName("root frame") >>- bgCol("main")
+      l[FrameLayout](but) >>- metaName("root frame") >>- bgCol("main")
     }
   }
 }
@@ -38,9 +39,17 @@ extends ActivityAgent
 class TMainViewAgent
 extends MainViewAgent
 {
+  lazy val tMachine = new Machine {
+    override def handle = "t"
+
+    def admit: Admission = {
+      case ActivityAgentStarted(_) => _ << LoadUi(new ViewAgent1).publish
+    }
+  }
+
   override def handle = "t_main_view"
 
-  override def initialMessages = emit(LoadUi(new ViewAgent1).publish)
+  override def machines = tMachine %:: super.machines
 }
 
 class ViewAgent1
@@ -50,9 +59,13 @@ extends ViewAgent
 
   lazy val viewMachine = new ViewMachine {
     lazy val layoutIO = c[FrameLayout](
-      w[TextView] >>= large >>= text("view agent 1") >>=
+      w[Button] >>= large >>= text("view agent 1") >>=
         lpK(WRAP_CONTENT, WRAP_CONTENT) { p: FrameLayout.LayoutParams =>
           p.gravity = Gravity.CENTER
+        } >>= hook.onClick { (v: View) =>
+          IO {
+            broadcast(StartActivity(new TAgent2))
+          }
         }
       )
   }
@@ -65,12 +78,12 @@ extends ActivityAgent
     lazy val but = w[Button] >>= large >>= text("agent 1") >>=
       hook.onClick { (v: View) =>
         IO {
-          broadcast(AppState.StartActivity(new TAgent))
+          broadcast(StartActivity(new TAgent))
         }
       }
 
     lazy val layoutIO = {
-      l[FrameLayout](but :: HNil) >>- metaName("root frame") >>- bgCol("main")
+      l[FrameLayout](but) >>- metaName("root frame") >>- bgCol("main")
     }
   }
 }
