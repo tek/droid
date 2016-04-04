@@ -12,7 +12,7 @@ with RootAgent
 {
   implicit def activity = this
 
-  def handle = "activity"
+  override def handle = "activity"
 
   override def onCreate(saved: Bundle) {
     super.onCreate(saved)
@@ -31,7 +31,7 @@ with RootAgent
   {
     override def description = "activity access state"
 
-    def handle = "activity"
+    override def handle = "activity"
 
     def toast(id: String): Transit = {
       case s => s

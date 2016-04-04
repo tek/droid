@@ -64,7 +64,7 @@
 //     val content = slut[FrameLayout]
 
 //     lazy val mainViewMachine = new FreeMainViewMachine {
-//       def handle = "mainview"
+//       override def handle = "mainview"
 //       override def description = "main view state"
 //       override def nativeBack() = mainView.nativeBack()
 //     }

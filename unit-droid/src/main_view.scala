@@ -38,8 +38,6 @@ extends MainViewAgent
 class Agent3
 extends ViewAgent
 {
-  def handle = "a3"
-
   lazy val viewMachine = new ViewMachine {
     lazy val layoutIO = c[FrameLayout](
       w[EditText] >>= large >>= text("view agent 1") >>=

@@ -44,7 +44,7 @@ import AgentSpecData._
 trait MachineSpecMachine
 extends Machine
 {
-  def handle = "state1"
+  override def handle = "state1"
 
   lazy val output = async.signalOf(-1)
 

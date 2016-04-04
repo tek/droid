@@ -23,7 +23,7 @@ extends RecyclerVSFragment[StringRecyclerAdapter]
 {
   def title = "recycler spec fragment"
 
-  def handle = "rec_frag"
+  override def handle = "rec_frag"
 
   lazy val viewMachine: RecyclerSpecMachine = new RecyclerSpecMachine {
     def adapter = new StringRecyclerAdapter {}

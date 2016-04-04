@@ -34,7 +34,7 @@ extends VSTrypFragment
 {
   def title = "spec fragment"
 
-  def handle = "spec_frag"
+  override def handle = "spec_frag"
 
   lazy val viewMachine: SpecViewMachine = new SpecViewMachine {}
 }

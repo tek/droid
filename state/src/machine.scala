@@ -177,7 +177,7 @@ with cats.syntax.StreamingSyntax
 
   override def toString = description
 
-  def handle: String
+  def handle: String = this.className.stripSuffix("Machine").snakeCase
 
   def machinePrefix: List[String] = List("mach")
 

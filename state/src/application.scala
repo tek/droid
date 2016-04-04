@@ -41,7 +41,7 @@ import AppState._
 trait AppStateMachine
 extends Machine
 {
-  def handle = "app_state"
+  override def handle = "app_state"
 
   def initialAgent: ActivityAgent
 
@@ -125,7 +125,7 @@ trait StateApplication
 extends ApplicationI
 with RootAgent { app: android.app.Application =>
 
-  def handle = "state_app"
+  override def handle = "state_app"
 
   lazy val appStateMachine = new AppStateMachine {
     def initialAgent = app.initialAgent

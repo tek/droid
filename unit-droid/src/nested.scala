@@ -42,7 +42,7 @@ extends TestViewActivity
   }
 
   lazy val nestedAgent = new Agent {
-    def handle = "nested_agent"
+    override def handle = "nested_agent"
 
     lazy val nested2 = new ViewMachine {
       lazy val tv = w[TextView] >>= tk

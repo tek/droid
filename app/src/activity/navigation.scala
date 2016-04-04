@@ -11,7 +11,7 @@
 //   def navigation: Navigation
 
 //   lazy val navMachine = new NavMachine {
-//     def handle = "nav"
+//     override def handle = "nav"
 //   }
 
 //   override def machines = navMachine %:: super.machines

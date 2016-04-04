@@ -29,7 +29,7 @@ with Views[Context, StreamIO]
 
   val Aid = iota.Id
 
-  def handle = "view"
+  override def handle = "view"
 
   override protected def initialZ = S(Initialized, Layout(layoutIO))
 

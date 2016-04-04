@@ -20,7 +20,7 @@ import droid.state.core._
 trait LogMachine
 extends Machine
 {
-  def handle = "log"
+  override def handle = "log"
 
   def logError(msg: String): Transit = {
     case s =>

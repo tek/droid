@@ -46,7 +46,7 @@ extends MainViewAgent
 class ViewAgent1
 extends ViewAgent
 {
-  def handle = "view_1"
+  override def handle = "view_1"
 
   lazy val viewMachine = new ViewMachine {
     lazy val layoutIO = c[FrameLayout](

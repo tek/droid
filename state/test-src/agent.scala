@@ -18,7 +18,7 @@ extends Message
 trait State1
 extends Machine
 {
-  def handle = "state1"
+  override def handle = "state1"
 
   lazy val output = async.signalOf(-1)
 
@@ -45,11 +45,11 @@ with CachedPool
 
   lazy val root = new RootAgent
   {
-    def handle = "root"
+    override def handle = "root"
   }
 
   lazy val ag1 = new Agent {
-    def handle = "ag1"
+    override def handle = "ag1"
 
     lazy val state = new State1 {}
 

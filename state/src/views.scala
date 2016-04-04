@@ -12,7 +12,7 @@ import view.core._
 trait IODispatcher
 extends Machine
 {
-  def handle = "io"
+  override def handle = "io"
 
   val admit: Admission = {
     case t: IOTask[_, _, _] => {
@@ -89,7 +89,7 @@ trait ActivityAgent
 extends ActivityAgentBase
 with ViewAgent { aa =>
   lazy val activityMachine = new Machine {
-    def handle = "activity"
+    override def handle = "activity"
 
     def admit: Admission = {
       case Create(_, _) => { s => s }
@@ -105,5 +105,5 @@ with ViewAgent { aa =>
 
   def title = "ActivityAgent"
 
-  def handle = "act_agent"
+  override def handle = "act_agent"
 }

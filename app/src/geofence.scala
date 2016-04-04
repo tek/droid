@@ -74,7 +74,7 @@ case class GeofenceInterface(apiClient: GoogleApiClient, intent: PendingIntent)
 case class GeofenceHandler(intent: PendingIntent)(implicit prefs: Settings)
 extends RootAgent
 {
-  def handle = "geofence"
+  override def handle = "geofence"
 
   // TODO connect
   def success = async.signalOf(false)

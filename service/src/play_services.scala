@@ -75,7 +75,7 @@ extends Machine
     }
   }
 
-  def handle = s"playservices.$subHandle"
+  override def handle = s"playservices.$subHandle"
 
   def subHandle: String
 

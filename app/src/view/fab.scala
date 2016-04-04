@@ -20,7 +20,7 @@
 //   import CommonWidgets._
 
 //   lazy val asyncMachine = new AsyncTasksMachine {
-//     def handle = "fab"
+//     override def handle = "fab"
 //     override def switchToAsyncUi = fabView.fadeToProgress
 //     override def switchToIdleUi = fabView.fadeToFab
 //   }

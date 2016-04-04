@@ -35,7 +35,7 @@ extends Message
 trait State0
 extends Machine
 {
-  def handle = "state0"
+  override def handle = "state0"
 
   def admit: Admission = {
     case Received3 => {
@@ -48,7 +48,7 @@ extends Machine
 trait State1
 extends Machine
 {
-  def handle = "state1"
+  override def handle = "state1"
 
   lazy val output = async.signalOf(-1)
 
@@ -68,7 +68,7 @@ extends Machine
 trait State2
 extends Machine
 {
-  def handle = "state2"
+  override def handle = "state2"
 
   def admit: Admission = {
     case Received1 => {
@@ -84,7 +84,7 @@ extends Machine
 trait State3
 extends Machine
 {
-  def handle = "state3"
+  override def handle = "state3"
 
   def admit: Admission = {
     case Received2 => {
@@ -106,7 +106,7 @@ with FixedPool
 
   lazy val root = new RootAgent {
       val ag1 = new Agent {
-        def handle = "ag1"
+        override def handle = "ag1"
 
         lazy val state = new State1 {}
 
@@ -114,7 +114,7 @@ with FixedPool
       }
 
       val ag2 = new Agent {
-        def handle = "ag2"
+        override def handle = "ag2"
 
         lazy val output = async.signalOf(-1)
 
@@ -131,7 +131,7 @@ with FixedPool
         }
       }
 
-      def handle = "root"
+      override def handle = "root"
 
       lazy val state = new State0 {}
 
