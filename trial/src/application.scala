@@ -6,6 +6,7 @@ import state._
 
 class TApplication
 extends android.app.Application
+with Application
 with StateApplication
 with MultiDexApplication
 {

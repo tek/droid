@@ -4,7 +4,7 @@ package state
 
 import core._
 
-class StateAppActivity
+class StateActivity
 extends Activity
 with Logging
 with StateStrategy

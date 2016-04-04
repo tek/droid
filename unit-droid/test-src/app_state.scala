@@ -14,13 +14,13 @@ import org.robolectric.annotation.Config
 
 @Config(application = classOf[StateApplication])
 class AppStateSpec
-extends ActivitySpec[StateAppActivity]
+extends ActivitySpec[StateActivity]
 {
   def is = s2"""
   run $run
   """
 
-  def activityClass = classOf[StateAppActivity]
+  def activityClass = classOf[StateActivity]
 
   def run = activity willContain view[EditText]
 }

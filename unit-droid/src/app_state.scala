@@ -23,8 +23,8 @@ extends ActivityAgent
     }
 }
 
-class StateAppUnitActivity
-extends StateAppActivity
+class StateUnitActivity
+extends StateActivity
 {
   override protected def mainViewTimeout = 30 seconds
 
@@ -36,9 +36,9 @@ extends StateAppActivity
 
 @Config(application = classOf[MainViewStateApplication])
 abstract class StateAppSpec
-extends ActivitySpec[StateAppUnitActivity]
+extends ActivitySpec[StateUnitActivity]
 {
-  def activityClass = classOf[StateAppUnitActivity]
+  def activityClass = classOf[StateUnitActivity]
 
   def stateApp = application match {
     case a: state.StateApplication => a

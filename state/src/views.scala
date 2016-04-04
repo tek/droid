@@ -101,7 +101,7 @@ with ViewAgent { aa =>
 
   override def machines = activityMachine %:: super.machines
 
-  def activityClass: Class[_ <: Activity] = classOf[StateAppActivity]
+  def activityClass: Class[_ <: Activity] = classOf[StateActivity]
 
   def title = "ActivityAgent"
 

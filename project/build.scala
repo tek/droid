@@ -91,7 +91,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
       "appClass" -> "tryp.droid.trial.TApplication",
       "minSdk" -> "22",
       "targetSdk" -> "22",
-      "activityClass" -> "tryp.droid.StateAppActivity",
+      "activityClass" -> "tryp.droid.state.StateActivity",
       "versionCode" -> "1",
       "versionName" -> "1.0",
       "extra" -> ""
@@ -105,7 +105,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
     .logback("tag" -> "tryp")
     .multidex(
       "tryp/droid/trial/TApplication.class",
-      "tryp/droid/StateAppActivity.class"
+      "tryp/droid/state/StateActivity.class"
     ) <<< logback
 
 

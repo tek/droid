@@ -1,72 +1,72 @@
-// package tryp
-// package droid
+package tryp
+package droid
 
-// import java.io.File
+import core._
 
-// import android.content.pm.ApplicationInfo
-// import android.support.multidex.MultiDex
+import java.io.File
 
-// import tryp.slick.DroidDbInfo
+import android.content.pm.ApplicationInfo
+import android.support.multidex.MultiDex
 
-// import tryp.core._
+import slick.DroidDbInfo
 
-// trait TrypApplication
-// extends HasContext
-// with ApplicationI
-// { self: android.app.Application =>
+trait TrypApplication
+extends ApplicationI { self: android.app.Application =>
 
-//   val useDb = true
+  def context: Context
 
-//   def setupDbInfo(name: String) = {
-//     val dbPath = new File(context.getFilesDir, s"$name.db")
-//     DbMeta.setDbInfo(DroidDbInfo(dbPath.toString))
-//   }
+  val useDb = false
 
-//   def isDebug = {
-//     (getApplicationInfo.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0
-//   }
+  def setupDbInfo(name: String) = {
+    val dbPath = new File(context.getFilesDir, s"$name.db")
+    DbMeta.setDbInfo(DroidDbInfo(dbPath.toString))
+  }
 
-//   def setupEnv() = {
-//     if (isDebug) setEnv(DebugEnv)
-//   }
+  def isDebug = {
+    (getApplicationInfo.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0
+  }
 
-//   def setupLog(name: String) = {
-//     Logs.log =
-//       if (TrypEnv.release) tryp.droid.meta.InternalLog
-//       else if (TrypEnv.unittest) tryp.StdoutLog
-//       else tryp.droid.meta.DebugLog
-//     AndroidLog.tag = name
-//   }
+  def setupEnv() = {
+    if (isDebug) setEnv(tryp.core.DebugEnv)
+  }
 
-//   def createTrypApp(name: String) {
-//     setupEnv()
-//     setupLog(name)
-//     if (useDb) setupDbInfo(name)
-//   }
-// }
+  def setupLog(name: String) = {
+    tryp.core.Logs.log =
+      if (TrypEnv.release) tryp.droid.InternalLog
+      else if (TrypEnv.unittest) tryp.StdoutLog
+      else tryp.droid.DebugLog
+    AndroidLog.tag = name
+  }
 
-// trait Application
-// extends TrypApplication
-// {
-//   self: android.app.Application =>
+  def createTrypApp(name: String) {
+    setupEnv()
+    setupLog(name)
+    if (useDb) setupDbInfo(name)
+  }
+}
 
-//   def context = getApplicationContext
+trait Application
+extends TrypApplication
+{
+  self: android.app.Application =>
 
-//   def name: String
+  def context = getApplicationContext
 
-//   abstract override def onCreate() {
-//     createTrypApp(name)
-//     super.onCreate()
-//   }
-// }
+  def name: String
 
-// trait MultiDexApplication
-// extends ApplicationI
-// {
-//   self: Application with android.app.Application =>
+  abstract override def onCreate() {
+    createTrypApp(name)
+    super.onCreate()
+  }
+}
 
-//     abstract override def attachBaseContext(base: Context) {
-//       super.attachBaseContext(base)
-//       MultiDex.install(this)
-//     }
-// }
+trait MultiDexApplication
+extends ApplicationI
+{
+  self: android.app.Application =>
+
+    abstract override def attachBaseContext(base: Context) {
+      super.attachBaseContext(base)
+      MultiDex.install(this)
+    }
+}
