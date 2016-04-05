@@ -12,16 +12,6 @@ import slick.DroidDbInfo
 
 trait TrypApplication
 extends ApplicationI { self: android.app.Application =>
-
-  def context: Context
-
-  val useDb = false
-
-  def setupDbInfo(name: String) = {
-    val dbPath = new File(context.getFilesDir, s"$name.db")
-    DbMeta.setDbInfo(DroidDbInfo(dbPath.toString))
-  }
-
   def isDebug = {
     (getApplicationInfo.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0
   }
@@ -41,7 +31,6 @@ extends ApplicationI { self: android.app.Application =>
   def createTrypApp(name: String) {
     setupEnv()
     setupLog(name)
-    if (useDb) setupDbInfo(name)
   }
 }
 
@@ -49,8 +38,6 @@ trait Application
 extends TrypApplication
 {
   self: android.app.Application =>
-
-  def context = getApplicationContext
 
   def name: String
 
