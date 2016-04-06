@@ -4,8 +4,6 @@ package unit
 
 import view._
 
-import android.support.v7.widget.RecyclerView
-
 import org.robolectric.Robolectric
 import org.robolectric.shadows.ShadowLog
 

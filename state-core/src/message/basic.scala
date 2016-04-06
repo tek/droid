@@ -81,6 +81,8 @@ case class LogFatal(description: String, error: Throwable)
 extends Loggable
 {
   lazy val message = Error.withTrace(s"exception while $description", error)
+
+  override def toString = s"LogFatal($description)"
 }
 
 case class LogInfo(message: String)

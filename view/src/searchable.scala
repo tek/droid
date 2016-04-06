@@ -4,8 +4,6 @@ package view
 
 import language.dynamics
 
-import android.widget.TextView
-
 import simulacrum._
 
 trait ProxyBase {

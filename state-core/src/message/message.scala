@@ -34,6 +34,7 @@ extends Loggable
 trait MessageInstances
 {
   implicit def messageShow[A <: Message] = Show.shows[A] {
+    case m @ LogFatal(desc, _) => s"${m.className}($desc)"
     case res: Loggable => s"${res.className}(${res.message})"
     case a => a.toString
   }

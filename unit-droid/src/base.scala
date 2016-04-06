@@ -2,12 +2,7 @@ package tryp
 package droid
 package unit
 
-import android.widget._
-import android.support.v7.widget.RecyclerView
-
-import scalaz._, Scalaz._
-
-import droid.state._
+import state._
 import view._
 
 class SpecActivity

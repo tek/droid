@@ -3,7 +3,7 @@ package droid
 
 import scala.math.min
 
-import android.widget.{NumberPicker,EditText}
+import android.widget.NumberPicker
 import android.text.InputType
 import android.graphics.drawable.Drawable
 

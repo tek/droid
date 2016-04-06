@@ -29,7 +29,7 @@ extends Annotation
     val name = tpe.typeSymbol.name.toString
     val term = TermName(s"${name}_publishFilter")
     q"""
-    implicit val $term = new PublishFilter[$tpe] {
+    implicit lazy val $term = new PublishFilter[$tpe] {
       def allowed = true
     }
     """

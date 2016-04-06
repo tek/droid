@@ -39,7 +39,7 @@ extends TrypApplication
 {
   self: android.app.Application =>
 
-  def name: String
+  def name = "tryp"
 
   abstract override def onCreate() {
     createTrypApp(name)

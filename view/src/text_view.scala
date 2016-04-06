@@ -4,8 +4,6 @@ package view
 
 import scalaz._, Scalaz._, stream._, concurrent._
 
-import android.widget.TextView
-
 final class TextViewOps[A <: TextView, C](a: StreamIO[A, C])
 {
   def text = a.view

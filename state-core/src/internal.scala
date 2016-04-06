@@ -83,7 +83,7 @@ extends BoundedCachedPool
   }
 
   def fatalTransition[Z](state: Z, cause: Message, t: Throwable) = {
-    emit(LogFatal(s"transitioning $state for $cause", t).publish.fail)
+    emit(LogFatal(s"transitioning $state for $cause", t).toLocal.fail)
   }
 
   // pipe the result computed by the (possibly effectful) processes produced
@@ -95,7 +95,7 @@ extends BoundedCachedPool
   // the results are then disassembled into single Message instances.
   def handleResult(effect: Effect)(implicit log: Logger) = {
     effect
-      .attempt(t => emit(LogFatal("performing effect", t).publish.fail))
+      .attempt(t => emit(LogFatal("performing effect", t).toLocal.fail))
       .mergeO
       .mapO {
         case scalaz.Success(trans) =>

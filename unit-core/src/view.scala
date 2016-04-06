@@ -8,8 +8,6 @@ import ZS._
 
 import org.specs2._, specification._, matcher._, org.specs2.concurrent._
 
-import android.support.v7.widget.RecyclerView
-
 import org.robolectric.Robolectric
 
 case class ContainsViewMatcher[A: RootView, B <: View: ClassTag]

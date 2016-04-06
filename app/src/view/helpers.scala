@@ -7,7 +7,7 @@ package droid
 
 // import scalaz._
 
-import android.widget.{AdapterView,TextView}
+import android.widget.{AdapterView}
 import android.content.res.{Resources => AResources,Configuration}
 import android.content.DialogInterface
 import android.view.inputmethod.InputMethodManager

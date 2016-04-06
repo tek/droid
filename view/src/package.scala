@@ -3,6 +3,12 @@ package droid
 package view
 
 trait ExportDecls
+{
+  type RecyclerView = android.support.v7.widget.RecyclerView
+  type RecyclerViewHolder = android.support.v7.widget.RecyclerView.ViewHolder
+  type RecyclerViewAdapter[A <: RecyclerViewHolder] =
+    android.support.v7.widget.RecyclerView.Adapter[A]
+}
 
 trait Exports
 extends view.core.Exports
