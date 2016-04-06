@@ -2,13 +2,8 @@ package tryp
 package droid
 package state
 
-import iota._
-import iota.std.TextCombinators._
-
 import android.view.ViewGroup.LayoutParams
 import android.widget._
-
-import shapeless._
 
 import view._
 import view.core._

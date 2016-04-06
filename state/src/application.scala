@@ -52,9 +52,6 @@ extends Machine
     case ActivityAgentStarted(agent) => activityStarted(agent)
     case f @ ContextFun(_) => contextFun(f)
     case f @ ActivityFun(_) => activityFun(f)
-    case f @ ResourcesFun(_) => resourcesFun(f)
-    case t @ ContextTask(_) => contextTask(t)
-    case s @ ContextStream(_) => contextStream(s)
   }
 
   def startActivity(agent: ActivityAgent): Transit = {
@@ -92,32 +89,14 @@ extends Machine
         .map(_.unitUi)
   }
 
-  def contextFun(task: ContextFun[_]): Transit =
-  {
+  def contextFun(task: ContextFun[_]): Transit = {
     case s @ S(Ready, ASData(Some(act), _)) =>
       s << task.task(act)
   }
 
-  def activityFun(task: ActivityFun[_]): Transit =
-  {
+  def activityFun(task: ActivityFun[_]): Transit = {
     case s @ S(Ready, ASData(Some(act), _)) =>
       s << task.task((act))
-  }
-
-  def resourcesFun(task: ResourcesFun[_]): Transit =
-  {
-    case s @ S(Ready, ASData(Some(act), _)) =>
-      s << task.task((Resources.fromContext(act)))
-  }
-
-  def contextTask(task: ContextTask[_]): Transit = {
-    case s @ S(Ready, ASData(Some(act), _)) =>
-      s << stateEffectTask("context task")(task.task(act))
-  }
-
-  def contextStream(task: ContextStream[_]): Transit = {
-    case s @ S(Ready, ASData(Some(act), _)) =>
-      s << stateEffectProc("context stream")(task.task(act))
   }
 }
 

@@ -7,40 +7,40 @@ import android.util.TypedValue
 import android.widget._
 import android.text.{TextWatcher,TextUtils,Editable}
 
-import iota._
 import iota.std.{TextCombinators => IText}
 
 import core._
 
+import annotation._
+
 package object text
-extends TextCombinators[StreamIO]
+extends TextCombinators
 
-abstract class TextCombinators[F[_, _]: ConsIO]
-extends IotaCombinators[TextView, F]
+abstract class TextCombinators
+extends Combinators[TextView]
 {
-  def hintR[A <: TextView](resName: String)(implicit res: Resources) = {
+  def text(content: String) = k(_.setText(content))
+
+  @contextwrapfold def hintR(resName: String) = {
     res.s(resName, Some("hint"))
-      .map(IText.hint)
-      .getOrElse(nopK)
+      .map(text)
   }
 
-  def size[A <: TextView](points: Int): iota.Kestrel[A] = {
-    kestrel(_.setTextSize(TypedValue.COMPLEX_UNIT_SP, points))
-  }
+  def size(points: Int) =
+    k(_.setTextSize(TypedValue.COMPLEX_UNIT_SP, points))
 
-  def medium[A <: TextView]: iota.Kestrel[A] = size(18)
+  def medium = size(18)
 
-  def large[A <: TextView]: iota.Kestrel[A] = size(22)
+  def large = size(22)
 
-  def minWidth[A <: TextView](name: String)(implicit res: Resources) = {
+  @contextfold def minWidth(name: String) = {
     res.d(name, Some("min_width"))
-      .map(w => kestrel((_: A).setMinWidth(w.toInt)))
-      .getOrElse(nopK)
+      .map(_.toInt)
+      .map(w => (_: TextView).setMinWidth(w))
   }
 
-  def textWatcher(listener: TextWatcher) = {
-    kestrel((_: EditText).addTextChangedListener(listener))
-  }
+  def textWatcher(listener: TextWatcher) =
+    ksub((t: EditText) => t.addTextChangedListener(listener))
 
   def watchText(cb: => Unit) = {
     val listener = new TextWatcher {

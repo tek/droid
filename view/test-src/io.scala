@@ -22,7 +22,7 @@ class C(c: Context)
 extends FrameLayout(c)
 
 object kestrels
-extends CKCombinators[TextView, StreamIO]
+extends CKCombinators[TextView, IO]
 {
   @context def setText(content: String) = _.setText(content)
 }
@@ -37,16 +37,16 @@ with Views[Context, I]
   """
 
   def test = {
-    val lo = l[C](w[B], w[A], l[C](w[B], w[A]))
-    def ok[A] = K((a: A) => ConsIO[I].pure[A, Context](ctx => a))
+    val lo: I[C, Context] = l[C](w[B], w[A], l[C](w[B], w[A]))
+    def ok[A]: Kestrel[A, Context, IO] = K((a: A) => ConsIO[IO].pure[A, Context](ctx => a))
     lo >>- ok
     iota.c[ViewGroup] { lo >>= iota.lp(MATCH_PARENT, MATCH_PARENT) }
     val kest = iota.kestrel((_: FrameLayout).setForeground(null))
-    val vgk: Kestrel[View, Context, I] =
-      K((a: View) => ConsIO[I].pure[View, Context](c => a))
+    val vgk = K((a: View) => ConsIO[I].pure[View, Context](c => a))
     val rl = l[FrameLayout](lo)
     val rl2 = rl >>- vgk >>= kest
     w[TextView] >>= text("")
+    w[TextView] >>- kestrels.setText("")
     1 === 1
   }
 }

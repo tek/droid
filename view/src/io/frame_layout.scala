@@ -12,18 +12,18 @@ import view.core._
 import cats._
 import cats.syntax.foldable._
 
-package object frame
-extends FrameLayoutCombinators[StreamIO]
+object frame
+extends FrameLayoutCombinators
 
-abstract class FrameLayoutCombinators[F[_, _]: ConsIO]
-extends CKCombinators[FrameLayout, F]
+abstract class FrameLayoutCombinators
+extends Combinators[FrameLayout]
 {
   import annotation._
 
   def foreground(draw: Drawable) = 
-    kp(_.setForeground(draw))
+    k(_.setForeground(draw))
 
-  @contextfold def selectableFg = {
+  @contextwrapfold def selectableFg = {
     res.theme.drawable("selectableItemBackground")
       .map(foreground)
   }

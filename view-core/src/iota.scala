@@ -14,7 +14,7 @@ import simulacrum._
 
 import iota._
 
-trait IotaInstances
+trait IotaOrphans
 {
   import iota.IO
 
@@ -35,81 +35,81 @@ trait IotaInstances
   }
 }
 
-trait IotaAnnBase
-extends SimpleMethodAnnotation
-with AndroidMacros
-{
-  val c: blackbox.Context
+// trait IotaAnnBase
+// extends SimpleMethodAnnotation
+// with AndroidMacros
+// {
+//   val c: blackbox.Context
 
-  import c.universe._
+//   import c.universe._
 
-  /* if the supplied TypeDef is a subtype of View, like A <: FrameLayout,
-   * return it as Some
-   */
-  def extractViewType(tp: TypeDef) = {
-    val checked = c.Expr(c.typecheck(tp.rhs))
-    val isView = checked.actualType.baseType(symbolOf[View]) != NoType
-    isView.opt(tp)
-  }
+//   /* if the supplied TypeDef is a subtype of View, like A <: FrameLayout,
+//    * return it as Some
+//    */
+//   def extractViewType(tp: TypeDef) = {
+//     val checked = c.Expr(c.typecheck(tp.rhs))
+//     val isView = checked.actualType.baseType(symbolOf[View]) != NoType
+//     isView.opt(tp)
+//   }
 
-  def templ(ann: MethodAnnottee, wrap: Boolean) = {
-    val m = ann.method
-    val tpe = m.tparams.headOption
-      .flatMap(extractViewType)
-    val name = tpe.map(_.name.toTypeName) | TypeName("Principal")
-    MethodAnnottee {
-      val impl =
-        if(wrap) List(q"val x = ${m.rhs}", q"x(ctx)")
-        else List(q"${m.rhs}")
-      q"""
-      def ${m.name}[..${m.tparams}](...${m.vparamss}): CK[$name] =
-        a => IO(implicit ctx => {
-          implicit val res = tryp.droid.core.Resources.fromContext
-            val kst = {
-              ..$impl
-            }
-            kst(a)
-        })
-      """
-    }
-  }
+//   def templ(ann: MethodAnnottee, wrap: Boolean) = {
+//     val m = ann.method
+//     val tpe = m.tparams.headOption
+//       .flatMap(extractViewType)
+//     val name = tpe.map(_.name.toTypeName) | TypeName("Principal")
+//     MethodAnnottee {
+//       val impl =
+//         if(wrap) List(q"val x = ${m.rhs}", q"x(ctx)")
+//         else List(q"${m.rhs}")
+//       q"""
+//       def ${m.name}[..${m.tparams}](...${m.vparamss}): CK[$name] =
+//         a => IO(implicit ctx => {
+//           implicit val res = tryp.droid.core.Resources.fromContext
+//             val kst = {
+//               ..$impl
+//             }
+//             kst(a)
+//         })
+//       """
+//     }
+//   }
 
-  def templF(ann: MethodAnnottee, wrap: Boolean) = {
-    val ann0 = ann.withRhs {
-      q"""
-      foldableSyntaxU(${ann.rhs}).fold
-      """
-    }
-    templ(ann0, wrap)
-  }
-}
+//   def templF(ann: MethodAnnottee, wrap: Boolean) = {
+//     val ann0 = ann.withRhs {
+//       q"""
+//       foldableSyntaxU(${ann.rhs}).fold
+//       """
+//     }
+//     templ(ann0, wrap)
+//   }
+// }
 
-class IotaAnn(val c: blackbox.Context)
-extends IotaAnnBase
-{
-  def apply(ann: MethodAnnottee) = templ(ann, false)
-}
+// class IotaAnn(val c: blackbox.Context)
+// extends IotaAnnBase
+// {
+//   def apply(ann: MethodAnnottee) = templ(ann, false)
+// }
 
-class IotaAnnWrap(val c: blackbox.Context)
-extends IotaAnnBase
-{
-  def apply(ann: MethodAnnottee) = templ(ann, true)
-}
+// class IotaAnnWrap(val c: blackbox.Context)
+// extends IotaAnnBase
+// {
+//   def apply(ann: MethodAnnottee) = templ(ann, true)
+// }
 
-class IotaAnnWrapFold(val c: blackbox.Context)
-extends IotaAnnBase
-{
-  def apply(ann: MethodAnnottee) = templF(ann, true)
-}
+// class IotaAnnWrapFold(val c: blackbox.Context)
+// extends IotaAnnBase
+// {
+//   def apply(ann: MethodAnnottee) = templF(ann, true)
+// }
 
-object ann
-{
-  @anno(IotaAnn) class ck()
+// object ann
+// {
+//   @anno(IotaAnn) class ck()
 
-  @anno(IotaAnnWrap) class ckw()
+//   @anno(IotaAnnWrap) class ckw()
 
-  @anno(IotaAnnWrapFold) class ckwf()
-}
+//   @anno(IotaAnnWrapFold) class ckwf()
+// }
 
 final class IotaKestrelOps[A](fa: iota.Kestrel[A])
 {
@@ -147,31 +147,31 @@ trait ToIotaKestrelOps
     new IotaKestrelOps(fa)
 }
 
-abstract class CombinatorBase[F[_, _]: ConsIO]
-extends ToIotaKestrelOps
-{
-  def k[A, B](f: Context => A => B): CK[A, F] =
-    CK(a => ConsIO[F].pure(ctx => { f(ctx)(a); a }))
-}
+// abstract class CombinatorBase
+// extends ToIotaKestrelOps
+// {
+//   def k[A, B](f: Context => A => B): CK[A] =
+//     OCK(a => ctx => { f(ctx)(a); a })
+// }
 
-abstract class IotaCombinators[P, F[_, _]: ConsIO]
-extends CombinatorBase[F]
-{
-  protected type Principal = P
+// abstract class IotaCombinators[P]
+// extends CombinatorBase[F]
+// {
+//   protected type Principal = P
 
-  protected def kk[A <: P, B](f: Principal => B): CK[A, F] = {
-    CK(a => ConsIO[F].pure(ctx => { f(a: P); a }))
-  }
+//   protected def k[A <: P, B](f: Principal => B): CK[A] = {
+//     CK(a => ConsIO[F].pure(ctx => { f(a: P); a }))
+//   }
 
-  protected def kp[B](f: Principal => B) = {
-    kk[P, B](f)
-  }
+//   protected def kp[B](f: Principal => B) = {
+//     k[P, B](f)
+//   }
 
-  protected def nopK[A <: P]: CK[A, F] = kk[A, Unit](_ => ())
+//   protected def nopK[A <: P]: CK[A] = k[A, Unit](_ => ())
 
-  def resK[A <: P, B](res: Throwable Xor B)(impl: B => P => Unit): CK[A, F] = {
-    res
-      .map(r => kk[A, Unit](impl(r)))
-      .getOrElse(nopK[A])
-  }
-}
+//   def resK[A <: P, B](res: Throwable Xor B)(impl: B => P => Unit): CK[A] = {
+//     res
+//       .map(r => k[A, Unit](impl(r)))
+//       .getOrElse(nopK[A])
+//   }
+// }

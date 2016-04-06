@@ -39,54 +39,56 @@ with AndroidMacros
    * Surround a method's rhs with Kestrel construction and supply an implicit
    * Context as a val `ctx`.
    */
-  def templ(ann: MethodAnnottee, wrap: Boolean) = {
+  def templ(ann: MethodAnnottee, wrap: Boolean, asString: Option[String]) = {
     val m = ann.method
     val tpe = kestrelType(m)
-    val rhsTpe = m.rhs match {
-      case q"(..$params) => $rhs" =>
-        tq"$tpe => Unit"
-      case _ =>
-        tq"Kestrel[$tpe, Context, IOT]"
-    }
+    val rhsTpe =
+      if (wrap) tq"Kestrel[$tpe, Context, IO]"
+      else tq"$tpe => Unit"
     MethodAnnottee {
       val impl =
-        if(wrap) List(q"val x = ${m.rhs}", q"x(ctx)")
+        if(wrap) List(q"val x = ${m.rhs}", q"{ (a: $tpe) => x(a)(ctx) }")
         else List(q"${m.rhs}")
+      val invoke =
+        if(wrap) q"kst(a)(ctx)"
+        else q"kst(a)"
+      val content = asString | ann.rhs.toString
       q"""
       def ${m.name}[..${m.tparams}](...${m.vparamss})
-      : Kestrel[$tpe, Context, IOT] =
-        K {
-          a => ConsIO[IOT].pure(
+      : Kestrel[$tpe, Context, IO] =
+        DescribedKestrel(${m.name.toString}, $content, {
+          a => IO(
             implicit ctx => {
               val kst: $rhsTpe = { ..$impl }
-              kst(a)
+              $invoke
               a
             })
-        }
+        })
       """
     }
   }
 
   def templF(ann: MethodAnnottee, wrap: Boolean) = {
+    val asString = ann.rhs.toString
     val ann0 = ann.withRhs {
       q"""
       cats.syntax.foldable.foldableSyntaxU(${ann.rhs}).fold
       """
     }
-    templ(ann0, wrap)
+    templ(ann0, wrap, Some(asString))
   }
 }
 
 class CKAnn(val c: blackbox.Context)
 extends CKAnnBase
 {
-  def apply(ann: MethodAnnottee) = templ(ann, false)
+  def apply(ann: MethodAnnottee) = templ(ann, false, None)
 }
 
 class CKAnnWrap(val c: blackbox.Context)
 extends CKAnnBase
 {
-  def apply(ann: MethodAnnottee) = templ(ann, true)
+  def apply(ann: MethodAnnottee) = templ(ann, true, None)
 }
 
 class CKAnnFold(val c: blackbox.Context)
@@ -126,41 +128,48 @@ extends ToIotaKestrelOps
   def ck = fa.liftAs[B, Context, F]
 }
 
-abstract class CKCombinatorBase[F[_, _]: ConsIO]
+abstract class CKCombinators
 extends ToIotaKestrelOps
 with ResourcesAccess
 with Logging
 {
-  def k[A, B](f: Context => A => B): CK[A, F] =
-    CK(a => ConsIO[F].pure(ctx => { f(ctx)(a); a }))
+  def kraw[A, B](f: Context => A => B): CK[A] =
+    CK(a => IO(ctx => { f(ctx)(a); a }))
 }
 
-abstract class CKCombinators[P, F[_, _]: ConsIO]
-(implicit chain: ChainKestrel[Kestrel[?, Context, F]])
-extends CKCombinatorBase[F]
+class Combinators[P]
+(implicit chain: ChainKestrel[Kestrel[?, Context, IO]])
+extends CKCombinators
+with cats.std.FunctionInstances
 {
   protected type Principal = P
-  protected type IOT[A, B] = F[A, B]
 
   implicit def ToCKIotaKestrelOps[A >: Principal](fa: iota.Kestrel[A]) =
-    new CKIotaKestrelOps[A, Principal, F](fa)
+    new CKIotaKestrelOps[A, Principal, IO](fa)
 
   implicit def IotaKestrelToCK[A >: Principal](fa: iota.Kestrel[A]) =
     fa.ck
 
-  protected def kk[A <: P, B](f: Principal => B): CK[A, F] = {
-    CK(a => ConsIO[F].pure(ctx => { f(a: P); a }))
+  protected def kkpsub[A <: P, B](f: Principal => B): CK[A] =
+    CK.lift[A, B, IO](f)
+
+  protected def k[B](f: Principal => B) = {
+    kkpsub[P, B](f)
   }
 
-  protected def kp[B](f: Principal => B) = {
-    kk[P, B](f)
-  }
+  protected def ksub[A <: P, B](f: A => B): CK[A] =
+    CK.lift[A, B, IO](f)
 
-  protected def nopK[A <: P]: CK[A, F] = kk[A, Unit](_ => ())
+  def nopK: CK[P] = k(_ => ())
 
-  def resK[A <: P, B](res: Throwable Xor B)(impl: B => P => Unit): CK[A, F] = {
+  protected def nopKSub[A <: P]: CK[A] = ksub(_ => ())
+
+  def resK[A <: P, B](res: Throwable Xor B)(impl: B => P => Unit): CK[A] = {
     res
-      .map(r => kk[A, Unit](impl(r)))
-      .getOrElse(nopK[A])
+      .map(r => ksub[A, Unit](impl(r)))
+      .getOrElse(nopKSub[A])
   }
 }
+
+class ViewCombinators
+extends Combinators[View]

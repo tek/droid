@@ -5,7 +5,7 @@ package core
 
 trait Decls
 {
-  type CK[A, F[_, _]] = Kestrel[A, Context, F]
+  type CK[A] = Kestrel[A, Context, IO]
 }
 
 trait Exports
@@ -13,14 +13,13 @@ extends droid.core.Exports
 with droid.core.ExportDecls
 with ChainKestrelInstances
 with ChainKestrel.ToChainKestrelOps
-with IOInstances
 with ApplyKestrel.ToApplyKestrelOps
+with IOOrphans
 with PerformIO.ToPerformIOOps
 with Decls
 
 object `package`
 extends droid.core.Exports
 with droid.core.ExportDecls
-with IOInstances
-with IotaInstances
+with IotaOrphans
 with Decls

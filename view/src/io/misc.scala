@@ -11,10 +11,10 @@ import core._
 import annotation._
 
 object misc
-extends ViewCombinators[StreamIO]
+extends MiscCombinators
 
-abstract class ViewCombinators[F[_, _]: ConsIO]
-extends CKCombinators[android.view.View, F]
+abstract class MiscCombinators
+extends ViewCombinators
 with ToViewOps
 {
   @context def bgCol[A <: View](name: String) = { (v: View) =>
@@ -26,6 +26,10 @@ with ToViewOps
   @context def meta[A <: View: ClassTag](data: ViewMetadata) =
     _.storeMeta(data) !? "store view metadata"
 
-  def metaName[A <: View: ClassTag](name: String): Kestrel[A, Context, F] = 
+  def metaName[A <: View: ClassTag](name: String) =
     meta[A](SimpleViewMetadata(name))
+
+  def nopSub[A <: View] = super.nopKSub[A]
+
+  def nop = super.nopK
 }

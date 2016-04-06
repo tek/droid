@@ -9,10 +9,10 @@ import android.support.v7.widget._
 import view.core._
 
 object recycler
-extends RecyclerCombinators[StreamIO]
+extends RecyclerCombinators
 
-abstract class RecyclerCombinators[F[_, _]: ConsIO]
-extends CKCombinators[RecyclerView, F]
+class RecyclerCombinators
+extends Combinators[RecyclerView]
 {
   import annotation._
 
@@ -21,30 +21,30 @@ extends CKCombinators[RecyclerView, F]
   @context def recyclerAdapter(adapter: RecyclerView.Adapter[_]) =
     _.setAdapter(adapter)
 
-  @contextfold def rvPad = {
+  @contextwrapfold def rvPad = {
     res.d("header_height", None)
       .map(_.toInt)
       .map(h => iota.padding[View](top = h.toInt).ck)
   }
 
-  @context def layoutManager(m: RecyclerView.LayoutManager) = 
+  @context def layoutManager(m: RecyclerView.LayoutManager) =
     _.setLayoutManager(m)
 
-  @context def linear = layoutManager(new LinearLayoutManager(ctx))
+  @contextwrap def linear = layoutManager(new LinearLayoutManager(ctx))
 
   def stagger(
     count: Long, orientation: Int = StaggeredGridLayoutManager.VERTICAL) =
       layoutManager(new StaggeredGridLayoutManager(count.toInt, orientation))
 
-  @context def grid(count: Long) =
+  @contextwrap def grid(count: Long) =
     layoutManager(new GridLayoutManager(ctx, count.toInt))
 
   @context def divider = 
     _.addItemDecoration(new DividerItemDecoration(ctx, null))
 
-  def dataChanged = kp(_.getAdapter.notifyDataSetChanged)
+  def dataChanged = k(_.getAdapter.notifyDataSetChanged)
 
-  def onScroll(callback: (ViewGroup, Int) => Unit) = kp { v =>
+  def onScroll(callback: (ViewGroup, Int) => Unit) = k { v =>
     val listener = new RecyclerView.OnScrollListener {
       var height = 0
       override def onScrolled(view: RecyclerView, dx: Int, dy: Int) {

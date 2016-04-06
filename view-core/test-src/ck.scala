@@ -6,12 +6,10 @@ package unit
 
 import android.widget._
 
-import cats.data._
-
 import annotation._
 
 object kest
-extends CKCombinators[View, IO]
+extends ViewCombinators
 {
   @context def setId(id: Int) =
     _.setId(id)
@@ -39,7 +37,7 @@ with Views[Context, IO]
   import kest._
 
   def test = {
-    w[TextView] >>- setId(1)
+    w[TextView] >>- setId(1) >>- foldId(1) >>- wrapId("foo") >>- bgCol("foo")
     1 === 1
   }
 }

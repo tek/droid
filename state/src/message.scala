@@ -12,84 +12,69 @@ import export._
 
 trait IOMessage[C]
 {
-  def pure[A: Operation](f: C => A): Message
+  def pure[A: StateEffect](f: C => A): Message
 }
 
 object IOMessage
 {
   implicit def instance_IOMessage_Context =
     new IOMessage[Context] {
-      def pure[A: Operation](f: Context => A) = ContextFun(f)
+      def pure[A: StateEffect](f: Context => A) = ContextFun(f)
     }
 
   implicit def instance_IOMessage_Activity =
     new IOMessage[Activity] {
-      def pure[A: Operation](f: Activity => A) = ActivityFun(f)
-    }
-
-  implicit def instance_IOMessage_Resources =
-    new IOMessage[Resources] {
-      def pure[A: Operation](f: Resources => A) = ResourcesFun(f)
+      def pure[A: StateEffect](f: Activity => A) = ActivityFun(f)
     }
 }
 
-trait IOFun
+abstract class IOFun[A: StateEffect, C]
 extends Message
 {
-  // def task
+  def run: C => A
+
+  def task(c: C) = Task(run(c)).map(_.stateEffect)
 }
 
-case class ActivityTask[A: Operation](f: Activity => A)
-extends IOFun
+case class ContextFun[A: StateEffect](run: Context => A)
+extends IOFun[A, Context]
+
+case class ActivityFun[A: StateEffect](run: Activity => A)
+extends IOFun[A, Activity]
+
+@typeclass trait FromContext[C]
 {
-  def task(implicit act: Activity) = {
-    Task(f(act)) map(_.toResult)
-  }
+  def summon(c: Context): C
 }
 
-case class ActivityFun[A: Operation](f: Activity => A)
-extends IOFun
+object FromContext
 {
-  def task(implicit act: Activity) = {
-    Task(f(act)) map(_.toResult)
-  }
+  implicit def instance_FromContext_Resources: FromContext[Resources] =
+    new FromContext[Resources] {
+      def summon(c: Context) = Resources.fromContext(c)
+    }
+
+  implicit def instance_FromContext_DbInfo: FromContext[DbInfo] =
+    new FromContext[DbInfo] {
+      def summon(c: Context) = Db.fromContext(c)
+    }
 }
 
-case class ContextTask[A: Operation](f: Context => Task[A])
-extends IOFun
+trait InternalIOMessage
+extends Message
 {
-  def task_(implicit ctx: Context) = {
-    f(ctx)
-  }
-
-  def task(implicit ctx: Context) = {
-    task_.map(_.toResult)
-  }
+  def effect: Effect
 }
 
-case class ContextFun[A: Operation](f: Context => A)
-extends IOFun
+case class FromContextIO[F[_, _]: PerformIO, A: Operation, C: FromContext]
+(io: F[A, C])(implicit cv: Contravariant[F[A, ?]])
+extends InternalIOMessage
 {
-  def task(implicit ctx: Context) = {
-    Task(f(ctx).toResult)
+  def effect = {
+    IOTask(io contramap FromContext[C].summon).effect
   }
 }
 
-case class ContextStream[A: Operation](s: Process[Task, Context => A])
-extends IOFun
-{
-  def task(implicit ctx: Context) = {
-    s map(_(ctx).toResult)
-  }
-}
-
-case class ResourcesFun[A: Operation](f: Resources => A)
-extends IOFun
-{
-  def task(implicit res: Resources) = {
-    Task(f(res)) map(_.toResult)
-  }
-}
 
 case class DbTask[A: Operation](action: AnyAction[A])
 extends Message

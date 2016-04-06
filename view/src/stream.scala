@@ -7,7 +7,7 @@ import scalaz.concurrent.Task
 import scalaz.stream._, Process._
 import async.mutable._
 
-import cats.{Applicative, Unapply}
+import cats.{Applicative, Unapply, Functor}
 
 import core._
 import state.core._
@@ -41,7 +41,7 @@ trait StreamIOInstances
 {
   implicit lazy val instance_ConsIO_StreamIO =
     new ConsIO[StreamIO] {
-      def cons[A, C](fa: StreamIO[A, C])(c: C): A = fa.apply(c)
+      def cons[A, C](fa: StreamIO[A, C])(c: C): A = fa.io(c)
       def pure[A, C](run: C => A): StreamIO[A, C] = StreamIO(IO(run))
     }
 
@@ -63,13 +63,6 @@ trait StreamIOInstances
       (implicit c: C) = {
         fa.run.main(timeout)
       }
-    }
-
-  implicit def instance_ApplyKestrel_StreamIO =
-    new ApplyKestrel[StreamIO] {
-      def combineRun[A, B >: A, C](fa: StreamIO[A, C])
-      (fb: B => StreamIO[B, C]): C => A =
-        IO.instance_ApplyKestrel_IO.combineRun[A, B, C](fa.io)(b => fb(b).io)
     }
 }
 
@@ -98,6 +91,9 @@ with StreamIOFunctions
 }
 
 case class ViewStream[A, C](view: Process[Task, IO[A, C]])
+{
+  def >>-[B >: A](ka: Kestrel[B, C, IO]) = view map(_ >>- ka)
+}
 
 trait ViewStreamInstances
 {
@@ -125,3 +121,17 @@ trait ViewStreamInstances
 
 object ViewStream
 extends ViewStreamInstances
+
+final class IOProcess[F[_, _]: PerformIO, A, C](self: Process[Task, F[A, C]])
+(implicit functor: Functor[F[?, C]])
+{
+  def unit = self map(_.void)
+}
+
+trait TOIOProcess
+{
+  implicit def TOIOProcess[F[_, _]: PerformIO, A, C]
+  (proc: Process[Task, F[A, C]])
+  (implicit functor: Functor[F[?, C]]) =
+    new IOProcess(proc)
+}

@@ -13,7 +13,7 @@ import android.support.v7.widget.RecyclerView
 import android.widget._
 
 trait MainViewMachine
-extends CKCombinators[RecyclerView, StreamIO]
+extends Combinators[RecyclerView]
 with RecyclerViewMachine[StringRecyclerAdapter]
 {
   def recyclerConf = nopK

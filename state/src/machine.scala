@@ -23,6 +23,7 @@ trait Machine
 extends Logging
 with StateStrategy
 with cats.syntax.StreamingSyntax
+with AnnotatedIO
 {
   import Process._
 
@@ -262,12 +263,8 @@ with cats.syntax.StreamingSyntax
     def allowed = true
   }
 
-  def instance_PublishFilter_IOFun[A <: IOFun]
-  : PublishFilter[A] = new PublishFilter[A] {
+  def instance_PublishFilter_IOFun[A, C]
+  : PublishFilter[IOFun[A, C]] = new PublishFilter[IOFun[A, C]] {
     def allowed = true
   }
-
-  def con[A](f: Context => A) = ConsIO[StreamIO].pure[A, Context](f)
-  def act[A](f: Activity => A) = ConsIO[StreamIO].pure[A, Activity](f)
-  def res[A](f: Resources => A) = ConsIO[StreamIO].pure[A, Resources](f)
 }
