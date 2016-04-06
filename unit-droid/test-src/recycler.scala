@@ -2,52 +2,67 @@ package tryp
 package droid
 package unit
 
-import android.support.v7.widget.RecyclerView
+import scalaz.concurrent.Task
 
-import android.widget._
+import state.core._
+import state._
 
-@frag(RecyclerSpecFragment)
-class RecyclerSpec
+object RecyclerSpec
 {
-  def is = s2"""
-  empty $empty
-  add $add
-  """
+  def items = List("first", "second")
 
-  val text = Random.string(10)
+  import ViewStreamOperation.exports._
 
-  lazy val recFrag = frag[RecyclerSpecFragment]("test").getA
+  class SpecAgent
+  extends ActivityAgent
+  {
+    override lazy val viewMachine =
+      new RecyclerViewMachine[StringRecyclerAdapter] {
+        override def handle = "spec"
 
-  def empty = {
-    recFrag willContain emptyRecycler
-  }
+        lazy val adapter = conS(implicit c => new StringRecyclerAdapter {})
 
-  def add = {
-    recFrag.viewMachine.adapter.updateItems(List("first", "second")).run
-    recFrag willContain nonEmptyRecycler(2)
+        override def extraAdmit = super.extraAdmit orElse {
+          case ViewMachine.LayoutReady => {
+            case s =>
+              s << adapter.v.map(_.updateItems(items).ui)
+          }
+        }
+      }
   }
 }
 
-class RecyclerActivitySpec
-extends ActivitySpec[RecyclerActivity]
+trait RecyclerSpec
+extends StateAppSpec
 {
+  import RecyclerSpec._
+
+  override lazy val initialAgent = new SpecAgent
+}
+
+// class RecyclerEmptySpec
+// extends RecyclerSpec
+// {
+//   import RecyclerSpec._
+
+//   def is = s2"""
+//   empty $empty
+//   """
+
+//   def empty = activity willContain emptyRecycler
+// }
+
+class RecyclerAddSpec
+extends RecyclerSpec
+{
+  import RecyclerSpec._
+
   def is = s2"""
-  empty $empty
   add $add
   """
 
-  def activityClass = classOf[RecyclerActivity]
-
-  val text = Random.string(10)
-
-  sequential
-
-  def empty = {
-    activity willContain emptyRecycler
-  }
-
   def add = {
-    activity.viewMachine.adapter.updateItems(List("first", "second")).run
-    activity willContain nonEmptyRecycler(2)
+    activity willContain view[RecyclerView] and (
+      activity willContain nonEmptyRecycler(2))
   }
 }

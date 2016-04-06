@@ -8,8 +8,7 @@ import view._
 
 import shapeless._
 
-import android.widget.{BaseAdapter,TextView,Filterable,Filter}
-import android.support.v7.widget.RecyclerView
+import android.widget.{BaseAdapter,Filterable,Filter}
 import android.view.ViewGroup.LayoutParams._
 
 import cats._
@@ -72,10 +71,10 @@ extends ListAdapter
   }
 }
 
-abstract class RecyclerAdapter[A <: RecyclerView.ViewHolder, B: ClassTag](
-  implicit val activity: Activity
+abstract class RecyclerAdapter[A <: RecyclerViewHolder, B: ClassTag](
+  implicit val context: Context
 )
-extends RecyclerView.Adapter[A]
+extends RecyclerViewAdapter[A]
 with Filterable
 with DefaultStrategy
 with Logging
@@ -112,7 +111,6 @@ with Logging
       def publishResults(q: CharSequence, results: Filter.FilterResults) {
         results.values match {
           case v: Seq[B] =>
-            // Ui(updateVisibleData(v)).run
             IO((c: Context) => updateVisibleData(v))
               .main() !? "update visible data"
           case v => {
@@ -134,8 +132,8 @@ with Logging
   def filterItem(item: B, constraint: CharSequence) = true
 }
 
-abstract class SimpleRecyclerAdapter[A <: RecyclerView.ViewHolder, B: ClassTag]
-(implicit activity: Activity)
+abstract class SimpleRecyclerAdapter[A <: RecyclerViewHolder, B: ClassTag]
+(implicit context: Context)
 extends RecyclerAdapter[A, B]
 {
   var simpleItems = Buffer[B]()
@@ -143,13 +141,17 @@ extends RecyclerAdapter[A, B]
   def items = simpleItems
 
   def updateItems(newItems: Seq[B]) = {
-    simpleItems = newItems.toBuffer
-    applyFilter
+    IO { (c: Context) =>
+      simpleItems = newItems.toBuffer
+      // applyFilter
+      updateVisibleData(simpleItems)
+      notifyDataSetChanged()
+    }
   }
 }
 
 case class StringHolder(view: View, content: ViewStream[TextView, Context])
-extends RecyclerView.ViewHolder(view)
+extends RecyclerViewHolder(view)
 
 trait StringRecyclerAdapter
 extends SimpleRecyclerAdapter[StringHolder, String]
@@ -167,11 +169,9 @@ with Views[Context, StreamIO]
     )
     val layout =
       v.unsafePerformIO !? "create layout for string recycler item" getOrElse(
-        new FrameLayout(activity))
+        new FrameLayout(context))
     StringHolder(layout, tv.v)
   }
-
-  import iota.std.TextCombinators.text
 
   def onBindViewHolder(holder: StringHolder, position: Int) {
     // items(position) foreach { s =>
