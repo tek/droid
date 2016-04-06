@@ -18,9 +18,11 @@ class PlusAccount(apiClient: GoogleApiClient)
 {
   import plus.Plus._
 
-  lazy val person = Maybe.fromNullable(PeopleApi.getCurrentPerson(apiClient))
+  // lazy val person = Maybe.fromNullable(PeopleApi.getCurrentPerson(apiClient))
+  lazy val person: Maybe[plus.model.people.Person] = Maybe.empty
 
-  def email = Maybe.fromNullable(AccountApi.getAccountName(apiClient))
+  // def email = Maybe.fromNullable(AccountApi.getAccountName(apiClient))
+  def email: Maybe[String] = Maybe.empty
 
   def name = person map(_.getName) map
     { n => s"${n.getGivenName} ${n.getFamilyName}" }
