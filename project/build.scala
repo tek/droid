@@ -62,12 +62,12 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
     .robotest
     .manifest(
       "appName" -> "tryp",
-      "appClass" -> ".Application",
+      "appClass" -> "android.app.Application",
       "minSdk" -> "21",
       "targetSdk" -> "21",
       "versionCode" -> "1",
       "extra" -> "",
-      "activityClass" -> ".SpecActivity"
+      "activityClass" -> "android.app.Activity"
     )
     .settingsV(
       manifestTokens += ("package" -> androidPackage.value),
