@@ -6,7 +6,6 @@ import org.robolectric.Shadows
 
 import state._
 import AppState._
-import MainViewMessages.LoadUi
 
 class StartActivitySpec
 extends StateAppSpec
@@ -15,7 +14,12 @@ extends StateAppSpec
   start another activity with an agent $startActivity
   """
 
-  override def before = stateApp.publishOne(StartActivity(MainView2()))
+  def initialAgent = new MainViewAgent {}
+
+  override def before = {
+    super.before
+    stateApp.publishOne(StartActivity(new MainViewAgent {}))
+  }
 
   def startActivity = {
     Option(Shadows.shadowOf(activity).getNextStartedActivity()) must

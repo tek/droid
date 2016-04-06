@@ -2,10 +2,6 @@ package tryp
 package droid
 package unit
 
-import android.support.v7.widget.RecyclerView
-
-import android.widget._
-
 class NestedSpec
 extends ActivitySpec[NestedActivity]
 {

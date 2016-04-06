@@ -2,23 +2,44 @@ package tryp
 package droid
 package unit
 
-import scalaz._, Scalaz._, concurrent.Task
+import state._
 
-import android.widget._
+object ViewStreamSpec
+{
+  class Target(c: Context)
+  extends TextView(c)
+
+  class SpecAgent
+  extends ActivityAgent
+  {
+    lazy val viewMachine =
+      new ViewMachine {
+        lazy val search = w[Target]
+
+        lazy val layoutIO = l[FrameLayout](search)
+      }
+  }
+}
 
 class ViewStreamSpec
-extends SpecBase
-with DefaultStrategy
+extends StateAppSpec
 {
+  import ViewStreamSpec._
+
   def is = s2"""
-  signal $signal
+  ViewStream TextView
+
+  access changed text through the signal $signal
   """
 
   val text = Random.string(10)
 
+  override lazy val initialAgent = new SpecAgent
+
   def signal = {
-    val f = frag[SpecFragment]("test").getA
-    f.viewOfType[TextView] foreachA(_.setText(text))
-    f.viewMachine.search.text computes_== text
+    activity willContain view[Target] and {
+      activity.viewOfType[Target] foreachA(_.setText(text))
+      initialAgent.viewMachine.search.text computes_== text
+    }
   }
 }

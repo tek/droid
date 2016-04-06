@@ -12,6 +12,12 @@ with slick.ToActionExpectable
 with MustThrownExpectations
 with ContainsView
 with tryp.Matchers
+with Logging
+with BoundedCachedPool
 {
+  def name = "spec"
+
   def activityClass: Class[A]
+
+  def p[A](o: A) = pr(o)
 }

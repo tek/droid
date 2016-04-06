@@ -2,25 +2,35 @@ package tryp
 package droid
 package unit
 
-import state.core._
 import state._
-import view.core._
-import view._
 
-import android.support.v7.widget.RecyclerView
-import android.widget._
-
-import org.robolectric.annotation.Config
-
-@Config(application = classOf[StateApplication])
-class AppStateSpec
-extends ActivitySpec[StateActivity]
+object AppStateSpec
 {
+  class Marker(c: Context)
+  extends View(c)
+
+  class SpecAgent
+  extends ActivityAgent
+  {
+    lazy val viewMachine =
+      new ViewMachine {
+        lazy val layoutIO = l[FrameLayout](w[Marker])
+      }
+  }
+}
+
+class AppStateSpec
+extends StateAppSpec
+{
+  import AppStateSpec._
+
   def is = s2"""
-  run $run
+  Application with RootAgent managing agents and activities
+
+  load the UI of an initial Agent $run
   """
 
-  def activityClass = classOf[StateActivity]
+  override def initialAgent = new SpecAgent
 
-  def run = activity willContain view[EditText]
+  def run = activity willContain view[Marker]
 }

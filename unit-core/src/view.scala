@@ -22,13 +22,14 @@ extends Matcher[A]
   }
 
   def apply[C <: A](e: Expectable[C]): MatchResult[C] = {
+    val view: A = e.value
     sync()
-    (e.value: A).viewOfType[B] map(checker.post) match {
+    view.viewOfType[B] map(checker.post) match {
       case Some(v) =>
         val (success, ok, ko) = checker.check(v)
         result(success, ok, ko, e)
       case None =>
-        failure(s"does not contain ${className[B]}", e)
+        failure(s"does not contain ${className[B]}:\n${view.showViewTree}", e)
     }
   }
 }
@@ -67,8 +68,10 @@ class RecyclerViewMatcher(count: Int)
 extends ViewChecker[RecyclerView]
 {
   def post(rec: RecyclerView) = {
-    rec.measure(0, 0)
-    rec.layout(0, 0, 100, 10000)
+    Try {
+      rec.measure(0, 0)
+      rec.layout(0, 0, 100, 10000)
+    }
     rec
   }
 
@@ -76,6 +79,17 @@ extends ViewChecker[RecyclerView]
     (rec.getChildCount == count,
       s"Recycler has $count children",
       s"Recycler child count ${rec.getChildCount} != $count")
+  }
+}
+
+class TextViewMatcher(content: String)
+extends ViewChecker[TextView]
+{
+  def post(a: TextView) = a
+
+  override def check(a: TextView) = {
+    (a.getText == content, s"contains text '$content'",
+      s"doesn't contain '$content'")
   }
 }
 
@@ -87,6 +101,8 @@ extends SpecificationLike
   def emptyRecycler = new RecyclerViewMatcher(0)
 
   def view[A <: View: ClassTag] = new TypedViewMatcher[A]
+
+  def text(content: String) = new TextViewMatcher(content)
 
   implicit def anyToContainsViewExpectable[A: RootView](a: => A) =
     new ContainsViewExpectable[A](a)
