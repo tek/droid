@@ -30,55 +30,6 @@ extends Machine
   }
 }
 
-trait DummyViewMachine
-extends ViewMachine
-{
-  def layoutIO = w[View]
-}
-
-trait ViewAgent
-extends Agent
-with Views[Context, StreamIO]
-{
-  def viewMachine: ViewMachine
-
-  override def machines = viewMachine %:: super.machines
-
-  import iota.std.TextCombinators.text
-
-  def dummyLayout: StreamIO[View, Context] =
-    (w[TextView] >>= text("Couldn't load content")) map(a => a: View)
-
-  def viewIO = viewMachine.layout.discrete.take(1)
-
-  def safeViewIO: Process[Task, StreamIO[View, Context]] = {
-    viewIO.availableOrHalt
-  }
-}
-
-trait FreeViewAgent
-extends ViewAgent
-{
-  implicit def activity: Activity
-
-  def title: String
-
-  def safeViewP: Process[Task, View] = {
-    safeViewIO
-      .map(_.unsafePerformIO)
-      .eval
-      .sideEffect { v =>
-        log.debug(s"setting view for $title:\n${v.viewTree.drawTree}")
-      }
-  }
-
-  def safeView: View = {
-    safeViewP
-      .infraRunLastFor("obtain layout", 10 seconds)
-      .getOrElse(dummyLayout.unsafePerformIO.unsafePerformSync)
-  }
-}
-
 import AppState.{StartActivity, ActivityAgentStarted}
 
 @Publish(StartActivity)

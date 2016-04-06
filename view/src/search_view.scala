@@ -75,13 +75,15 @@ extends ViewInstances
     }
   }
 
-  def showViewTree()(implicit res: Resources) =
-    Log.i(viewTree.drawTree)
+  def showViewTree = viewTree.drawTree
+
+  def printViewTree() = Log.i(showViewTree)
 }
 
 trait ToSearchView
 {
-  implicit def ToSearchView[A: RootView](a: A) = new SearchView(a)
+  implicit def ToSearchView[A: RootView](a: A): SearchView[A] = 
+    new SearchView(a)
 }
 
 object SearchView

@@ -25,6 +25,10 @@ with ToViewGroupOps
 with StartActivity.ToStartActivityOps
 with StartActivityForResult.ToStartActivityForResultOps
 with Auth.ToAuthOps
+with TOIOProcess
+
+object all
+extends Exports
 
 object `package`
 extends Exports

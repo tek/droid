@@ -24,14 +24,17 @@ object AppState
   case class SetAgent(agent: ActivityAgent)
   extends Message
 
-  case object Ready
-  extends BasicState
-
   case object AgentInitialized
   extends Message
 
   case class ActivityAgentStarted(agent: ActivityAgent)
   extends Message
+
+  case class ContentViewReady(agent: ActivityAgent)
+  extends Message
+
+  case object Ready
+  extends BasicState
 
   case class ASData(activity: Option[Activity], agent: Option[ActivityAgent])
   extends Data
@@ -43,7 +46,7 @@ extends Machine
 {
   override def handle = "app_state"
 
-  def initialAgent: ActivityAgent
+  def initialAgent: Option[ActivityAgent]
 
   def admit: Admission = {
     case AppState.StartActivity(a) => startActivity(a)
@@ -70,7 +73,7 @@ extends Machine
 
   def setActivity(a: Activity): Transit = {
     case S(Pristine, NoData) =>
-      S(Ready, ASData(Some(a), None)) << SetAgent(initialAgent)
+      S(Ready, ASData(Some(a), None)) << initialAgent.map(SetAgent(_))
     case S(Ready, ASData(_, ag)) =>
       S(Ready, ASData(Some(a), ag))
   }
@@ -80,13 +83,11 @@ extends Machine
       s << ag.publish(Create(Map(), None))
   }
 
-  import IOEffect.ops._
-
   def activityStarted(agent: ActivityAgent): Transit = {
     case s @ S(Ready, ASData(Some(act), Some(ag))) if agent == ag =>
       s << ag.safeViewIO
         .map(_ >>- (act.setContentView(_: View)))
-        .map(_.unitUi)
+        .map(_.map(_ => ContentViewReady(ag).toSub).ui)
   }
 
   def contextFun(task: ContextFun[_]): Transit = {
@@ -123,5 +124,5 @@ with RootAgent { app: android.app.Application =>
     scheduleOne(SetActivity(act).toLocal)
   }
 
-  def initialAgent: ActivityAgent
+  def initialAgent: Option[ActivityAgent] = None
 }

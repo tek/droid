@@ -55,6 +55,7 @@ object MainViewMessages
 }
 import MainViewMessages._
 
+@Publish(LoadUi)
 trait MainViewMachine
 extends ViewMachine
 {
@@ -100,7 +101,7 @@ extends ViewMachine
 
   // FIXME must be overridden in activity to delegate to here. then implement
   // and call nativeBack() in activity
-  def nativeBack = ActivityTask(_.onBackPressed())
+  def nativeBack = ActivityFun(_.onBackPressed())
 
   override def machineName = "main".right
 
@@ -108,12 +109,11 @@ extends ViewMachine
 
   lazy val content = w[MainFrame] >>- metaName[MainFrame]("content frame")
 
-  lazy val label = w[TextView] >>= text("labeeeeeeeel") >>= large
+  lazy val label = w[TextView] >>- text("labeeeeeeeel") >>- large
 
-  lazy val layoutIO = {
+  lazy val layoutIO =
     l[FrameLayout](label, content) >>- metaName("root frame") >>-
       bgCol("main")
-  }
 }
 
 trait MainViewAgent

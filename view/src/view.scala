@@ -16,12 +16,12 @@ trait ViewMetadata
 case class SimpleViewMetadata(desc: String, extra: Params = Map())
 extends ViewMetadata
 
-final class ViewOps[A <: View: ClassTag](v: A)(implicit res: Resources)
+final class ViewOps[A <: View: ClassTag](v: A)
 {
-  lazy val metaKey = res.id("view_metadata")
+  lazy val metaKey = 12000
 
   def meta: ViewMetadata = {
-    metaKey.map(_.value).map(v.getTag) match {
+    v.getTag(metaKey) match {
       case Right(m: ViewMetadata) => m
       case _ => inferMetadata
     }
@@ -33,7 +33,7 @@ final class ViewOps[A <: View: ClassTag](v: A)(implicit res: Resources)
 
   def storeMeta(meta: ViewMetadata) = {
     Task {
-      metaKey.foreach(v.setTag(_, meta))
+      v.setTag(metaKey, meta)
     }
   }
 
@@ -65,8 +65,7 @@ extends LayoutMetadata
 
 trait ToViewOps
 {
-  implicit def ToViewOps[A <: View: ClassTag](v: A)
-  (implicit res: Resources): ViewOps[A] = 
+  implicit def ToViewOps[A <: View: ClassTag](v: A): ViewOps[A] = 
     new ViewOps(v)
 }
 
@@ -79,11 +78,11 @@ extends ToViewOps
     }
   }
 
-  implicit def viewShow(implicit res: Resources) =
+  implicit def detailedViewShow =
     new Show[View]
     {
       override def show(v: View) = {
-        val meta = ToViewOps(v).meta
+        val meta = v.meta
         val extra = extraInfo(v) | ""
         s"${meta.desc} $extra (${v.getId})"
       }

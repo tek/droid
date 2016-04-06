@@ -15,6 +15,8 @@ with MiscEffectOps
 with ToProcessSyntax
 with TransitSyntax
 with ToViewStreamMessageOps
+with IOEffect.ToIOEffectOps
+with view.ExportDecls
 
 object `package`
 extends Exports

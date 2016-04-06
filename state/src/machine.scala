@@ -29,8 +29,6 @@ with AnnotatedIO
 
   lazy val S = Zthulhu
 
-  def admit: Admission
-
   def stateAdmit: StateAdmission = PartialFunction.empty
 
   protected def initialZ = Zthulhu()
@@ -50,11 +48,6 @@ with AnnotatedIO
   val current = async.signalUnset[Zthulhu]
 
   private[this] def idle: Process[Task, Boolean] = size map(_ == 0)
-
-  protected def preselect: Preselection = {
-    case m: InternalMessage => internalMessage
-    case m: Message => admit
-  }
 
   protected def uncurriedTransitions(z: Zthulhu, m: Message) = {
     byMessage(z, m)
@@ -77,6 +70,17 @@ with AnnotatedIO
       .lift(z)
       .flatMap(_.lift(m))
   }
+
+  protected def preselect: Preselection = {
+    case m: InternalMessage => internalMessage
+    case m: Message => internalAdmit
+  }
+
+  protected def internalAdmit: Admission = extraAdmit orElse admit
+
+  def admit: Admission
+
+  def extraAdmit: Admission = PartialFunction.empty
 
   protected def interrupt = {
     term.discrete
