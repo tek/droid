@@ -14,6 +14,8 @@ trait Decls
   type Fragment = android.app.Fragment
   type FrameLayout = android.widget.FrameLayout
   type RelativeLayout = android.widget.RelativeLayout
+  type TextView = android.widget.TextView
+  type EditText = android.widget.EditText
 }
 
 trait Exports
@@ -26,6 +28,7 @@ trait ExportDecls
 extends Decls
 {
   type Resources = core.Resources
+  val Resources = core.Resources
   type ResourcesAccess = core.ResourcesAccess
   type ResourceNamespace = core.ResourceNamespace
   type PrefixResourceNamespace = core.PrefixResourceNamespace
