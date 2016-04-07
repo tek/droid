@@ -8,7 +8,7 @@ import shapeless.tag.@@
 
 import argonaut._, Argonaut._
 
-import droid.core.Keys
+import droid.core.{Keys, IOActionTypes}
 import droid.state.core._
 
 abstract class ShowMachine[A <: Model: DecodeJson]
@@ -24,7 +24,7 @@ extends Machine
 
   override def machinePrefix: List[String] = "show" :: super.machinePrefix
 
-  def setupData(args: Map[String, String]): droid.core.IOActionTypes.Action[SetModel] = {
+  def setupData(args: Map[String, String]): IOActionTypes.Action[SetModel] = {
     def errmsg(item: String) = {
       s"No valid $item passed to show impl for '$handle'"
     }

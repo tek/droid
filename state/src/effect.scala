@@ -6,9 +6,6 @@ import scala.annotation.implicitNotFound
 
 import scalaz._, Scalaz._
 
-import shapeless._
-import shapeless.tag.@@
-
 import simulacrum._
 
 import view.core._
@@ -107,9 +104,10 @@ extends StateEffectInstances0
       def stateEffect(prc: F[Effect]) = prc getOrElse(halt)
     }
 
-  implicit def instance_StateEffect_AnyAction[A: Operation] =
-    new StateEffect[AnyAction[A]] {
-      def stateEffect(fa: AnyAction[A]) = DbTask(fa).publish.success
+  implicit def instance_StateEffect_AnyAction[A: Operation, E <: SlickEffect] =
+    new StateEffect[SlickAction[A, E]] {
+      def stateEffect(fa: SlickAction[A, E]) = 
+        DbTask[A, E](fa).publish.success
     }
 
   implicit def instance_StateEffect_IO[F[_, _], A: Operation, C]

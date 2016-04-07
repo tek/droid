@@ -16,8 +16,10 @@ case class FragmentBuilder(ctor: () => Fragment, id: RId,
   }
 
 object IOActionTypes
-{ type ActionResult[E, A] = ValidationNel[E, A]
-  type ValidationAction[E, A] = AnyAction[ActionResult[E, A]]
+{
+  import _root_.slick.dbio.Effect
+  type ActionResult[E, A] = ValidationNel[E, A]
+  type ValidationAction[E, A] = SlickAction[ActionResult[E, A], Effect.All]
   type Action[A] = ValidationAction[String, A]
 }
 import IOActionTypes._

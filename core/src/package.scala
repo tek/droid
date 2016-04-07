@@ -2,6 +2,8 @@ package tryp
 package droid
 package core
 
+import _root_.slick.dbio.NoStream
+
 trait Decls
 {
   val TrypKeys = core.Keys
@@ -16,6 +18,9 @@ trait Decls
   type RelativeLayout = android.widget.RelativeLayout
   type TextView = android.widget.TextView
   type EditText = android.widget.EditText
+  type SlickEffect = _root_.slick.dbio.Effect
+  type SlickAction[A, E <: SlickEffect] =
+    _root_.slick.dbio.DBIOAction[A, NoStream, E]
 }
 
 trait Exports
