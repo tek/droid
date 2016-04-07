@@ -16,6 +16,7 @@ extends tryp.AndroidDeps
     "app" -> app,
     "test" -> test,
     "unit-core" -> unitCore,
+    "unit-droid" -> unitDroid,
     "unit" -> unit,
     "integration" -> integration,
     "logback" -> logback,
@@ -87,6 +88,10 @@ extends tryp.AndroidDeps
   )
 
   override def unit = ids(pulsar("jvm"))
+
+  def unitDroid = ids(
+    "org.xerial" % "sqlite-jdbc" % "3.+" % "test"
+  )
 
   override def integration = super.integration ++ ids(
     "org.scalatest" %% "scalatest" % "2.2.+",

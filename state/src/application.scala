@@ -48,6 +48,8 @@ extends Machine
 
   def initialAgent: Option[ActivityAgent]
 
+  def dbInfo: Option[DbInfo]
+
   def admit: Admission = {
     case AppState.StartActivity(a) => startActivity(a)
     case SetActivity(a) => setActivity(a)
@@ -97,7 +99,7 @@ extends Machine
 
   def activityFun(task: ActivityFun[_]): Transit = {
     case s @ S(Ready, ASData(Some(act), _)) =>
-      s << task.task((act))
+      s << task.task(act)
   }
 }
 
@@ -109,6 +111,7 @@ with RootAgent { app: android.app.Application =>
 
   lazy val appStateMachine = new AppStateMachine {
     def initialAgent = app.initialAgent
+    def dbInfo = app.dbInfo
   }
 
   lazy val ioMachine = new IODispatcher {}
@@ -125,4 +128,6 @@ with RootAgent { app: android.app.Application =>
   }
 
   def initialAgent: Option[ActivityAgent] = None
+
+  def dbInfo: Option[DbInfo] = None
 }
