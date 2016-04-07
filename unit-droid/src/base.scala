@@ -9,10 +9,6 @@ import android.view.Window
 
 import org.robolectric.annotation.Config
 
-abstract class TestViewActivity
-extends Activity
-with ViewActivity
-
 abstract class ActivitySpec[A <: Activity]
 extends UnitSpecs2Spec[A]
 with Matchers
@@ -39,11 +35,11 @@ extends ActivitySpec[StateUnitActivity]
 
   def initialAgent: ActivityAgent
 
-  override def before = 
+  override def before =
     stateApp.publishLocalOne(AppState.SetAgent(initialAgent))
 
   def stateApp = application match {
-    case a: state.StateApplication => a
+    case a: SpecStateApplication => a
     case a => sys.error(s"app is not StateApplication: ${a.className}")
   }
 }

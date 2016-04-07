@@ -24,6 +24,7 @@ import scalaz.Liskov._
 trait ConsIO[F[_, _]]
 {
   def cons[A, C](fa: F[A, C])(c: C): A
+  def init[A, C](fa: F[A, C])(c: C): A = cons[A, C](fa)(c)
   def pure[A, C](run: C => A): F[A, C]
 }
 
@@ -381,7 +382,7 @@ extends Poly1
 {
   implicit def caseConsIO[A, C, F[_, _]]
   (implicit ac: ConsIO[F]) =
-    at[F[A, C]](fa => (c: C) => ac.cons(fa)(c))
+    at[F[A, C]](fa => (c: C) => ac.init(fa)(c))
 }
 
 case class LayoutBuilder[A, C, F[_, _]: ConsIO]

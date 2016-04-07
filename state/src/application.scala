@@ -57,6 +57,8 @@ extends Machine
     case ActivityAgentStarted(agent) => activityStarted(agent)
     case f @ ContextFun(_) => contextFun(f)
     case f @ ActivityFun(_) => activityFun(f)
+    case t @ DbTask(_) => dbTask(t)
+    case t @ ECTask(_) => ecTask(t)
   }
 
   def startActivity(agent: ActivityAgent): Transit = {
@@ -101,6 +103,10 @@ extends Machine
     case s @ S(Ready, ASData(Some(act), _)) =>
       s << task.task(act)
   }
+
+  def dbTask(task: DbTask[_, _]): Transit = _ << task.effect(dbInfo)
+
+  def ecTask(task: ECTask[_]): Transit = _ << task.effect(ec)
 }
 
 trait StateApplication

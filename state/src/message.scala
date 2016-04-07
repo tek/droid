@@ -5,6 +5,9 @@ package state
 import core._
 import view.core._
 import view._
+import droid.core.Db
+
+import scala.concurrent.Await
 
 import simulacrum._
 
@@ -75,20 +78,32 @@ extends InternalIOMessage
   }
 }
 
-
-case class DbTask[A: Operation](action: AnyAction[A])
+case class ECTask[A: StateEffect](run: EC => A)
 extends Message
+{
+  def effect = (ec: EC) => (run(ec): Effect)
+}
+
+case class DbTask[A: Operation, E <: SlickEffect](action: SlickAction[A, E])
+extends Message
+{
+  def task(dbi: DbInfo): Effect = {
+    Task(Await.result(dbi.db() run(action), Duration.Inf))
+  }
+
+  def effect(dbi: Option[DbInfo]): Effect = {
+    dbi.map(task) | {
+      val io = IO((dbi: DbInfo) => task(dbi))
+      FromContextIO(io).effect
+    }
+  }
+}
 
 case class IOTask[F[_, _]: PerformIO, A: Operation, C](io: F[A, C])
 (implicit cm: IOMessage[C])
 extends Message
 {
-  def effect = {
-    cm.pure {
-      implicit c =>
-        FlatMapEffect(io.unsafePerformIO, s"IOTask($io)").internal.success
-    } .publish
-  }
+  def effect = cm.pure(io.unsafePerformIO(_)).publish
 }
 
 // TODO maybe allow A to have an Operation and asynchronously enqueue the
@@ -98,10 +113,7 @@ case class IOMainTask[F[_, _]: PerformIO, A: Operation, C]
 (implicit cm: IOMessage[C])
 extends Message
 {
-  def effect = cm.pure {
-    implicit c =>
-      FlatMapEffect(io.main(timeout), s"IOMainTask($io)").internal.success
-  } .publish
+  def effect = cm.pure(io.main(timeout)(_)).publish
 }
 
 case class IOFork[F[_, _]: PerformIO, C](io: F[Unit, C], desc: String)

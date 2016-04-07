@@ -42,6 +42,7 @@ trait StreamIOInstances
   implicit lazy val instance_ConsIO_StreamIO =
     new ConsIO[StreamIO] {
       def cons[A, C](fa: StreamIO[A, C])(c: C): A = fa.io(c)
+      override def init[A, C](fa: StreamIO[A, C])(c: C): A = fa(c)
       def pure[A, C](run: C => A): StreamIO[A, C] = StreamIO(IO(run))
     }
 
@@ -92,7 +93,7 @@ with StreamIOFunctions
 
 case class ViewStream[A, C](view: Process[Task, IO[A, C]])
 {
-  def >>-[B >: A](ka: Kestrel[B, C, IO]) = view map(_ >>- ka)
+  def >>-[B >: A](ka: Kestrel[B, C, IO]) = ViewStream(view map(_ >>- ka))
 }
 
 trait ViewStreamInstances
