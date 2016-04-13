@@ -1,16 +1,17 @@
 package tryp
 package droid
 
-trait Exports
-extends ToIntentOps
+trait All
+extends droid.core.All
+with view.core.All
+with state.core.All
+with view.All
+with state.All
+with FragmentManagement.ToFragmentManagementOps
+with ToIntentOps
 with view.BuilderOps
-with view.Exports
-with state.Exports
-with ViewExports
 with AndroidExt
 
+@integrate(view, state)
 object `package`
-extends Exports
-{
-  // def Fragments = tryp.droid.Classes.fragments
-}
+extends All

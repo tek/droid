@@ -6,7 +6,7 @@ import state.core._
 import view._
 import view.core._
 
-import scala.collection.mutable.{Set => MSet}
+import scala.collection.mutable.{Set => MSet, Buffer}
 import scala.concurrent.ExecutionContext
 
 import android.widget._

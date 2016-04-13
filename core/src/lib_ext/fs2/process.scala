@@ -88,7 +88,7 @@ with ToProcessOps0
 
   def infraRunLastFor(desc: String, timeout: Duration)
   (implicit ex: ExecutorService) = {
-    self.runLast.infraRunFor(desc, timeout).toOption.flatten
+    self.runLast.infraRunFor(desc, timeout).flatten
   }
 
   def peek()(implicit timeout: Duration = 5 seconds) = self.runLog.peek()

@@ -53,7 +53,6 @@ with AnnotatedIO
     byMessage(z, m)
       .orElse(byState(z, m))
       .orElse(unmatched(m).lift(z))
-      .toMaybe
   }
 
   protected def byMessage(z: Zthulhu, m: Message): Option[TransitResult] = {

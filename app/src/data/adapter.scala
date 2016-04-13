@@ -6,14 +6,12 @@ import state._
 import view.core._
 import view._
 
-import shapeless._
+import scala.collection.mutable.Buffer
 
 import android.widget.{BaseAdapter,Filterable,Filter}
 import android.view.ViewGroup.LayoutParams._
 
 import cats._
-
-import ViewExports._
 
 abstract class ListAdapter(implicit val activity: Activity)
 extends BaseAdapter

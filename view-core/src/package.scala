@@ -3,23 +3,28 @@ package droid
 package view
 package core
 
-trait Decls
+@exportNames(IO, Kestrel)
+trait Exports
+extends droid.core.Exports
+with droid.core.Decls
 {
   type CK[A] = Kestrel[A, Context, IO]
 }
 
-trait Exports
-extends droid.core.Exports
-with droid.core.ExportDecls
+trait All
+extends droid.core.All
 with ChainKestrelInstances
 with ChainKestrel.ToChainKestrelOps
 with ApplyKestrel.ToApplyKestrelOps
+with ConsIO.ToConsIOOps
 with IOOrphans
 with PerformIO.ToPerformIOOps
-with Decls
+with ToCKIotaKestrelOps
 
+@integrate(droid.core, droid.core.Decls)
 object `package`
-extends droid.core.Exports
-with droid.core.ExportDecls
+extends droid.core.All
 with IotaOrphans
-with Decls
+{
+  type CK[A] = Kestrel[A, Context, IO]
+}

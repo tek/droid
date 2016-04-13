@@ -2,25 +2,27 @@ package tryp
 package droid
 package state
 
-trait ExportDecls
+@export
+trait Exports
+extends state.core.Exports
+with state.core.Names
+with state.core.StateDecls
 {
   def Nop: Effect = Process.halt
 }
 
-trait Exports
-extends state.core.Exports
-with StateEffect.ToStateEffectOps
-with ToStateEffect
+trait All
+extends StateEffect.ToStateEffectOps
 with MiscEffectOps
 with ToProcessSyntax
 with TransitSyntax
 with ToViewStreamMessageOps
 with IOEffect.ToIOEffectOps
-with view.ExportDecls
 
+@integrate(view, state.core, state.core.Names, state.core.StateDecls)
 object `package`
 extends Exports
-with ExportDecls
-with state.core.ExportDecls
-with state.core.StateDecls
-with view.core.Exports
+with All
+with droid.core.All
+with state.core.All
+with view.core.All

@@ -145,15 +145,14 @@ extends Machine
   def machinesMessageOut(in: MProc) =
     machines foldMap(_.runWithInput(in))
 
+  // TODO
   // def machinesMessageOut(in: MProc) =
   //   (this %:: machines) foldMap(_.runWithInput(in))
 
   def agentMain(in: MProc): MProc = {
     val down = publishDownIn.subscribe
-      // .sideEffect(a => log.debug(s"pdi: $a"))
       .merge(in)
     val local = publishLocalIn.subscribe
-      // .sideEffect(a => log.debug(s"pli: $a"))
       .merge(down)
     val mainstream =
       machinesMessageOut(local)

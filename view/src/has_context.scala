@@ -10,8 +10,6 @@ import simulacrum._
 
   implicit def res(a: A): Resources = 
     droid.core.Resources.fromContext(context(a))
-
-  // implicit lazy val settings = implicitly[Settings]
 }
 
 object HasContextF

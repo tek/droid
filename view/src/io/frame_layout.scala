@@ -9,9 +9,6 @@ import android.graphics.drawable.Drawable
 
 import view.core._
 
-import cats._
-import cats.syntax.foldable._
-
 object frame
 extends FrameLayoutCombinators
 

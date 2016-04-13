@@ -3,10 +3,11 @@ package droid
 package state
 package core
 
-import shapeless.syntax.std.tuple._
+import scalaz.{\/-, -\/}
 
-import scalaz._, Scalaz._
-import stream.process1
+import cats.std.list._
+
+import scalaz.stream.process1
 import Process._
 
 trait BasicState
@@ -30,7 +31,7 @@ final class ZthulhuCtor(source: MProc)
 {
   import Zthulhu._
 
-  def fsm[Z](initial: Z, transition: (Z, Message) => Maybe[(Z, Effect)]) = {
+  def fsm[Z](initial: Z, transition: (Z, Message) => Option[(Z, Effect)]) = {
     source
       .pipe(transLoop(initial)(transition)(fatalTransition))
       .flatMapO(handleResult)
@@ -39,7 +40,7 @@ final class ZthulhuCtor(source: MProc)
 
 trait ToZthulhuCtor
 {
-  implicit def ToZthulhuCtor(source: MProc)(implicit log: Logger) = 
+  implicit def ToZthulhuCtor(source: MProc)(implicit log: Logger) =
     new ZthulhuCtor(source)
 }
 
@@ -65,18 +66,18 @@ extends BoundedCachedPool
    */
   def transLoop[Z, E, M]
   (z: Z)
-  (f: (Z, M) => Maybe[(Z, E)])
+  (f: (Z, M) => Option[(Z, E)])
   (transError: (Z, M, Throwable) => E)
   : Writer1[Z, M, E] = {
     receive1 { (a: M) =>
       val (state, effect) =
         Task(f(z, a)).runDefault match {
-          case \/-(Just((nz, e))) => nz.just -> e.just
-          case \/-(Empty()) => Maybe.empty[Z] -> Maybe.empty[E]
-          case -\/(t) => Maybe.empty[Z] -> transError(z, a, t).just
+          case \/-(Some((nz, e))) => Some(nz) -> Some(e)
+          case \/-(None) => None -> None
+          case -\/(t) => None -> Some(transError(z, a, t))
         }
-      val w = state.cata(emitW, halt)
-      val o = effect.cata(emitO, halt)
+      val w = state.map(emitW) | halt
+      val o = effect.map(emitO) | halt
       val l = transLoop(state | z)(f)(transError)
       w ++ o ++ l
     }
@@ -98,10 +99,10 @@ extends BoundedCachedPool
       .attempt(t => emit(LogFatal("performing effect", t).toLocal.fail))
       .mergeO
       .mapO {
-        case scalaz.Success(trans) =>
+        case Valid(trans) =>
           log.debug(s"task succeeded with ${trans.show}")
           List(trans)
-        case scalaz.Failure(transs) =>
+        case Invalid(transs) =>
           log.error(s"task failed with ${transs.show}")
           transs.toList
       }

@@ -5,7 +5,10 @@ package core
 
 import scala.annotation.implicitNotFound
 
-import scalaz._, Scalaz._
+import scalaz.{\/, \/-, -\/, ValidationNel}
+
+import cats._
+import cats.std.all._
 
 import export._
 
@@ -20,7 +23,7 @@ trait Operation[A]
 trait ParcelOperation[A]
 extends Operation[A]
 {
-  def result(a: A) = parcel(a).successNel[Parcel]
+  def result(a: A) = parcel(a).validNel[Parcel]
   def parcel(a: A): Parcel
 }
 
@@ -63,21 +66,38 @@ with OperationOrphans
   implicit def optionOperation[A: ParcelOperation]
   (implicit pf: PublishFilter[LogVerbose]) = new ParcelOperation[Option[A]] {
     def parcel(oa: Option[A]) = {
-      oa
-        .some(_.toParcel)
-        .none(LogVerbose("empty option produced by app effect").toParcel)
+      oa.map(_.toParcel) |
+        LogVerbose("empty option produced by app effect").toParcel
     }
 
     override def toString = "Operation[Option]"
   }
 
+  implicit def validatedNelOperation[A: ParcelOperation, B: Show] =
+    new Operation[ValidatedNel[B, A]] {
+      def result(v: ValidatedNel[B, A]): Result = {
+        v.bimap(_.map(e => LogError("from nel", e.show).publish), _.toParcel)
+      }
+
+      override def toString = "Operation[ValidatedNel]"
+    }
+
   implicit def validationNelOperation[A: ParcelOperation] =
     new Operation[ValidationNel[String, A]] {
       def result(v: ValidationNel[String, A]): Result = {
-        v.bimap(_.map(e => LogError("from nel", e).publish), _.toParcel)
+        v.toValidatedNel.toResult
       }
 
       override def toString = "Operation[ValidationNel]"
+    }
+
+  implicit def xorOperation[A: ParcelOperation, B: Show] =
+    new Operation[Xor[B, A]] {
+      def result(v: Xor[B, A]): Result = {
+        v.toValidated.toValidatedNel[B, A].toResult
+      }
+
+      override def toString = "Operation[Xor]"
     }
 
   implicit def resultOperation = new Operation[Result] {

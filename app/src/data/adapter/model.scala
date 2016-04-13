@@ -1,26 +1,15 @@
-// package tryp
-// package droid
+package tryp
+package droid
 
-// import android.widget._
-// import android.support.v7.widget.RecyclerView
-
-// import macroid.FullDsl._
-// import macroid.Snails
-
-// import akka.actor.ActorSelection
-// import akka.pattern.ask
-
-// import scalaz._, Scalaz._
-
-// import tweaks.Slot
+import android.widget._
 
 // case class SimpleModelViewHolder(view: View, root: Slot[RelativeLayout],
 //   name: Slot[TextView], delete: Slot[ImageButton])
-// extends RecyclerView.ViewHolder(view)
+// extends RecyclerViewHolder(view)
 
 // class SimpleModelAdapter[A <: NamedModel: ClassTag]
 // (dao: Dao[A])
-// (implicit activity: Activity, dbi: DbInfo, ctx: AndroidUiContext)
+// (implicit activity: Activity, dbi: DbInfo)
 // extends SimpleRecyclerAdapter[SimpleModelViewHolder, A]
 // with Macroid
 // with DbProfile

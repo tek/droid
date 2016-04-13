@@ -6,12 +6,12 @@ import scala.annotation.implicitNotFound
 
 import scalaz._, Scalaz._
 
+import scalaz.stream.Process._
+
 import simulacrum._
 
 import view.core._
 import core._
-
-import Process._
 
 trait ToProcess[F[_], G[_]]
 {

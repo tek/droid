@@ -2,18 +2,21 @@ package tryp
 package droid
 package view
 
-trait ExportDecls
+@exportNames(
+  StreamIO, ViewStream,
+  android.support.v7.widget.RecyclerView
+)
+trait Exports
+extends view.core.Exports
 {
-  type RecyclerView = android.support.v7.widget.RecyclerView
   type RecyclerViewHolder = android.support.v7.widget.RecyclerView.ViewHolder
   type RecyclerViewAdapter[A <: RecyclerViewHolder] =
     android.support.v7.widget.RecyclerView.Adapter[A]
 }
 
-trait Exports
-extends view.core.Exports
-with state.core.Exports
-with state.core.ExportDecls
+trait All
+extends state.core.All
+with view.core.All
 with RootView.ToRootViewOps
 with ToSearchable
 with ToSearchView
@@ -27,11 +30,9 @@ with StartActivityForResult.ToStartActivityForResultOps
 with Auth.ToAuthOps
 with TOIOProcess
 
-object all
-extends Exports
-
+@integrate(state.core, state.core.Names)
 object `package`
-extends Exports
+extends All
 
 package object io
-extends Exports
+extends All

@@ -3,8 +3,6 @@ package droid
 package state
 package core
 
-import ZS._
-
 trait Message
 extends Logging
 {
@@ -25,7 +23,7 @@ extends Message
   def message: String
 }
 
-case class UnknownResult[A: Show](result: A)
+case class UnknownResult[A: cats.Show](result: A)
 extends Loggable
 {
   def message = result.show.toString
@@ -33,7 +31,7 @@ extends Loggable
 
 trait MessageInstances
 {
-  implicit def messageShow[A <: Message] = Show.shows[A] {
+  implicit def messageShow[A <: Message] = cats.Show.show[A] {
     case m @ LogFatal(desc, _) => s"${m.className}($desc)"
     case res: Loggable => s"${res.className}(${res.message})"
     case a => a.toString
@@ -42,7 +40,7 @@ trait MessageInstances
   type MProc = Process[Task, Message]
 
   implicit lazy val mProcMonoid =
-    Monoid.instance[MProc]((a, b) => a.merge(b), Process.halt)
+    scalaz.Monoid.instance[MProc]((a, b) => a.merge(b), Process.halt)
 
   implicit lazy val mProcMonoidNon: algebra.Monoid[MProc] =
     new algebra.Monoid[MProc] {

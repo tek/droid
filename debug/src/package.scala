@@ -3,4 +3,4 @@ package droid
 package debug
 
 object `package`
-extends droid.Exports
+extends All

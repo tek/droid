@@ -36,7 +36,7 @@ extends StateAppSpec
   load a different main view $loadUi
   """
 
-  lazy val initialAgent = new MainView 
+  lazy val initialAgent = new MainView
 
   def loadUi = activity willContain view[Marker]
 }

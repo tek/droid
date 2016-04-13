@@ -3,16 +3,14 @@ package droid
 package state
 package core
 
-import ZS._
-
 sealed trait Parcel
 extends InternalMessage
 {
   def message: Message
 
-  def fail = this.failureNel[Parcel]
+  def fail = this.invalidNel[Parcel]
 
-  def success = this.successNel[Parcel]
+  def success = this.validNel[Parcel]
 }
 
 case class Internal(message: Message)
@@ -35,7 +33,7 @@ extends Message
 
 trait ParcelInstances
 {
-  implicit val ShowParcel = Show.shows[Parcel](_.message.shows)
+  implicit lazy val ShowParcel = cats.Show.show[Parcel](_.message.show)
 }
 
 object Parcel

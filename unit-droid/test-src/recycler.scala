@@ -2,8 +2,6 @@ package tryp
 package droid
 package unit
 
-import scalaz.concurrent.Task
-
 import state.core._
 import state._
 

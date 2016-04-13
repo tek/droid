@@ -2,8 +2,6 @@ package tryp
 package droid
 package state
 
-import cats.syntax.all._
-
 import scalaz.stream._
 import Process._
 import AgentStateData._

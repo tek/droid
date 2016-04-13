@@ -9,7 +9,7 @@ import Z._
 object TaskOps
 {
   def infraResult[A](desc: String)(res: Throwable \/ A)
-  (implicit log: Logger, ex: ExecutorService): Maybe[A] = {
+  (implicit log: Logger, ex: ExecutorService): Option[A] = {
     ex match {
       case _: PoolExecutor =>
       case e =>
@@ -21,12 +21,12 @@ object TaskOps
         val e = s"timed out trying to $desc, executor: $ex, threads: $threads"
         log.error(e)
         PoolExecutor.logInfo()
-        Maybe.empty[A]
+        None
       case -\/(e) =>
         log.error(s"failed to $desc: $e")
-        Maybe.empty[A]
+        None
       case a =>
-        a.toMaybe
+        a.toOption
     }
   }
 }
