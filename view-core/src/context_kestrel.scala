@@ -122,32 +122,36 @@ object annotation
   @anno(CKAnnResources) class resources()
 }
 
-final class CKIotaKestrelOps[A, B <: A, F[_, _]: ConsIO](fa: iota.Kestrel[A])
+final class CKIotaKestrelOps[A, F[_, _]: ConsIO](fa: iota.Kestrel[A])
 extends ToIotaKestrelOps
 {
-  def ck = fa.liftAs[B, Context, F]
+  def ck = fa.liftAs[A, Context, F]
 }
 
-abstract class CKCombinators
+trait ToCKIotaKestrelOps
+{
+  protected implicit def ToCKIotaKestrelOps[A](fa: iota.Kestrel[A]) =
+    new CKIotaKestrelOps[A, IO](fa)
+}
+
+trait CKCombinators
 extends ToIotaKestrelOps
 with ResourcesAccess
 with Logging
+with ToCKIotaKestrelOps
 {
   def kraw[A, B](f: Context => A => B): CK[A] =
     CK(a => IO(ctx => { f(ctx)(a); a }))
 }
 
-class Combinators[P]
-(implicit chain: ChainKestrel[Kestrel[?, Context, IO]])
+trait Combinators[P]
 extends CKCombinators
 with cats.std.FunctionInstances
 {
   protected type Principal = P
 
-  implicit def ToCKIotaKestrelOps[A >: Principal](fa: iota.Kestrel[A]) =
-    new CKIotaKestrelOps[A, Principal, IO](fa)
-
-  implicit def IotaKestrelToCK[A >: Principal](fa: iota.Kestrel[A]) =
+  protected implicit def IotaKestrelToCK[A >: Principal]
+  (fa: iota.Kestrel[A]) =
     fa.ck
 
   protected def kkpsub[A <: P, B](f: Principal => B): CK[A] =
@@ -171,5 +175,5 @@ with cats.std.FunctionInstances
   }
 }
 
-class ViewCombinators
+trait ViewCombinators
 extends Combinators[View]
