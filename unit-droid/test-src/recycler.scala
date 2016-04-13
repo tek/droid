@@ -9,7 +9,7 @@ object RecyclerSpec
 {
   def items = List("first", "second")
 
-  import ViewStreamOperation.exports._
+  import IOOperation.exports._
 
   class SpecAgent
   extends ActivityAgent
@@ -20,8 +20,8 @@ object RecyclerSpec
 
         lazy val adapter = conS(implicit c => new StringRecyclerAdapter {})
 
-        override def extraAdmit = super.extraAdmit orElse {
-          case ViewMachine.LayoutReady => {
+        def admit: Admission = {
+          case AppState.ContentViewReady(_) => {
             case s =>
               s << adapter.v.map(_.updateItems(items).ui)
           }
@@ -30,28 +30,8 @@ object RecyclerSpec
   }
 }
 
-trait RecyclerSpec
-extends StateAppSpec
-{
-  import RecyclerSpec._
-
-  override lazy val initialAgent = new SpecAgent
-}
-
-// class RecyclerEmptySpec
-// extends RecyclerSpec
-// {
-//   import RecyclerSpec._
-
-//   def is = s2"""
-//   empty $empty
-//   """
-
-//   def empty = activity willContain emptyRecycler
-// }
-
 class RecyclerAddSpec
-extends RecyclerSpec
+extends StateAppSpec
 {
   import RecyclerSpec._
 
@@ -59,8 +39,10 @@ extends RecyclerSpec
   add $add
   """
 
+  override lazy val initialAgent = new SpecAgent
+
   def add = {
-    activity willContain view[RecyclerView] and (
+    activity willContain emptyRecycler and (
       activity willContain nonEmptyRecycler(2))
   }
 }

@@ -13,10 +13,10 @@ object ViewStreamSpec
   extends ActivityAgent
   {
     lazy val viewMachine =
-      new ViewMachine {
+      new SimpleViewMachine {
         lazy val search = w[Target]
 
-        lazy val layoutIO = l[FrameLayout](search)
+        lazy val layout = l[FrameLayout](search)
       }
   }
 }

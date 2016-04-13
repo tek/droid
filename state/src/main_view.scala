@@ -61,19 +61,17 @@ extends ViewMachine
 {
   import AppState._
 
-  def localAdmit: Admission = {
+  def admit: Admission = {
     case LoadUi(ui) => loadUi(ui)
     case SetMainView(view) => setMainView(view)
     // case ContentLoaded(view) => contentLoaded(view)
     case Back => back
   }
 
-  override def admit: Admission = localAdmit orElse super.admit
-
   def loadUi(agent: ViewAgent): Transit = {
     case s =>
       s << AgentStateData.AddSub(Nes(agent)).toAgent <<
-        Fork(agent.viewIO.map(SetMainView(_).toResult), "set main view")
+        SetMainView(agent.layout).toResult
   }
 
   // def contentLoaded(view: Ui[View]): Transit = {
@@ -83,7 +81,7 @@ extends ViewMachine
   //   )
   // }
 
-  import ViewStreamOperation.exports._
+  import IOOperation.exports._
 
   /** `view` has to be executed before its signal can be used, so the effect
    *  has to be a StreamIO IOTask, which produces a ViewStreamTask of `content`
@@ -101,7 +99,7 @@ extends ViewMachine
 
   // FIXME must be overridden in activity to delegate to here. then implement
   // and call nativeBack() in activity
-  def nativeBack = ActivityFun(_.onBackPressed())
+  def nativeBack = act(_.onBackPressed())
 
   override def machineName = "main".right
 
@@ -109,17 +107,13 @@ extends ViewMachine
 
   lazy val content = w[MainFrame] >>- metaName[MainFrame]("content frame")
 
-  lazy val label = w[TextView] >>- text("labeeeeeeeel") >>- large
-
-  lazy val layoutIO =
-    l[FrameLayout](label, content) >>- metaName("root frame") >>-
-      bgCol("main")
+  lazy val layout =
+    l[FrameLayout](content) >>- metaName("root frame") >>- bgCol("main")
 }
 
 trait MainViewAgent
 extends ActivityAgent
 {
-
   lazy val viewMachine = new MainViewMachine {
   }
 }

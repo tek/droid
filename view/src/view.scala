@@ -65,7 +65,7 @@ extends LayoutMetadata
 
 trait ToViewOps
 {
-  implicit def ToViewOps[A <: View: ClassTag](v: A): ViewOps[A] = 
+  implicit def ToViewOps[A <: View: ClassTag](v: A): ViewOps[A] =
     new ViewOps(v)
 }
 

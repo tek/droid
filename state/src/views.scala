@@ -58,3 +58,11 @@ with ViewAgent { aa =>
 
   override def handle = "act_agent"
 }
+
+object ActivityAgent
+{
+  def apply(lay: StreamIO[_ <: View, Context]) =
+    new ActivityAgent {
+      lazy val viewMachine = ViewMachine(lay)
+    }
+}

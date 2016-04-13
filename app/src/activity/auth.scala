@@ -12,6 +12,7 @@ import view.core._
 import state._
 import state.core._
 import ZS._
+import IOOperation._
 
 object AuthStateData
 {
@@ -109,15 +110,15 @@ extends Machine
       case Success(tkn) =>
         IOTask(tkn.map(AuthorizeToken(email, _).toResult)).internal.success
       case Failure(t: UserRecoverableAuthException) =>
-        NonEmptyList(
+        Nel(
           FetchTokenFailed("insufficient permissions").toParcel,
           RequestPermission(t.getIntent).toParcel
-        ).failure[Parcel]
+        ).invalid[Parcel]
       case Failure(t) =>
-        NonEmptyList(
+        Nel(
           LogFatal("requesting plus token", t).toParcel,
           FetchTokenFailed("exception thrown").toParcel
-        ).failure[Parcel]
+        ).invalid[Parcel]
     }
   }
 
@@ -137,7 +138,7 @@ extends Machine
     () => true
   //   settings.app.bool("auto_fetch_auth_token", true)
 
-  def authorizePlusToken(account: String, plusToken: String): Effect = {
+  def authorizePlusToken(account: String, plusToken: String) = {
     Task {
       backend.authorizePlusToken(account, plusToken) map(BackendAuthorized(_))
     }

@@ -26,11 +26,37 @@ trait ConsIO[F[_, _]]
   def cons[A, C](fa: F[A, C])(c: C): A
   def init[A, C](fa: F[A, C])(c: C): A = cons[A, C](fa)(c)
   def pure[A, C](run: C => A): F[A, C]
+
+  def withContext[A, C, D <: C](fa: F[A, C]): F[A, D] = 
+    pure[A, D](d => cons[A, C](fa)(d))
 }
 
 object ConsIO
 {
   def apply[F[_, _]](implicit instance: ConsIO[F]): ConsIO[F] = instance
+
+  abstract class Ops[F[_, _], A, C]
+  {
+    def typeClassInstance: ConsIO[F]
+    def self: F[A, C]
+
+    def cons(c: C): A = typeClassInstance.cons(self)(c)
+    def init(c: C): A = typeClassInstance.init(self)(c)
+    def withContext[D <: C]: F[A, D] = typeClassInstance.withContext(self)
+  }
+
+  trait ToConsIOOps
+  {
+    implicit def toConsIOOps[F[_, _]: ConsIO, A, C](fa: F[A, C])
+    (implicit tc: ConsIO[F]): Ops[F, A, C] =
+      new Ops[F, A, C] {
+        val self = fa
+        val typeClassInstance = tc
+      }
+    }
+
+  object ops
+  extends ToConsIOOps
 }
 
 case class IO[A, C](run: C => A)
@@ -463,3 +489,9 @@ trait IOOrphans
         ConsIO[F].pure(d => ConsIO[F].cons(fa)(f(d)))
     }
 }
+
+trait IOViews
+extends Views[Context, IO]
+
+object IOViews
+extends IOViews

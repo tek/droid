@@ -20,11 +20,11 @@ object NestedSpec
   {
     val tk = io.text.text(oldText)
 
-    lazy val nested1 = new ViewMachine
+    lazy val nested1 = new SimpleViewMachine
     {
       lazy val tv = w[TextView] >>- tk
 
-      lazy val layoutIO = l[FrameLayout](tv)
+      lazy val layout = l[FrameLayout](tv)
     }
 
     lazy val nestedAgent = new Agent {
@@ -33,7 +33,7 @@ object NestedSpec
       lazy val nested2 = new ViewMachine {
         lazy val tv = w[TextView] >>- tk
 
-        lazy val layoutIO = l[FrameLayout](tv)
+        lazy val layout = l[FrameLayout](tv)
 
         override def admit: Admission = {
           case SetText(content) =>
@@ -49,12 +49,12 @@ object NestedSpec
     override def sub = nestedAgent %:: super.sub
 
     override lazy val viewMachine =
-      new ViewMachine {
-        lazy val layoutIO =
+      new SimpleViewMachine {
+        lazy val layout =
           l[FrameLayout](
             w[TextView],
-            nested1.layoutIO,
-            nestedAgent.nested2.layoutIO
+            nested1.layout,
+            nestedAgent.nested2.layout
           )
       }
   }

@@ -10,6 +10,7 @@ import core._
 import droid.core._
 import view.core._
 import view._
+import IOOperation._
 
 object AppState
 {
@@ -87,9 +88,7 @@ extends Machine
 
   def activityStarted(agent: ActivityAgent): Transit = {
     case s @ S(Ready, ASData(Some(act), Some(ag))) if agent == ag =>
-      s << ag.safeViewIO
-        .map(_ >>- (act.setContentView(_: View)))
-        .map(_.map(_ => ContentViewReady(ag).toSub).ui)
+      s << ag.setContentView.map(_.map(_ => ContentViewReady(ag).toSub).ui)
   }
 
   def contextFun(task: ContextFun[_]): Transit = {

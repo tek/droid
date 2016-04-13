@@ -6,6 +6,8 @@ import state.core._
 import view.core._
 import view._
 
+import IOOperation._
+
 import scalaz.stream._, Process._
 
 import cats._

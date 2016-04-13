@@ -18,6 +18,6 @@
 //   lazy val viewMachine = new ViewMachine {
 //     val label = w[TextView] >>= large >>= text("splash")
 
-//     lazy val layoutIO = l[FrameLayout](label)
+//     lazy val layout = l[FrameLayout](label)
 //   }
 // }

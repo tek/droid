@@ -18,7 +18,7 @@ trait DbSpecData
   import AppState._
   import MainViewMessages._
   import Db._
-  import ViewStreamOperation.exports._
+  import IOOperation.exports._
 
   implicit def dbi: DbInfo
 
@@ -37,9 +37,9 @@ trait DbSpecData
     lazy val viewMachine = new ViewMachine {
       lazy val label = w[Marker]
 
-      lazy val layoutIO = l[FrameLayout](label)
+      lazy val layout = l[FrameLayout](label)
 
-      override def extraAdmit: Admission = {
+      def admit: Admission = {
         case ContentViewReady(_) =>
           _ << DB.Alpha.one.map { a =>
             val newText = a.headOption map(_.a) getOrElse("invalid")

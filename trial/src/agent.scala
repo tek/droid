@@ -30,7 +30,7 @@ extends ActivityAgent
         }
       }
 
-    lazy val layoutIO = {
+    lazy val layout = {
       l[FrameLayout](but) >>- metaName("root frame") >>- bgCol("main")
     }
   }
@@ -58,7 +58,7 @@ extends ViewAgent
   override def handle = "view_1"
 
   lazy val viewMachine = new ViewMachine {
-    lazy val layoutIO = c[FrameLayout](
+    lazy val layout = c[FrameLayout](
       w[Button] >>= large >>= text("view agent 1") >>=
         lpK(WRAP_CONTENT, WRAP_CONTENT) { p: FrameLayout.LayoutParams =>
           p.gravity = Gravity.CENTER
@@ -82,7 +82,7 @@ extends ActivityAgent
         }
       }
 
-    lazy val layoutIO = {
+    lazy val layout = {
       l[FrameLayout](but) >>- metaName("root frame") >>- bgCol("main")
     }
   }

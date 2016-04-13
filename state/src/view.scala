@@ -12,25 +12,12 @@ import shapeless.tag.@@
 
 object ViewMachine
 {
-  trait Layout[A <: View]
-  extends Data
-  {
-    def layout: StreamIO[A, Context]
-  }
+  def apply(lay: StreamIO[_ <: View, Context]) =
+    new ViewMachine {
+      val layout = lay
 
-  object Layout
-  {
-    def unapply[A <: View](o: Layout[A]) = Some(o.layout)
-  }
-
-  case class ViewMachineData[A <: View](layout: StreamIO[A, Context])
-  extends Layout[A]
-
-  case object SetLayout
-  extends Message
-
-  case object LayoutReady
-  extends Message
+      def admit: Admission = PartialFunction.empty
+    }
 }
 
 trait ViewMachine
@@ -43,24 +30,13 @@ with Views[Context, StreamIO]
 
   override def machinePrefix = super.machinePrefix :+ "view"
 
-  override protected def initialZ = S(Initialized, ViewMachineData(layoutIO))
+  def layout: StreamIO[_ <: View, Context]
+}
 
-  override protected def initialMessages =
-    super.initialMessages ++ Process.emit(SetLayout)
-
-  lazy val layout = async.signalUnset[StreamIO[View, Context]]
-
-  def layoutIO: StreamIO[_ <: View, Context]
-
-  def admit: Admission = {
-    case SetLayout => setLayout
-  }
-
-  val setLayout: Transit = {
-    case s @ S(_, Layout(l)) =>
-      s << layout.setter(l map(v => (v: View)))
-        .stateSideEffect("set layout signal") << LayoutReady
-  }
+trait SimpleViewMachine
+extends ViewMachine
+{
+  def admit: Admission = PartialFunction.empty
 }
 
 trait ViewAgent
@@ -76,19 +52,15 @@ with Views[Context, StreamIO]
   def dummyLayout: StreamIO[View, Context] =
     (w[TextView] >>= text("Couldn't load content")) map(a => a: View)
 
-  def viewIO = viewMachine.layout.discrete.take(1)
+  lazy val layout = viewMachine.layout
 
-  def safeViewIO: Process[Task, StreamIO[View, Context]] = {
-    viewIO.availableOrHalt
-  }
+  def setContentView = layout.map(v => act(_.setContentView(v)))
 }
 
 object ViewAgent
 {
   def apply(lay: StreamIO[_ <: View, Context]) = new ViewAgent {
-    lazy val viewMachine = new ViewMachine {
-      val layoutIO = lay
-    }
+    lazy val viewMachine = ViewMachine(lay)
   }
 }
 
@@ -100,9 +72,7 @@ extends ViewAgent
   def title: String
 
   def safeViewP: Process[Task, View] = {
-    safeViewIO
-      .map(_.unsafePerformIO)
-      .eval
+    Process.eval(layout.unsafePerformIO)
       .sideEffect { v =>
         log.debug(s"setting view for $title:\n${v.viewTree.drawTree}")
       }

@@ -22,28 +22,29 @@ class C(c: Context)
 extends FrameLayout(c)
 
 object kestrels
-extends CKCombinators[TextView, IO]
+extends Combinators[TextView]
 {
   @context def setText(content: String) = _.setText(content)
 }
 
-abstract class IOSpecBase[I[_, _]: ConsIO: ApplyKestrel]
-(implicit M: Monad[I[?, Context]])
+class IOSpec
 extends Spec
-with Views[Context, I]
+with Views[Context, IO]
 {
   def is = s2"""
   test $test
   """
 
   def test = {
-    val lo: I[C, Context] = l[C](w[B], w[A], l[C](w[B], w[A]))
-    def ok[A]: Kestrel[A, Context, IO] = K((a: A) => ConsIO[IO].pure[A, Context](ctx => a))
+    val lo: IO[C, Context] = l[C](w[B], w[A], l[C](w[B], w[A]))
+    def ok[A]: Kestrel[A, Context, IO] =
+      K((a: A) => ConsIO[IO].pure[A, Context](ctx => a))
     lo >>- ok
     iota.c[ViewGroup] { lo >>= iota.lp(MATCH_PARENT, MATCH_PARENT) }
     val kest = iota.kestrel((_: FrameLayout).setForeground(null))
-    val vgk = K((a: View) => ConsIO[I].pure[View, Context](c => a))
+    val vgk = K((a: View) => ConsIO[IO].pure[View, Context](c => a))
     val rl = l[FrameLayout](lo)
+    val mapped: IO[Unit, Context] = rl.map(a => ())
     val rl2 = rl >>- vgk >>= kest
     w[TextView] >>= text("")
     w[TextView] >>- kestrels.setText("")
@@ -51,8 +52,16 @@ with Views[Context, I]
   }
 }
 
-class IOSpec
-extends IOSpecBase[IO]
-
 class StreamIOSpec
-extends IOSpecBase[StreamIO]
+extends Spec
+with Views[Activity, StreamIO]
+{
+  def is = s2"""
+  test $test
+  """
+
+  def test = {
+    val mapped: StreamIO[Unit, Activity] = w[TextView].map(a => ())
+    1 === 1
+  }
+}

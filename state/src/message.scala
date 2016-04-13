@@ -81,14 +81,14 @@ extends InternalIOMessage
 case class ECTask[A: StateEffect](run: EC => A)
 extends Message
 {
-  def effect = (ec: EC) => (run(ec): Effect)
+  def effect = (ec: EC) => (run(ec).stateEffect)
 }
 
 case class DbTask[A: Operation, E <: SlickEffect](action: SlickAction[A, E])
 extends Message
 {
   def task(dbi: DbInfo): Effect = {
-    Task(Await.result(dbi.db() run(action), Duration.Inf))
+    Task(Await.result(dbi.db() run(action), Duration.Inf)).stateEffect
   }
 
   def effect(dbi: Option[DbInfo]): Effect = {
@@ -103,7 +103,7 @@ case class IOTask[F[_, _]: PerformIO, A: Operation, C](io: F[A, C])
 (implicit cm: IOMessage[C])
 extends Message
 {
-  def effect = cm.pure(io.unsafePerformIO(_)).publish
+  def effect = cm.pure(io.unsafePerformIO(_)).publish.stateEffect
 }
 
 // TODO maybe allow A to have an Operation and asynchronously enqueue the
@@ -117,13 +117,13 @@ extends Message
 }
 
 case class IOFork[F[_, _]: PerformIO, C](io: F[Unit, C], desc: String)
-(implicit cm: IOMessage[C])
+(implicit im: IOMessage[C])
 extends Message
 {
-  def effect = cm.pure {
+  def effect = im.pure {
     implicit c =>
-      Fork(io.unsafePerformIO, desc).publish.success
-  }
+      Fork(io.unsafePerformIO.stateEffect, desc).publish.success
+  }.stateEffect
 }
 
 final class IOEffect[F[_, _]: PerformIO]
@@ -177,14 +177,14 @@ extends Message
 
   def effect: Effect = {
     val eff = stream.view.take(1).map(taskCtor(_).publish.success)
-    FlatMapEffect(eff, toString).internal.success
+    FlatMapEffect(eff, toString).internal.success.stateEffect
   }
 
   override def toString = "ViewStreamTask"
 }
 
 @exports
-object ViewStreamOperation
+object IOOperation
 {
   @export(Instantiated)
   implicit def instance_Operation_ViewStream[A: Operation, C: IOMessage]:
@@ -196,6 +196,16 @@ object ViewStreamOperation
 
       override def toString = "Operation[ViewStream]"
     }
+
+  @export(Instantiated)
+  implicit def instance_Operation_IO
+  [F[_, _]: PerformIO, A: Operation, C: IOMessage]: Operation[F[A, C]]
+  = Operation.message(IOTask(_: F[A, C]))
+
+  @export(Instantiated)
+  implicit def instance_Operation_UnitIO
+  [F[_, _]: PerformIO, C: IOMessage]
+  = Operation.message(IOFork((_: F[Unit, C]), "forked IO"))
 }
 
 final class ViewStreamMessageOps[A: Operation, C: IOMessage]

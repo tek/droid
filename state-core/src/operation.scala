@@ -147,4 +147,8 @@ extends OperationInstances
 
     override def toString = "Operation[Parcel]"
   }
+
+  def message[A, B <: Message](f: A => B) = new Operation[A] {
+    def result(a: A) = f(a).publish.success
+  }
 }

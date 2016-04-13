@@ -6,34 +6,12 @@ import state.core._
 import view._
 import view.core._
 
-trait RecyclerViewMachineData[A <: RecyclerViewAdapter[_]]
+trait RecyclerViewMachineData
 {
-  trait Recycler[B <: View]
-  extends ViewMachine.Layout[B]
-  {
-    def adapter: A
-  }
-
-  object Recycler
-  {
-    def unapply[B <: View](o: Recycler[B]) =
-      Some((o.layout, o.adapter))
-  }
-
-  case class RecyclerData[B <: View]
-  (layout: StreamIO[B, Context], adapter: A)
-  extends Recycler[B]
-
-  case class AdapterReady(adapter: A)
-  extends Message
-
-  case object AdapterInstalled
-  extends Message
 }
 
 trait RecyclerViewMachine[A <: RecyclerViewAdapter[_]]
 extends ViewMachine
-with RecyclerViewMachineData[A]
 {
   import ViewMachine._
 
@@ -56,16 +34,5 @@ with RecyclerViewMachineData[A]
     adapter.flatMap { a => recycler >>- recyclerAdapter(a) }
   }
 
-  def layoutIO = l[FrameLayout](assembled)
-
-  // def createAdapter: Transit = _ << act(a => adapter(a)).map(AdapterReady(_))
-
-  // def installAdapter(a: A): Transit = {
-  //   case S(s, Layout(l)) =>
-  //     S(s, RecyclerData(l, a)) << (recycler.v >>- recyclerAdapter(a)).unit <<
-  //       AdapterInstalled
-  // }
-
-  // def update = IOMainTask(IO(_ => adapter.notifyDataSetChanged()))
-  // def update = mainIO(adapter.notifyDataSetChanged())
+  def layout = l[FrameLayout](assembled)
 }

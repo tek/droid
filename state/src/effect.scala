@@ -59,7 +59,9 @@ with ToProcessSyntax
   implicit def processStateEffectWrap[A: StateEffect] =
     new StateEffect[Process[Task, A]] {
       def stateEffect(prc: Process[Task, A]) =
-        prc map(FlatMapEffect(_, "wrap effect").internal.success)
+        prc
+          .map(_.stateEffect)
+          .map(FlatMapEffect(_, "wrap effect").internal.success)
     }
 
   implicit def resultStateEffect = new StateEffect[Result]
@@ -106,20 +108,21 @@ extends StateEffectInstances0
 
   implicit def instance_StateEffect_AnyAction[A: Operation, E <: SlickEffect] =
     new StateEffect[SlickAction[A, E]] {
-      def stateEffect(fa: SlickAction[A, E]) = 
-        DbTask[A, E](fa).publish.success
+      def stateEffect(fa: SlickAction[A, E]) =
+        DbTask[A, E](fa).publish.success.stateEffect
     }
 
-  implicit def instance_StateEffect_IO[F[_, _], A: Operation, C]
-  (implicit P: PerformIO[F], cm: IOMessage[C]) =
-    new StateEffect[F[A, C]] {
-      def stateEffect(fa: F[A, C]) = IOTask(fa).publish.success
+  implicit def instance_StateEffect_IO
+  [F[_, _]: PerformIO, A: Operation, C: IOMessage]
+  (implicit O: Operation[F[A, C]])
+  = new StateEffect[F[A, C]] {
+      def stateEffect(fa: F[A, C]) = O.result(fa).stateEffect
     }
 
-  implicit def instance_StateEffect_IO_Unit[F[_, _], C]
-  (implicit P: PerformIO[F], cm: IOMessage[C]) =
+  implicit def instance_StateEffect_IO_Unit[F[_, _]: PerformIO, C: IOMessage]
+  (implicit O: Operation[F[Unit, C]]) =
     new StateEffect[F[Unit, C]] {
-      def stateEffect(fa: F[Unit, C]) = IOFork(fa, "forked IO").publish.success
+      def stateEffect(fa: F[Unit, C]) = O.result(fa).stateEffect
     }
 }
 
@@ -142,7 +145,7 @@ final class TaskEffectOps[A](val self: Task[A])
 extends AnyVal
 {
   def stateSideEffect(desc: String): Effect = {
-    self.map(a => EffectSuccessful(desc, a).internal.success)
+    self.map(a => EffectSuccessful(desc, a).internal.success).stateEffect
   }
 }
 
@@ -159,7 +162,7 @@ with ToEffectOps
   }
 
   def chain[O: Operation](next: Process[Task, O]) = {
-    self map(_ => next: Effect)
+    self map(_ => next.stateEffect)
   }
 }
 
@@ -188,11 +191,11 @@ final class TransitResultOps(val self: TransitResult)
 extends AnyVal
 {
   def <<[A: StateEffect](e: A): TransitResult = {
-    (self._1, self._2 ++ (e: Effect))
+    (self._1, self._2 ++ (e.stateEffect))
   }
 
   def <<(prc: Parcel): TransitResult = {
-    (self._1, self._2 ++ (prc.success: Effect))
+    (self._1, self._2 ++ (prc.success.stateEffect))
   }
 }
 
