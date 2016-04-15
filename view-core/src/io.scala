@@ -320,7 +320,7 @@ trait PerformIOExecution
 
   def main[A](task: Task[A], timeout: Duration) = {
     val timed = timeout match {
-      case Duration.Inf => task
+      case concurrent.duration.Duration.Inf => task
       case _ => task.unsafePerformTimed(timeout)
     }
     Task.fork(timed)(AndroidMainExecutorService)

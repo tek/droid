@@ -1,10 +1,7 @@
 package tryp
 package droid
 
-import view._
-import view.core._
-import state._
-import state.core._
+import state.core.{Create, Resume}
 
 trait FreeActivityAgent
 extends Activity
@@ -43,5 +40,5 @@ with RootAgent
     }
   }
 
-  lazy val ioMachine = new IODispatcher {}
+  lazy val ioMachine = new state.IODispatcher {}
 }

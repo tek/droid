@@ -48,7 +48,7 @@ trait StreamIOInstances
 
   implicit def instance_Monad_StreamIO[C]: Monad[StreamIO[?, C]] =
     new Monad[StreamIO[?, C]] {
-      def pure[A](a: A) = StreamIO(Monad[IO[?, C]].pure(a))
+      def pure[A](a: A) = StreamIO(cats.Monad[IO[?, C]].pure(a))
 
       def flatMap[A, B](fa: StreamIO[A, C])(f: A => StreamIO[B, C]) = {
         StreamIO(IO(c => f(fa.run(c)).io(c)))

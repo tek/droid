@@ -1,4 +1,5 @@
-package tryp.droid.util
+package tryp
+package droid
 
 import android.os.Build.VERSION
 

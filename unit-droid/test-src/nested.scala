@@ -2,11 +2,9 @@ package tryp
 package droid
 package unit
 
-import cats.data.Streaming
+import view.io
 
-import state.core._
-import state._
-import view._
+import cats.data.Streaming
 
 object NestedSpec
 {

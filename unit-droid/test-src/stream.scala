@@ -2,8 +2,6 @@ package tryp
 package droid
 package unit
 
-import state._
-
 object ViewStreamSpec
 {
   class Target(c: Context)

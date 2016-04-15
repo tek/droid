@@ -2,7 +2,8 @@ package tryp
 package droid
 package test
 
-import state.{PlayServices, PlusAccount, PlusInterface}
+import state.{PlayServices, PlusAccount}
+import state.service.PlusInterface
 import PlayServices._
 
 import scalaz._, Scalaz._, concurrent._

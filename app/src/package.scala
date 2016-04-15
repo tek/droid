@@ -2,16 +2,10 @@ package tryp
 package droid
 
 trait All
-extends droid.core.All
-with view.core.All
-with state.core.All
-with view.All
-with state.All
+extends state.All
 with FragmentManagement.ToFragmentManagementOps
 with ToIntentOps
-with view.BuilderOps
 with AndroidExt
 
-@integrate(view, state)
+@integrate(state, state.service)
 object `package`
-extends All

@@ -150,8 +150,7 @@ with cats.std.FunctionInstances
 {
   protected type Principal = P
 
-  protected implicit def IotaKestrelToCK[A >: Principal]
-  (fa: iota.Kestrel[A]) =
+  protected implicit def IotaKestrelToCK[A >: Principal](fa: iota.Kestrel[A]) =
     fa.ck
 
   protected def kkpsub[A <: P, B](f: Principal => B): CK[A] =

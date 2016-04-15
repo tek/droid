@@ -3,8 +3,6 @@ package droid
 package state
 
 import core._
-import view.core._
-import view._
 
 import scalaz.stream
 import stream.async
@@ -23,7 +21,7 @@ trait Machine
 extends Logging
 with StateStrategy
 with cats.syntax.StreamingSyntax
-with AnnotatedIO
+with view.AnnotatedIO
 {
   import Process._
 

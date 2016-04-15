@@ -145,6 +145,7 @@ extends FragmentHelpers
   def findNestedFrag[B <: Fragment: ClassTag](a: A)
   (tags: Seq[String]): Option[B] =
   {
+    import FragmentManagement.ops._
     tags
       .lift(0)
       .flatMap(findFragment(a))

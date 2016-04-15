@@ -6,12 +6,12 @@ package core
 import cats._
 import cats.syntax.all._
 
-@exportNames(Zthulhu, Parcel, Message)
+@exportNames(Zthulhu, Parcel, Message, Data, NoData, StateStrategy)
 trait Names
+extends droid.core.Names
 
 @export
 trait Decls
-extends droid.core.Decls
 {
   import scalaz.stream._
 
@@ -45,22 +45,19 @@ trait StateDecls
   val Process = stream.Process
 }
 
-@exportNames(Message)
+@export
 trait Exports
-extends droid.core.Exports
+extends Names
 with Decls
-{
-  private[this] def foo = 1
-}
+with droid.core.Exports
 
 trait All
 extends droid.core.All
 with ToOperationSyntax
 with ToZthulhuCtor
 
-@integrate(droid.core, droid.core.Decls)
+@integrate(droid.core)
 object `package`
-extends All
-with tryp.slick.sync.meta.Globals
+extends tryp.slick.sync.meta.Globals
 with Decls
 with StateDecls

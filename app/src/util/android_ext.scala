@@ -7,8 +7,6 @@ import android.widget.NumberPicker
 import android.text.InputType
 import android.graphics.drawable.Drawable
 
-import tryp.droid.util._
-
 trait AndroidExt
 {
 

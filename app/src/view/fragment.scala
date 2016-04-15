@@ -1,11 +1,6 @@
 package tryp
 package droid
 
-import state.core._
-import state._
-import view.core._
-import view._
-
 // import scalaz._, Scalaz._, concurrent._, stream._
 
 // import argonaut._, Argonaut._
@@ -93,7 +88,7 @@ import android.view.LayoutInflater
 
 trait VSTrypFragment
 extends Fragment
-with FreeViewAgent
+with state.FreeViewAgent
 {
   override def onCreateView
   (inflater: LayoutInflater, container: ViewGroup, state: Bundle) = {

@@ -1,6 +1,8 @@
 package tryp
 package droid
 
+import tryp.core._
+
 import scala.collection.mutable.Buffer
 
 trait AndroidLog

@@ -1,17 +1,10 @@
 package tryp
 package droid
 
-import state.core._
-import state._
-import view.core._
-import view._
-
 import scala.collection.mutable.Buffer
 
 import android.widget.{BaseAdapter,Filterable,Filter}
 import android.view.ViewGroup.LayoutParams._
-
-import cats._
 
 abstract class ListAdapter(implicit val activity: Activity)
 extends BaseAdapter

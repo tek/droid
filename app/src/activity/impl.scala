@@ -1,17 +1,10 @@
 package tryp
 package droid
 
-import view._
-
 import android.support.v7.app.ActionBarActivity
 import android.widget._
 
 import scalaz._, Scalaz._, concurrent._, stream._
-
-import state._
-import state.core._
-import view._
-import view.core._
 
 // abstract trait TrypActivity
 // extends Themes
@@ -45,7 +38,7 @@ import view.core._
 
 trait ViewActivity
 extends FreeActivityAgent
-with FreeViewAgent
+with state.FreeViewAgent
 // with Themes
 // with Preferences
 {

@@ -9,7 +9,7 @@ import scala.language.dynamics
 case class RId(value: Int, tag: String)
 
 class RIdGen(start: Int) extends Dynamic {
-  val ids = MMap[String, RId]()
+  val ids = collection.mutable.Map[String, RId]()
 
   var counter = start
 

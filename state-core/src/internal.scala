@@ -6,6 +6,7 @@ package core
 import scalaz.{\/-, -\/}
 
 import cats.std.list._
+import cats.data.Validated._
 
 import scalaz.stream.process1
 import Process._

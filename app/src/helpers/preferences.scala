@@ -194,8 +194,8 @@ class PreferencesFacade(val prefs: SharedPreferences)
 
   private def updateString(name: String, value: String) {
     Try(value.toLong) match {
-      case Success(int) => PrefCache.invalidate[Long](name)
-      case Failure(_) => PrefCache.invalidate[String](name)
+      case util.Success(int) => PrefCache.invalidate[Long](name)
+      case util.Failure(_) => PrefCache.invalidate[String](name)
     }
   }
 }

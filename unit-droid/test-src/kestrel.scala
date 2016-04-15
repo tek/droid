@@ -2,9 +2,7 @@ package tryp
 package droid
 package unit
 
-import view.core._
-import view._
-import annotation._
+import view.core.annotation._
 
 class PerformCKMainSpec
 extends UnitSpecs2Spec[Activity]

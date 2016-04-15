@@ -3,10 +3,10 @@ package droid
 package view
 package core
 
-@exportNames(IO, Kestrel)
+@exportNames(IO, Kestrel, Views, Combinators, ViewCombinators,
+  DescribedKestrel, PerformIO)
 trait Exports
 extends droid.core.Exports
-with droid.core.Decls
 {
   type CK[A] = Kestrel[A, Context, IO]
 }
@@ -21,10 +21,9 @@ with IOOrphans
 with PerformIO.ToPerformIOOps
 with ToCKIotaKestrelOps
 
-@integrate(droid.core, droid.core.Decls)
+@integrate(droid.core)
 object `package`
-extends droid.core.All
-with IotaOrphans
+extends IotaOrphans
 {
   type CK[A] = Kestrel[A, Context, IO]
 }

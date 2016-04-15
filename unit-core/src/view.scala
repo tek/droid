@@ -2,8 +2,6 @@ package tryp
 package droid
 package unit
 
-import view._
-
 import ZS._
 
 import org.specs2._, specification._, matcher._, org.specs2.concurrent._

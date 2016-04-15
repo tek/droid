@@ -78,7 +78,6 @@ extends ToTaskOps
 
   def infraRunFor(desc: String, timeout: Duration)
   (implicit ex: ExecutorService) = {
-     // implicit val ex = TimedPool.executor
      val res = Task.fork(task)(ex)
        .unsafePerformSyncAttemptFor(timeout)
      TaskOps.infraResult(desc)(res)

@@ -2,9 +2,6 @@ package tryp
 package droid
 package unit
 
-import state.core._
-import state._
-
 object RecyclerSpec
 {
   def items = List("first", "second")

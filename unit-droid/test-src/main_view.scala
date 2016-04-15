@@ -2,10 +2,6 @@ package tryp
 package droid
 package unit
 
-import view.core._
-import view._
-import state._
-
 object MainViewSpec
 extends Views[Context, StreamIO]
 {

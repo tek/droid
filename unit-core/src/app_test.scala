@@ -2,8 +2,6 @@ package tryp
 package droid
 package unit
 
-import view._
-
 import org.robolectric.Robolectric
 import org.robolectric.shadows.ShadowLog
 

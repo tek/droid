@@ -1,6 +1,8 @@
 package tryp
 package droid
 
+import state.{GeofenceData, LocationInterface}
+
 import scalaz._, Scalaz._, concurrent._, stream._, Process._
 
 import cats.syntax.all._
@@ -11,11 +13,6 @@ import com.google.android.gms.common._
 import com.google.android.gms.location._
 import LocationServices.GeofencingApi
 import com.google.android.gms.common.api._
-
-import state._
-import state.core._
-import view._
-import view.core._
 
 case class GeofenceInterface(apiClient: GoogleApiClient, intent: PendingIntent)
 (implicit prefs: Settings)

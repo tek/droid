@@ -1,11 +1,6 @@
 package tryp
 package droid
 
-import state._
-import state.core._
-import view._
-import view.core._
-
 trait RecyclerViewMachineData
 {
 }
@@ -13,15 +8,13 @@ trait RecyclerViewMachineData
 trait RecyclerViewMachine[A <: RecyclerViewAdapter[_]]
 extends ViewMachine
 {
-  import ViewMachine._
-
-  import io.recycler._
+  import view.io.recycler._
 
   override def machinePrefix = super.machinePrefix :+ "recycler"
 
   val adapter: StreamIO[A, Context]
 
-  def recyclerConf: CK[RecyclerView] = io.recycler.nopK
+  def recyclerConf: CK[RecyclerView] = nopK
 
   lazy val recycler =
     w[RecyclerView] >>-
@@ -34,5 +27,5 @@ extends ViewMachine
     adapter.flatMap { a => recycler >>- recyclerAdapter(a) }
   }
 
-  def layout = l[FrameLayout](assembled)
+  lazy val layout: StreamIO[_ <: View, Context] = l[FrameLayout](assembled)
 }

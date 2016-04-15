@@ -3,4 +3,4 @@ package droid
 package trial
 
 object `package`
-extends Exports
+extends All

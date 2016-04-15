@@ -23,7 +23,7 @@ extends ApplicationI { self: android.app.Application =>
   def setupLog(name: String) = {
     tryp.core.Logs.log =
       if (TrypEnv.release) tryp.droid.InternalLog
-      else if (TrypEnv.unittest) tryp.StdoutLog
+      else if (TrypEnv.unittest) tryp.core.StdoutLog
       else tryp.droid.DebugLog
     AndroidLog.tag = name
   }

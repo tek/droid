@@ -3,11 +3,17 @@ package droid
 package view
 
 @exportNames(
-  StreamIO, ViewStream,
-  android.support.v7.widget.RecyclerView
+  StreamIO, ViewStream, RootView,
+  android.support.v7.widget.RecyclerView,
+  android.support.v7.widget.Toolbar
 )
+trait Names
+
+@export
 trait Exports
-extends view.core.Exports
+extends state.core.Exports
+with view.core.Exports
+with Names
 {
   type RecyclerViewHolder = android.support.v7.widget.RecyclerView.ViewHolder
   type RecyclerViewAdapter[A <: RecyclerViewHolder] =
@@ -29,10 +35,12 @@ with StartActivity.ToStartActivityOps
 with StartActivityForResult.ToStartActivityForResultOps
 with Auth.ToAuthOps
 with TOIOProcess
+with BuilderOps
 
-@integrate(state.core, state.core.Names)
+@integrate(state.core, view.core)
 object `package`
 extends All
 
 package object io
 extends All
+with Names

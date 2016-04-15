@@ -1,6 +1,7 @@
 package tryp
 package droid
 package state
+package service
 
 import scalaz.concurrent._, scalaz.stream._
 
@@ -11,11 +12,6 @@ import gms.common.ConnectionResult
 import gms.common.{api => gapi}
 import gms.plus
 import gapi.GoogleApiClient
-
-import state.core._
-import state._
-import view.core._
-import view._
 
 import IOOperation._
 

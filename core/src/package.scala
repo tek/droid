@@ -5,13 +5,15 @@ package core
 @exportNames(android.app.Activity, android.view.View, android.view.ViewGroup,
   android.content.Context, android.os.Bundle, android.content.Intent,
   android.app.Fragment, android.widget.FrameLayout,
-  android.widget.RelativeLayout, android.widget.TextView,
-  android.widget.EditText
+  android.widget.LinearLayout, android.widget.RelativeLayout,
+  android.widget.TextView, android.widget.EditText,
+  android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+  android.view.ViewGroup.LayoutParams.MATCH_PARENT
   )
-trait Decls
+trait Names
 {
-  val TrypKeys = droid.core.Keys
-  
+  def TrypKeys = droid.core.Keys
+
   type SlickEffect = _root_.slick.dbio.Effect
   type SlickAction[A, E <: SlickEffect] =
     _root_.slick.dbio.DBIOAction[A, _root_.slick.dbio.NoStream, E]
@@ -26,7 +28,8 @@ with ToProcessOps
 @exportNames(Resources, ResourcesAccess, ResourceNamespace,
   PrefixResourceNamespace, GlobalResourceNamespace, RId, Tag, ResId)
 trait Exports
+extends Names
 
 object `package`
 extends tryp.slick.meta.Globals
-with Decls
+with Names

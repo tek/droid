@@ -2,10 +2,8 @@ package tryp
 package droid
 package unit
 
-import view.core._
-import view._
-import state.core._
-import state._
+import slick._
+import view.io
 
 @tryp.annotation.Slick
 object DbSpecSchema
@@ -15,7 +13,7 @@ object DbSpecSchema
 
 trait DbSpecData
 {
-  import AppState._
+  import state.AppState._
   import MainViewMessages._
   import Db._
   import IOOperation.exports._

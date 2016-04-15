@@ -7,9 +7,6 @@ import rx.ops._
 import com.google.android.gms.common.Scopes
 import com.google.android.gms.auth.UserRecoverableAuthException
 
-import view._
-import view.core._
-import state._
 import state.core._
 import ZS._
 import IOOperation._
@@ -107,14 +104,14 @@ extends Machine
 
   def tokenFromEmail(email: String): Result = {
     Try(plusToken(email)) match {
-      case Success(tkn) =>
+      case util.Success(tkn) =>
         IOTask(tkn.map(AuthorizeToken(email, _).toResult)).internal.success
-      case Failure(t: UserRecoverableAuthException) =>
+      case util.Failure(t: UserRecoverableAuthException) =>
         Nel(
           FetchTokenFailed("insufficient permissions").toParcel,
           RequestPermission(t.getIntent).toParcel
         ).invalid[Parcel]
-      case Failure(t) =>
+      case util.Failure(t) =>
         Nel(
           LogFatal("requesting plus token", t).toParcel,
           FetchTokenFailed("exception thrown").toParcel

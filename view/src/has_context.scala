@@ -19,11 +19,6 @@ object HasContextF
       def context(c: A) = c
     }
 
-  // implicit def activityHasContext[A <: Activity] =
-  //   new HasContextF[A] {
-  //     def context(a: A) = a
-  //   }
-
   implicit def fragmentHasContext[A <: Fragment] =
     new HasContextF[A] {
       def context(f: A) = f.getActivity

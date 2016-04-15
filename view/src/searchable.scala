@@ -4,6 +4,8 @@ package view
 
 import language.dynamics
 
+import cats.data.Xor._
+
 import simulacrum._
 
 trait ProxyBase {

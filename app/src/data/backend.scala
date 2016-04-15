@@ -10,6 +10,8 @@ import com.squareup.okhttp.{Request => OkRequest, _}
 import scalaz.syntax.validation._
 import scalaz.syntax.foldable._
 
+import cats.data.Xor._
+
 import argonaut._, Argonaut._
 
 import _root_.slick.dbio.DBIO
