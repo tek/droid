@@ -18,7 +18,11 @@ extends ViewMetadata
 
 final class ViewOps[A <: View: ClassTag](v: A)
 {
-  lazy val metaKey = 12000
+  def context = v.getContext
+
+  def res = Resources.fromContext(context)
+
+  lazy val metaKey = res.R.id.view_metadata
 
   def meta: ViewMetadata = {
     v.getTag(metaKey) match {
@@ -32,12 +36,8 @@ final class ViewOps[A <: View: ClassTag](v: A)
   }
 
   def storeMeta(meta: ViewMetadata) = {
-    Task {
-      v.setTag(metaKey, meta)
-    }
+    v.setTag(metaKey, meta)
   }
-
-  def context = v.getContext
 
   def clickListen(callback: View => Unit) {
     v.setOnClickListener(new android.view.View.OnClickListener {

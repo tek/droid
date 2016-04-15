@@ -18,6 +18,8 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
       .settingsV(
         fork := true,
         manifestTemplate := metaRes.value / "aar" / manifestName,
+        typedResources := true,
+        packageForR := "tryp.droid.res",
         manifestTokens ++= Map(
           "package" -> androidPackage.value,
           "versionName" -> version.value,
@@ -38,12 +40,12 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
       generateLogback in Test := true
     )
 
-  lazy val view = 
+  lazy val view =
     "view" / "view IO streaming and iota wrappers" <<< viewCore <<< stateCore
 
   lazy val state = "state" / "state machine" <<< view
 
-  lazy val service = 
+  lazy val service =
     "service" / "machines providing services" <<< state
 
   lazy val app =
@@ -72,6 +74,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
     .settingsV(
       manifestTokens += ("package" -> androidPackage.value),
       aarModule := "unit",
+      packageForR := "tryp.droid.res",
       logbackOutput := outputLayout.value(projectLayout.value).classes /
         "assets" / logbackName
     )
@@ -100,6 +103,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
       aarModule := "trial",
       manifestTemplate := metaRes.value / "trial" / manifestName,
       manifestTokens += ("package" -> androidPackage.value),
+      packageForR := "tryp.droid.res",
       dexMaxHeap := "2048m"
     )
     .logback("tag" -> "tryp")
