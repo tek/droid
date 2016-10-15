@@ -5,8 +5,6 @@ package core
 
 import reflect.macros.blackbox
 
-import algebra.Monoid
-
 import cats._
 import cats.syntax.foldable._
 
@@ -72,7 +70,7 @@ with AndroidMacros
     val asString = ann.rhs.toString
     val ann0 = ann.withRhs {
       q"""
-      cats.syntax.foldable.foldableSyntaxU(${ann.rhs}).fold
+      cats.syntax.foldable.catsSyntaxUFoldable(${ann.rhs}).fold
       """
     }
     templ(ann0, wrap, Some(asString))
@@ -146,7 +144,7 @@ with ToCKIotaKestrelOps
 
 trait Combinators[P]
 extends CKCombinators
-with cats.std.FunctionInstances
+with cats.instances.FunctionInstances
 {
   protected type Principal = P
 

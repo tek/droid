@@ -2,22 +2,27 @@ package tryp
 package droid
 package state
 
-@exportNames(StateApplication, Nop, MainViewMessages, AppState, IOOperation,
-  MainViewAgent, ActivityAgent, ViewAgent, Machine, Agent, ViewMachine,
-  RootAgent, IOTask, SimpleViewMachine)
+// FIXME exports Machine, clashing with tryp.state
+// need to change export to pick the subclass's
+@exportNames(StateApplication,
+  MainViewAgent, ActivityAgent, ViewAgent, Machine, ViewMachine,
+  IOTask, SimpleViewMachine)
 trait Exports
 extends view.Exports
+{
+  val MainViewMessages = tryp.droid.state.MainViewMessages
+  val AppState = tryp.droid.state.AppState
+  val ViewAgent = tryp.droid.state.ViewAgent
+  val IOOperation = tryp.droid.state.IOOperation
+}
 
 trait All
 extends view.All
-with StateEffect.ToStateEffectOps
-with MiscEffectOps
-with ToProcessSyntax
-with TransitSyntax
 with ToViewStreamMessageOps
+with StateEffectInstances
 with IOEffect.ToIOEffectOps
 
-@integrate(view, state.core.StateDecls)
+@integrate(app, slick, slick.sync, view, tryp.state.StateDecls)
 object `package`
 extends All
 {

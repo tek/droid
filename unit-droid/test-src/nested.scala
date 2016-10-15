@@ -4,8 +4,6 @@ package unit
 
 import view.io
 
-import cats.data.Streaming
-
 object NestedSpec
 {
   val oldText = Random.string(10)
@@ -39,12 +37,12 @@ object NestedSpec
         }
       }
 
-      override def machines = nested2 %:: super.machines
+      override def machines = nested2 :: super.machines
     }
 
-    override def machines = nested1 %:: super.machines
+    override def machines = nested1 :: super.machines
 
-    override def sub = nestedAgent %:: super.sub
+    override def sub = nestedAgent :: super.sub
 
     override lazy val viewMachine =
       new SimpleViewMachine {

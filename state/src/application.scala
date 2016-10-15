@@ -2,11 +2,12 @@ package tryp
 package droid
 package state
 
+import tryp.state._
+
 import scalaz.stream._
 import Process._
 import AgentStateData._
 
-import core._
 import droid.core._
 import view.core._
 import view._
@@ -68,10 +69,10 @@ extends Machine
 
   def setAgent(agent: ActivityAgent): Transit = {
     case S(Ready, ASData(act, None)) =>
-      S(Ready, ASData(act, agent.some)) << AddSub(Nes(agent)).toAgent
+      S(Ready, ASData(act, agent.some)) << AddSub(Nel(agent)).toAgent
     case S(Ready, ASData(act, Some(old))) =>
-      S(Ready, ASData(act, agent.some)) << AddSub(Nes(agent)).toAgent <<
-        StopSub(Nes(old))
+      S(Ready, ASData(act, agent.some)) << AddSub(Nel(agent)).toAgent <<
+        StopSub(Nel(old))
   }
 
   def setActivity(a: Activity): Transit = {
@@ -119,7 +120,7 @@ with RootAgent { app: android.app.Application =>
 
   lazy val ioMachine = new IODispatcher {}
 
-  override def machines = ioMachine %:: appStateMachine %:: super.machines
+  override def machines = ioMachine :: appStateMachine :: super.machines
 
   abstract override def onCreate() {
     forkAgent()

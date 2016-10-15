@@ -2,8 +2,7 @@ package tryp
 package droid
 package unit
 
-import state.core._
-import state._
+import tryp.state._
 
 import org.specs2._, specification._, matcher._, concurrent._
 
@@ -110,7 +109,7 @@ with FixedPool
 
         lazy val state = new State1 {}
 
-        override def machines = state %:: super.machines
+        override def machines = state :: super.machines
       }
 
       val ag2 = new Agent {
@@ -122,7 +121,7 @@ with FixedPool
 
         lazy val state3 = new State3 {}
 
-        override def machines = state2 %:: state3 %:: super.machines
+        override def machines = state2 :: state3 :: super.machines
 
         override def admit: Admission = {
           case Set1 => {
@@ -135,9 +134,9 @@ with FixedPool
 
       lazy val state = new State0 {}
 
-      override def machines = state %:: super.machines
+      override def machines = state :: super.machines
 
-      override def sub = ag1 %:: ag2 %:: super.sub
+      override def sub = ag1 :: ag2 :: super.sub
   }
 
   def machine = {

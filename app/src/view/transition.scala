@@ -2,7 +2,7 @@ package tryp
 package droid
 
 import state._
-import state.core._
+import state._
 import view._
 import view.core._
 

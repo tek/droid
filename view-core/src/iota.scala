@@ -32,6 +32,10 @@ trait IotaOrphans
     def flatMap[A, B](fa: IO[A])(f: A => IO[B]): IO[B] = {
       fa.flatMap(f)
     }
+
+    def tailRecM[A, B](a: A)(f: A => IO[Either[A, B]])
+    : IO[B] =
+      defaultTailRecM(a)(f)
   }
 }
 

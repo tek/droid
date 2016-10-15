@@ -2,7 +2,7 @@ package tryp
 package droid
 package state
 
-import state.core._
+import tryp.state._
 import view.core._
 import view._
 
@@ -12,7 +12,7 @@ import scalaz.stream._, Process._
 
 import cats._
 import cats.syntax.all._
-import cats.std.all._
+import cats.instances.all._
 
 import com.google.android.gms
 import gms.common.{ConnectionResult, GooglePlayServicesUtil}

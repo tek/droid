@@ -2,7 +2,7 @@ package tryp
 package droid
 package unit
 
-import tryp.slick.{DbInfo, TestFileDbInfo}
+import tryp.slick.TestFileDbInfo
 
 case class DbName(name: String)
 extends AnyVal

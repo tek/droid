@@ -5,7 +5,6 @@ package unit
 object MainViewSpec
 extends Views[Context, StreamIO]
 {
-  import AppState._
   import MainViewMessages._
 
   class Marker(c: Context)
@@ -15,7 +14,7 @@ extends Views[Context, StreamIO]
   extends MainViewAgent
   {
     override def extraAdmit: Admission = {
-      case ContentViewReady(ag) if ag == this =>
+      case MainViewReady =>
         _ << LoadUi(view2).publish
     }
   }

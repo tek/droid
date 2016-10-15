@@ -5,9 +5,7 @@ package core
 
 import android.os.{Looper, Handler}
 
-import algebra.Monoid
-
-import cats.Unapply
+import cats.Monoid
 
 import concurrent.Await
 
@@ -27,7 +25,7 @@ trait ConsIO[F[_, _]]
   def init[A, C](fa: F[A, C])(c: C): A = cons[A, C](fa)(c)
   def pure[A, C](run: C => A): F[A, C]
 
-  def withContext[A, C, D <: C](fa: F[A, C]): F[A, D] = 
+  def withContext[A, C, D <: C](fa: F[A, C]): F[A, D] =
     pure[A, D](d => cons[A, C](fa)(d))
 }
 
@@ -206,6 +204,10 @@ trait IOInstances
     def flatMap[A, B](fa: IO[A, C])(f: A => IO[B, C]) = {
       IO(c => f(fa.run(c)).run(c))
     }
+
+    def tailRecM[A, B](a: A)(f: A => IO[Either[A, B], C])
+    : IO[B, C] =
+      defaultTailRecM(a)(f)
   }
 
   implicit lazy val instance_ConsIO_IO = new ConsIO[IO] {

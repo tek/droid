@@ -9,7 +9,6 @@ extends tryp.AndroidDeps
 {
   override def deps = super.deps ++ Map(
     "core" -> core,
-    "state-core" -> stateCore,
     "view-core" -> viewCore,
     "view" -> view,
     "service" -> service,
@@ -37,45 +36,40 @@ extends tryp.AndroidDeps
     dd("tryp" %% "pulsar-unit-core" % "+" % "test", "tek/pulsar", "unit-core")
   )
 
-  def stateCore = ids(
-    "tryp" %% "pulsar-jvm" % "+" % "test"
-  )
-
   def viewCore = ids(
-    "com.hanhuy.android" %% "iota" % "+"
+    "com.hanhuy.android" %% "iota" % "1.+"
   )
 
   def view = ids(
-    aar("com.android.support" % "support-v4" % "21.+"),
-    aar("com.android.support" % "appcompat-v7" % "21.+"),
-    aar("com.android.support" % "palette-v7" % "21.+"),
-    aar("com.android.support" % "recyclerview-v7" % "21.+"),
-    aar("com.android.support" % "cardview-v7" % "21.+"),
-    aar("com.android.support" % "support-v13" % "21.+"),
-    aar("com.google.android.gms" % "play-services-basement" % "+"),
-    aar("com.google.android.gms" % "play-services-base" % "+")
+    pulsar("state"),
+    aar("com.android.support" % "support-v4" % "23.+"),
+    aar("com.android.support" % "appcompat-v7" % "23.+"),
+    aar("com.android.support" % "palette-v7" % "23.+"),
+    aar("com.android.support" % "recyclerview-v7" % "23.+"),
+    aar("com.android.support" % "cardview-v7" % "23.+"),
+    aar("com.android.support" % "support-v13" % "23.+"),
+    aar("com.google.android.gms" % "play-services-basement" % "9.6.1"),
+    aar("com.google.android.gms" % "play-services-base" % "9.6.1")
   )
 
   def service = ids(
-    aar("com.google.android.gms" % "play-services-maps" % "+"),
-    aar("com.google.android.gms" % "play-services-location" % "+"),
-    aar("com.google.android.gms" % "play-services-plus" % "+")
+    aar("com.google.android.gms" % "play-services-maps" % "9.+"),
+    aar("com.google.android.gms" % "play-services-location" % "9.+"),
+    aar("com.google.android.gms" % "play-services-plus" % "9.+")
   )
 
   def app = ids(
-    aar("com.android.support" % "support-v13" % "21.+"),
-    aar("com.android.support" % "support-v4" % "21.+"),
-    "com.scalarx" %% "scalarx" % "+",
-    "com.github.andkulikov" % "transitions-everywhere" % "+",
-    "com.melnykov" % "floatingactionbutton" % "+",
-    "com.makeramen" % "roundedimageview" % "+",
-    "com.squareup.okhttp" % "okhttp" % "+"
+    "com.lihaoyi" %% "scalarx" % "0.3.1",
+    "com.github.andkulikov" % "transitions-everywhere" % "1.+",
+    "com.melnykov" % "floatingactionbutton" % "1.+",
+    "com.makeramen" % "roundedimageview" % "1.+",
+    "com.squareup.okhttp3" % "okhttp" % "3.+"
   )
 
   def logback = ids(
-    "com.github.tony19" % "logback-android-core" % "+" exclude(
+    "com.github.tony19" % "logback-android-core" % "1.+" exclude(
       "com.google.android", "android"),
-    "com.github.tony19" % "logback-android-classic" % "+" exclude(
+    "com.github.tony19" % "logback-android-classic" % "1.+" exclude(
       "com.google.android", "android")
   )
 
@@ -83,8 +77,9 @@ extends tryp.AndroidDeps
     pulsar("slick")
   )
 
-  def unitCore = super.unit ++ ids(
-    pulsar("unit-slick")
+  def unitCore = ids(
+    pulsar("unit-slick"),
+    "tryp" %% "speclectic" % "1.0.1"
   )
 
   override def unit = ids(pulsar("jvm"))
@@ -96,8 +91,8 @@ extends tryp.AndroidDeps
   override def integration = super.integration ++ ids(
     "org.scalatest" %% "scalatest" % "2.2.+",
     "junit" % "junit" % "4.12" % "provided",
-    "com.android.support.test" % "runner" % "+" exclude("junit", "junit"),
-    "com.android.support" % "multidex-instrumentation" % "+"
+    "com.android.support.test" % "runner" % "1.+" exclude("junit", "junit"),
+    "com.android.support" % "multidex-instrumentation" % "1.+"
   )
 
   def macroConsole = ids(

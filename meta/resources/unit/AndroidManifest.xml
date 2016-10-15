@@ -3,16 +3,17 @@
   xmlns:android='http://schemas.android.com/apk/res/android'
   package='${package}'
   android:versionCode='${versionCode}'
-  android:versionName='${versionName}'
+  android:versionName='@string/version_name'
   >
   <application
     android:name='${appClass}'
     android:label='${appName}'
+    android:theme='@style/Theme.AppCompat.Light.NoActionBar'
     >
     <activity
-      android:name='${activityClass}'
       android:label='${appName}'
-      android:theme='@style/droid.light'
+      android:name='${activityClass}'
+      android:theme='@style/Theme.AppCompat.Light.NoActionBar'
       >
       <intent-filter>
         <action android:name='android.intent.action.MAIN'/>

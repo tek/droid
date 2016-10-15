@@ -8,10 +8,13 @@ package view
   android.support.v7.widget.Toolbar
 )
 trait Names
+{
+  val StreamIO = view.StreamIO
+}
 
 @export
 trait Exports
-extends state.core.Exports
+extends tryp.state.Exports
 with view.core.Exports
 with Names
 {
@@ -21,7 +24,7 @@ with Names
 }
 
 trait All
-extends state.core.All
+extends state.All
 with view.core.All
 with RootView.ToRootViewOps
 with ToSearchable
@@ -37,7 +40,7 @@ with Auth.ToAuthOps
 with TOIOProcess
 with BuilderOps
 
-@integrate(state.core, view.core)
+@integrate(tryp.state, view.core)
 object `package`
 extends All
 

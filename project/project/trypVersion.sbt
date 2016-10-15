@@ -1,1 +1,1 @@
-P.trypVersion in Global := "93"
+P.trypVersion in Global := "107.0.0"

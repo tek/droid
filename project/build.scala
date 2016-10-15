@@ -9,17 +9,27 @@ import TrypAndroid.autoImport._
 import TrypBuildKeys._
 import Templates.autoImport._
 
+import coursier.Keys._
+import coursier.CoursierPlugin
+
 object DroidBuild
 extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
+with tryp.ToTransformIf
 {
+  override val platform = "android-23"
+
   override def defaultBuilder = { name: String =>
     super.defaultBuilder(name)
+      .map(_.disablePlugins(CoursierPlugin))
       .manifest("minSdkVersion" -> "14")
       .settingsV(
         fork := true,
+        publishArtifact in (Compile, packageDoc) := false,
         manifestTemplate := metaRes.value / "aar" / manifestName,
         typedResources := true,
         packageForR := "tryp.droid.res",
+        resolvers +=
+          Resolver.url(s"pulsar maven 2", url(s"${Tek.pulsarUri}/snapshots"))(Patterns(true, nexusPattern)),
         manifestTokens ++= Map(
           "package" -> androidPackage.value,
           "versionName" -> version.value,
@@ -32,21 +42,13 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val viewCore = "view-core" / "context abstraction core" <<< core
 
-  lazy val stateCore = ("state-core" / "state machine core" <<< core)
-    .logback("tag" -> "tryp")
-    .settingsV(
-      logbackTemplate := metaRes.value / "unit" / "logback.xml",
-      generateLogback := false,
-      generateLogback in Test := true
-    )
-
   lazy val view =
-    "view" / "view IO streaming and iota wrappers" <<< viewCore <<< stateCore
+    "view" / "view IO streaming and iota wrappers" <<< viewCore
 
   lazy val state = "state" / "state machine" <<< view
 
   lazy val service =
-    "service" / "machines providing services" <<< state
+    "service" / "machines providing services" <<< state <<< viewCore
 
   lazy val app =
     "app".multidexDeps / "android commons" <<< service
@@ -60,25 +62,30 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val debug = "debug" <<< app
 
-  lazy val unitDroid = (adp("unit-droid") <<< unitCore <<< logback <<< debug)
-    .robotest
-    .manifest(
-      "appName" -> "tryp",
-      "appClass" -> "android.app.Application",
-      "minSdk" -> "21",
-      "targetSdk" -> "21",
-      "versionCode" -> "1",
-      "extra" -> "",
-      "activityClass" -> "android.app.Activity"
-    )
-    .settingsV(
-      manifestTokens += ("package" -> androidPackage.value),
-      aarModule := "unit",
-      packageForR := "tryp.droid.res",
-      logbackOutput := outputLayout.value(projectLayout.value).classes /
-        "assets" / logbackName
-    )
-    .logback("tag" -> "tryp")
+  lazy val unitDroid =
+    (adp("unit-droid") <<< unitCore <<< logback <<< debug <<< view <<< service)
+      .robotest
+      .manifest(
+        "appName" -> "tryp",
+        "appClass" -> "android.app.Application",
+        "minSdk" -> "21",
+        "targetSdk" -> "21",
+        "versionCode" -> "1",
+        "extra" -> "",
+        "activityClass" -> "android.app.Activity"
+      )
+      .settingsV(
+        manifestTemplate := metaRes.value / "unit" / manifestName,
+        manifestTokens += ("package" -> androidPackage.value),
+        aarModule := "unit",
+        packageForR := "tryp.droid.res",
+        typedResources := true,
+        javaOptions += "-Drobolectric.logging=stdout",
+        logbackOutput := outputLayout.value(projectLayout.value).classes /
+          "assets" / logbackName
+      )
+      .logback("tag" -> "tryp")
+      .map(_.disablePlugins(CoursierPlugin))
 
   lazy val unit = (tdp("unit") << unitCore << app << debug)
     .settingsV(logbackTemplate := metaRes.value / "unit" / "logback.xml")
@@ -104,6 +111,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
       manifestTemplate := metaRes.value / "trial" / manifestName,
       manifestTokens += ("package" -> androidPackage.value),
       packageForR := "tryp.droid.res",
+      typedResources := true,
       dexMaxHeap := "2048m"
     )
     .logback("tag" -> "tryp")

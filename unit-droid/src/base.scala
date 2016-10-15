@@ -16,22 +16,22 @@ with Matchers
   def before = ()
 }
 
-class StateUnitActivity
+class SpecStateActivity
 extends StateActivity
 {
   override protected def mainViewTimeout = 30 seconds
 
   override def onCreate(state: Bundle) {
-    super.onCreate(state)
     requestWindowFeature(Window.FEATURE_NO_TITLE)
+    super.onCreate(state)
   }
 }
 
 @Config(application = classOf[SpecStateApplication])
 abstract class StateAppSpec
-extends ActivitySpec[StateUnitActivity]
+extends ActivitySpec[SpecStateActivity]
 {
-  def activityClass = classOf[StateUnitActivity]
+  def activityClass = classOf[SpecStateActivity]
 
   def initialAgent: ActivityAgent
 

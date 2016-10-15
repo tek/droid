@@ -3,7 +3,7 @@
 
 // import scalaz._, Scalaz._, concurrent._
 
-// import state.core._
+// import state._
 // import state._
 
 // object AsyncTaskStateData

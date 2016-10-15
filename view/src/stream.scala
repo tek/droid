@@ -10,7 +10,7 @@ import async.mutable._
 import cats.{Applicative, Unapply, Functor}
 
 import core._
-import state.core._
+import state._
 
 case class StreamIO[A, C](io: IO[A, C])
 extends Logging
@@ -53,6 +53,10 @@ trait StreamIOInstances
       def flatMap[A, B](fa: StreamIO[A, C])(f: A => StreamIO[B, C]) = {
         StreamIO(IO(c => f(fa.run(c)).io(c)))
       }
+
+      def tailRecM[A, B](a: A)(f: A => StreamIO[Either[A, B], C])
+      : StreamIO[B, C] =
+        defaultTailRecM(a)(f)
     }
 
   implicit def instance_PerformIO_StreamIO =
@@ -104,6 +108,7 @@ case class ViewStream[A, C](view: Process[Task, IO[A, C]])
 
 trait ViewStreamInstances
 {
+  // TODO product and map are now implemented in Apply et al.
   implicit def instance_Applicative_ViewStream[C] =
     new Applicative[ViewStream[?, C]] {
       def pure[A](a: A) = ViewStream(emit(IO[A, C](c => a)))
@@ -112,7 +117,8 @@ trait ViewStreamInstances
       (fa: ViewStream[A, C]): ViewStream[B, C] =
         map(product(fa, ff)) { case (a, f) => f(a) }
 
-      def product[A, B](fa: ViewStream[A, C], fb: ViewStream[B, C]) = {
+      override def product[A, B](fa: ViewStream[A, C], fb: ViewStream[B, C]) =
+      {
         ViewStream {
           fa.view.zip(fb.view) map {
             case (ia, ib) => IO(c => (ia.run(c), ib.run(c)))
@@ -120,7 +126,8 @@ trait ViewStreamInstances
         }
       }
 
-      def map[A, B](fa: ViewStream[A, C])(f: A => B): ViewStream[B, C] = {
+      override def map[A, B](fa: ViewStream[A, C])(f: A => B)
+      : ViewStream[B, C] = {
         ViewStream(fa.view.map(_.map(f)))
       }
     }

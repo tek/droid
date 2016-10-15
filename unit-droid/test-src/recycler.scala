@@ -2,6 +2,9 @@ package tryp
 package droid
 package unit
 
+import tryp.state._
+import state._
+
 object RecyclerSpec
 {
   def items = List("first", "second")
@@ -18,7 +21,7 @@ object RecyclerSpec
         lazy val adapter = conS(implicit c => new StringRecyclerAdapter {})
 
         def admit: Admission = {
-          case AppState.ContentViewReady(_) => {
+          case state.AppState.ContentViewReady(_) => {
             case s =>
               s << adapter.v.map(_.updateItems(items).ui)
           }

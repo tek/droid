@@ -2,6 +2,8 @@ package tryp
 package droid
 package state
 
+import tryp.state._
+
 import scalaz._, Scalaz._, concurrent._, stream._, Process._
 import android.widget._
 
@@ -50,7 +52,7 @@ with ViewAgent { aa =>
       emit(PublishMessage(ActivityAgentStarted(aa)))
   }
 
-  override def machines = activityMachine %:: super.machines
+  override def machines = activityMachine :: super.machines
 
   def activityClass: Class[_ <: Activity] = classOf[StateActivity]
 

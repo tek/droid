@@ -5,7 +5,7 @@
 
 // import ScalazGlobals._
 
-// import state.core._
+// import state._
 
 // object NavMessages
 // {

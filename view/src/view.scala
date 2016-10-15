@@ -22,7 +22,7 @@ final class ViewOps[A <: View: ClassTag](v: A)
 
   def res = Resources.fromContext(context)
 
-  lazy val metaKey = res.R.id.view_metadata
+  lazy val metaKey = droid.res.R.id.view_metadata
 
   def meta: ViewMetadata = {
     v.getTag(metaKey) match {

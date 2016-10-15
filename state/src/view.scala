@@ -4,7 +4,6 @@ package state
 
 import view._
 import view.core._
-import state.core._
 
 import scalaz.stream.async
 
@@ -42,10 +41,11 @@ extends ViewMachine
 trait ViewAgent
 extends Agent
 with Views[Context, StreamIO]
+with Machine
 {
   def viewMachine: ViewMachine
 
-  override def machines = viewMachine %:: super.machines
+  override def machines = viewMachine :: super.machines
 
   import iota.std.TextCombinators.text
 
@@ -71,7 +71,7 @@ extends ViewAgent
 
   def title: String
 
-  def safeViewP: Process[Task, View] = {
+  def safeViewP: Process[ZTask, View] = {
     Process.eval(layout.unsafePerformIO)
       .sideEffect { v =>
         log.debug(s"setting view for $title:\n${v.viewTree.drawTree}")

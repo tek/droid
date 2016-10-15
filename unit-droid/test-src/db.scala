@@ -2,8 +2,9 @@ package tryp
 package droid
 package unit
 
-import slick._
+// import slick._
 import view.io
+// import state._
 
 @tryp.annotation.Slick
 object DbSpecSchema

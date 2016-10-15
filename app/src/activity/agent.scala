@@ -1,7 +1,7 @@
 package tryp
 package droid
 
-import state.core.{Create, Resume}
+import state.{Create, Resume}
 
 trait FreeActivityAgent
 extends Activity
@@ -22,7 +22,7 @@ with RootAgent
     send(Resume)
   }
 
-  override def machines = ioMachine %:: activityMachine %:: super.machines
+  override def machines = ioMachine :: activityMachine :: super.machines
 
   protected lazy val activityMachine = new Machine
   {
@@ -36,7 +36,7 @@ with RootAgent
     }
 
     val admit: Admission = {
-      case state.core.Toast(id) => toast(id)
+      case state.Toast(id) => toast(id)
     }
   }
 

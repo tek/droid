@@ -8,7 +8,7 @@
 // import view._
 // import view.core._
 // import state._
-// import state.core._
+// import state._
 
 // abstract class WithContext[F[_, _]: ConsIO]
 // extends Android[F]

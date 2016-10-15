@@ -2,6 +2,8 @@ package tryp
 package droid
 package state
 
+import tryp.state._
+
 import scalaz._, Scalaz._
 
 import shapeless.tag.@@
@@ -9,7 +11,6 @@ import shapeless.tag.@@
 import argonaut._, Argonaut._
 
 import droid.core.{Keys, IOActionTypes}
-import droid.state.core._
 
 abstract class ShowMachine[A <: Model: DecodeJson]
 extends Machine

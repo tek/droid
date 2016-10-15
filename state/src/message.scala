@@ -2,7 +2,9 @@ package tryp
 package droid
 package state
 
-import core._
+import tryp.slick._
+import tryp.state._
+
 import view.core._
 import view._
 import droid.core.Db
@@ -36,7 +38,7 @@ extends Message
 {
   def run: C => A
 
-  def task(c: C) = Task(run(c)).map(_.stateEffect)
+  def task(c: C) = ZTask(run(c)).map(_.stateEffect)
 }
 
 case class ContextFun[A: StateEffect](run: Context => A)
@@ -88,7 +90,7 @@ case class DbTask[A: Operation, E <: SlickEffect](action: SlickAction[A, E])
 extends Message
 {
   def task(dbi: DbInfo): Effect = {
-    Task(Await.result(dbi.db() run(action), Duration.Inf)).stateEffect
+    ZTask(Await.result(dbi.db() run(action), Duration.Inf)).stateEffect
   }
 
   def effect(dbi: Option[DbInfo]): Effect = {

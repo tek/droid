@@ -2,7 +2,7 @@ package tryp
 package droid
 package view
 
-import com.google.android.gms.auth.GoogleAuthUtil
+// import com.google.android.gms.auth.GoogleAuthUtil
 
 import simulacrum._
 
@@ -21,7 +21,8 @@ trait AuthInstances
         // GoogleAuthUtil.getToken(a, email, scope)
 
       def clearPlusToken(a: A)(token: String) =
-        GoogleAuthUtil.clearToken(a, token)
+        ???
+        // GoogleAuthUtil.clearToken(a, token)
     }
 }
 

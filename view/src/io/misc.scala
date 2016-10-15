@@ -23,8 +23,8 @@ with ToViewOps
       .map(v.setBackgroundColor)
   }
 
-  @context def meta[A <: View: ClassTag](data: ViewMetadata) =
-    _.storeMeta(data) !? "store view metadata"
+  def meta[A <: View: ClassTag](data: ViewMetadata) =
+    ksub((_: A).storeMeta(data))
 
   def metaName[A <: View: ClassTag](name: String) =
     meta[A](SimpleViewMetadata(name))
@@ -32,4 +32,6 @@ with ToViewOps
   def nopSub[A <: View] = super.nopKSub[A]
 
   def nop = super.nopK
+
+  def fitsSystemWindows = k(_.setFitsSystemWindows(true))
 }

@@ -2,7 +2,7 @@ package tryp
 package droid
 package state
 
-import state.core._
+import tryp.state._
 
 import org.specs2._, specification._, matcher._, concurrent._
 
@@ -53,7 +53,7 @@ with CachedPool
 
     lazy val state = new State1 {}
 
-    override def machines = state %:: super.machines
+    override def machines = state :: super.machines
   }
 
   def subAgent = {

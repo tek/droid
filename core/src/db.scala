@@ -4,8 +4,6 @@ package core
 
 import java.io.File
 
-import tryp.slick.{DbInfo, DroidDbInfo}
-
 object Db
 {
   implicit def fromContext(implicit c: Context): DbInfo = {

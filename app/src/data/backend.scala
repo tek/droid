@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 
 import concurrent.duration._
 
-import com.squareup.okhttp.{Request => OkRequest, _}
+import okhttp3.{Request => OkRequest, _}
 
 import scalaz.syntax.validation._
 import scalaz.syntax.foldable._
@@ -21,11 +21,11 @@ import SyncResult._
 
 object Backend
 {
-  lazy val client = (new OkHttpClient) tap { c =>
-      c.setConnectTimeout(10, TimeUnit.SECONDS)
-      c.setWriteTimeout(10, TimeUnit.SECONDS)
-      c.setReadTimeout(30, TimeUnit.SECONDS)
-  }
+  lazy val client = (new OkHttpClient.Builder)
+    .connectTimeout(10, TimeUnit.SECONDS)
+    .writeTimeout(10, TimeUnit.SECONDS)
+    .readTimeout(30, TimeUnit.SECONDS)
+    .build
 }
 
 class Backend(implicit prefs: Settings, res: Resources)
@@ -122,28 +122,28 @@ class Backend(implicit prefs: Settings, res: Resources)
   }
 }
 
-class BackendRestClient(implicit prefs: Settings, res: Resources)
-extends Backend
-with RestClient
-{
-  def jsonRequest(req: Request)
-  (method: OkRequest.Builder => RequestBody => OkRequest.Builder) = {
-    val body = RequestBody.create(mediaTypeJson, req.body getOrElse("{}"))
-    request(req)(r => method(r)(body))
-  }
+// class BackendRestClient(implicit prefs: Settings, res: Resources)
+// extends Backend
+// with RestClient
+// {
+//   def jsonRequest(req: Request)
+//   (method: OkRequest.Builder => RequestBody => OkRequest.Builder) = {
+//     val body = RequestBody.create(mediaTypeJson, req.body getOrElse("{}"))
+//     request(req)(r => method(r)(body))
+//   }
 
-  def post(req: Request) =
-    jsonRequest(req) { _.post _ }
+//   def post(req: Request) =
+//     jsonRequest(req) { _.post _ }
 
-  def put(req: Request) =
-    jsonRequest(req) { _.put _ }
+//   def put(req: Request) =
+//     jsonRequest(req) { _.put _ }
 
-  def get(req: Request) =
-    request(req)(identity)
+//   def get(req: Request) =
+//     request(req)(identity)
 
-  def delete(req: Request) =
-    jsonRequest(req) { _.delete _ }
-}
+//   def delete(req: Request) =
+//     jsonRequest(req) { _.delete _ }
+// }
 
 // trait BackendAccess
 // extends DbAccess

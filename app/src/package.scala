@@ -7,5 +7,6 @@ with FragmentManagement.ToFragmentManagementOps
 with ToIntentOps
 with AndroidExt
 
-@integrate(state, state.service)
+@integrate(state)
 object `package`
+

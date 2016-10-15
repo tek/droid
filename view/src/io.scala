@@ -8,21 +8,24 @@ import view.core._
 
 class IOX[A, C](run: C => A, desc: String)
 extends IO(run)
+{
+  override def toString = s"IO(desc)"
+}
 
 trait AnnotatedIO
 {
-  def con[A](f: Context => A): IO[A, Context] = 
+  def con[A](f: Context => A): IO[A, Context] =
     macro AnnotatedIOM.inst[A, Context]
-  def act[A](f: Activity => A): IO[A, Activity] = 
+  def act[A](f: Activity => A): IO[A, Activity] =
     macro AnnotatedIOM.inst[A, Activity]
-  def res[A](f: Resources => A): IO[A, Resources] = 
+  def res[A](f: Resources => A): IO[A, Resources] =
     macro AnnotatedIOM.inst[A, Resources]
 
-  def conS[A](f: Context => A): StreamIO[A, Context] = 
+  def conS[A](f: Context => A): StreamIO[A, Context] =
     macro AnnotatedIOM.instS[A, Context]
-  def actS[A](f: Activity => A): StreamIO[A, Activity] = 
+  def actS[A](f: Activity => A): StreamIO[A, Activity] =
     macro AnnotatedIOM.instS[A, Activity]
-  def resS[A](f: Resources => A): StreamIO[A, Resources] = 
+  def resS[A](f: Resources => A): StreamIO[A, Resources] =
     macro AnnotatedIOM.instS[A, Resources]
 }
 

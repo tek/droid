@@ -2,6 +2,8 @@ package tryp
 package droid
 package state
 
+import tryp.state._
+
 import android.view.ViewGroup.LayoutParams
 import android.widget._
 
@@ -9,7 +11,6 @@ import view._
 import view.core._
 import io.text._
 import io.misc._
-import state.core._
 
 class MainFrame(c: Context)
 extends FrameLayout(c)
@@ -47,6 +48,9 @@ object MainViewMessages
   // case class ContentLoaded(view: Ui[View])
   // extends Message
 
+  case object MainViewReady
+  extends Message
+
   case class SetMainView[A <: View](view: StreamIO[A, Context])
   extends Message
 
@@ -70,11 +74,11 @@ extends ViewMachine
 
   def loadUi(agent: ViewAgent): Transit = {
     case s =>
-      s << AgentStateData.AddSub(Nes(agent)).toAgent <<
+      s << AgentStateData.AddSub(Nel(agent)).toAgent <<
         SetMainView(agent.layout).toResult
   }
 
-  // def contentLoaded(view: Ui[View]): Transit = {
+  // def uiLoaded(view: Ui[View]): Transit = {
   //   case s =>
   //     s << ContextTask(ctx =>
   //         LogInfo(s"Loaded content view:\n${ctx.showViewTree(view.get)}")
@@ -114,6 +118,13 @@ extends ViewMachine
 trait MainViewAgent
 extends ActivityAgent
 {
+  import AppState._
+
   lazy val viewMachine = new MainViewMachine {
+  }
+
+  override def admit = super.admit orElse {
+    case ContentViewReady(ag) if ag == this =>
+      _ << MainViewReady.toLocal
   }
 }

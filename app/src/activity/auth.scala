@@ -5,9 +5,10 @@ import rx._
 import rx.ops._
 
 import com.google.android.gms.common.Scopes
-import com.google.android.gms.auth.UserRecoverableAuthException
+// import com.google.android.gms.auth.UserRecoverableAuthException
 
-import state.core._
+import tryp.state._
+import state._
 import ZS._
 import IOOperation._
 
@@ -75,8 +76,9 @@ extends Machine
 
   def auth(account: String, plusToken: String): Transit = {
     case S(Fetching, data) =>
-      S(Authing, data) << authorizePlusToken(account, plusToken) <<
-        clearPlusToken(plusToken)
+      S(Authing, data)
+      // S(Authing, data) << authorizePlusToken(account, plusToken) <<
+      //   clearPlusToken(plusToken)
   }
 
   def storeToken(token: String): Transit = {
@@ -92,7 +94,8 @@ extends Machine
 
   def requestPermission(intent: Intent): Transit = {
     case s @ S(Unauthed, data) =>
-      s << act(_.startActivityForResult(intent, Plus.RC_TOKEN_FETCH))
+      s
+      // s << act(_.startActivityForResult(intent, Plus.RC_TOKEN_FETCH))
   }
 
   // // FIXME blocking indefinitely if the connection failed
@@ -106,11 +109,11 @@ extends Machine
     Try(plusToken(email)) match {
       case util.Success(tkn) =>
         IOTask(tkn.map(AuthorizeToken(email, _).toResult)).internal.success
-      case util.Failure(t: UserRecoverableAuthException) =>
-        Nel(
-          FetchTokenFailed("insufficient permissions").toParcel,
-          RequestPermission(t.getIntent).toParcel
-        ).invalid[Parcel]
+      // case util.Failure(t: UserRecoverableAuthException) =>
+      //   Nel(
+      //     FetchTokenFailed("insufficient permissions").toParcel,
+      //     RequestPermission(t.getIntent).toParcel
+      //   ).invalid[Parcel]
       case util.Failure(t) =>
         Nel(
           LogFatal("requesting plus token", t).toParcel,
@@ -162,7 +165,7 @@ extends Agent
     // def backend = new Backend()(settings, res)
   }
 
-  override def machines = authMachine %:: super.machines
+  override def machines = authMachine :: super.machines
 
   // TODO in activity agent
   // publishLocalOne(ActivityResult(requestCode))
@@ -178,6 +181,6 @@ extends Agent
   // }
 
   def obtainToken() = {
-    publishLocalAll(Nes(Reset, Fetch))
+    publishLocalAll(Nel(Reset, Fetch))
   }
 }

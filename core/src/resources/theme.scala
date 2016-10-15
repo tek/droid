@@ -9,7 +9,7 @@ import android.graphics.drawable.Drawable
 
 import cats._
 import cats.data.{NonEmptyList, OneAnd, Validated, ValidatedNel}
-import cats.std.list._
+import cats.instances.list._
 import cats.syntax.traverse._
 
 class Theme(implicit internal: ThemeInternal)
@@ -75,7 +75,7 @@ class AndroidThemeInternal(implicit context: Context, res: ResourcesInternal)
 extends ThemeInternal
 {
   def styledAttrs(names: List[String]): Throwable Xor TypedArray = {
-    new cats.syntax.TraverseOps(names).traverseU(attrId)
+    cats.Traverse.ops.toAllTraverseOps(names).traverseU(attrId)
     .leftMap(a => new Throwable(a))
     .flatMap { attrIds =>
       Xor.catchNonFatal {

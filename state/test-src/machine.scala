@@ -2,9 +2,7 @@ package tryp
 package droid
 package state
 
-import state.core._
-
-import org.specs2._, specification._, matcher._, concurrent._
+import tryp.state._
 
 import scalaz._, Scalaz._, scalaz.concurrent._, stream.async
 
@@ -69,7 +67,6 @@ extends Machine
 
 trait MachineSpecBase
 extends Spec
-with tryp.Matchers
 {
   def is = s2"""
   reach state S4 $endState
