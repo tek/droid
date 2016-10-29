@@ -5,7 +5,7 @@ package state
 // FIXME exports Machine, clashing with tryp.state
 // need to change export to pick the subclass's
 @exportNames(StateApplication,
-  MainViewAgent, ActivityAgent, ViewAgent, Machine, ViewMachine,
+  MainViewAgent, ActivityAgent, ViewAgent, IOMachine, ViewMachine,
   IOTask, SimpleViewMachine)
 trait Exports
 extends view.Exports

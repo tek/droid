@@ -6,7 +6,6 @@ import core._
 import java.io.File
 
 import android.content.pm.ApplicationInfo
-import android.support.multidex.MultiDex
 
 import slick.DroidDbInfo
 
@@ -45,15 +44,4 @@ extends TrypApplication
     createTrypApp(name)
     super.onCreate()
   }
-}
-
-trait MultiDexApplication
-extends ApplicationI
-{
-  self: android.app.Application =>
-
-    abstract override def attachBaseContext(base: Context) {
-      super.attachBaseContext(base)
-      MultiDex.install(this)
-    }
 }

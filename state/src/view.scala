@@ -7,8 +7,6 @@ import view.core._
 
 import scalaz.stream.async
 
-import shapeless.tag.@@
-
 object ViewMachine
 {
   def apply(lay: StreamIO[_ <: View, Context]) =
@@ -20,7 +18,7 @@ object ViewMachine
 }
 
 trait ViewMachine
-extends Machine
+extends IOMachine
 with Views[Context, StreamIO]
 {
   import ViewMachine._
@@ -41,7 +39,7 @@ extends ViewMachine
 trait ViewAgent
 extends Agent
 with Views[Context, StreamIO]
-with Machine
+with IOMachine
 {
   def viewMachine: ViewMachine
 

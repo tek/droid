@@ -9,8 +9,8 @@ trait Exports
 extends droid.core.Exports
 {
   type CK[A] = Kestrel[A, Context, IO]
-  val IO = view.core.IO
-  val DescribedKestrel = view.core.DescribedKestrel
+  val IO = droid.view.core.IO
+  val DescribedKestrel = droid.view.core.DescribedKestrel
 }
 
 trait All

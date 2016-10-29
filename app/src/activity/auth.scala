@@ -39,7 +39,7 @@ import AuthStateData._
 
 @Publish(AuthorizeToken)
 abstract class AuthState
-extends Machine
+extends IOMachine
 {
   override def handle = "gplus"
 

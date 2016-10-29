@@ -2,12 +2,10 @@ package tryp
 package droid
 package state
 
-import android.support.v7.app.ActionBarActivity
-
 import core._
 
 class StateActivity
-extends ActionBarActivity
+extends Activity
 with Logging
 with StateStrategy
 {

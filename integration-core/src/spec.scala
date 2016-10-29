@@ -1,6 +1,6 @@
 package tryp
 package droid
-package test
+package integration
 
 import scala.reflect.classTag
 
@@ -13,24 +13,26 @@ import junit.framework.Assert._
 
 import com.robotium.solo._
 
-class TrypIntegrationSpec[A <: TrypActivity](cls: Class[A])
+class TrypIntegrationSpec[A <: Activity](cls: Class[A])
 extends ActivityInstrumentationTestCase2[A](cls)
-with Preferences
-with AppPreferences
-with BroadcastSend
-with HasActivity
-with TrypDroidSpec
+with HasSettings
+with TestHelpers
 {
+  // def frag[A <: Fragment: ClassTag](names: String*) =
+  //   activity.findNestedFrag[A](names)
+
   def view = null
   implicit def activity: A = getActivity
   def instr: Instrumentation = getInstrumentation
   lazy val solo: Solo = new Solo(instr, activity)
 
+  def settings = Settings.defaultSettings
+
   override def setUp() {
     super.setUp()
     pre()
-    prefs.clear()
-    appPrefs.clear()
+    settings.user.clear()
+    settings.app.clear()
     setActivityInitialTouchMode(false)
     solo
     post()
@@ -70,7 +72,7 @@ with TrypDroidSpec
     }
   }
 
-  implicit class ViewAssertions[A: droid.SearchView](target: A) {
+  implicit class ViewAssertions[A: droid.view.RootView](target: A) {
     def recycler = {
       target.viewOfType[RecyclerView] effect { r =>
         idleSync()

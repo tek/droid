@@ -17,7 +17,7 @@ import cats.instances.all._
 case class MachineTerminated(z: Machine)
 extends Message
 
-trait Machine
+trait IOMachine
 extends tryp.state.Machine
 with view.AnnotatedIO
 {

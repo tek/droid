@@ -9,7 +9,6 @@ extends Proguard
 {
   override lazy val cache = List(
     "akka",
-    "argonaut",
     "com",
     "ch.qos",
     "com.android.support",
@@ -37,18 +36,15 @@ extends Proguard
     "se.walkercrou",
     "shapeless",
     "slick",
+    "cats",
+    "dogs",
+    "alleycats",
+    "co.fs2",
+    "io.circe",
     ""
   )
 
   override lazy val options = List(
-    """-keepclassmembers,includedescriptorclasses class * extends tryp.loki.Application {
-      public void *(...);
-    }""",
-    "-keep,includedescriptorclasses class tryp.droid.AkkaAndroidLogger",
-    "-keep,includedescriptorclasses class tryp.droid.test.TrypIntegrationSpec",
-    // "-keepclassmembers,includedescriptorclasses class tryp.loki.** { *; }",
-    // "-keepclassmembers,includedescriptorclasses class loki.** { *; }",
-
     // play services stuff
     """-keep,includedescriptorclasses class * extends java.util.ListResourceBundle {
       protected java.lang.Object[][] getContents();
@@ -65,6 +61,7 @@ extends Proguard
     }""",
     "-dontnote com.google.android.gms.maps.internal.**",
     """-keep class com.google.android.gms.plus.PlusOneButton$OnPlusOneClickListener""",
+    "-keep class shapeless.** { *; }",
 
     "-keepattributes Signature",
     "-keepattributes InnerClasses",
@@ -85,25 +82,6 @@ extends Proguard
     "-dontwarn javax.**",
     "-dontwarn java.awt.**",
     "-dontwarn org.apache.**",
-
-    // akka
-    "-keep,includedescriptorclasses class akka.actor.LightArrayRevolverScheduler { *; }",
-    "-keep,includedescriptorclasses class akka.actor.LocalActorRefProvider { *; }",
-    "-keep,includedescriptorclasses class akka.actor.CreatorFunctionConsumer { *; }",
-    "-keep,includedescriptorclasses class akka.actor.TypedCreatorFunctionConsumer { *; }",
-    "-keep,includedescriptorclasses class akka.dispatch.BoundedDequeBasedMessageQueueSemantics { *; }",
-    "-keep,includedescriptorclasses class akka.dispatch.UnboundedMessageQueueSemantics { *; }",
-    "-keep,includedescriptorclasses class akka.dispatch.UnboundedDequeBasedMessageQueueSemantics { *; }",
-    "-keep,includedescriptorclasses class akka.dispatch.DequeBasedMessageQueueSemantics { *; }",
-    "-keep,includedescriptorclasses class akka.dispatch.UnboundedMailbox { *; }",
-    "-keep,includedescriptorclasses class akka.dispatch.MultipleConsumerSemantics { *; }",
-    "-keep,includedescriptorclasses class akka.actor.LocalActorRefProvider$Guardian { *; }",
-    "-keep,includedescriptorclasses class akka.actor.LocalActorRefProvider$SystemGuardian { *; }",
-    "-keep,includedescriptorclasses class akka.actor.DefaultSupervisorStrategy { *; }",
-    "-keep,includedescriptorclasses class akka.event.Logging$LogExt { *; }",
-    "-keep,includedescriptorclasses class akka.util.Timeout",
-    "-dontwarn sun.**",
-    "-dontnote sun.**",
 
     // misc warnings
     "-dontwarn java.nio.**",
@@ -165,14 +143,49 @@ extends Proguard
     "-dontnote android.net.http.*",
     "-dontnote com.robotium.solo.*",
 
+    "-keep class tryp.droid.**",
+    "-keep class tryp.droid.* { *; }",
+    "-keep class tryp.droid.** { *; }",
+    "-keep class dogs.** { *; }",
+    "-keep class dogs.* { *; }",
+    "-keep class cats.** { *; }",
+    "-keep class cats.* { *; }",
+    "-keep class alleycats.** { *; }",
+    "-keep class alleycats.* { *; }",
+    "-keep class scala.Function0",
+    "-keep class scala.Function1",
+    "-keep class scala.Function2",
+    "-keep class scala.Tuple1",
+    "-keep class scala.Tuple2",
+    "-keep class scala.**",
+    "-dontwarn org.scalacheck.**",
+    "-dontwarn ch.qos.**",
+    "-dontwarn org.codehaus.**",
+    "-dontwarn spray.**",
+    "-dontwarn akka.**",
+    "-dontwarn dogs.**",
+    "-dontwarn alleycats.**",
+    "-dontwarn okhttp3.**",
+    "-dontwarn com.google.android.gms.**",
+    "-dontwarn android.security.**",
+    "-dontwarn com.android.org.conscrypt.**",
+    "-dontwarn sun.**",
+    "-dontnote sun.**",
+    "-dontwarn org.slf4j.**",
+    "-dontwarn java.net.**",
+    "-dontnote **",
+
+    """-keepclasseswithmembers class * {
+      native <methods>;
+    }""",
+
     ""
   )
 
   override lazy val excludes = List(
     "LICENSE.txt",
     "META-INF/NOTICE.txt",
-    "META-INF/LICENSE.txt",
-    "ScalacticBundle.properties"
+    "META-INF/LICENSE.txt"
   )
 
   override lazy val merges = List(

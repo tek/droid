@@ -9,7 +9,7 @@ package view
 )
 trait Names
 {
-  val StreamIO = view.StreamIO
+  val StreamIO = droid.view.StreamIO
 }
 
 @export

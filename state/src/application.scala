@@ -107,10 +107,9 @@ extends Machine
   def ecTask(task: ECTask[_]): Transit = _ << task.effect(ec)
 }
 
-trait StateApplication
-extends ApplicationI
-with RootAgent { app: android.app.Application =>
-
+trait StateApplicationAgent
+extends RootAgent
+{ app =>
   override def handle = "state_app"
 
   lazy val appStateMachine = new AppStateMachine {
@@ -122,16 +121,12 @@ with RootAgent { app: android.app.Application =>
 
   override def machines = ioMachine :: appStateMachine :: super.machines
 
-  abstract override def onCreate() {
-    forkAgent()
-    super.onCreate()
-  }
-
-  def setActivity(act: Activity) = {
-    scheduleOne(SetActivity(act).toLocal)
-  }
-
   def initialAgent: Option[ActivityAgent] = None
 
   def dbInfo: Option[DbInfo] = None
+}
+
+trait StateApplication
+{
+  def setActivity(act: Activity)
 }

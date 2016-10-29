@@ -17,7 +17,7 @@ extends tryp.AndroidDeps
     "unit-core" -> unitCore,
     "unit-droid" -> unitDroid,
     "unit" -> unit,
-    "integration" -> integration,
+    "integration-core" -> integrationCore,
     "logback" -> logback,
     "macro-console" -> macroConsole
   )
@@ -42,12 +42,12 @@ extends tryp.AndroidDeps
 
   def view = ids(
     pulsar("state"),
-    aar("com.android.support" % "support-v4" % "23.+"),
-    aar("com.android.support" % "appcompat-v7" % "23.+"),
-    aar("com.android.support" % "palette-v7" % "23.+"),
-    aar("com.android.support" % "recyclerview-v7" % "23.+"),
-    aar("com.android.support" % "cardview-v7" % "23.+"),
-    aar("com.android.support" % "support-v13" % "23.+"),
+    aar("com.android.support" % "support-v4" % "22.+"),
+    aar("com.android.support" % "appcompat-v7" % "22.+"),
+    aar("com.android.support" % "palette-v7" % "22.+"),
+    aar("com.android.support" % "recyclerview-v7" % "22.+"),
+    aar("com.android.support" % "cardview-v7" % "22.+"),
+    aar("com.android.support" % "support-v13" % "22.+"),
     aar("com.google.android.gms" % "play-services-basement" % "9.6.1"),
     aar("com.google.android.gms" % "play-services-base" % "9.6.1")
   )
@@ -59,7 +59,7 @@ extends tryp.AndroidDeps
   )
 
   def app = ids(
-    "com.lihaoyi" %% "scalarx" % "0.3.1",
+    "com.lihaoyi" %% "scalarx" % "0.2.8",
     "com.github.andkulikov" % "transitions-everywhere" % "1.+",
     "com.melnykov" % "floatingactionbutton" % "1.+",
     "com.makeramen" % "roundedimageview" % "1.+",
@@ -74,11 +74,9 @@ extends tryp.AndroidDeps
   )
 
   def test = ids(
-    pulsar("slick")
   )
 
   def unitCore = ids(
-    pulsar("unit-slick"),
     "tryp" %% "speclectic" % "1.0.1"
   )
 
@@ -88,10 +86,9 @@ extends tryp.AndroidDeps
     "org.xerial" % "sqlite-jdbc" % "3.+" % "test"
   )
 
-  override def integration = super.integration ++ ids(
-    "org.scalatest" %% "scalatest" % "2.2.+",
+  def integrationCore = super.integration ++ ids(
     "junit" % "junit" % "4.12" % "provided",
-    "com.android.support.test" % "runner" % "1.+" exclude("junit", "junit"),
+    "com.android.support.test" % "runner" % "0.+" exclude("junit", "junit"),
     "com.android.support" % "multidex-instrumentation" % "1.+"
   )
 

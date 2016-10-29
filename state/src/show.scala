@@ -2,17 +2,16 @@ package tryp
 package droid
 package state
 
+import io.circe._
+import io.circe.parser._
+
 import tryp.state._
 
 import scalaz._, Scalaz._
 
-import shapeless.tag.@@
-
-import argonaut._, Argonaut._
-
 import droid.core.{Keys, IOActionTypes}
 
-abstract class ShowMachine[A <: Model: DecodeJson]
+abstract class ShowMachine[A <: Model: Decoder]
 extends Machine
 {
   case class Model(model: A)
@@ -30,7 +29,7 @@ extends Machine
       s"No valid $item passed to show impl for '$handle'"
     }
     args.get(Keys.model)
-      .flatMap(_.decodeOption[A])
+      .flatMap(decode[A](_).toOption)
       .toDbioSuccess
       .nelM(errmsg("model"))
       .orElse {

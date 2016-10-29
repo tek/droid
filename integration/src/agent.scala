@@ -1,6 +1,6 @@
 package tryp
 package droid
-package trial
+package integration
 
 import android.widget._
 import android.view.Gravity
@@ -19,7 +19,7 @@ import state.AppState.{ActivityAgentStarted, StartActivity, ContentViewReady}
 import IOOperation._
 
 
-class TMainViewAgent
+class IntMainViewAgent
 extends state.DrawerAgent
 {
   lazy val tMachine = new Machine {

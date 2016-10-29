@@ -12,12 +12,15 @@ import scalaz.syntax.foldable._
 
 import cats.data.Xor._
 
-import argonaut._, Argonaut._
-
 import _root_.slick.dbio.DBIO
+
+import io.circe.generic.auto._
+import io.circe.syntax._
 
 import slick.sync._
 import SyncResult._
+
+case class TokenAuthData(id: String, token: String)
 
 object Backend
 {
@@ -90,8 +93,8 @@ class Backend(implicit prefs: Settings, res: Resources)
   }
 
   def authorizePlusToken(account: String, plusToken: String) = {
-    val json = ("id" := account) ->: ("token" := plusToken) ->: jEmptyObject
-    val body = RequestBody.create(mediaTypeJson, json.spaces2)
+    val json = TokenAuthData(account, plusToken)
+    val body = RequestBody.create(mediaTypeJson, json.asJson.noSpaces)
     val request = (new OkRequest.Builder)
       .url(urlBuilder.addPathSegment("token").build)
       .post(body)

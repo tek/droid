@@ -4,6 +4,7 @@ import sbt._
 import sbt.Keys._
 
 import android.Keys._
+import android.protify.AndroidProtify
 
 import TrypAndroid.autoImport._
 import TrypBuildKeys._
@@ -14,22 +15,20 @@ import coursier.CoursierPlugin
 
 object DroidBuild
 extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
-with tryp.ToTransformIf
 {
-  override val platform = "android-23"
+  val sdkVersion = 22
+
+  override val platform = s"android-$sdkVersion"
 
   override def defaultBuilder = { name: String =>
     super.defaultBuilder(name)
       .map(_.disablePlugins(CoursierPlugin))
-      .manifest("minSdkVersion" -> "14")
+      .manifest("minSdkVersion" -> "21")
       .settingsV(
         fork := true,
         publishArtifact in (Compile, packageDoc) := false,
         manifestTemplate := metaRes.value / "aar" / manifestName,
-        typedResources := true,
         packageForR := "tryp.droid.res",
-        resolvers +=
-          Resolver.url(s"pulsar maven 2", url(s"${Tek.pulsarUri}/snapshots"))(Patterns(true, nexusPattern)),
         manifestTokens ++= Map(
           "package" -> androidPackage.value,
           "versionName" -> version.value,
@@ -40,7 +39,8 @@ with tryp.ToTransformIf
 
   lazy val core = "core" / "android basics"
 
-  lazy val viewCore = "view-core" / "context abstraction core" <<< core
+  lazy val viewCore =
+    "view-core" / "context abstraction core" <<< core
 
   lazy val view =
     "view" / "view IO streaming and iota wrappers" <<< viewCore
@@ -51,7 +51,7 @@ with tryp.ToTransformIf
     "service" / "machines providing services" <<< state <<< viewCore
 
   lazy val app =
-    "app".multidexDeps / "android commons" <<< service
+    "app".transitive / "android commons" <<< state
 
   lazy val logback = "logback" / "logback deps" <<< app
 
@@ -78,29 +78,52 @@ with tryp.ToTransformIf
         manifestTemplate := metaRes.value / "unit" / manifestName,
         manifestTokens += ("package" -> androidPackage.value),
         aarModule := "unit",
-        packageForR := "tryp.droid.res",
         typedResources := true,
         javaOptions += "-Drobolectric.logging=stdout",
         logbackOutput := outputLayout.value(projectLayout.value).classes /
           "assets" / logbackName
       )
       .logback("tag" -> "tryp")
-      .map(_.disablePlugins(CoursierPlugin))
 
   lazy val unit = (tdp("unit") << unitCore << app << debug)
     .settingsV(logbackTemplate := metaRes.value / "unit" / "logback.xml")
     .logback()
 
-  lazy val integration = "integration" <<< test
+  lazy val integrationCore = ("integration-core" <<< app)
+
+  lazy val integration = (apb("integration") <<< integrationCore)
+    .integration
+    .protify
+    .manifest(
+      "minSdk" -> "21",
+      "targetSdk" -> sdkVersion.toString,
+      "activityClass" -> "android.app.Activity",
+      "versionCode" -> "1",
+      "versionName" -> "1.0",
+      "appName" -> "tryp integration",
+      "appClass" -> "android.app.Application"
+    )
+    .settingsV(
+      aarModule := "integration",
+      manifestTemplate := metaRes.value / "integration" / manifestName,
+      manifestTokens += ("package" -> androidPackage.value),
+      dexMaxHeap := "4G",
+      dexMulti := true,
+      dexMinimizeMain := false,
+      packageForR := "tryp.droid.integration"
+    )
+    .logback("tag" -> "tryp")
+    .map(_.disablePlugins(CoursierPlugin))
+    .enablePlugins(AndroidProtify)
 
   lazy val trial = adp("trial")
-    .protify
+    // .protify
     .settingsV(apkbuildDebug ~= { a ⇒ a(true); a })
     .manifest(
       "appName" -> "tryp trial",
       "appClass" -> "tryp.droid.trial.TApplication",
-      "minSdk" -> "22",
-      "targetSdk" -> "22",
+      "minSdk" -> "21",
+      "targetSdk" -> "21",
       "activityClass" -> "tryp.droid.state.StateActivity",
       "versionCode" -> "1",
       "versionName" -> "1.0",
@@ -110,19 +133,18 @@ with tryp.ToTransformIf
       aarModule := "trial",
       manifestTemplate := metaRes.value / "trial" / manifestName,
       manifestTokens += ("package" -> androidPackage.value),
-      packageForR := "tryp.droid.res",
-      typedResources := true,
-      dexMaxHeap := "2048m"
+      dexMaxHeap := "4096m",
+      dexMulti := true,
+      dexMinimizeMain := false
     )
-    .logback("tag" -> "tryp")
-    .multidex(
-      "tryp/droid/trial/TApplication.class",
-      "tryp/droid/state/StateActivity.class"
-    ) <<< logback
+    .logback("tag" -> "tryp") <<< logback
 
+  lazy val all = mpb("all")
+    .aggregate(core.!, viewCore.!, view.!, state.!, service.!, app.!,
+      logback.!, debug.!, test.!)
 
   override def consoleImports = """
-  import cats._, data._, syntax.all._, std.all._
+  import cats._, data._, syntax.all._, instances.all._
   import scalaz.concurrent._
   import scalaz.stream._
   import Process._
