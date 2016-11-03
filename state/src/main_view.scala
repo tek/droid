@@ -36,19 +36,16 @@ object MainViewMessages
   case class LoadUi(agent: ViewAgent)
   extends Message
 
-  // case class LoadMUi(agent: Ui[View])
-  // extends Message
-
   case class LoadContent(view: View)
   extends Message
 
   case class LoadFragment(fragment: () => Fragment, tag: String)
   extends Message
 
-  // case class ContentLoaded(view: Ui[View])
-  // extends Message
-
   case object MainViewReady
+  extends Message
+
+  case object MainViewLoaded
   extends Message
 
   case class SetMainView[A <: View](view: StreamIO[A, Context])
@@ -61,14 +58,13 @@ import MainViewMessages._
 
 @Publish(LoadUi)
 trait MainViewMachine
-extends ViewMachine
+extends IOViewMachine
 {
   import AppState._
 
   def admit: Admission = {
     case LoadUi(ui) => loadUi(ui)
     case SetMainView(view) => setMainView(view)
-    // case ContentLoaded(view) => contentLoaded(view)
     case Back => back
   }
 
@@ -78,13 +74,6 @@ extends ViewMachine
         SetMainView(agent.layout).toResult
   }
 
-  // def uiLoaded(view: Ui[View]): Transit = {
-  //   case s =>
-  //     s << ContextTask(ctx =>
-  //         LogInfo(s"Loaded content view:\n${ctx.showViewTree(view.get)}")
-  //   )
-  // }
-
   import IOOperation.exports._
 
   /** `view` has to be executed before its signal can be used, so the effect
@@ -93,7 +82,14 @@ extends ViewMachine
    */
   def setMainView(view: StreamIO[_ <: View, Context]): Transit = {
     case s =>
-      s << view.map { v => content.v.map(_.setView(v)).main }
+      s << view
+        .map { v =>
+          content.v
+            .map(_.setView(v))
+            .map(_ => MainViewLoaded.publish)
+            .main
+        }
+        
   }
 
   def back: Transit = {

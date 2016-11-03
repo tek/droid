@@ -9,7 +9,7 @@ import view.core._
 class IOX[A, C](run: C => A, desc: String)
 extends IO(run)
 {
-  override def toString = s"IO(desc)"
+  override def toString = s"IO($desc)"
 }
 
 trait AnnotatedIO

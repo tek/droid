@@ -91,3 +91,12 @@ with TestHelpers
     }
   }
 }
+
+class StateSpec[A <: StateActivity](cls: Class[A])
+extends TrypIntegrationSpec[A](cls)
+{
+  def stateActivity = activity match {
+    case a: StateActivity => a
+    case _ => sys.error("activity is not a StateActivity")
+  }
+}

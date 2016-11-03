@@ -71,8 +71,8 @@ extends Message
   def effect: Effect
 }
 
-case class FromContextIO[F[_, _]: PerformIO, A: Operation, C: FromContext]
-(io: F[A, C])(implicit cv: Contravariant[F[A, ?]])
+case class FromContextIO[F[_, _]: PerformIO, A, C: FromContext]
+(io: F[A, C])(implicit cv: Contravariant[F[A, ?]], se: StateEffect[ZTask[A]])
 extends InternalIOMessage
 {
   def effect = {
@@ -96,13 +96,14 @@ extends Message
   def effect(dbi: Option[DbInfo]): Effect = {
     dbi.map(task) | {
       val io = IO((dbi: DbInfo) => task(dbi))
-      FromContextIO(io).effect
+      val fc = FromContextIO[IO, Effect, DbInfo](io)
+      fc.effect
     }
   }
 }
 
-case class IOTask[F[_, _]: PerformIO, A: Operation, C](io: F[A, C])
-(implicit cm: IOMessage[C])
+case class IOTask[F[_, _]: PerformIO, A, C](io: F[A, C])
+(implicit cm: IOMessage[C], se: StateEffect[ZTask[A]])
 extends Message
 {
   def effect = cm.pure(io.unsafePerformIO(_)).publish.stateEffect
@@ -110,9 +111,9 @@ extends Message
 
 // TODO maybe allow A to have an Operation and asynchronously enqueue the
 // results in Machine.asyncTask
-case class IOMainTask[F[_, _]: PerformIO, A: Operation, C]
-(io: F[A, C], timeout: Duration = Duration.Inf)
-(implicit cm: IOMessage[C])
+case class IOMainTask[F[_, _]: PerformIO, A, C]
+(io: F[A, C], timeout: Duration = 1.second)
+(implicit cm: IOMessage[C], se: StateEffect[ZTask[A]])
 extends Message
 {
   def effect = cm.pure(io.main(timeout)(_)).publish
@@ -169,9 +170,10 @@ object IOEffect
 
 // FIXME this should be handled by the same machine and thus not need
 // FlatMapEffect and publish
-case class ViewStreamTask[A: Operation, C: IOMessage](
+case class ViewStreamTask[A, C: IOMessage](
   stream: ViewStream[A, C], timeout: Duration = 30 seconds,
   main: Boolean = false)
+(implicit se: StateEffect[ZTask[A]])
 extends Message
 {
   private[this] val taskCtor: IO[A, C] => Message =
@@ -179,7 +181,7 @@ extends Message
 
   def effect: Effect = {
     val eff = stream.view.take(1).map(taskCtor(_).publish.success)
-    FlatMapEffect(eff, toString).internal.success.stateEffect
+    Effect(eff, "view stream")
   }
 
   override def toString = "ViewStreamTask"
@@ -197,6 +199,19 @@ object IOOperation
       }
 
       override def toString = "Operation[ViewStream]"
+    }
+
+  @export(Instantiated)
+  implicit def instance_StateEffect_ViewStream[A, C: IOMessage]
+  (implicit se: StateEffect[ZTask[A]])
+  :
+  StateEffect[ViewStream[A, C]] =
+    new StateEffect[ViewStream[A, C]] {
+      def stateEffect(v: ViewStream[A, C]) = {
+        ViewStreamTask(v).publish.stateEffect
+      }
+
+      override def toString = "StateEffect[ViewStream]"
     }
 
   @export(Instantiated)

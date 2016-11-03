@@ -8,7 +8,5 @@ class AppSpec
 extends TrypIntegrationSpec(classOf[IntStateActivity])
 {
   def testSomething() = {
-    Thread.sleep(5000)
-    p("--------------")
   }
 }

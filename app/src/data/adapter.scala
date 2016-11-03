@@ -1,10 +1,10 @@
 package tryp
 package droid
 
-import scala.collection.mutable.Buffer
-
 import android.widget.{BaseAdapter,Filterable,Filter}
 import android.view.ViewGroup.LayoutParams._
+
+import scalaz.stream._
 
 import view.core._
 
@@ -129,13 +129,13 @@ abstract class SimpleRecyclerAdapter[A <: RecyclerViewHolder, B: ClassTag]
 (implicit context: Context)
 extends RecyclerAdapter[A, B]
 {
-  var simpleItems = Buffer[B]()
+  var simpleItems = Vector[B]()
 
   def items = simpleItems
 
   def updateItems(newItems: Seq[B]) = {
     IO { (c: Context) =>
-      simpleItems = newItems.toBuffer
+      simpleItems = newItems.toVector
       // applyFilter
       updateVisibleData(simpleItems)
       notifyDataSetChanged()
@@ -150,8 +150,9 @@ trait StringRecyclerAdapter
 extends SimpleRecyclerAdapter[StringHolder, String]
 with Views[Context, StreamIO]
 {
-  import iota._
+  import iota.effect._
   import view.io.frame._
+  import view.io.text._
 
   def onCreateViewHolder(parent: ViewGroup, viewType: Int) = {
     val tv = w[TextView]
@@ -167,9 +168,12 @@ with Views[Context, StreamIO]
   }
 
   def onBindViewHolder(holder: StringHolder, position: Int) {
-    // items(position) foreach { s =>
-    //   val io = holder.content >>= text[TextView](s)
-    //   io.unsafePerformMain()
-    // }
+    items.lift(position) foreach { s =>
+      val io = holder.content >>- text(s)
+      io.view
+        .flatMap(a => Process.eval(a.main()))
+        .run
+        .infraRun("bind view holder")
+    }
   }
 }

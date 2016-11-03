@@ -30,6 +30,12 @@ object AppState
   case class ActivityAgentStarted(agent: ActivityAgent)
   extends Message
 
+  case object CreateContentView
+  extends Message
+
+  case class SetContentView(view: View)
+  extends Message
+
   case class ContentViewReady(agent: ActivityAgent)
   extends Message
 
@@ -43,6 +49,7 @@ import AppState._
 
 trait AppStateMachine
 extends Machine
+with view.AnnotatedIO
 {
   override def handle = "app_state"
 
@@ -55,6 +62,7 @@ extends Machine
     case SetActivity(a) => setActivity(a)
     case SetAgent(a) => setAgent(a)
     case ActivityAgentStarted(agent) => activityStarted(agent)
+    case SetContentView(view) => setContentView(view)
     case f @ ContextFun(_) => contextFun(f)
     case f @ ActivityFun(_) => activityFun(f)
     case t @ DbTask(_) => dbTask(t)
@@ -63,7 +71,7 @@ extends Machine
 
   def startActivity(agent: ActivityAgent): Transit = {
     case s @ S(Ready, ASData(_, _)) =>
-      s << ContextFun(_.startActivityCls(agent.activityClass)) <<
+      s << con(_.startActivityCls(agent.activityClass)) <<
         SetAgent(agent)
   }
 
@@ -89,17 +97,22 @@ extends Machine
 
   def activityStarted(agent: ActivityAgent): Transit = {
     case s @ S(Ready, ASData(Some(act), Some(ag))) if agent == ag =>
-      s << ag.setContentView.map(_.map(_ => ContentViewReady(ag).toSub).ui)
+      s << CreateContentView.toSub
   }
 
-  def contextFun(task: ContextFun[_]): Transit = {
-    case s @ S(Ready, ASData(Some(act), _)) =>
-      s << task.task(act)
+  def setContentView(view: View): Transit = {
+    case s @ S(Ready, ASData(Some(_), Some(ag))) =>
+      s << act(_.setContentView(view)).map(_ => ContentViewReady(ag).toSub).ui
   }
 
-  def activityFun(task: ActivityFun[_]): Transit = {
+  def contextFun(fun: ContextFun[_]): Transit = {
     case s @ S(Ready, ASData(Some(act), _)) =>
-      s << task.task(act)
+      s << fun.task(act)
+  }
+
+  def activityFun(fun: ActivityFun[_]): Transit = {
+    case s @ S(Ready, ASData(Some(act), _)) =>
+      s << fun.task(act)
   }
 
   def dbTask(task: DbTask[_, _]): Transit = _ << task.effect(dbInfo)

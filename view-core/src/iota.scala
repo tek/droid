@@ -12,11 +12,11 @@ import scalaz.Liskov.<~<
 
 import simulacrum._
 
-import iota._
+import iota.effect._
 
 trait IotaOrphans
 {
-  import iota.IO
+  import iota.effect.IO
 
   implicit val ioInstance = new Bimonad[IO] {
     def pure[A](x: A): IO[A] = IO(x)
@@ -115,7 +115,7 @@ trait IotaOrphans
 //   @anno(IotaAnnWrapFold) class ckwf()
 // }
 
-final class IotaKestrelOps[A](fa: iota.Kestrel[A])
+final class IotaKestrelOps[A](fa: iota.effect.Kestrel[A])
 {
   def strip[C]: A => C => A = {
     a => c => fa(a).perform()
@@ -147,7 +147,7 @@ final class IotaKestrelOps[A](fa: iota.Kestrel[A])
 
 trait ToIotaKestrelOps
 {
-  implicit def ToIotaKestrelOps[A](fa: iota.Kestrel[A]) = 
+  implicit def ToIotaKestrelOps[A](fa: iota.effect.Kestrel[A]) = 
     new IotaKestrelOps(fa)
 }
 

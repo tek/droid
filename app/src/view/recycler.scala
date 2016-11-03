@@ -1,12 +1,17 @@
 package tryp
 package droid
 
-trait RecyclerViewMachineData
+object RecyclerViewMachineData
 {
+  trait RecyclerData[A <: RecyclerViewAdapter[_]]
+  extends Data
+  {
+    def adapter: A
+  }
 }
 
 trait RecyclerViewMachine[A <: RecyclerViewAdapter[_]]
-extends ViewMachine
+extends state.IOViewMachine
 {
   import view.io.recycler._
 

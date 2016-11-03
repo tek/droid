@@ -1,7 +1,7 @@
 package tryp
 package droid
 
-import android.support.v7.app.ActionBarActivity
+// import android.support.v7.app.ActionBarActivity
 import android.widget._
 
 import scalaz._, Scalaz._, concurrent._, stream._

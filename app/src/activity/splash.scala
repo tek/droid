@@ -5,7 +5,7 @@
 
 // import shapeless._
 
-// import iota._, iota.std.TextCombinators._
+// import iota.effect._, iota.std.TextCombinators._
 
 // import view._
 // import state._

@@ -8,7 +8,7 @@ import android.view.ViewGroup.LayoutParams._
 
 import shapeless._
 
-import iota._
+import iota.effect._
 
 import scalaz.stream.Process._
 
@@ -48,7 +48,7 @@ extends ViewAgent
         lpK(WRAP_CONTENT, WRAP_CONTENT) { p: LinearLayout.LayoutParams =>
           p.gravity = Gravity.CENTER
         } >>= hook.onClick { (v: View) =>
-          iota.IO {
+          iota.effect.IO {
             broadcast(StartActivity(new TAgent1))
           }
         },
@@ -56,7 +56,7 @@ extends ViewAgent
         lpK(WRAP_CONTENT, WRAP_CONTENT) { p: LinearLayout.LayoutParams =>
           p.gravity = Gravity.CENTER
         } >>= hook.onClick { (v: View) =>
-          iota.IO {
+          iota.effect.IO {
             broadcast(LoadUi(new ViewAgent2))
           }
         }
@@ -82,7 +82,7 @@ extends ViewAgent
         lpK(WRAP_CONTENT, WRAP_CONTENT) { p: LinearLayout.LayoutParams =>
           p.gravity = Gravity.CENTER
         } >>= hook.onClick { (v: View) =>
-          iota.IO {
+          iota.effect.IO {
             broadcast(StartActivity(new TAgent1))
           }
         },
@@ -90,7 +90,7 @@ extends ViewAgent
         lpK(WRAP_CONTENT, WRAP_CONTENT) { p: LinearLayout.LayoutParams =>
           p.gravity = Gravity.CENTER
         } >>= hook.onClick { (v: View) =>
-          iota.IO {
+          iota.effect.IO {
             broadcast(LoadUi(new ViewAgent1))
           }
         }
@@ -106,7 +106,7 @@ extends ActivityAgent
 
     lazy val but = w[Button] >>- large >>- text("agent 2") >>=
       hook.onClick { (v: View) =>
-        iota.IO {
+        iota.effect.IO {
           broadcast(StartActivity(new TAgent2))
         }
       }
@@ -125,7 +125,7 @@ extends ActivityAgent
 
     lazy val but = w[Button] >>- large >>- text("agent 1") >>=
       hook.onClick { (v: View) =>
-        iota.IO {
+        iota.effect.IO {
           broadcast(StartActivity(new TAgent1))
         }
       }

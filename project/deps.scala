@@ -37,7 +37,7 @@ extends tryp.AndroidDeps
   )
 
   def viewCore = ids(
-    "com.hanhuy.android" %% "iota" % "1.+"
+    "com.hanhuy.android" %% "iota" % "2.0.0-SNAPSHOT"
   )
 
   def view = ids(

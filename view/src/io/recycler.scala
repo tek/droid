@@ -24,7 +24,7 @@ extends Combinators[RecyclerView]
   @contextwrapfold def rvPad = {
     res.d("header_height", None)
       .map(_.toInt)
-      .map(h => iota.padding[View](top = h.toInt).ck)
+      .map(h => iota.effect.padding[View](top = h.toInt).ck)
   }
 
   @context def layoutManager(m: RecyclerView.LayoutManager) =

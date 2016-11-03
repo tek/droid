@@ -3,7 +3,7 @@ package droid
 
 import android.graphics.{Canvas, Rect}
 
-import iota._
+import iota.effect._
 
 class ParallaxHeader(c: Context)
 extends RelativeLayout(c)

@@ -7,6 +7,8 @@ import view.core._
 
 import scalaz.stream.async
 
+import IOOperation._
+
 object ViewMachine
 {
   def apply(lay: StreamIO[_ <: View, Context]) =
@@ -23,7 +25,7 @@ with Views[Context, StreamIO]
 {
   import ViewMachine._
 
-  val Aid = iota.Id
+  val Aid = iota.effect.Id
 
   override def machinePrefix = super.machinePrefix :+ "view"
 
@@ -36,16 +38,31 @@ extends ViewMachine
   def admit: Admission = PartialFunction.empty
 }
 
+trait IOViewMachine
+extends ViewMachine
+{
+  import AppState._
+
+  override def extraAdmit = super.extraAdmit orElse {
+    case CreateContentView => {
+      case s =>
+        s << layout.map(SetContentView(_))
+    }
+  }
+}
+
 trait ViewAgent
 extends Agent
 with Views[Context, StreamIO]
 with IOMachine
 {
+  import AppState._
+
   def viewMachine: ViewMachine
 
   override def machines = viewMachine :: super.machines
 
-  import iota.std.TextCombinators.text
+  import iota.module.TextCombinators.text
 
   def dummyLayout: StreamIO[View, Context] =
     (w[TextView] >>= text("Couldn't load content")) map(a => a: View)
@@ -53,6 +70,11 @@ with IOMachine
   lazy val layout = viewMachine.layout
 
   def setContentView = layout.map(v => act(_.setContentView(v)))
+}
+
+trait IOViewAgent
+extends ViewAgent
+{
 }
 
 object ViewAgent

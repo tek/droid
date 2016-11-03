@@ -30,7 +30,7 @@ extends ViewMachine
 
   lazy val layout = l[DrawerLayout](
       contentLayout,
-      w[FrameLayout] >>- iota.id[FrameLayout](iota.Id.drawer)
+      w[FrameLayout] >>- iota.effect.id[FrameLayout](iota.module.Id.drawer)
     )
 
   def drawer = layout
@@ -42,7 +42,8 @@ extends ViewMachine
 
   def setupToggle: Transit = {
     case s @ S(_, NoData) =>
-      s << createDrawerToggle
+      s
+      // s << createDrawerToggle
   }
 
   def storeToggle(toggle: ActionBarDrawerToggle): Transit = {
@@ -53,9 +54,6 @@ extends ViewMachine
   def createDrawerToggle = {
     drawer.v.map2(toolbar.v) { (d, t) =>
         act { act =>
-          hl
-          hl
-          hl
           val res = Resources.fromContext(act)
           (res.stringId("drawer_open") |@| res.stringId("drawer_close"))
             .map((o, c) => new ActionBarDrawerToggle(act, d, t, o, c))

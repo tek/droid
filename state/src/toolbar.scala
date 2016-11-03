@@ -4,7 +4,7 @@ package state
 
 import IOOperation.exports._
 
-import android.support.v7.app.ActionBarActivity
+// import android.support.v7.app.ActionBarActivity
 import android.view.Gravity
 
 object ToolbarMachineData
@@ -25,7 +25,9 @@ extends ViewMachine
 
   lazy val toolbar =
     l[Toolbar](
-      w[FrameLayout] >>= iota.id[FrameLayout](iota.Id.toolbar)) >>- bgCol("toolbar")// >>-
+      w[FrameLayout] >>=
+        iota.effect.id[FrameLayout](iota.effect.Id.toolbar)) >>-
+        bgCol("toolbar")// >>-
       // titleColor("toolbar_text") >>-
       // toolbarLp(↔, Height.wrap, Gravity.RIGHT)
 
@@ -35,7 +37,7 @@ extends ViewMachine
       // LL(vertical, llp(↔, ↕))(
       l[LinearLayout](
         toolbar,
-        belowToolbarLayout >>= iota.lp(MATCH_PARENT, MATCH_PARENT)
+        belowToolbarLayout >>= iota.effect.lp(MATCH_PARENT, MATCH_PARENT)
       )
     ) >>- fitsSystemWindows
   }
@@ -43,8 +45,13 @@ extends ViewMachine
   override def machinePrefix = super.machinePrefix :+ "toolbar"
 
   def admit: Admission = {
-    case AppState.ContentViewReady(_) =>
-      _ << toolbar.v
-        .map(t => actAs[ActionBarActivity, Unit](_.setSupportActionBar(t)))
+    case AppState.ContentViewReady(_) => {
+      case s => s
+    }
+    //   val e = toolbar.v
+    //     .map(t => actAs[ActionBarActivity, Unit](_.setSupportActionBar(t)))
+    //   _ << IOOperation
+    //     .instance_StateEffect_ViewStream[IO[Effect, Activity], Context]
+    //     .stateEffect(e)
   }
 }

@@ -7,7 +7,7 @@ import android.util.TypedValue
 import android.widget._
 import android.text.{TextWatcher,TextUtils,Editable}
 
-import iota.std.{TextCombinators => IText}
+import iota.module.{TextCombinators => IText}
 
 import core._
 

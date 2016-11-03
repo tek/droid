@@ -124,7 +124,7 @@ extends Kestrel[A, C, F]
   (implicit lis: A <~< B): F[A]
 
   @op(">=", alias = true)
-  def chainIota[A, B, G[_]](fa: F[A])(gb: iota.Kestrel[B])
+  def chainIota[A, B, G[_]](fa: F[A])(gb: iota.effect.Kestrel[B])
   (implicit lis: A <~< B): F[A]
 }
 
@@ -149,7 +149,7 @@ extends ToIotaKestrelOps
         }
       }
 
-      def chainIota[A, B, G[_]](fa: KS[A])(gb: iota.Kestrel[B])
+      def chainIota[A, B, G[_]](fa: KS[A])(gb: iota.effect.Kestrel[B])
       (implicit lis: A <~< B): KS[A] = {
         chain(fa)(gb.liftAs[A, C, F])
       }
@@ -157,17 +157,17 @@ extends ToIotaKestrelOps
   }
 
   implicit lazy val instance_ChainKestrel_iotaKestrel =
-    new ChainKestrel[iota.Kestrel] {
-      def chain[A, B, G[_]](fa: iota.Kestrel[A])(fb: iota.Kestrel[B])
-      (implicit lis: A <~< B): iota.Kestrel[A] = {
+    new ChainKestrel[iota.effect.Kestrel] {
+      def chain[A, B, G[_]](fa: iota.effect.Kestrel[A])(fb: iota.effect.Kestrel[B])
+      (implicit lis: A <~< B): iota.effect.Kestrel[A] = {
         a => {
           fb(lis(fa(a).perform())).perform()
-          iota.IO(a)
+          iota.effect.IO(a)
         }
       }
 
-      def chainIota[A, B, G[_]](fa: iota.Kestrel[A])(gb: iota.Kestrel[B])
-      (implicit lis: A <~< B): iota.Kestrel[A] = {
+      def chainIota[A, B, G[_]](fa: iota.effect.Kestrel[A])(gb: iota.effect.Kestrel[B])
+      (implicit lis: A <~< B): iota.effect.Kestrel[A] = {
         chain(fa)(gb)
       }
     }
@@ -274,7 +274,7 @@ extends ToIotaKestrelOps
     def >-[B >: A, G[_, _]: ConsIO](ka: Kestrel[B, C, G]): F[A, C] =
       applyKestrel[B, G](ka)
 
-    def >>=[B >: A](ka: iota.Kestrel[B]): F[A, C] =
+    def >>=[B >: A](ka: iota.effect.Kestrel[B]): F[A, C] =
       applyKestrel(ka.liftAs[A, C, IO])
   }
 
@@ -414,7 +414,7 @@ extends Poly1
 }
 
 case class LayoutBuilder[A, C, F[_, _]: ConsIO]
-(layout: C => List[iota.IO[View]] => A)
+(layout: C => List[iota.effect.IO[View]] => A)
 {
   def apply[In <: HList, Out <: HList](vs: In)
   (implicit
@@ -426,7 +426,7 @@ case class LayoutBuilder[A, C, F[_, _]: ConsIO]
           .map(consChildren)
           .toList
           .map(_(ctx))
-          .map(iota.IO(_))
+          .map(iota.effect.IO(_))
         layout(ctx)(children)
       }
       ConsIO[F].pure(f)
@@ -438,9 +438,11 @@ trait Views[C, F[_, _]]
   def w[A]: F[A, C] = macro ViewM.w[A, C, F]
 
   def l[A](inner: Any*): F[A, C] = macro ViewM.l[A, C, F]
+
+  def inf[A]: F[A, C] = macro ViewM.inf[A, C, F]
 }
 
-class ViewM(val c: blackbox.Context)
+class ViewM(val c: whitebox.Context)
 extends AndroidMacros
 {
   import c.universe._
@@ -472,11 +474,28 @@ extends AndroidMacros
     val builder = symbolOf[LayoutBuilder[A, C, F]].companion
     Expr[F[A, C]] {
       q"""
-      iota.c[$aType] {
+      iota.effect.c[$aType] {
         val b = $builder[$aType, $cType, $fSym](
-          ctx => sub => iota.l[$aType](sub: _*)(ctx).perform())
+          ctx => sub => iota.effect.l[$aType](sub: _*)(ctx).perform())
         b($sub)
       }
+      """
+    }
+  }
+
+  def inf[A: WeakTypeTag, C: WeakTypeTag, F[_, _]]
+  (implicit wtf: WeakTypeTag[F[_, _]])
+  : Expr[F[A, C]] = {
+    val aType = weakTypeOf[A]
+    val vtree = aType.typeSymbol.companion
+    val cType = weakTypeOf[C]
+    val vg = typeOf[ViewGroup]
+    val TypeRef(_, fSym, _) = wtf.tpe
+    val cons = symbolOf[ConsIO[F]].companion
+    Expr[F[A, C]] {
+      q"""
+      $cons[$fSym].pure[$aType, $cType]((ctx: $cType) =>
+          ViewTree.inflate(ctx, $vtree))
       """
     }
   }

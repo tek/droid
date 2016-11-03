@@ -36,7 +36,7 @@ import AppState.{StartActivity, ActivityAgentStarted}
 
 @Publish(StartActivity)
 trait ActivityAgentBase
-extends RootAgent
+extends Agent
 
 trait ActivityAgent
 extends ActivityAgentBase

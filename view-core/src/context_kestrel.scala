@@ -8,7 +8,7 @@ import reflect.macros.blackbox
 import cats._
 import cats.syntax.foldable._
 
-import iota._
+import iota.effect._
 
 trait CKAnnBase
 extends SimpleMethodAnnotation
@@ -120,7 +120,7 @@ object annotation
   @anno(CKAnnResources) class resources()
 }
 
-final class CKIotaKestrelOps[A, F[_, _]: ConsIO](fa: iota.Kestrel[A])
+final class CKIotaKestrelOps[A, F[_, _]: ConsIO](fa: iota.effect.Kestrel[A])
 extends ToIotaKestrelOps
 {
   def ck = fa.liftAs[A, Context, F]
@@ -128,7 +128,7 @@ extends ToIotaKestrelOps
 
 trait ToCKIotaKestrelOps
 {
-  protected implicit def ToCKIotaKestrelOps[A](fa: iota.Kestrel[A]) =
+  protected implicit def ToCKIotaKestrelOps[A](fa: iota.effect.Kestrel[A]) =
     new CKIotaKestrelOps[A, IO](fa)
 }
 
@@ -148,7 +148,7 @@ with cats.instances.FunctionInstances
 {
   protected type Principal = P
 
-  protected implicit def IotaKestrelToCK[A >: Principal](fa: iota.Kestrel[A]) =
+  protected implicit def IotaKestrelToCK[A >: Principal](fa: iota.effect.Kestrel[A]) =
     fa.ck
 
   protected def kkpsub[A <: P, B](f: Principal => B): CK[A] =

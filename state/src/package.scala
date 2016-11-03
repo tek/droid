@@ -6,7 +6,7 @@ package state
 // need to change export to pick the subclass's
 @exportNames(StateApplication,
   MainViewAgent, ActivityAgent, ViewAgent, IOMachine, ViewMachine,
-  IOTask, SimpleViewMachine)
+  IOTask, SimpleViewMachine, StateActivity)
 trait Exports
 extends view.Exports
 {
@@ -26,5 +26,5 @@ with IOEffect.ToIOEffectOps
 object `package`
 extends All
 {
-  def Nop: Effect = Process.halt
+  def Nop: Effect = tryp.state.Effect(Process.halt, "nop")
 }
