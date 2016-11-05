@@ -36,9 +36,9 @@ import scalaz._, Scalaz._, concurrent._, stream._
 //   self: HasContextAgent =>
 // }
 
-trait ViewActivity
+trait ViewActivity[A <: ViewGroup]
 extends FreeActivityAgent
-with state.FreeViewAgent
+with state.FreeViewAgent[A]
 // with Themes
 // with Preferences
 {

@@ -17,7 +17,7 @@ object DrawerMachineData
 }
 
 trait DrawerMachine
-extends ViewMachine
+extends ViewMachine[DrawerLayout]
 {
   import ViewMachine._
   import DrawerMachineData._
@@ -82,26 +82,26 @@ extends ViewMachine
 
 trait DrawerAgent
 extends ActivityAgent
-{
+with MainViewAgent { ag =>
   lazy val drawerMachine =
     new DrawerMachine {
       override def handle = "spec"
 
-      def contentLayout = mainViewMachine.layout
+      def contentLayout = ag.viewMachine.layout
 
       def toolbar = toolbarMachine.toolbar
 
       def admit: Admission = PartialFunction.empty
     }
 
-  lazy val mainViewMachine = new MainViewMachine {}
+//   lazy val mainViewMachine = new MainViewMachine {}
 
   lazy val toolbarMachine: ToolbarMachine = new ToolbarMachine {
     def belowToolbarLayout = drawerMachine.layout
   }
 
-  def viewMachine = toolbarMachine
+  // def viewMachine = toolbarMachine
 
-  override def machines =
-    mainViewMachine :: drawerMachine :: super.machines
+  // override def machines =
+  //   mainViewMachine :: drawerMachine :: super.machines
 }

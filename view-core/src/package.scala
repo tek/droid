@@ -3,7 +3,7 @@ package droid
 package view
 package core
 
-@exportNames(IO, Kestrel, Views, Combinators, ViewCombinators,
+@exportNames(IO, IOI, Kestrel, Views, Combinators, ViewCombinators,
   DescribedKestrel, PerformIO)
 trait Exports
 extends droid.core.Exports

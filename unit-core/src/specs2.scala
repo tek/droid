@@ -19,5 +19,5 @@ with BoundedCachedPool
 
   def activityClass: Class[A]
 
-  def p[A](o: A) = pr(o)
+  def p[A](o: A) = pr (o)
 }

@@ -30,7 +30,8 @@ trait StateEffectInstances
   : StateEffect[F[A, C]] =
     new StateEffect[F[A, C]] {
       def stateEffect(v: F[A, C]) = {
-        tryp.state.Effect(Process.emit(IOTask(v).publish.success), "IO")
+        tryp.state.Effect(Process.emit(IOTask(v, v.toString).publish.success),
+          "IO")
       }
 
       override def toString = "StateEffect[ViewStream]"

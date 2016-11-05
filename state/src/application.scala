@@ -8,6 +8,8 @@ import scalaz.stream._
 import Process._
 import AgentStateData._
 
+import iota.ViewTree
+
 import droid.core._
 import view.core._
 import view._
@@ -33,7 +35,11 @@ object AppState
   case object CreateContentView
   extends Message
 
-  case class SetContentView(view: View)
+  case class SetContentView(view: View, sender: Option[Machine])
+  extends Message
+
+  case class SetContentTree(tree: ViewTree[_ <: ViewGroup],
+    sender: Option[Machine])
   extends Message
 
   case class ContentViewReady(agent: ActivityAgent)
@@ -62,9 +68,9 @@ with view.AnnotatedIO
     case SetActivity(a) => setActivity(a)
     case SetAgent(a) => setAgent(a)
     case ActivityAgentStarted(agent) => activityStarted(agent)
-    case SetContentView(view) => setContentView(view)
-    case f @ ContextFun(_) => contextFun(f)
-    case f @ ActivityFun(_) => activityFun(f)
+    case SetContentView(view, sender) => setContentView(view)
+    case f @ ContextFun(_, _) => contextFun(f)
+    case f @ ActivityFun(_, _) => activityFun(f)
     case t @ DbTask(_) => dbTask(t)
     case t @ ECTask(_) => ecTask(t)
   }
@@ -77,9 +83,9 @@ with view.AnnotatedIO
 
   def setAgent(agent: ActivityAgent): Transit = {
     case S(Ready, ASData(act, None)) =>
-      S(Ready, ASData(act, agent.some)) << AddSub(Nel(agent)).toAgent
+      S(Ready, ASData(act, agent.some)) << AddSub(Nel(agent)).toAgentMachine
     case S(Ready, ASData(act, Some(old))) =>
-      S(Ready, ASData(act, agent.some)) << AddSub(Nel(agent)).toAgent <<
+      S(Ready, ASData(act, agent.some)) << AddSub(Nel(agent)).toAgentMachine <<
         StopSub(Nel(old))
   }
 
@@ -97,7 +103,7 @@ with view.AnnotatedIO
 
   def activityStarted(agent: ActivityAgent): Transit = {
     case s @ S(Ready, ASData(Some(act), Some(ag))) if agent == ag =>
-      s << CreateContentView.toSub
+      s << CreateContentView.to(agent)
   }
 
   def setContentView(view: View): Transit = {
@@ -137,6 +143,10 @@ extends RootAgent
   def initialAgent: Option[ActivityAgent] = None
 
   def dbInfo: Option[DbInfo] = None
+
+  override def extraAdmit = super.extraAdmit orElse {
+    case a @ SetContentView(_, _) => _ << appStateMachine.sendP(a)
+  }
 }
 
 trait StateApplication

@@ -108,7 +108,8 @@ extends IOMachine
   def tokenFromEmail(email: String): Result = {
     Try(plusToken(email)) match {
       case util.Success(tkn) =>
-        IOTask(tkn.map(AuthorizeToken(email, _).toResult)).internal.success
+        val next = tkn.map(AuthorizeToken(email, _).toResult)
+        IOTask(next, next.toString).internal.success
       // case util.Failure(t: UserRecoverableAuthException) =>
       //   Nel(
       //     FetchTokenFailed("insufficient permissions").toParcel,

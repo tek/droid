@@ -104,6 +104,8 @@ extends StreamIOViews
 case class ViewStream[A, C](view: Process[Task, IO[A, C]])
 {
   def >>-[B >: A](ka: Kestrel[B, C, IO]) = ViewStream(view map(_ >>- ka))
+
+  def desc = toString
 }
 
 trait ViewStreamInstances

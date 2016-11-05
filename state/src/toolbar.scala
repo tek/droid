@@ -12,7 +12,7 @@ object ToolbarMachineData
 }
 
 trait ToolbarMachine
-extends ViewMachine
+extends ViewMachine[ViewGroup]
 {
   import ViewMachine._
   import ToolbarMachineData._
@@ -39,7 +39,7 @@ extends ViewMachine
         toolbar,
         belowToolbarLayout >>= iota.effect.lp(MATCH_PARENT, MATCH_PARENT)
       )
-    ) >>- fitsSystemWindows
+    ).widen[ViewGroup] >>- fitsSystemWindows
   }
 
   override def machinePrefix = super.machinePrefix :+ "toolbar"

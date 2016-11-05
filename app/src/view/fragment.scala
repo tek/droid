@@ -86,9 +86,9 @@ import android.view.LayoutInflater
 //   }
 // }
 
-trait VSTrypFragment
+trait VSTrypFragment[A <: ViewGroup]
 extends Fragment
-with state.FreeViewAgent
+with state.FreeViewAgent[A]
 {
   override def onCreateView
   (inflater: LayoutInflater, container: ViewGroup, state: Bundle) = {

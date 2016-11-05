@@ -87,7 +87,7 @@ extends Machine
 
   def admit: Admission = {
     case Received2 => {
-      case s => s << Received3 << Set1.toAgent
+      case s => s << Received3 << Set1.toAgentMachine
     }
   }
 }

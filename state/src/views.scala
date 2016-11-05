@@ -24,10 +24,10 @@ extends Machine
     case t @ IOFork(io, timeout) => {
       case s => s << t.effect
     }
-    case t @ IOMainTask(io, timeout) => {
+    case t @ IOMainTask(_, _, _) => {
       case s => s << t.effect
     }
-    case t @ ViewStreamTask(stream, timeout, main) =>
+    case t @ ViewStreamTask(_, _, _, _) =>
       _ << t.effect
   }
 }
@@ -40,7 +40,7 @@ extends Agent
 
 trait ActivityAgent
 extends ActivityAgentBase
-with ViewAgent { aa =>
+with ViewAgent[ViewGroup] { aa =>
   lazy val activityMachine = new Machine {
     override def handle = "activity"
 
@@ -63,7 +63,7 @@ with ViewAgent { aa =>
 
 object ActivityAgent
 {
-  def apply(lay: StreamIO[_ <: View, Context]) =
+  def apply(lay: StreamIO[ViewGroup, Context]) =
     new ActivityAgent {
       lazy val viewMachine = ViewMachine(lay)
     }

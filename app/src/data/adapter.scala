@@ -138,7 +138,6 @@ extends RecyclerAdapter[A, B]
       simpleItems = newItems.toVector
       // applyFilter
       updateVisibleData(simpleItems)
-      notifyDataSetChanged()
     }
   }
 }

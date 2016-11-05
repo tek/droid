@@ -57,9 +57,18 @@ object ConsIO
   extends ToConsIOOps
 }
 
+trait IOI[A, C]
+{
+  def run: C => A
+  def desc: String
+}
+
 case class IO[A, C](run: C => A)
+extends IOI[A, C]
 {
   def apply(implicit c: C): A = run(c)
+
+  def desc = run.toString
 }
 
 trait Kestrel[A, C, F[_, _]]

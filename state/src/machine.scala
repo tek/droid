@@ -32,7 +32,7 @@ with view.AnnotatedIO
   }
 
   def actAs[A <: Activity: ClassTag, B: Operation](f: A => B)
-  : IO[Effect, Activity] = act { a =>
+  : IOI[Effect, Activity] = act { a =>
     a match {
       case aa: A => ZTask(f(aa)).stateEffect
       case _ =>
