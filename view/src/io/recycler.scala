@@ -53,7 +53,7 @@ extends Combinators[RecyclerView]
         callback(view, height)
       }
     }
-    v.setOnScrollListener(listener)
+    v.addOnScrollListener(listener)
   }
 
   @context def reverseLayout =
