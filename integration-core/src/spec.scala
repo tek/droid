@@ -59,9 +59,8 @@ with TestHelpers
   }
 
   def waitFor(timeout: Int)(predicate: => Boolean) {
-    solo.waitForCondition(new Condition {
-      override def isSatisfied: Boolean = predicate
-    }, timeout)
+    val end = System.currentTimeMillis + timeout
+    while(!predicate && System.currentTimeMillis < end) Thread.sleep(100)
   }
 
   def assertion(isTrue: => Boolean, msg: => String) = assert(isTrue, msg)
@@ -75,13 +74,21 @@ with TestHelpers
   implicit class ViewAssertions[A: droid.view.RootView](target: A) {
     def recycler = {
       target.viewOfType[RecyclerView] effect { r =>
-        idleSync()
         r.measure(0, 0)
         r.layout(0, 0, 100, 10000)
       }
     }
 
-    def nonEmptyRecycler(count: Long) = {
+    def nonEmptyRecycler(timeout: Double) = {
+      assertWMFor(
+        recycler
+          .map(r => "recycler empty")
+          .getOrElse("recycler doesn't exist")
+        )((timeout * 1000).toInt)(ui(recycler.exists(_.getChildCount > 0)))
+      recycler
+    }
+
+    def recyclerWith(count: Long) = {
       assertWM {
         recycler
           .map(r => s"recycler childcount ${r.getChildCount} != $count")
@@ -90,6 +97,12 @@ with TestHelpers
       recycler
     }
   }
+
+  def ui[A](f: => A) = {
+    cio(_ => f).main.unsafePerformSync
+  }
+
+  def sleep(secs: Double) = Thread.sleep((secs * 1000).toInt)
 }
 
 class StateSpec[A <: StateActivity](cls: Class[A])
