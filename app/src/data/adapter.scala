@@ -105,7 +105,7 @@ with Logging
         results.values match {
           case v: Seq[B] =>
             IO((c: Context) => updateVisibleData(v))
-              .main() !? "update visible data"
+              .main !? "update visible data"
           case v => {
             Log.e(s"Error casting filtering results in ${this.className}")
           }
@@ -170,7 +170,7 @@ with Views[Context, StreamIO]
     items.lift(position) foreach { s =>
       val io = holder.content >>- text(s)
       io.view
-        .flatMap(a => Process.eval(a.main()))
+        .flatMap(a => Process.eval(a.main))
         .run
         .infraRun("bind view holder")
     }

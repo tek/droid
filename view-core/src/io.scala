@@ -305,7 +305,7 @@ trait PerformIO[F[_, _]]
 {
   def unsafePerformIO[A, C](fa: F[A, C])(implicit c: C): Task[A]
 
-  def main[A, C](fa: F[A, C])(timeout: Duration = Duration.Inf)
+  def main[A, C](fa: F[A, C])(timeout: Duration)
   (implicit c: C): Task[A]
 }
 
@@ -332,7 +332,7 @@ trait PerformIOExecution
   def main[A](task: Task[A], timeout: Duration) = {
     val timed = timeout match {
       case concurrent.duration.Duration.Inf => task
-      case _ => task.unsafePerformTimed(timeout)
+      case _ => task.timed(timeout)
     }
     Task.fork(timed)(AndroidMainExecutorService)
   }
@@ -373,14 +373,18 @@ extends PerformIOExecution
       typeClassInstance.unsafePerformIO[A, C](self)
     }
 
-    def main(timeout: Duration = Duration.Inf)(implicit c: C): Task[A] = {
+    def main(implicit c: C): Task[A] = {
+      typeClassInstance.main[A, C](self)(Duration.Inf)
+    }
+
+    def mainTimed(timeout: Duration)(implicit c: C): Task[A] = {
       typeClassInstance.main[A, C](self)(timeout)
     }
 
-    def mainUnit(timeout: Duration = Duration.Inf)(implicit c: C): Task[Unit] =
-    {
-      main(timeout).void
-    }
+    def mainUnit(implicit c: C): Task[Unit] = main.void
+
+    def mainUnit(timeout: Duration)(implicit c: C): Task[Unit] =
+      mainTimed(timeout).void
   }
 
   trait ToPerformIOOps

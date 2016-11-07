@@ -64,9 +64,9 @@ trait StreamIOInstances
       def unsafePerformIO[A, C](fa: StreamIO[A, C])(implicit c: C) =
         Task(fa(c))
 
-      def main[A, C](fa: StreamIO[A, C])(timeout: Duration = Duration.Inf)
+      def main[A, C](fa: StreamIO[A, C])(timeout: Duration)
       (implicit c: C) = {
-        fa.run.main(timeout)
+        fa.run.mainTimed(timeout)
       }
     }
 }

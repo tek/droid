@@ -118,7 +118,7 @@ case class IOMainTask[F[_, _]: PerformIO, A, C]
 (implicit cm: IOMessage[C], se: StateEffect[ZTask[A]])
 extends Message
 {
-  def effect = cm.pure(io.main(timeout)(_), desc).publish
+  def effect = cm.pure(io.mainTimed(timeout)(_), desc).publish
 
   override def toString = desc
 }
