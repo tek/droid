@@ -12,7 +12,7 @@ object ToolbarMachineData
 }
 
 trait ToolbarMachine
-extends ViewMachine[ViewGroup]
+extends IOViewMachine[ViewGroup]
 {
   import ViewMachine._
   import ToolbarMachineData._

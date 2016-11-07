@@ -15,7 +15,7 @@ object RecyclerSpec
   extends ActivityAgent
   {
     override lazy val viewMachine =
-      new RecyclerViewMachine[StringRecyclerAdapter] {
+      new RVMachine[StringRecyclerAdapter] {
         override def handle = "spec"
 
         lazy val adapter = conS(implicit c => new StringRecyclerAdapter {})

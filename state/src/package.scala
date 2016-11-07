@@ -6,12 +6,12 @@ package state
 // need to change export to pick the subclass's
 @exportNames(StateApplication,
   MainViewAgent, ActivityAgent, IOMachine,
-  IOTask, SimpleViewMachine, StateActivity)
+  IOTask, SimpleViewMachine, StateActivity, ViewAgent, ViewMachine)
 trait Exports
 extends view.Exports
 {
-  type ViewAgent[A <: ViewGroup] = tryp.droid.state.ViewAgent[A]
-  type ViewMachine[A <: ViewGroup] = tryp.droid.state.ViewMachine[A]
+  type IOViewAgent[A <: ViewGroup] = tryp.droid.state.IOViewAgent[A]
+  type IOViewMachine[A <: ViewGroup] = tryp.droid.state.IOViewMachine[A]
   val MainViewMessages = tryp.droid.state.MainViewMessages
   val ViewAgent = tryp.droid.state.ViewAgent
   val IOOperation = tryp.droid.state.IOOperation

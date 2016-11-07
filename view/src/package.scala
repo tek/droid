@@ -3,7 +3,7 @@ package droid
 package view
 
 @exportNames(
-  StreamIO, ViewStream, RootView,
+  IOX, StreamIO, ViewStream, RootView,
   android.support.v7.widget.RecyclerView,
   android.support.v7.widget.Toolbar
 )

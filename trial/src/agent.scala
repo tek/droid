@@ -69,7 +69,7 @@ extends ViewAgent
 {
   override def handle = "view_1"
 
-  lazy val viewMachine = new RecyclerViewMachine[StringRecyclerAdapter] {
+  lazy val viewMachine = new RVMachine[StringRecyclerAdapter] {
     lazy val adapter = conS(implicit c => new StringRecyclerAdapter {})
 
     // FIXME constructs a new StringRecyclerAdapter every time

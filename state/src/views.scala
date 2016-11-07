@@ -40,7 +40,7 @@ extends Agent
 
 trait ActivityAgent
 extends ActivityAgentBase
-with ViewAgent[ViewGroup] { aa =>
+with IOViewAgent[ViewGroup] { aa =>
   lazy val activityMachine = new Machine {
     override def handle = "activity"
 

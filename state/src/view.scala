@@ -10,58 +10,55 @@ import AppState._
 object ViewMachine
 {
   def apply[A <: ViewGroup](lay: StreamIO[A, Context]) =
-    new ViewMachine[A] {
+    new IOViewMachine[A] {
       val layout = lay
 
       def admit: Admission = PartialFunction.empty
     }
 }
 
-trait ViewMachine[A <: ViewGroup]
+trait ViewDataI[A]
+extends Data
+{
+  def view: A
+}
+
+trait ViewMachine
 extends IOMachine
 with Views[Context, StreamIO]
 {
-  case class ContentView(view: A)
-  extends Message
+  override def machinePrefix = super.machinePrefix :+ "view"
+}
 
-  case class ContentTree(tree: ViewTree[A])
+abstract class TreeViewMachine[A <: ViewTree[_ <: ViewGroup]: ClassTag]
+extends ViewMachine
+{
+  case class ContentTree(tree: A)
   extends Message
   {
     override def toString = "ContentTree"
   }
 
   trait ViewData
-  extends Data
+  extends ViewDataI[A]
   {
     def view: A
-    def tree: Option[ViewTree[A]]
   }
+
 
   object ViewData
   {
-    def unapply(a: ViewData) = Some((a.view, a.tree))
+    def unapply(a: ViewData) = Some(a.view)
   }
 
-  case class SimpleViewMachineData(view: A, tree: Option[ViewTree[A]])
+  case class VData(view: A)
   extends ViewData
 
-  val Aid = iota.effect.Id
-
-  override def machinePrefix = super.machinePrefix :+ "view"
-
-  protected def dataWithView(data: Data, view: A): ViewData =
-    SimpleViewMachineData(view, None)
-
-  protected def dataWithTree(data: Data, tree: ViewTree[A]): ViewData =
-    SimpleViewMachineData(tree.container, Some(tree))
+  protected def dataWithTree(data: Data, tree: A): ViewData =
+    VData(tree)
 
   override def internalAdmit = super.internalAdmit orElse {
-    case ContentView(view) => {
-      case S(s, d) =>
-        S(s, dataWithView(d, view)) <<
-          SetContentView(view, Some(this)).toAgentMachine
-    }
-    case ContentTree(tree) => {
+    case ContentTree(tree: A) => {
       case S(s, d) =>
         val data = dataWithTree(d, tree)
         S(s, data) << SetContentTree(tree, Some(this)).toAgentMachine
@@ -69,21 +66,42 @@ with Views[Context, StreamIO]
   }
 }
 
-trait SimpleViewMachine
-extends ViewMachine[ViewGroup]
-{
-  def admit: Admission = PartialFunction.empty
-}
-
 trait IOViewMachine[A <: ViewGroup]
-extends ViewMachine[A]
+extends ViewMachine
 {
   import AppState._
   import ViewMachine._
 
   def layout: StreamIO[A, Context]
 
+  case class ContentView(view: A)
+  extends Message
+
+  trait ViewData
+  extends ViewDataI[A]
+  {
+    def view: A
+  }
+
+  object ViewData
+  {
+    def unapply(a: ViewData) = Some(a.view)
+  }
+
+  case class VData(view: A)
+  extends ViewData
+
+  val Aid = iota.effect.Id
+
+  protected def dataWithView(data: Data, view: A): ViewData =
+    VData(view)
+
   override def internalAdmit = super.internalAdmit orElse {
+    case ContentView(view) => {
+      case S(s, d) =>
+        S(s, dataWithView(d, view)) <<
+          SetContentView(view, Some(this)).toAgentMachine
+    }
     case CreateContentView => {
       case s =>
         s << layout.map(ContentView(_).to(this))
@@ -91,12 +109,18 @@ extends ViewMachine[A]
   }
 }
 
-trait ViewAgent[A <: ViewGroup]
+trait SimpleViewMachine
+extends IOViewMachine[ViewGroup]
+{
+  def admit: Admission = PartialFunction.empty
+}
+
+trait ViewAgent
 extends Agent
 with Views[Context, StreamIO]
 with IOMachine
 {
-  def viewMachine: ViewMachine[A]
+  def viewMachine: ViewMachine
 
   override def machines = viewMachine :: super.machines
 
@@ -115,7 +139,7 @@ with IOMachine
 }
 
 trait IOViewAgent[A <: ViewGroup]
-extends ViewAgent[A]
+extends ViewAgent
 {
   import iota.module.TextCombinators.text
 
@@ -131,8 +155,8 @@ extends ViewAgent[A]
 
 object ViewAgent
 {
-  def apply[A <: ViewGroup](lay: StreamIO[A, Context]) = new ViewAgent[A] {
-    lazy val viewMachine = ViewMachine(lay)
+  def apply[A <: ViewGroup](lay: StreamIO[A, Context]) = new ViewAgent {
+    lazy val viewMachine = ViewMachine[A](lay)
   }
 }
 

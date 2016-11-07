@@ -36,7 +36,7 @@ with Logging
 
 object MainViewMessages
 {
-  case class LoadUi(agent: ViewAgent[_ <: ViewGroup])
+  case class LoadUi(agent: ViewAgent)
   extends Message
 
   case class LoadContent(view: View)
@@ -130,18 +130,18 @@ extends IOViewMachine[ViewGroup]
       bgCol("main")
 }
 
+case class MVData(ui: Agent)
+extends Data
+
 trait MV
 extends IOMachine
 {
-  case class MVData(ui: Agent)
-  extends Data
-
   def admit: Admission = {
     case LoadUi(ui) => loadUi(ui)
     case InitUi => initUi
   }
 
-  def loadUi(ui: ViewAgent[_ <: ViewGroup]): Transit = {
+  def loadUi(ui: ViewAgent): Transit = {
     case S(s, _) =>
       S(s, MVData(ui)) << AgentStateData.AddSub(Nel(ui)).toAgentMachine <<
         UiLoaded.toLocal

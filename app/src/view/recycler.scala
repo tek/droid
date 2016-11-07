@@ -10,8 +10,24 @@ object RecyclerViewMachineData
 {
 }
 
-abstract class RecyclerViewMachine[A <: RecyclerViewAdapter[_]: ClassTag]
-extends state.ViewMachine[FrameLayout]
+trait RVTree
+{
+  def recycler: RecyclerView
+}
+
+case class RVMain(container: FrameLayout, recycler: RecyclerView)
+extends ViewTree[FrameLayout]
+with RVTree
+{
+  override def toString = "RVMain"
+}
+
+abstract class RVMachine
+[
+A <: RecyclerViewAdapter[_]: ClassTag,
+B <: ViewTree[_ <: ViewGroup] with RVTree: ClassTag
+]
+extends state.TreeViewMachine[B]
 {
   case object CreateAdapter
   extends Message
@@ -37,7 +53,7 @@ extends state.ViewMachine[FrameLayout]
   extends RecyclerDataBase
   with ViewData
   {
-    def main: Main
+    def main: B
   }
 
   object RecyclerData
@@ -45,11 +61,10 @@ extends state.ViewMachine[FrameLayout]
     def unapply(a: RecyclerData) = Some((a.main, a.adapter))
   }
 
-  case class RVData(main: Main, adapter: A)
+  case class RVData(main: B, adapter: A)
   extends RecyclerData
   {
-    def tree = Some(main)
-    def view = main.container
+    def view = main
   }
 
   import view.io.recycler._
@@ -57,30 +72,19 @@ extends state.ViewMachine[FrameLayout]
   case class SetAdapter(adapter: A)
   extends Message
 
-  case class Main(container: FrameLayout, recycler: RecyclerView)
-  extends ViewTree[FrameLayout]
-  {
-    override def toString = "Main"
-  }
-
   override def machinePrefix = super.machinePrefix :+ "recycler"
 
-  val adapter: StreamIO[A, Context]
+  val adapter: IOX[A, Context]
 
   def recyclerConf: CK[RecyclerView] = nopK
 
   def recyclerLayout = linear
 
-  override def dataWithTree(data: Data, tree: ViewTree[FrameLayout]) = {
-    def fallback = super.dataWithTree(data, tree)
+  override def dataWithTree(data: Data, tree: B) = {
     data match {
       case RecyclerDataBase(adapter) =>
-        tree match {
-          case a: Main =>
-            RVData(a, adapter)
-          case _ => fallback
-        }
-        case _ => fallback
+        RVData(tree, adapter)
+      case _ => super.dataWithTree(data, tree)
     }
   }
 
@@ -88,18 +92,20 @@ extends state.ViewMachine[FrameLayout]
     data match {
       case RVData(main, _) =>
         RVData(main, adapter)
-      case ViewData(view, Some(tree: Main)) =>
+      case ViewData(tree) =>
         RVData(tree, adapter)
       case _ =>
         SimpleRecyclerDataBase(adapter)
     }
+
+  protected def infMain: StreamIO[B, Context]
 
   override def extraAdmit = {
     case CreateContentView =>
       _ << CreateAdapter
     case CreateAdapter =>
       _ << adapter.map(SetAdapter(_).to(this)) <<
-        inf[Main].map(ContentTree(_).to(this))
+        infMain.map(ContentTree(_).to(this))
     case SetAdapter(adapter) => {
       case S(s, d) =>
         S(s, dataWithAdapter(d, adapter))
@@ -111,4 +117,10 @@ extends state.ViewMachine[FrameLayout]
         s << io.unitUi << AdapterInstalled
     }
   }
+}
+
+abstract class SimpleRV[A <: RecyclerViewAdapter[_]: ClassTag]
+extends RVMachine[A, RVMain]
+{
+  def infMain = inf[RVMain]
 }

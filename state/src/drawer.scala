@@ -17,7 +17,7 @@ object DrawerMachineData
 }
 
 trait DrawerMachine
-extends ViewMachine[DrawerLayout]
+extends IOViewMachine[DrawerLayout]
 {
   import ViewMachine._
   import DrawerMachineData._
