@@ -20,4 +20,6 @@ with StateStrategy
     super.onCreate(state)
     stateApp.fold(log.error(_), _.setActivity(this))
   }
+
+  def agent: Option[ActivityAgent] = None
 }

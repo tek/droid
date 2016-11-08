@@ -89,11 +89,18 @@ with view.AnnotatedIO
         StopSub(Nel(old))
   }
 
+  private[this] def agentForActivity(a: Activity) =
+    a match {
+      case sa: StateActivity => sa.agent
+      case _ => None
+    }
+
   def setActivity(a: Activity): Transit = {
     case S(Pristine, NoData) =>
-      S(Ready, ASData(Some(a), None)) << initialAgent.map(SetAgent(_))
+      val agent = agentForActivity(a) orElse initialAgent
+      S(Ready, ASData(Some(a), None)) << agent.map(SetAgent(_))
     case S(Ready, ASData(_, ag)) =>
-      S(Ready, ASData(Some(a), ag))
+      S(Ready, ASData(Some(a), ag)) << agentForActivity(a).map(SetAgent(_))
   }
 
   def initAgent: Transit = {
@@ -127,8 +134,7 @@ with view.AnnotatedIO
 }
 
 trait StateApplicationAgent
-extends RootAgent
-{ app =>
+extends RootAgent { app =>
   override def handle = "state_app"
 
   lazy val appStateMachine = new AppStateMachine {
