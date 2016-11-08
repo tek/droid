@@ -16,7 +16,7 @@ import coursier.CoursierPlugin
 object DroidBuild
 extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 {
-  val sdkVersion = 22
+  val sdkVersion = 23
 
   override val platform = s"android-$sdkVersion"
 

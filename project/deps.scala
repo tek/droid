@@ -42,14 +42,12 @@ extends tryp.AndroidDeps
 
   def view = ids(
     pulsar("state"),
-    aar("com.android.support" % "support-v4" % "22.+"),
-    aar("com.android.support" % "appcompat-v7" % "22.+"),
-    aar("com.android.support" % "palette-v7" % "22.+"),
-    aar("com.android.support" % "recyclerview-v7" % "22.+"),
-    aar("com.android.support" % "cardview-v7" % "22.+"),
-    aar("com.android.support" % "support-v13" % "22.+"),
-    aar("com.google.android.gms" % "play-services-basement" % "9.6.1"),
-    aar("com.google.android.gms" % "play-services-base" % "9.6.1")
+    aar("com.android.support" % "support-v4" % "23.+"),
+    aar("com.android.support" % "appcompat-v7" % "23.+"),
+    aar("com.android.support" % "palette-v7" % "23.+"),
+    aar("com.android.support" % "recyclerview-v7" % "23.+"),
+    aar("com.android.support" % "cardview-v7" % "23.+"),
+    aar("com.android.support" % "support-v13" % "23.+")
   )
 
   def service = ids(
