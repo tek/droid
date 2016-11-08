@@ -508,7 +508,7 @@ extends AndroidMacros
     Expr[F[A, C]] {
       q"""
       $cons[$fSym].pure[$aType, $cType]((ctx: $cType) =>
-          ViewTree.inflate(ctx, $vtree))
+          iota.ViewTree.inflate(ctx, $vtree))
       """
     }
   }
