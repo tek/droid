@@ -2,10 +2,25 @@ package tryp
 package droid
 package integration
 
+import droid.state.StateApplicationAgent
+import droid.state.AppState.SetActivity
+
 class IntApplication
 extends android.app.Application
 with StateApplication
-with MultiDexApplication
 {
-  override def initialAgent = Some(new IntMainViewAgent2)
+  lazy val root = new StateApplicationAgent {
+
+    override def initialAgent =
+      Some(new IntMainViewAgent)
+  }
+
+  override def onCreate(): Unit = {
+    root.runAgent()
+    super.onCreate()
+  }
+
+  def setActivity(act: Activity) = {
+    root.scheduleOne(SetActivity(act).toLocal)
+  }
 }

@@ -91,30 +91,29 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val integrationCore = ("integration-core" <<< app)
 
-  lazy val integration = (apb("integration") <<< integrationCore)
+  lazy val integration = (adp("integration") <<< integrationCore <<< app)
     .integration
     .protify
     .manifest(
+      "package" -> "tryp.droid.integration",
       "minSdk" -> "21",
       "targetSdk" -> sdkVersion.toString,
-      "activityClass" -> "android.app.Activity",
+      "activityClass" -> "tryp.droid.integration.IntStateActivity",
       "versionCode" -> "1",
       "versionName" -> "1.0",
       "appName" -> "tryp integration",
-      "appClass" -> "android.app.Application"
+      "appClass" -> "tryp.droid.integration.IntApplication"
     )
     .settingsV(
+      packageForR := "tryp.droid.res",
       aarModule := "integration",
       manifestTemplate := metaRes.value / "integration" / manifestName,
-      manifestTokens += ("package" -> androidPackage.value),
-      dexMaxHeap := "4G",
       dexMulti := true,
       dexMinimizeMain := false,
-      packageForR := "tryp.droid.integration"
+      debugIncludesTests := true
     )
     .logback("tag" -> "tryp")
     .map(_.disablePlugins(CoursierPlugin))
-    .enablePlugins(AndroidProtify)
 
   lazy val trial = adp("trial")
     // .protify
