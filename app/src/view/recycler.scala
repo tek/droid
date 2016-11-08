@@ -98,9 +98,7 @@ extends state.TreeViewMachine[B]
         SimpleRecyclerDataBase(adapter)
     }
 
-  protected def infMain: StreamIO[B, Context]
-
-  override def extraAdmit = {
+  protected def extraInternal: Admission = {
     case CreateContentView =>
       _ << CreateAdapter
     case CreateAdapter =>
@@ -117,6 +115,8 @@ extends state.TreeViewMachine[B]
         s << io.unitUi << AdapterInstalled
     }
   }
+
+  override def internalAdmit = extraInternal orElse super.internalAdmit
 }
 
 abstract class SimpleRV[A <: RecyclerViewAdapter[_]: ClassTag]

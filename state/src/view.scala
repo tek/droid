@@ -54,10 +54,14 @@ extends ViewMachine
   case class VData(view: A)
   extends ViewData
 
+  protected def infMain: StreamIO[A, Context]
+
   protected def dataWithTree(data: Data, tree: A): ViewData =
     VData(tree)
 
   override def internalAdmit = super.internalAdmit orElse {
+    case CreateContentView =>
+      _ << infMain.map(ContentTree(_).to(this))
     case ContentTree(tree: A) => {
       case S(s, d) =>
         val data = dataWithTree(d, tree)
