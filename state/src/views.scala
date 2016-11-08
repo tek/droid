@@ -39,8 +39,7 @@ trait ActivityAgentBase
 extends Agent
 
 trait ActivityAgent
-extends ActivityAgentBase
-with IOViewAgent[ViewGroup] { aa =>
+extends ActivityAgentBase { aa =>
   lazy val activityMachine = new Machine {
     override def handle = "activity"
 
@@ -60,6 +59,14 @@ with IOViewAgent[ViewGroup] { aa =>
 
   override def handle = "act_agent"
 }
+
+trait IOActivityAgent
+extends ActivityAgent
+with IOViewAgent[ViewGroup]
+
+trait TreeActivityAgent
+extends ActivityAgent
+with ViewAgent
 
 object ActivityAgent
 {

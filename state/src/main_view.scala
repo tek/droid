@@ -9,6 +9,9 @@ import tryp.state._
 import android.view.ViewGroup.LayoutParams
 import android.widget._
 
+import android.support.v4.widget.DrawerLayout
+import android.support.v7.app.ActionBarDrawerToggle
+
 import view._
 import view.core._
 import io.text._
@@ -32,6 +35,20 @@ with Logging
     if (getChildCount != 0) removeViewAt(0)
     addView(a)
   }
+}
+
+trait HasMainFrame
+{
+  def mainFrame: MainFrame
+}
+
+case class MainViewLayout(container: MainFrame)
+extends ViewTree[MainFrame]
+with HasMainFrame
+{
+  override def toString = "MainViewLayout"
+
+  def mainFrame = container
 }
 
 object MainViewMessages
@@ -72,12 +89,13 @@ object MainViewMessages
 import MainViewMessages._
 
 @Publish(LoadUi)
-trait MVContainer
-extends IOViewMachine[ViewGroup]
+abstract class MVContainer
+[A <: ViewTree[_ <: ViewGroup] with HasMainFrame: ClassTag]
+extends TreeViewMachine[A]
 {
   def admit: Admission = {
-    case SetContentView(view, _) => setContentView(view)
-    case SetContentTree(tree, _) => setContentView(tree.container)
+    case SetContentView(view, _) => setMainView(view)
+    case SetContentTree(tree, _) => setMainView(tree.container)
     case Back => back
     case ContentViewReady(agent) => contentViewReady
     case UiLoaded => uiLoaded
@@ -96,13 +114,11 @@ extends IOViewMachine[ViewGroup]
    *  has to be a StreamIO IOTask, which produces a ViewStreamTask of `content`
    *  setting its view to `view`'s result.
    */
-  def setContentView(view: View): Transit = {
-    case s =>
-      s << content.v
-        .map(_.setView(view))
+  def setMainView(view: View): Transit = {
+    case s @ S(_, ViewData(main)) =>
+      s << cio(_ => main.mainFrame.setView(view))
         .map(_ => MainViewLoaded.publish)
-        .main
-
+        .ui
   }
 
   def contentViewReady: Transit = {
@@ -119,15 +135,15 @@ extends IOViewMachine[ViewGroup]
   // and call nativeBack() in activity
   def nativeBack = act(_.onBackPressed())
 
-  override def machineName = "main".right
+  override def handle = "mvc"
 
-  override def description = "main view"
+  override def description = "mv container"
+}
 
-  lazy val content = w[MainFrame] >>- metaName[MainFrame]("content frame")
-
-  lazy val layout =
-    l[FrameLayout](content).widen[ViewGroup] >>- metaName("root frame") >>-
-      bgCol("main")
+trait MVFrame
+extends MVContainer[MainViewLayout]
+{
+  def infMain = inf[MainViewLayout]
 }
 
 case class MVData(ui: Agent)
@@ -136,6 +152,10 @@ extends Data
 trait MV
 extends IOMachine
 {
+  override def handle = "mv"
+
+  override def description = "mv"
+
   def admit: Admission = {
     case LoadUi(ui) => loadUi(ui)
     case InitUi => initUi
@@ -154,12 +174,11 @@ extends IOMachine
 }
 
 trait MainViewAgent
-extends ActivityAgent
+extends TreeActivityAgent
 {
   import AppState._
 
-  lazy val viewMachine = new MVContainer {
-  }
+  def viewMachine: MVContainer[_]
 
   lazy val mvMachine = new MV {
   }
@@ -179,8 +198,78 @@ extends ActivityAgent
 
   override def extraAdmit = setContentViewAdmit orElse super.extraAdmit
 
+  protected def initialUi: Option[ViewAgent] = None
+
   override def admit = super.admit orElse {
     case ContentViewReady(ag) if ag == this =>
       _ << MainViewReady.toLocal
+    case ActivityAgentStarted(_) =>
+      initialUi match {
+        case Some(agent) => _ << mvMachine.sendP(LoadUi(agent))
+        case _ => s => s
+      }
   }
+}
+
+trait MVAgent
+extends MainViewAgent
+{
+  lazy val viewMachine = new MVFrame {}
+}
+
+case class Drawer(container: DrawerLayout, mainFrame: MainFrame,
+  drawer: FrameLayout)
+extends ViewTree[DrawerLayout]
+with HasMainFrame
+{
+  container.lp(MATCH_PARENT, MATCH_PARENT)
+
+  drawer.setId(res.R.id.drawer)
+
+  override def toString = className
+}
+
+case class ExtMVLayout(container: LinearLayout, toolbar: Toolbar,
+  drawer: Drawer)
+extends ViewTree[LinearLayout]
+with HasMainFrame
+{
+  container.lp(MATCH_PARENT, MATCH_PARENT)
+
+  override def toString = className
+
+  def mainFrame = drawer.mainFrame
+}
+
+trait ExtMVContainer
+extends MVContainer[ExtMVLayout]
+{
+  def infMain = inf[ExtMVLayout]
+
+//   def createDrawerToggle = {
+//     drawer.v.map2(toolbar.v) { (d, t) =>
+//         act { act =>
+//           val res = Resources.fromContext(act)
+//           (res.stringId("drawer_open") |@| res.stringId("drawer_close"))
+//             .map((o, c) => new ActionBarDrawerToggle(act, d, t, o, c))
+//             .map(StoreDrawerToggle(_))
+//         }
+//     }
+//   }
+//     StreamIO.lift { implicit a =>
+//     drawer >>- { drawer =>
+//       toolbar >>- { tb =>
+//         res.stringId("drawer_open") |@| res.stringId("drawer_close") map {
+//           case (o, c) =>
+//             new ActionBarDrawerToggle(activity, drawer, tb, o, c)
+//         } toOption
+//       }
+//     }
+//   }
+}
+
+trait ExtMV
+extends MainViewAgent
+{
+  lazy val viewMachine = new ExtMVContainer {}
 }

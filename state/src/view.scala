@@ -45,7 +45,6 @@ extends ViewMachine
     def view: A
   }
 
-
   object ViewData
   {
     def unapply(a: ViewData) = Some(a.view)
@@ -95,8 +94,6 @@ extends ViewMachine
   case class VData(view: A)
   extends ViewData
 
-  val Aid = iota.effect.Id
-
   protected def dataWithView(data: Data, view: A): ViewData =
     VData(view)
 
@@ -122,7 +119,6 @@ extends IOViewMachine[ViewGroup]
 trait ViewAgent
 extends Agent
 with Views[Context, StreamIO]
-with IOMachine
 {
   def viewMachine: ViewMachine
 
@@ -173,7 +169,7 @@ extends IOViewAgent[A]
 
   def safeViewP: Process[ZTask, View] = {
     Process.eval(layout.unsafePerformIO)
-      .sideEffect { v =>
+      .sideEffect { case v =>
         log.debug(s"setting view for $title:\n${v.viewTree.drawTree}")
       }
   }

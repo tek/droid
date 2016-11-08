@@ -69,6 +69,7 @@ with view.AnnotatedIO
     case SetAgent(a) => setAgent(a)
     case ActivityAgentStarted(agent) => activityStarted(agent)
     case SetContentView(view, sender) => setContentView(view)
+    case SetContentTree(view, sender) => setContentView(view.container)
     case f @ ContextFun(_, _) => contextFun(f)
     case f @ ActivityFun(_, _) => activityFun(f)
     case t @ DbTask(_) => dbTask(t)
@@ -152,6 +153,7 @@ extends RootAgent { app =>
 
   override def extraAdmit = super.extraAdmit orElse {
     case a @ SetContentView(_, _) => _ << appStateMachine.sendP(a)
+    case a @ SetContentTree(_, _) => _ << appStateMachine.sendP(a)
   }
 }
 

@@ -10,3 +10,4 @@ target/
 .history
 .tags
 .ensime*
+**/assets/logback.xml

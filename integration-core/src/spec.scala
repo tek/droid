@@ -73,7 +73,7 @@ with TestHelpers
 
   implicit class ViewAssertions[A: droid.view.RootView](target: A) {
     def recycler = {
-      target.viewOfType[RecyclerView] effect { r =>
+      target.viewOfType[RecyclerView] sideEffect { case r =>
         r.measure(0, 0)
         r.layout(0, 0, 100, 10000)
       }
