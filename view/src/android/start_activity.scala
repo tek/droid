@@ -4,8 +4,6 @@ package view
 
 import simulacrum._
 
-import com.google.android.gms.common.ConnectionResult
-
 import core._
 
 @typeclass trait StartActivity[A]
@@ -17,7 +15,6 @@ import core._
 @typeclass trait StartActivityForResult[A]
 {
   def startActivityForResult(a: A)(intent: Intent, code: Int): Unit
-  def resolveResult(a: A)(result: ConnectionResult, code: Int): Unit
 }
 
 trait StartActivityInstances
@@ -40,10 +37,6 @@ trait StartActivityForResultInstances
     new StartActivityForResult[A] {
       def startActivityForResult(a: A)(intent: Intent, code: Int) = {
         a.startActivityForResult(intent, code)
-      }
-
-      def resolveResult(a: A)(result: ConnectionResult, code: Int) = {
-        result.startResolutionForResult(a, code)
       }
     }
 }
