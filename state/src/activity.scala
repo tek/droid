@@ -2,8 +2,6 @@ package tryp
 package droid
 package state
 
-import core._
-
 class StateActivity
 extends Activity
 with Logging

@@ -2,8 +2,8 @@ package tryp
 package droid
 package state
 
-import io.circe._
-import io.circe.parser._
+import _root_.io.circe._
+import _root_.io.circe.parser._
 
 import tryp.state._
 

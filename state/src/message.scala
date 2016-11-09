@@ -227,6 +227,18 @@ object IOOperation
   implicit def instance_Operation_UnitIO
   [F[_, _]: PerformIO, C: IOMessage]
   = Operation.message(IOFork((_: F[Unit, C]), "forked IO"))
+
+  /* fork IOs that return View
+   */
+  @export(Instantiated)
+  implicit def instance_StateEffect_IO_View
+  [A <: View, F[_, _]: PerformIO, C: IOMessage]
+  (implicit fu: cats.Functor[F[?, C]]): StateEffect[F[A, C]] =
+    new StateEffect[F[A, C]] {
+      def stateEffect(io: F[A, C]) = {
+        IOTask(io.void, io.toString).publish.stateEffect
+      }
+    }
 }
 
 final class ViewStreamMessageOps[A: Operation, C: IOMessage]

@@ -20,6 +20,7 @@ extends Message
 trait IOMachine
 extends tryp.state.Machine
 with view.AnnotatedIO
+with view.core.ToIO
 {
   def instance_PublishFilter_IOTask[F[_, _]: PerformIO, A: Operation, C]
   : PublishFilter[IOTask[F, A, C]] = new PublishFilter[IOTask[F, A, C]] {

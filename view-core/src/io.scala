@@ -529,3 +529,16 @@ extends Views[Context, IO]
 
 object IOViews
 extends IOViews
+
+trait ToIO
+{
+  implicit def viewToIO[A <: View](a: A): IO[A, Context] = {
+    ConsIO[IO].pure[A, Context](_ => a)
+  }
+
+  implicit def viewToApplyKestrel[A <: View](a: A)
+  : ApplyKestrel.Ops[IO, A, Context] = {
+    import ApplyKestrel.ops._
+    viewToIO(a)
+  }
+}

@@ -12,10 +12,8 @@ import android.widget._
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
 
-import view._
-import view.core._
-import io.text._
-import io.misc._
+import view.io.text._
+import view.io.misc._
 import AppState._
 
 class MainFrame(c: Context)
@@ -93,7 +91,7 @@ abstract class MVContainer
 [A <: ViewTree[_ <: ViewGroup] with HasMainFrame: ClassTag]
 extends TreeViewMachine[A]
 {
-  def admit: Admission = {
+  override def internalAdmit = super.internalAdmit orElse {
     case SetContentView(view, _) => setMainView(view)
     case SetContentTree(tree, _) => setMainView(tree.container)
     case Back => back
@@ -103,8 +101,9 @@ extends TreeViewMachine[A]
 
   import IOOperation.exports._
 
-  // If the main frame has already been installed (state Ready), immediately
-  // request the main view
+  /** If the main frame has already been installed (state Ready), immediately
+   *  request the main view
+   */
   def uiLoaded: Transit = {
     case s @ S(Ready, _) =>
       s << InitUi.toLocal
@@ -136,8 +135,6 @@ extends TreeViewMachine[A]
   def nativeBack = act(_.onBackPressed())
 
   override def handle = "mvc"
-
-  override def description = "mv container"
 }
 
 trait MVFrame
@@ -214,7 +211,9 @@ extends TreeActivityAgent
 trait MVAgent
 extends MainViewAgent
 {
-  lazy val viewMachine = new MVFrame {}
+  lazy val viewMachine = new MVFrame {
+    def admit = PartialFunction.empty
+  }
 }
 
 case class Drawer(container: DrawerLayout, mainFrame: MainFrame,
@@ -271,5 +270,7 @@ extends MVContainer[ExtMVLayout]
 trait ExtMV
 extends MainViewAgent
 {
-  lazy val viewMachine = new ExtMVContainer {}
+  lazy val viewMachine = new ExtMVContainer {
+    def admit = PartialFunction.empty
+  }
 }
