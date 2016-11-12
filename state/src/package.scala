@@ -15,6 +15,9 @@ extends view.Exports
   val MainViewMessages = tryp.droid.state.MainViewMessages
   val ViewAgent = tryp.droid.state.ViewAgent
   val IOOperation = tryp.droid.state.IOOperation
+  val Resume = tryp.droid.state.Resume
+  val Update = tryp.droid.state.Update
+  val Create = tryp.droid.state.Create
 }
 
 trait All
@@ -22,10 +25,10 @@ extends view.All
 with ToViewStreamMessageOps
 with StateEffectInstances
 with IOEffect.ToIOEffectOps
+{
+  def Nop: Effect = tryp.state.Effect(Process.halt, "nop")
+}
 
 @integrate(app, slick, slick.sync, view, tryp.state.StateDecls)
 object `package`
 extends All
-{
-  def Nop: Effect = tryp.state.Effect(Process.halt, "nop")
-}

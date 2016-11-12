@@ -1,6 +1,6 @@
 package tryp
 package droid
-package core
+package db
 
 import java.io.File
 

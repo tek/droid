@@ -1,6 +1,6 @@
 package tryp
 package droid
-package state
+package db
 
 import _root_.io.circe._
 import _root_.io.circe.parser._
@@ -9,7 +9,7 @@ import tryp.state._
 
 import scalaz._, Scalaz._
 
-import droid.core.{Keys, IOActionTypes}
+import droid.core.Keys
 
 abstract class ShowMachine[A <: Model: Decoder]
 extends Machine
@@ -24,7 +24,7 @@ extends Machine
 
   override def machinePrefix: List[String] = "show" :: super.machinePrefix
 
-  def setupData(args: Map[String, String]): IOActionTypes.Action[SetModel] = {
+  def setupData(args: Map[String, String]): Action[SetModel] = {
     def errmsg(item: String) = {
       s"No valid $item passed to show impl for '$handle'"
     }

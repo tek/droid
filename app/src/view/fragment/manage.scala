@@ -1,9 +1,6 @@
 package tryp
 package droid
 
-import core._
-import view._
-
 import reflect.classTag
 
 import android.app.{FragmentManager, FragmentTransaction}
@@ -11,6 +8,8 @@ import android.app.{FragmentManager, FragmentTransaction}
 import ScalazGlobals._
 
 import simulacrum._
+
+import view.{HasActivityF, HasContextF}
 
 trait FragmentHelpers
 {

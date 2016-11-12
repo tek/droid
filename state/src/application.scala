@@ -2,17 +2,12 @@ package tryp
 package droid
 package state
 
-import tryp.state._
-
 import scalaz.stream._
 import Process._
-import AgentStateData._
+import tryp.state.AgentStateData._
 
 import iota.ViewTree
 
-import droid.core._
-import view.core._
-import view._
 import IOOperation._
 
 object AppState
@@ -72,7 +67,7 @@ with view.AnnotatedIO
     case SetContentTree(view, sender) => setContentView(view.container)
     case f @ ContextFun(_, _) => contextFun(f)
     case f @ ActivityFun(_, _) => activityFun(f)
-    case t @ DbTask(_) => dbTask(t)
+    // case t @ DbTask(_) => dbTask(t)
     case t @ ECTask(_) => ecTask(t)
   }
 
@@ -129,7 +124,7 @@ with view.AnnotatedIO
       s << fun.task(act)
   }
 
-  def dbTask(task: DbTask[_, _]): Transit = _ << task.effect(dbInfo)
+  // def dbTask(task: DbTask[_, _]): Transit = _ << task.effect(dbInfo)
 
   def ecTask(task: ECTask[_]): Transit = _ << task.effect(ec)
 }

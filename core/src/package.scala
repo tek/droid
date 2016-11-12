@@ -12,10 +12,6 @@ trait Names
 {
   def TrypKeys = droid.core.Keys
 
-  type SlickEffect = _root_.slick.dbio.Effect
-  type SlickAction[A, E <: SlickEffect] =
-    _root_.slick.dbio.DBIOAction[A, _root_.slick.dbio.NoStream, E]
-
   val WRAP_CONTENT = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
   val MATCH_PARENT = android.view.ViewGroup.LayoutParams.MATCH_PARENT
 }
@@ -35,6 +31,6 @@ extends Names
   val Resources = tryp.droid.core.Resources
 }
 
-@integrate(slick)
+@integrate(tryp)
 object `package`
 extends Names

@@ -10,9 +10,8 @@ import scala.collection.mutable.{Set => MSet, Buffer}
 import scala.concurrent.ExecutionContext
 
 import android.widget._
+import android.transition._
 import android.view.Gravity
-
-import android.transitions.everywhere._
 
 import com.melnykov.fab.FloatingActionButton
 

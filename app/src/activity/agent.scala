@@ -1,8 +1,6 @@
 package tryp
 package droid
 
-import state.{Create, Resume}
-
 trait FreeActivityAgent
 extends Activity
 with RootAgent

@@ -13,6 +13,7 @@ extends tryp.AndroidDeps
     "view" -> view,
     "service" -> service,
     "app" -> app,
+    "db" -> db,
     "test" -> test,
     "unit-core" -> unitCore,
     "unit-droid" -> unitDroid,
@@ -32,8 +33,8 @@ extends tryp.AndroidDeps
   }
 
   def core = ids(
-    pulsar("slick"),
-    dd("tryp" %% "pulsar-unit-core" % "+" % "test", "tek/pulsar", "unit-core")
+    pulsar("main")
+    // "tryp" %% "pulsar-unit-core" % "+" % "test"
   )
 
   def viewCore = ids(
@@ -58,10 +59,14 @@ extends tryp.AndroidDeps
 
   def app = ids(
     "com.lihaoyi" %% "scalarx" % "0.2.8",
-    "com.github.andkulikov" % "transitions-everywhere" % "1.+",
+    // "com.github.andkulikov" % "transitions-everywhere" % "1.+",
     "com.melnykov" % "floatingactionbutton" % "1.+",
-    "com.makeramen" % "roundedimageview" % "1.+",
+    // "com.makeramen" % "roundedimageview" % "1.+",
     "com.squareup.okhttp3" % "okhttp" % "3.+"
+  )
+
+  def db = ids(
+    pulsar("slick")
   )
 
   def logback = ids(

@@ -12,12 +12,6 @@ import simulacrum._
 
 trait StateEffectInstances
 {
-  implicit def instance_StateEffect_AnyAction[A: Operation, E <: SlickEffect] =
-    new StateEffect[SlickAction[A, E]] {
-      def stateEffect(fa: SlickAction[A, E]) =
-        DbTask[A, E](fa).publish.success.stateEffect
-    }
-
 //   implicit def instance_StateEffect_IO
 //   [F[_, _]: PerformIO, A: Operation, C: IOMessage]
 //   (implicit O: Operation[F[A, C]])

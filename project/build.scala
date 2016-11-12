@@ -53,6 +53,9 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
   lazy val app =
     "app".transitive / "android commons" <<< state
 
+  lazy val db =
+    "db" / "slick/sqldroid" <<< state
+
   lazy val logback = "logback" / "logback deps" <<< app
 
   lazy val test = "test" <<< app

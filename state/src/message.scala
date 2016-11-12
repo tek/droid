@@ -7,7 +7,6 @@ import tryp.state._
 
 import view.core._
 import view._
-import droid.core.Db
 
 import scala.concurrent.Await
 
@@ -60,11 +59,6 @@ object FromContext
     new FromContext[Resources] {
       def summon(c: Context) = Resources.fromContext(c)
     }
-
-  implicit def instance_FromContext_DbInfo: FromContext[DbInfo] =
-    new FromContext[DbInfo] {
-      def summon(c: Context) = Db.fromContext(c)
-    }
 }
 
 trait InternalIOMessage
@@ -88,27 +82,15 @@ extends Message
   def effect = (ec: EC) => (run(ec).stateEffect)
 }
 
-case class DbTask[A: Operation, E <: SlickEffect](action: SlickAction[A, E])
-extends Message
-{
-  def task(dbi: DbInfo): Effect = {
-    ZTask(Await.result(dbi.db() run(action), Duration.Inf)).stateEffect
-  }
-
-  def effect(dbi: Option[DbInfo]): Effect = {
-    dbi.map(task) | {
-      val io = IO((dbi: DbInfo) => task(dbi))
-      val fc = FromContextIO[IO, Effect, DbInfo](io)
-      fc.effect
-    }
-  }
-}
-
 case class IOTask[F[_, _]: PerformIO, A, C](io: F[A, C], desc: String)
 (implicit cm: IOMessage[C], se: StateEffect[ZTask[A]])
 extends Message
 {
-  def effect = cm.pure(io.unsafePerformIO(_), desc).publish.stateEffect
+  val task = (c: C) => io.unsafePerformIO(c)
+    // .handleWith {
+    // case ZZ
+  // }
+  def effect = cm.pure(task, desc).publish.stateEffect
 }
 
 // TODO maybe allow A to have an Operation and asynchronously enqueue the

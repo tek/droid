@@ -126,10 +126,10 @@ extends Proguard
     "-dontnote com.melnykov.fab.**",
 
     // logback
-    // "-keep class ch.qos.logback.classic.LoggerContext",
-    // "-keep class ch.qos.** { *; }",
-    // "-keep class org.slf4j.** { *; }",
-    // "-keepattributes *Annotation*",
+    "-keep class ch.qos.logback.classic.LoggerContext",
+    "-keep class ch.qos.** { *; }",
+    "-keep class org.slf4j.** { *; }",
+    "-keepattributes *Annotation*",
     "-dontnote java.nio.file.**",
 
     // test runner
