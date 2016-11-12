@@ -102,8 +102,8 @@ extends state.TreeViewMachine[B]
     case CreateContentView =>
       _ << CreateAdapter
     case CreateAdapter =>
-      _ << adapter.map(SetAdapter(_).to(this)) <<
-        infMain.map(ContentTree(_).to(this))
+      _ << adapter.map(SetAdapter(_).back) <<
+        infMain.map(ContentTree(_).back)
     case SetAdapter(adapter) => {
       case S(s, d) =>
         S(s, dataWithAdapter(d, adapter))

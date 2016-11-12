@@ -15,6 +15,7 @@ import android.support.v7.app.ActionBarDrawerToggle
 import view.io.text._
 import view.io.misc._
 import AppState._
+import IOOperation.exports._
 
 class MainFrame(c: Context)
 extends FrameLayout(c)
@@ -33,6 +34,12 @@ with Logging
     if (getChildCount != 0) removeViewAt(0)
     addView(a)
   }
+}
+
+object MainFrame
+extends Combinators[MainFrame]
+{
+  def load(v: View) = k(_.setView(v))
 }
 
 trait HasMainFrame
@@ -99,8 +106,6 @@ extends TreeViewMachine[A]
     case UiLoaded => uiLoaded
   }
 
-  import IOOperation.exports._
-
   /** If the main frame has already been installed (state Ready), immediately
    *  request the main view
    */
@@ -115,7 +120,7 @@ extends TreeViewMachine[A]
    */
   def setMainView(view: View): Transit = {
     case s @ S(_, ViewData(main)) =>
-      s << cio(_ => main.mainFrame.setView(view))
+      s << (main.mainFrame >>- MainFrame.load(view))
         .map(_ => MainViewLoaded.publish)
         .ui
   }
@@ -217,7 +222,7 @@ extends MainViewAgent
 }
 
 case class Drawer(container: DrawerLayout, mainFrame: MainFrame,
-  drawer: FrameLayout)
+  drawer: MainFrame)
 extends ViewTree[DrawerLayout]
 with HasMainFrame
 {
@@ -228,10 +233,17 @@ with HasMainFrame
   override def toString = className
 }
 
+trait HasDrawer
+extends HasMainFrame
+{
+  def drawer: Drawer
+  def toolbar: Toolbar
+}
+
 case class ExtMVLayout(container: LinearLayout, toolbar: Toolbar,
   drawer: Drawer)
 extends ViewTree[LinearLayout]
-with HasMainFrame
+with HasDrawer
 {
   container.lp(MATCH_PARENT, MATCH_PARENT)
 
@@ -240,31 +252,72 @@ with HasMainFrame
   def mainFrame = drawer.mainFrame
 }
 
+object ExtMVContainerData
+{
+  type Toggle = ActionBarDrawerToggle
+
+  case class StoreDrawerToggle(toggle: Toggle)
+  extends Message
+
+  case object DrawerReady
+  extends Message
+
+  case object CreateDrawerView
+  extends Message
+
+  case class DrawerViewReady(view: View)
+  extends Message
+
+  case object DrawerLoaded
+  extends Message
+}
+import ExtMVContainerData._
+
+abstract class ExtMVContainerBase
+[A <: ViewTree[_ <: ViewGroup] with HasDrawer: ClassTag]
+extends MVContainer[A]
+{
+  trait ExtMVDataBase
+  extends ViewData
+  {
+    def toggle: Toggle
+  }
+
+  case class ExtMVData(view: A, toggle: Toggle)
+  extends ExtMVDataBase
+
+  protected def dataWithToggle(main: A, toggle: Toggle): ExtMVDataBase =
+    ExtMVData(main, toggle)
+
+  protected def toggleAdmit: Admission = {
+    case MainViewReady => {
+      case s @ S(_, ViewData(main)) =>
+        val createToggle = act(a => new Toggle(
+          a, main.drawer.container, main.toolbar,
+          droid.res.R.string.drawer_open, droid.res.R.string.drawer_close)
+        )
+        s << DrawerReady.toRoot <<
+          createToggle.map(StoreDrawerToggle(_).back) <<
+          CreateDrawerView.toRoot
+    }
+    case StoreDrawerToggle(toggle) => {
+      case S(s, ViewData(main)) =>
+        S(s, dataWithToggle(main, toggle))
+    }
+    case DrawerViewReady(v) => {
+      case s @ S(_, ViewData(main)) =>
+        val io = (main.drawer.drawer >>- MainFrame.load(v))
+        s << io.map(_ => DrawerLoaded.toRoot).ui
+    }
+  }
+
+  override def internalAdmit = toggleAdmit orElse super.internalAdmit
+}
+
 trait ExtMVContainer
-extends MVContainer[ExtMVLayout]
+extends ExtMVContainerBase[ExtMVLayout]
 {
   def infMain = inf[ExtMVLayout]
-
-//   def createDrawerToggle = {
-//     drawer.v.map2(toolbar.v) { (d, t) =>
-//         act { act =>
-//           val res = Resources.fromContext(act)
-//           (res.stringId("drawer_open") |@| res.stringId("drawer_close"))
-//             .map((o, c) => new ActionBarDrawerToggle(act, d, t, o, c))
-//             .map(StoreDrawerToggle(_))
-//         }
-//     }
-//   }
-//     StreamIO.lift { implicit a =>
-//     drawer >>- { drawer =>
-//       toolbar >>- { tb =>
-//         res.stringId("drawer_open") |@| res.stringId("drawer_close") map {
-//           case (o, c) =>
-//             new ActionBarDrawerToggle(activity, drawer, tb, o, c)
-//         } toOption
-//       }
-//     }
-//   }
 }
 
 trait ExtMV

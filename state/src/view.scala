@@ -60,7 +60,7 @@ extends ViewMachine
 
   override def internalAdmit = super.internalAdmit orElse {
     case CreateContentView =>
-      _ << infMain.map(ContentTree(_).to(this))
+      _ << infMain.map(ContentTree(_).back)
     case ContentTree(tree: A) => {
       case S(s, d) =>
         val data = dataWithTree(d, tree)
@@ -105,7 +105,7 @@ extends ViewMachine
     }
     case CreateContentView => {
       case s =>
-        s << layout.map(ContentView(_).to(this))
+        s << layout.map(ContentView(_).back)
     }
   }
 }
