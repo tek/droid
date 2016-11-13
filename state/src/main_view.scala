@@ -230,6 +230,7 @@ with HasMainFrame
   implicit val c = ctx
   container.lp(MATCH_PARENT, MATCH_PARENT)
   container.desc("drawer root")
+  mainFrame.desc("drawer main")
   drawer.setId(res.R.id.drawer)
   val lp = new DrawerLayout.LayoutParams(200.dp, MATCH_PARENT)
   lp.gravity = Gravity.START
@@ -303,7 +304,7 @@ extends MVContainer[A]
   case class ExtMVData(view: A, toggle: Toggle, open: Boolean)
   extends ExtMVDataBase
 
-  protected def dataWithToggle(main: A, toggle: Toggle): ExtMVDataBase =
+  protected def dataWithToggle(main: A, toggle: Toggle): Data =
     ExtMVData(main, toggle, false)
 
   protected def toggleAdmit: Admission = {
@@ -311,7 +312,6 @@ extends MVContainer[A]
       case s @ S(_, ViewData(main)) =>
         s << DrawerReady.toRoot << CreateDrawerView.toRoot << SetupActionBar <<
           CreateToggle
-
     }
     case SetupActionBar => {
       case s @ S(_, ViewData(main)) =>
@@ -328,11 +328,11 @@ extends MVContainer[A]
           a, main.drawer.container, main.toolbar,
           droid.res.R.string.drawer_open, droid.res.R.string.drawer_close)
         )
-        s << createToggle.map(StoreDrawerToggle(_).back) << SyncToggle
+        s << createToggle.map(StoreDrawerToggle(_).back)
     }
     case StoreDrawerToggle(toggle) => {
       case S(s, ViewData(main)) =>
-        S(s, dataWithToggle(main, toggle))
+        S(s, dataWithToggle(main, toggle)) << SyncToggle
     }
     case DrawerViewReady(v) => {
       case s @ S(_, ViewData(main)) =>
@@ -341,8 +341,7 @@ extends MVContainer[A]
     }
     case SyncToggle => {
       case s @ S(_, ExtMVData(_, toggle, _)) =>
-        val io = ZTask(toggle.syncState())
-        s << io
+        s << cio(_ => toggle.syncState()).unitUi
     }
   }
 
