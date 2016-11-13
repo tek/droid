@@ -97,21 +97,20 @@ extends TreeViewMachine[D]
     case CreateContentView =>
       _ << CreateAdapter
     case CreateAdapter =>
-      _ << adapter.map(SetAdapter(_).back) <<
-        infMain.map(ContentTree(_).back)
+      adapter.map(SetAdapter(_).back) << infMain.map(ContentTree(_).back)
     case SetAdapter(adapter) => {
       case S(s, d) =>
         S(s, dataWithAdapter(d, adapter))
     }
     case MainViewMessages.MainViewLoaded => {
-      case s @ S(_, RVData(main, adapter)) =>
+      case S(_, RVData(main, adapter)) =>
         val io = con(_ => main.recycler) >>- recyclerAdapter(adapter) >>-
           recyclerConf >>- recyclerLayout
-        s << io.unitUi << AdapterInstalled
+        io.unitUi << AdapterInstalled
     }
     case Update(items) => {
       case s @ S(_, RVData(main, adapter)) =>
-        s << adapter.updateItems(items).unitUi
+        adapter.updateItems(items).unitUi
     }
   }
 
