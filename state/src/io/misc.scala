@@ -5,6 +5,8 @@ package io
 
 import shapeless.tag.@@
 
+import iota._
+
 import tryp.state.From
 
 object misc
@@ -14,7 +16,5 @@ trait MiscCombinators
 extends ViewCombinators
 {
   def click(msg: Message)(implicit sender: Machine @@ From) =
-    k { (v: View) =>
-      v.clickListen(_ => sender.send(msg))
-    }
+    k(_.onClick(sender.send(msg)))
 }
