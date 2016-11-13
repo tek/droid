@@ -7,6 +7,7 @@ import iota._
 import tryp.state._
 
 import android.view.ViewGroup.LayoutParams
+import android.view.Gravity
 import android.widget._
 
 import android.support.v4.widget.DrawerLayout
@@ -221,15 +222,19 @@ extends MainViewAgent
   }
 }
 
-case class Drawer(container: DrawerLayout, mainFrame: MainFrame,
+case class Drawer(ctx: Context, container: DrawerLayout, mainFrame: MainFrame,
   drawer: MainFrame)
 extends ViewTree[DrawerLayout]
 with HasMainFrame
 {
+  implicit val c = ctx
   container.lp(MATCH_PARENT, MATCH_PARENT)
-
   container.desc("drawer root")
   drawer.setId(res.R.id.drawer)
+  drawer.lp(200.dp, MATCH_PARENT)
+  val lp = new DrawerLayout.LayoutParams(200.dp, MATCH_PARENT)
+  lp.gravity = Gravity.START
+  drawer.setLayoutParams(lp)
   drawer.desc("drawer")
 
   override def toString = className
@@ -273,6 +278,15 @@ object ExtMVContainerData
 
   case object DrawerLoaded
   extends Message
+
+  case object SetupActionBar
+  extends Message
+
+  case object CreateToggle
+  extends Message
+
+  case object SyncToggle
+  extends Message
 }
 import ExtMVContainerData._
 
@@ -286,22 +300,35 @@ extends MVContainer[A]
     def toggle: Toggle
   }
 
-  case class ExtMVData(view: A, toggle: Toggle)
+  case class ExtMVData(view: A, toggle: Toggle, open: Boolean)
   extends ExtMVDataBase
 
   protected def dataWithToggle(main: A, toggle: Toggle): ExtMVDataBase =
-    ExtMVData(main, toggle)
+    ExtMVData(main, toggle, false)
 
   protected def toggleAdmit: Admission = {
     case MainViewReady => {
+      case s @ S(_, ViewData(main)) =>
+        s << DrawerReady.toRoot << CreateDrawerView.toRoot << SetupActionBar <<
+          CreateToggle
+
+    }
+    case SetupActionBar => {
+      case s @ S(_, ViewData(main)) =>
+        val action = acact { a =>
+          a.setSupportActionBar(main.toolbar)
+          a.getSupportActionBar.setHomeButtonEnabled(true)
+          a.getSupportActionBar.setDisplayHomeAsUpEnabled(true)
+        }
+        s << action.unitUi
+    }
+    case CreateToggle => {
       case s @ S(_, ViewData(main)) =>
         val createToggle = act(a => new Toggle(
           a, main.drawer.container, main.toolbar,
           droid.res.R.string.drawer_open, droid.res.R.string.drawer_close)
         )
-        s << DrawerReady.toRoot <<
-          createToggle.map(StoreDrawerToggle(_).back) <<
-          CreateDrawerView.toRoot
+        s << createToggle.map(StoreDrawerToggle(_).back) << SyncToggle
     }
     case StoreDrawerToggle(toggle) => {
       case S(s, ViewData(main)) =>
@@ -311,6 +338,11 @@ extends MVContainer[A]
       case s @ S(_, ViewData(main)) =>
         val io = (main.drawer.drawer >>- MainFrame.load(v))
         s << io.map(_ => DrawerLoaded.toRoot).ui
+    }
+    case SyncToggle => {
+      case s @ S(_, ExtMVData(_, toggle, _)) =>
+        val io = ZTask(toggle.syncState())
+        s << io
     }
   }
 
