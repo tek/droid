@@ -2,22 +2,22 @@
 <resources>
   <style name='droid.base' parent='Theme.AppCompat.Light.NoActionBar'>
     <item name='drawerArrowStyle'>@style/DrawerArrow</item>
-  </style>
-  <style name='droid.light' parent='droid.light'>
-    <item name='colorPrimary'>@color/teal_500</item>
+
+    <item name='colorPrimary'>@color/white</item>
     <item name='colorPrimaryDark'>@color/teal_800</item>
-    <item name='colorPrimaryLight'>@color/teal_100</item>
-    <item name='colorAccent'>@color/pink_200</item>
-    <item name='colorAccentStrong'>@color/pink_500</item>
+    <item name='colorPrimaryLight'>@color/white</item>
+    <item name='colorAccent'>@color/orange_200</item>
+    <item name='colorAccentStrong'>@color/orange_500</item>
     <item name='colorBg'>@color/white</item>
-    <item name='colorBgLight'>@color/teal_50</item>
-    <item name='android:textColor'>@color/grey_500</item>
+    <item name='colorBgLight'>@color/grey_200</item>
+    <item name='android:textColor'>@color/grey_800</item>
 
     <item name='main_bg'>?colorBg</item>
     <item name='light_bg'>?colorBgLight</item>
     <item name='header_bg'>?light_bg</item>
     <item name='toolbar_bg'>?colorPrimary</item>
     <item name='toolbar_text'>?colorBg</item>
+
 
     <item name='drawer_main_bg'>?colorBgLight</item>
     <item name='drawer_item_bg'>@android:color/transparent</item>
@@ -26,11 +26,13 @@
     <item name='drawer_header_photo_border_color'>@color/grey_800</item>
     <item name='drawer_arrow_color'>?colorBg</item>
 
+    <item name='android:imageButtonStyle'>@style/button</item>
+    <item name='android:windowBackground'>?colorBg</item>
+  </style>
+  <style name='droid.light' parent='droid.light'>
     <item name='android:windowDrawsSystemBarBackgrounds'>true</item>
     <item name='android:windowTranslucentStatus'>true</item>
     <item name='android:windowTranslucentNavigation'>true</item>
-    <item name='android:windowBackground'>?colorPrimaryDark</item>
-    <item name='android:imageButtonStyle'>@style/button</item>
     <item name='actionBarItemBackground'>?android:attr/selectableItemBackground</item>
   </style>
 </resources>
