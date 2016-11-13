@@ -6,6 +6,8 @@ import reflect.macros.blackbox
 
 import scalaz.concurrent.Task
 
+import android.support.v7.app.AppCompatActivity
+
 import view.core._
 
 case class IOX[A, C](run: C => A, desc: String)
@@ -54,6 +56,8 @@ trait AnnotatedIO
     macro AnnotatedIOM.inst[A, Context]
   def act[A](f: Activity => A): IOX[A, Activity] =
     macro AnnotatedIOM.inst[A, Activity]
+  def acact[A](f: AppCompatActivity => A): IOX[A, AppCompatActivity] =
+    macro AnnotatedIOM.inst[A, AppCompatActivity]
   def res[A](f: Resources => A): IOX[A, Resources] =
     macro AnnotatedIOM.inst[A, Resources]
 

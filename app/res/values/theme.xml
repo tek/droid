@@ -1,6 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-  <style name='droid.light' parent='Theme.AppCompat.Light.NoActionBar'>
+  <style name='droid.base' parent='Theme.AppCompat.Light.NoActionBar'>
+    <item name='drawerArrowStyle'>@style/DrawerArrow</item>
+  </style>
+  <style name='droid.light' parent='droid.light'>
     <item name='colorPrimary'>@color/teal_500</item>
     <item name='colorPrimaryDark'>@color/teal_800</item>
     <item name='colorPrimaryLight'>@color/teal_100</item>
@@ -22,7 +25,6 @@
     <item name='drawer_header_text_color'>@color/white</item>
     <item name='drawer_header_photo_border_color'>@color/grey_800</item>
     <item name='drawer_arrow_color'>?colorBg</item>
-    <item name='drawerArrowStyle'>@style/DrawerArrow</item>
 
     <item name='android:windowDrawsSystemBarBackgrounds'>true</item>
     <item name='android:windowTranslucentStatus'>true</item>

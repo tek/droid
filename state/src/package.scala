@@ -18,7 +18,6 @@ extends view.Exports
   val Resume = tryp.droid.state.Resume
   val Update = tryp.droid.state.Update
   val Create = tryp.droid.state.Create
-  val AppState = tryp.droid.state.AppState
 }
 
 trait All

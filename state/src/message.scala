@@ -2,11 +2,9 @@ package tryp
 package droid
 package state
 
-import tryp.slick._
-import tryp.state._
+import tryp.state.{Fork, ParcelOperation}
 
-import view.core._
-import view._
+import android.support.v7.app.AppCompatActivity
 
 import scala.concurrent.Await
 
@@ -32,6 +30,12 @@ object IOMessage
       def pure[A: StateEffect](f: Activity => A, desc: String) =
         ActivityFun(f, desc)
     }
+
+  implicit def instance_IOMessage_AppCompatActivity =
+    new IOMessage[AppCompatActivity] {
+      def pure[A: StateEffect](f: AppCompatActivity => A, desc: String) =
+        AppCompatActivityFun(f, desc)
+    }
 }
 
 abstract class IOFun[A: StateEffect, C]
@@ -47,6 +51,10 @@ extends IOFun[A, Context]
 
 case class ActivityFun[A: StateEffect](run: Activity => A, desc: String)
 extends IOFun[A, Activity]
+
+case class AppCompatActivityFun[A: StateEffect]
+(run: AppCompatActivity => A, desc: String)
+extends IOFun[A, AppCompatActivity]
 
 @typeclass trait FromContext[C]
 {

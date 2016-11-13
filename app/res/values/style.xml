@@ -6,6 +6,6 @@
   </style>
   <style name='DrawerArrow' parent='Widget.AppCompat.DrawerArrowToggle'>
     <item name='spinBars'>true</item>
-    <item name='color'>?drawer_arrow_color</item>
+    <!-- <item name='color'>?drawer_arrow_color</item> -->
   </style>
 </resources>

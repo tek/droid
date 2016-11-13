@@ -2,8 +2,10 @@ package tryp
 package droid
 package state
 
+import android.support.v7.app.AppCompatActivity
+
 class StateActivity
-extends Activity
+extends AppCompatActivity
 with Logging
 with StateStrategy
 {

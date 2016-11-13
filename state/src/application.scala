@@ -4,10 +4,12 @@ package state
 
 import scalaz.stream._
 import Process._
-import tryp.state.AgentStateData._
+
+import android.support.v7.app.AppCompatActivity
 
 import iota.ViewTree
 
+import tryp.state.AgentStateData._
 import IOOperation._
 
 object AppState
@@ -67,6 +69,7 @@ with view.AnnotatedIO
     case SetContentTree(view, sender) => setContentView(view.container)
     case f @ ContextFun(_, _) => contextFun(f)
     case f @ ActivityFun(_, _) => activityFun(f)
+    case f @ AppCompatActivityFun(_, _) => appCompatActivityFun(f)
     // case t @ DbTask(_) => dbTask(t)
     case t @ ECTask(_) => ecTask(t)
   }
@@ -122,6 +125,14 @@ with view.AnnotatedIO
   def activityFun(fun: ActivityFun[_]): Transit = {
     case s @ S(Ready, ASData(Some(act), _)) =>
       s << fun.task(act)
+  }
+
+  def appCompatActivityFun(fun: AppCompatActivityFun[_]): Transit = {
+    case s @ S(Ready, ASData(Some(act), _)) =>
+      act match {
+        case aca: AppCompatActivity => s << fun.task(aca)
+        case _ => s << LogError(s"executing $fun", s"wrong type $act")
+      }
   }
 
   // def dbTask(task: DbTask[_, _]): Transit = _ << task.effect(dbInfo)
