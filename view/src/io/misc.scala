@@ -27,7 +27,7 @@ with ToViewOps
     ksub((_: A).storeMeta(data))
 
   def metaName[A <: View: ClassTag](name: String) =
-    meta[A](SimpleViewMetadata(name))
+    meta[A](NamedVMD(className[A], name))
 
   def nopSub[A <: View] = super.nopKSub[A]
 

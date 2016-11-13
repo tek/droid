@@ -228,7 +228,9 @@ with HasMainFrame
 {
   container.lp(MATCH_PARENT, MATCH_PARENT)
 
+  container.desc("drawer root")
   drawer.setId(res.R.id.drawer)
+  drawer.desc("drawer")
 
   override def toString = className
 }
@@ -246,6 +248,7 @@ extends ViewTree[LinearLayout]
 with HasDrawer
 {
   container.lp(MATCH_PARENT, MATCH_PARENT)
+  container.desc("ext mv")
 
   override def toString = className
 
