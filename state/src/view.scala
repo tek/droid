@@ -39,7 +39,7 @@ extends ViewMachine
     override def toString = "ContentTree"
   }
 
-  trait ViewData
+  abstract class ViewData
   extends ViewDataI[A]
   {
     def view: A
@@ -55,7 +55,7 @@ extends ViewMachine
 
   protected def infMain: StreamIO[A, Context]
 
-  protected def dataWithTree(data: Data, tree: A): ViewData =
+  protected def dataWithTree(data: Data, tree: A): Data =
     VData(tree)
 
   override def internalAdmit = super.internalAdmit orElse {

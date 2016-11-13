@@ -35,7 +35,7 @@ extends state.TreeViewMachine[B]
   case object AdapterInstalled
   extends Message
 
-  trait RecyclerDataBase
+  abstract class RecyclerDataBase
   extends Data
   {
     def adapter: A
@@ -49,10 +49,10 @@ extends state.TreeViewMachine[B]
   case class SimpleRecyclerDataBase(adapter: A)
   extends RecyclerDataBase
 
-  trait RecyclerData
-  extends RecyclerDataBase
-  with ViewData
+  abstract class RecyclerData
+  extends ViewData
   {
+    def adapter: A
     def main: B
   }
 
@@ -88,7 +88,7 @@ extends state.TreeViewMachine[B]
     }
   }
 
-  protected def dataWithAdapter(data: Data, adapter: A): RecyclerDataBase =
+  protected def dataWithAdapter(data: Data, adapter: A): Data =
     data match {
       case RVData(main, _) =>
         RVData(main, adapter)
