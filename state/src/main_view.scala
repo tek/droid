@@ -231,7 +231,6 @@ with HasMainFrame
   container.lp(MATCH_PARENT, MATCH_PARENT)
   container.desc("drawer root")
   drawer.setId(res.R.id.drawer)
-  drawer.lp(200.dp, MATCH_PARENT)
   val lp = new DrawerLayout.LayoutParams(200.dp, MATCH_PARENT)
   lp.gravity = Gravity.START
   drawer.setLayoutParams(lp)
@@ -253,6 +252,7 @@ extends ViewTree[LinearLayout]
 with HasDrawer
 {
   container.lp(MATCH_PARENT, MATCH_PARENT)
+  container.setOrientation(LinearLayout.VERTICAL)
   container.desc("ext mv")
 
   override def toString = className
