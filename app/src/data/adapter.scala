@@ -6,7 +6,7 @@ import android.view.ViewGroup.LayoutParams._
 
 import scalaz.stream._
 
-import view.core._
+import view.AnnotatedIO
 
 abstract class ListAdapter(implicit val activity: Activity)
 extends BaseAdapter
@@ -74,6 +74,8 @@ with Logging
 {
   def items: Seq[B]
 
+  def updateItems(newItems: Seq[B]): IOX[Unit, Context]
+
   var visibleItems: Seq[B] = Seq()
 
   def getItemCount = visibleItems.length
@@ -128,13 +130,14 @@ with Logging
 abstract class SimpleRecyclerAdapter[A <: RecyclerViewHolder, B: ClassTag]
 (implicit context: Context)
 extends RecyclerAdapter[A, B]
+with AnnotatedIO
 {
   var simpleItems = Vector[B]()
 
   def items = simpleItems
 
   def updateItems(newItems: Seq[B]) = {
-    IO { (c: Context) =>
+    con { _ =>
       simpleItems = newItems.toVector
       // applyFilter
       updateVisibleData(simpleItems)

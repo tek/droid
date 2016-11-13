@@ -5,40 +5,35 @@ import iota._
 
 import state.AppState._
 import state.ViewMachine._
-
-object RecyclerViewMachineData
-{
-}
+import state.TreeViewMachine
 
 trait RVTree
 {
   def recycler: RecyclerView
 }
 
-case class RVMain(container: FrameLayout, recycler: RecyclerView)
-extends ViewTree[FrameLayout]
-with RVTree
+abstract class RVMachine[
+A <: RecyclerViewHolder,
+B,
+C <: RecyclerAdapter[A, B],
+D <: ViewTree[_ <: ViewGroup] with RVTree: ClassTag]
+extends TreeViewMachine[D]
 {
-  override def toString = "RVMain"
-}
+  type RVA = C
 
-abstract class RVMachine
-[
-A <: RecyclerViewAdapter[_]: ClassTag,
-B <: ViewTree[_ <: ViewGroup] with RVTree: ClassTag
-]
-extends state.TreeViewMachine[B]
-{
   case object CreateAdapter
   extends Message
 
   case object AdapterInstalled
   extends Message
 
+  case class Update(items: Seq[B])
+  extends Message
+
   abstract class RecyclerDataBase
   extends Data
   {
-    def adapter: A
+    def adapter: RVA
   }
 
   object RecyclerDataBase
@@ -46,14 +41,14 @@ extends state.TreeViewMachine[B]
     def unapply(a: RecyclerDataBase) = Some(a.adapter)
   }
 
-  case class SimpleRecyclerDataBase(adapter: A)
+  case class SimpleRecyclerDataBase(adapter: RVA)
   extends RecyclerDataBase
 
   abstract class RecyclerData
   extends ViewData
   {
-    def adapter: A
-    def main: B
+    def adapter: RVA
+    def main: D
   }
 
   object RecyclerData
@@ -61,7 +56,7 @@ extends state.TreeViewMachine[B]
     def unapply(a: RecyclerData) = Some((a.main, a.adapter))
   }
 
-  case class RVData(main: B, adapter: A)
+  case class RVData(main: D, adapter: RVA)
   extends RecyclerData
   {
     def view = main
@@ -69,18 +64,18 @@ extends state.TreeViewMachine[B]
 
   import view.io.recycler._
 
-  case class SetAdapter(adapter: A)
+  case class SetAdapter(adapter: RVA)
   extends Message
 
   override def machinePrefix = super.machinePrefix :+ "recycler"
 
-  val adapter: IOX[A, Context]
+  val adapter: IOX[RVA, Context]
 
   def recyclerConf: CK[RecyclerView] = nopK
 
   def recyclerLayout = linear
 
-  override def dataWithTree(data: Data, tree: B) = {
+  override def dataWithTree(data: Data, tree: D) = {
     data match {
       case RecyclerDataBase(adapter) =>
         RVData(tree, adapter)
@@ -88,7 +83,7 @@ extends state.TreeViewMachine[B]
     }
   }
 
-  protected def dataWithAdapter(data: Data, adapter: A): Data =
+  protected def dataWithAdapter(data: Data, adapter: RVA): Data =
     data match {
       case RVData(main, _) =>
         RVData(main, adapter)
@@ -114,13 +109,24 @@ extends state.TreeViewMachine[B]
           recyclerConf >>- recyclerLayout
         s << io.unitUi << AdapterInstalled
     }
+    case Update(items) => {
+      case s @ S(_, RVData(main, adapter)) =>
+        s << adapter.updateItems(items).unitUi
+    }
   }
 
   override def internalAdmit = extraInternal orElse super.internalAdmit
 }
 
-abstract class SimpleRV[A <: RecyclerViewAdapter[_]: ClassTag]
-extends RVMachine[A, RVMain]
+case class RVMain(container: FrameLayout, recycler: RecyclerView)
+extends ViewTree[FrameLayout]
+with RVTree
+{
+  override def toString = "RVMain"
+}
+
+abstract class SimpleRV[A <: RecyclerViewHolder, B, C <: RecyclerAdapter[A, B]]
+extends RVMachine[A, B, C, RVMain]
 {
   def infMain = inf[RVMain]
 }
