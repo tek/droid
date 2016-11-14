@@ -40,33 +40,34 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
   lazy val core = "core" / "android basics"
 
   lazy val viewCore =
-    "view-core" / "context abstraction core" <<< core
+    "view-core" / "context abstraction core" << core
 
   lazy val view =
-    "view" / "view IO streaming and iota wrappers" <<< viewCore
+    "view" / "view IO streaming and iota wrappers" << viewCore
 
-  lazy val state = "state" / "state machine" <<< view
+  lazy val state = "state" / "state machine" << view
 
   lazy val service =
-    "service" / "machines providing services" <<< state <<< viewCore
+    "service" / "machines providing services" << state << viewCore
 
   lazy val app =
-    "app".transitive / "android commons" <<< state
+    "app".transitive / "android commons" << state
 
   lazy val db =
-    "db" / "slick/sqldroid" <<< state
+    "db" / "slick/sqldroid" << state
 
-  lazy val logback = "logback" / "logback deps" <<< app
+  lazy val logback = "logback" / "logback deps" << app
 
-  lazy val test = "test" <<< app
+  lazy val test = "test" << app
 
-  lazy val unitCore = ("unit-core" <<< test)
+  lazy val unitCore = ("unit-core" << test)
     .settingsV(aarModule := "unit.core")
 
-  lazy val debug = "debug" <<< app
+  lazy val debug = "debug" << app
 
   lazy val unitDroid =
-    (adp("unit-droid") <<< unitCore <<< logback <<< debug <<< view <<< service)
+    (adp("unit-droid") << unitCore << logback << debug << view << service)
+      .map(_.disablePlugins(CoursierPlugin))
       .robotest
       .manifest(
         "appName" -> "tryp",
@@ -89,12 +90,13 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
       .logback("tag" -> "tryp")
 
   lazy val unit = (tdp("unit") << unitCore << app << debug)
+    .map(_.disablePlugins(CoursierPlugin))
     .settingsV(logbackTemplate := metaRes.value / "unit" / "logback.xml")
     .logback()
 
-  lazy val integrationCore = ("integration-core" <<< app)
+  lazy val integrationCore = ("integration-core" << app)
 
-  lazy val integration = (adp("integration") <<< integrationCore <<< app)
+  lazy val integration = (adp("integration") << integrationCore << app)
     .integration
     .protify
     .manifest(
@@ -121,6 +123,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
   lazy val trial = adp("trial")
     // .protify
     .settingsV(apkbuildDebug ~= { a ⇒ a(true); a })
+    .map(_.disablePlugins(CoursierPlugin))
     .manifest(
       "appName" -> "tryp trial",
       "appClass" -> "tryp.droid.trial.TApplication",
@@ -139,7 +142,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
       dexMulti := true,
       dexMinimizeMain := false
     )
-    .logback("tag" -> "tryp") <<< logback
+    .logback("tag" -> "tryp") << logback
 
   lazy val all = mpb("all")
     .aggregate(core.!, viewCore.!, view.!, state.!, service.!, app.!,
