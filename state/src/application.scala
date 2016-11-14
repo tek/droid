@@ -119,18 +119,18 @@ with view.AnnotatedIO
 
   def contextFun(fun: ContextFun[_]): Transit = {
     case s @ S(Ready, ASData(Some(act), _)) =>
-      s << fun.task(act)
+      s << fun.task(act).effect(fun.desc)
   }
 
   def activityFun(fun: ActivityFun[_]): Transit = {
     case s @ S(Ready, ASData(Some(act), _)) =>
-      s << fun.task(act)
+      s << fun.task(act).effect(fun.desc)
   }
 
   def appCompatActivityFun(fun: AppCompatActivityFun[_]): Transit = {
     case s @ S(Ready, ASData(Some(act), _)) =>
       act match {
-        case aca: AppCompatActivity => s << fun.task(aca)
+        case aca: AppCompatActivity => s << fun.task(aca).effect(fun.desc)
         case _ => s << LogError(s"executing $fun", s"wrong type $act")
       }
   }
