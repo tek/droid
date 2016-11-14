@@ -1,34 +1,3 @@
-// package tryp
-// package droid
-
-// import concurrent._
-
-// import scalaz._, Scalaz._, concurrent._
-
-// import android.widget._
-
-// import com.melnykov.fab.FloatingActionButton
-
-// import AsyncTaskStateData._
-
-// trait Fab
-// extends HasActivityAgent
-// with Transitions
-// with Macroid
-// { fabView =>
-
-//   import CommonWidgets._
-
-//   lazy val asyncMachine = new AsyncTasksMachine {
-//     override def handle = "fab"
-//     override def switchToAsyncUi = fabView.fadeToProgress
-//     override def switchToIdleUi = fabView.fadeToFab
-//   }
-
-//   override def machines = asyncMachine %:: super.machines
-
-//   val progress = slut[ProgressBar]
-
 //   def fabCorner(icon: String)(contentView: => Ui[View]) = {
 //     val geom = rlp(↧, ↦) + margin(right = 16 dp, bottom = 48 dp)
 //     RL(rlp(↔, ↕), metaName("fab corner container"))(
@@ -45,7 +14,7 @@
 //     val geom = rlp(↦, alignBottom(RId.header)) +
 //       margin(right = 16 dp, bottom = marg.toInt)
 //     val contentParams = rlp(parallax ? ↥ | below(RId.header))
-//     RL(rlp(↔, ↕), metaName("fab corner container"))(
+//     RL(rlp(↔, ↕), metaName("fab between container"))(
 //       content(contentView) <~ contentParams <~ metaName("content view"),
 //       header(
 //         RL(rlp(↔, ↕))(
@@ -67,8 +36,6 @@
 //       Fab.colors("colorAccentStrong", "colorAccent") <~
 //       On.click { Ui(fabClick()) }
 //   }
-
-//   def fabClick() { }
 
 //   // Runs 'task' while changing the fab to a circular progress indicator. After
 //   // completion, 'snack' is shown as a toast, if nonempty.

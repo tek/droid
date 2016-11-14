@@ -94,7 +94,6 @@ object MainViewMessages
 }
 import MainViewMessages._
 
-@Publish(LoadUi)
 abstract class MVContainer
 [A <: ViewTree[_ <: ViewGroup] with HasMainFrame: ClassTag]
 extends TreeViewMachine[A]

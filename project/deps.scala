@@ -59,7 +59,6 @@ extends tryp.AndroidDeps
 
   def app = ids(
     "com.lihaoyi" %% "scalarx" % "0.2.8",
-    // "com.github.andkulikov" % "transitions-everywhere" % "1.+",
     "com.melnykov" % "floatingactionbutton" % "1.+",
     // "com.makeramen" % "roundedimageview" % "1.+",
     "com.squareup.okhttp3" % "okhttp" % "3.+"
