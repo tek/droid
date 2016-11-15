@@ -287,6 +287,9 @@ object ExtMVContainerData
 
   case object SyncToggle
   extends Message
+
+  case object CloseDrawer
+  extends Message
 }
 import ExtMVContainerData._
 
@@ -340,7 +343,11 @@ extends MVContainer[A]
     }
     case SyncToggle => {
       case s @ S(_, ExtMVData(_, toggle, _)) =>
-        s << cio(_ => toggle.syncState()).unitUi
+        cio(_ => toggle.syncState()).unitUi
+    }
+    case CloseDrawer => {
+      case s @ S(_, ExtMVData(main, _, _)) =>
+        cio(_ => main.drawer.container.closeDrawer(Gravity.LEFT)).unitUi
     }
   }
 
