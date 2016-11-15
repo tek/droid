@@ -47,6 +47,12 @@ object AppState
 
   case class ASData(activity: Option[Activity], agent: Option[ActivityAgent])
   extends Data
+
+  case class OnStart(activity: Activity)
+  extends Message
+
+  case class OnResume(activity: Activity)
+  extends Message
 }
 import AppState._
 
@@ -161,9 +167,20 @@ extends RootAgent { app =>
     case a @ SetContentView(_, _) => _ << appStateMachine.sendP(a)
     case a @ SetContentTree(_, _) => _ << appStateMachine.sendP(a)
   }
+
+  def setActivity(act: Activity) = {
+    log.debug(s"setting activity $act")
+    scheduleOne(SetActivity(act).toLocal)
+  }
+
+  def onStart(activity: Activity) =
+    appStateMachine.send(OnStart(activity))
+
+  def onResume(activity: Activity) =
+    appStateMachine.send(OnResume(activity))
 }
 
 trait StateApplication
 {
-  def setActivity(act: Activity)
+  def stateAppAgent: StateApplicationAgent
 }
