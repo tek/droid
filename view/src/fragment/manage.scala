@@ -1,15 +1,12 @@
 package tryp
 package droid
+package view
 
 import reflect.classTag
 
 import android.app.{FragmentManager, FragmentTransaction}
 
 import ScalazGlobals._
-
-import simulacrum._
-
-import view.{HasActivityF, HasContextF}
 
 trait FragmentHelpers
 {
@@ -27,7 +24,7 @@ trait FragmentHelpers
   }
 }
 
-@typeclass abstract class FragmentManagement[A]
+@tc abstract class FragmentManagement[A]
 (implicit val hasActivity: HasActivityF[A], val hasContext: HasContextF[A],
   val rv: RootView[A])
 extends FragmentHelpers

@@ -25,6 +25,7 @@ extends view.All
 with ToViewStreamMessageOps
 with StateEffectInstances
 with IOEffect.ToIOEffectOps
+with view.FragmentManagement.ToFragmentManagementOps
 {
   def Nop: Effect = tryp.state.Effect(Process.halt, "nop")
 }
