@@ -28,6 +28,7 @@ object RootView
 
 final class SearchView[A: RootView](a: A)
 extends ViewInstances
+with Logging
 {
   def searcher: SearchView.CanFindView = a.root
 
@@ -77,12 +78,16 @@ extends ViewInstances
 
   def showViewTree = viewTree.drawTree
 
+  def treeLines = showViewTree.lines
+
+  def showTree() = treeLines.dbgLines
+
   def printViewTree() = Log.i(showViewTree)
 }
 
 trait ToSearchView
 {
-  implicit def ToSearchView[A: RootView](a: A): SearchView[A] = 
+  implicit def ToSearchView[A: RootView](a: A): SearchView[A] =
     new SearchView(a)
 }
 
