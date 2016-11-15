@@ -123,8 +123,6 @@ class Resources(implicit internal: ResourcesInternal,
 
   def dimen[A: ResId](_id: A) = res(_id, "dimen")(_.getDimension _)
 
-  def color[A: ResId](_id: A) = res(_id, "color")(_.getColor _)
-
   def bool[A: ResId](_id: A) = res(_id, "bool")(_.getBoolean _)
 
   def i(name: String, suffix: Option[String] = None) = {
