@@ -7,9 +7,8 @@ import iota._
 import tryp.state._
 
 import android.view.ViewGroup.LayoutParams
-import android.view.Gravity
+import android.view.{Gravity, LayoutInflater}
 import android.widget._
-
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
 
@@ -18,10 +17,21 @@ import view.io.misc._
 import AppState._
 import IOOperation.exports._
 
+case class MainFragment(view: View)
+extends Fragment
+{
+  override def onCreateView
+  (inflater: LayoutInflater, container: ViewGroup, state: Bundle) = {
+    view
+  }
+}
+
 class MainFrame(c: Context)
 extends FrameLayout(c)
 with Logging
 {
+  setId(System.identityHashCode(this))
+
   override def addView
   (v: View, index: Int, params: LayoutParams): Unit =
   {
@@ -32,7 +42,7 @@ with Logging
   }
 
   def setView(a: View) = {
-    if (getChildCount != 0) removeViewAt(0)
+    if (getChildCount > 0) removeViewAt(0)
     addView(a)
   }
 }
@@ -120,7 +130,11 @@ extends TreeViewMachine[A]
    */
   def setMainView(view: View): Transit = {
     case s @ S(_, ViewData(main)) =>
-      s << (main.mainFrame >>- MainFrame.load(view))
+      val io = act { a =>
+        a.replaceFragment(main.mainFrame.getId, MainFragment(view), true,
+          "mainframe", false)
+      }
+      io
         .map(_ => MainViewLoaded.publish)
         .ui
   }
