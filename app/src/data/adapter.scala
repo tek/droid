@@ -64,14 +64,14 @@ extends ListAdapter
   }
 }
 
-abstract class RecyclerAdapter[A <: RecyclerViewHolder, B: ClassTag](
-  implicit val context: Context
-)
+abstract class RecyclerAdapter[A <: RecyclerViewHolder, B: ClassTag]
 extends RecyclerViewAdapter[A]
 with Filterable
 with DefaultStrategy
 with Logging
 {
+  implicit def context: Context
+
   def items: Seq[B]
 
   def updateItems(newItems: Seq[B]): IOX[Unit, Context]
@@ -128,7 +128,6 @@ with Logging
 }
 
 abstract class SimpleRecyclerAdapter[A <: RecyclerViewHolder, B: ClassTag]
-(implicit context: Context)
 extends RecyclerAdapter[A, B]
 with AnnotatedIO
 {
