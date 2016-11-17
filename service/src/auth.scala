@@ -169,7 +169,7 @@ extends Agent
   override def machines = authMachine :: super.machines
 
   // TODO in activity agent
-  // publishLocalOne(ActivityResult(requestCode))
+  // publishLocal1(ActivityResult(requestCode))
 
   // override def onActivityResult(requestCode: Int, responseCode: Int,
   //   intent: Intent) = {
