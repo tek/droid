@@ -48,11 +48,17 @@ object AppState
   case class ASData(activity: Option[Activity], agent: Option[ActivityAgent])
   extends Data
 
-  case class OnStart(activity: Activity)
+  trait ActivityLifecycleMessage
   extends Message
+  {
+    def activity: Activity
+  }
+
+  case class OnStart(activity: Activity)
+  extends ActivityLifecycleMessage
 
   case class OnResume(activity: Activity)
-  extends Message
+  extends ActivityLifecycleMessage
 }
 import AppState._
 
@@ -78,6 +84,7 @@ with view.AnnotatedIO
     case f @ AppCompatActivityFun(_, _) => appCompatActivityFun(f)
     // case t @ DbTask(_) => dbTask(t)
     case t @ ECTask(_) => ecTask(t)
+    case m: ActivityLifecycleMessage => activityLifecycleMessage(m)
   }
 
   def startActivity(agent: ActivityAgent): Transit = {
@@ -144,6 +151,11 @@ with view.AnnotatedIO
   // def dbTask(task: DbTask[_, _]): Transit = _ << task.effect(dbInfo)
 
   def ecTask(task: ECTask[_]): Transit = _ << task.effect(ec)
+
+  def activityLifecycleMessage(m: ActivityLifecycleMessage): Transit = {
+    case s @ S(Ready, ASData(Some(act), Some(agent))) if act == m.activity =>
+      agent.publish(m)
+  }
 }
 
 trait StateApplicationAgent
