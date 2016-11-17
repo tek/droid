@@ -36,7 +36,7 @@ extends ActivitySpec[SpecStateActivity]
   def initialAgent: ActivityAgent
 
   override def before =
-    stateApp.publishLocalOne(AppState.SetAgent(initialAgent))
+    stateApp.publishLocal1(AppState.SetAgent(initialAgent))
 
   def stateApp = application match {
     case a: SpecStateApplication => a

@@ -141,7 +141,7 @@ with FixedPool
 
   def machine = {
     root.runAgent()
-    root.ag1.scheduleOne(Go.publish)
+    root.ag1.schedule1(Go.publish)
     (root.ag2.output.get will_== 1) and (root.ag1.state.output.get will_== 0)
   }
 }

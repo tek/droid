@@ -62,7 +62,7 @@ with CachedPool
   }
 
   def publish = {
-    root.publishOne(Go)
+    root.publish1(Go)
     ag1.state.output.get will_== 0
   }
 }

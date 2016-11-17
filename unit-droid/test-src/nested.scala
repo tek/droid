@@ -77,7 +77,7 @@ extends StateAppSpec
   def show = {
     activity willContain text(oldText) and (
       initialAgent.nested1.tv.text computes_== oldText) and {
-        initialAgent.nestedAgent.publishOne(SetText(newText))
+        initialAgent.nestedAgent.publish1(SetText(newText))
         1 === 1
       }
   }

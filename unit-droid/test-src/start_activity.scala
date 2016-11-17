@@ -18,7 +18,7 @@ extends StateAppSpec
 
   override def before = {
     super.before
-    stateApp.publishOne(StartActivity(new MainViewAgent {}))
+    stateApp.publish1(StartActivity(new MainViewAgent {}))
   }
 
   def startActivity = {

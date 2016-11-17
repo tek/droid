@@ -170,7 +170,7 @@ extends RootAgent { app =>
 
   def setActivity(act: Activity) = {
     log.debug(s"setting activity $act")
-    scheduleOne(SetActivity(act).toLocal)
+    schedule1(SetActivity(act).toLocal)
   }
 
   def onStart(activity: Activity) =

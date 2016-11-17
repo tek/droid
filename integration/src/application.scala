@@ -21,6 +21,6 @@ with StateApplication
   }
 
   def setActivity(act: Activity) = {
-    root.scheduleOne(SetActivity(act).toLocal)
+    root.schedule1(SetActivity(act).toLocal)
   }
 }
