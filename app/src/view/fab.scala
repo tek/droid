@@ -39,7 +39,7 @@
 
 //   // Runs 'task' while changing the fab to a circular progress indicator. After
 //   // completion, 'snack' is shown as a toast, if nonempty.
-//   // TODO queue into Process
+//   // TODO queue into Stream
 //   def fabAsyncF[A, B]
 //   (success: => Option[String] = None, failure: => Option[String] = None)
 //   (f: Future[B]) = {

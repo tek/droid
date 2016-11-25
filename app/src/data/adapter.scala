@@ -4,8 +4,6 @@ package droid
 import android.widget.{BaseAdapter,Filterable,Filter}
 import android.view.ViewGroup.LayoutParams._
 
-import scalaz.stream._
-
 import view.AnnotatedIO
 
 abstract class ListAdapter(implicit val activity: Activity)
@@ -71,6 +69,8 @@ with DefaultStrategy
 with Logging
 {
   implicit def context: Context
+
+  implicit def scheduler: Scheduler
 
   def items: Seq[B]
 
@@ -172,7 +172,7 @@ with Views[Context, StreamIO]
     items.lift(position) foreach { s =>
       val io = holder.content >>- text(s)
       io.view
-        .flatMap(a => Process.eval(a.main))
+        .flatMap(a => Stream.eval(a.main))
         .run
         .infraRun("bind view holder")
     }

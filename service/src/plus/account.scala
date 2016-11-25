@@ -2,7 +2,6 @@ package tryp
 package droid
 package state
 
-import scalaz.concurrent._
 import scalaz.Maybe
 
 import java.net.URL

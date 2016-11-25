@@ -10,28 +10,30 @@ import shapeless._
 
 import iota._
 
-import scalaz.stream.Process._
-
 import MainViewMessages.LoadUi
 import state.AppState._
 import IOOperation._
-import state.TreeViewMachine
+import state.TreeViewTrans
 
-
-class IntMainViewAgent
-extends state.DrawerAgent
+class Simple
+extends state.MVAgent
 {
   lazy val tMachine = new Machine {
-    override def handle = "t"
+    def name = "t"
 
-    def admit: Admission = {
-      case ActivityAgentStarted(_) => _ << LoadUi(new ViewAgent1).publish
-    }
+    def transitions(mc: MComm) =
+      new MachineTransitions {
+        def mcomm = mc
+
+        def admit: Admission = {
+          case ActivityAgentStarted(_) => _ << LoadUi(new ViewAgent1).broadcast
+        }
+      }
   }
 
-  override def handle = "t_main_view"
-
   override def machines = tMachine :: super.machines
+
+  def agents = Nil
 }
 
 case class Main1(container: FrameLayout, label: TextView)
@@ -44,11 +46,17 @@ extends ViewTree[FrameLayout]
 class ViewAgent1
 extends ViewAgent
 {
-  override def handle = "view_1"
+  def name = "view_1"
 
-  lazy val viewMachine = new TreeViewMachine {
-    def admit = PartialFunction.empty
+  def agents = Nil
 
-    def infMain = inf[Main1]
-  }
+  lazy val viewMachine =
+    new state.ViewMachine {
+      def transitions(mc: MComm) =
+        new state.TreeViewTrans[Main1] {
+          def mcomm = mc
+          def admit = PartialFunction.empty
+          def infMain = inf[Main1]
+        }
+    }
 }

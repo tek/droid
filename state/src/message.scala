@@ -2,8 +2,6 @@ package tryp
 package droid
 package state
 
-import tryp.state.{Fork, ParcelOperation}
-
 import android.support.v7.app.AppCompatActivity
 
 import scala.concurrent.Await
@@ -11,6 +9,8 @@ import scala.concurrent.Await
 import simulacrum._
 
 import export._
+
+import tryp.state.{Fork, ParcelOperation}
 
 trait IOMessage[C]
 {
@@ -43,7 +43,8 @@ extends Message
 {
   def run: C => A
 
-  def task(c: C) = ZTask(run(c)).map(_.stateEffect)
+  def task(c: C)(implicit strat: Strategy) =
+    fs2.Task(run(c)).map(_.stateEffect)
 }
 
 case class ContextFun[A: StateEffect](run: Context => A, desc: String)
@@ -76,7 +77,7 @@ extends Message
 }
 
 case class FromContextIO[F[_, _]: PerformIO, A, C: FromContext]
-(io: F[A, C])(implicit cv: Contravariant[F[A, ?]], se: StateEffect[ZTask[A]])
+(io: F[A, C])(implicit cv: Contravariant[F[A, ?]], se: StateEffect[Task[A]])
 extends InternalIOMessage
 {
   def effect = {
@@ -91,24 +92,23 @@ extends Message
 }
 
 case class IOTask[F[_, _]: PerformIO, A, C](io: F[A, C], desc: String)
-(implicit cm: IOMessage[C], se: StateEffect[ZTask[A]])
+(implicit cm: IOMessage[C], se: StateEffect[Task[A]])
 extends Message
 {
   val task = (c: C) => io.unsafePerformIO(c)
-    // .handleWith {
-    // case ZZ
-  // }
-  def effect = cm.pure(task, desc).publish.stateEffect
+
+  def effect = cm.pure(task, desc).toRoot.stateEffect
 }
 
 // TODO maybe allow A to have an Operation and asynchronously enqueue the
 // results in Machine.asyncTask
 case class IOMainTask[F[_, _]: PerformIO, A, C]
 (io: F[A, C], desc: String, timeout: Duration = 3.second)
-(implicit cm: IOMessage[C], se: StateEffect[ZTask[A]])
+(implicit cm: IOMessage[C], se: StateEffect[Task[A]])
 extends Message
 {
-  def effect = cm.pure(io.mainTimed(timeout)(_), desc).publish
+  def effect(implicit sched: Scheduler) =
+    cm.pure(io.mainTimed(timeout)(_, sched), desc).publish
 
   override def toString = desc
 }
@@ -117,7 +117,7 @@ case class IOFork[F[_, _]: PerformIO, C](io: F[Unit, C], desc: String)
 (implicit im: IOMessage[C])
 extends Message
 {
-  def effect = im.pure (
+  def effect(implicit sender: Sender) = im.pure (
     implicit c => Fork(io.unsafePerformIO.stateEffect, desc).publish.success,
     desc
   ).stateEffect
@@ -156,7 +156,7 @@ object IOEffect
         val self = fa
         val typeClassInstance = tc
       }
-    }
+  }
 
   object ops
   extends ToIOEffectOps
@@ -167,7 +167,7 @@ object IOEffect
 case class ViewStreamTask[A, C: IOMessage](
   stream: ViewStream[A, C], desc: String, timeout: Duration = 30 seconds,
   main: Boolean = false)
-(implicit se: StateEffect[ZTask[A]])
+(implicit se: StateEffect[Task[A]], strat: Strategy)
 extends Message
 {
   private[this] val taskCtor: IO[A, C] => Message =
@@ -185,8 +185,8 @@ extends Message
 object IOOperation
 {
   @export(Instantiated)
-  implicit def instance_Operation_ViewStream[A: Operation, C: IOMessage]:
-  Operation[ViewStream[A, C]] =
+  implicit def instance_Operation_ViewStream[A: Operation, C: IOMessage]
+  (implicit strat: Strategy): Operation[ViewStream[A, C]] =
     new ParcelOperation[ViewStream[A, C]] {
       def parcel(v: ViewStream[A, C]) = {
         ViewStreamTask(v, v.desc).publish
@@ -197,9 +197,8 @@ object IOOperation
 
   @export(Instantiated)
   implicit def instance_StateEffect_ViewStream[A, C: IOMessage]
-  (implicit se: StateEffect[ZTask[A]])
-  :
-  StateEffect[ViewStream[A, C]] =
+  (implicit se: StateEffect[Task[A]], strat: Strategy)
+  : StateEffect[ViewStream[A, C]] =
     new StateEffect[ViewStream[A, C]] {
       def stateEffect(v: ViewStream[A, C]) = {
         ViewStreamTask(v, v.desc).publish.stateEffect
@@ -234,7 +233,8 @@ object IOOperation
 final class ViewStreamMessageOps[A: Operation, C: IOMessage]
 (val self: ViewStream[A, C])
 {
-  def main = ViewStreamTask(self, self.desc, main = true).publish
+  def main(implicit strat: Strategy) =
+    ViewStreamTask(self, self.desc, main = true).publish
 }
 
 trait ToViewStreamMessageOps

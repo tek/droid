@@ -7,31 +7,27 @@ import iota._
 import IOOperation._
 import AppState._
 
-object ViewMachine
-{
-  def apply[A <: ViewGroup](lay: StreamIO[A, Context]) =
-    new IOViewMachine[A] {
-      val layout = lay
-
-      def admit: Admission = PartialFunction.empty
-    }
-}
-
 trait ViewDataI[A]
 extends Data
 {
   def view: A
 }
 
-trait ViewMachine
-extends IOMachine
+trait ViewTrans
+extends IOTrans
 with Views[Context, StreamIO]
 {
   override def machinePrefix = super.machinePrefix :+ "view"
 }
 
-abstract class TreeViewMachine[A <: ViewTree[_ <: ViewGroup]: ClassTag]
-extends ViewMachine
+trait ViewMachine
+extends Machine
+{
+  def transitions(comm: MComm): ViewTrans
+}
+
+abstract class TreeViewTrans[A <: ViewTree[_ <: ViewGroup]: ClassTag]
+extends ViewTrans
 {
   case class ContentTree(tree: A)
   extends Message
@@ -64,67 +60,23 @@ extends ViewMachine
     case ContentTree(tree: A) => {
       case S(s, d) =>
         val data = dataWithTree(d, tree)
-        S(s, data) << SetContentTree(tree, Some(this)).toAgentMachine
+        S(s, data) << SetContentTree(tree, Some(sender)).toAgentMachine
     }
   }
 }
 
-trait IOViewMachine[A <: ViewGroup]
+trait TreeViewMachine
 extends ViewMachine
 {
-  import AppState._
-  import ViewMachine._
-
-  def layout: StreamIO[A, Context]
-
-  case class ContentView(view: A)
-  extends Message
-
-  trait ViewData
-  extends ViewDataI[A]
-  {
-    def view: A
-  }
-
-  object ViewData
-  {
-    def unapply(a: ViewData) = Some(a.view)
-  }
-
-  case class VData(view: A)
-  extends ViewData
-
-  protected def dataWithView(data: Data, view: A): ViewData =
-    VData(view)
-
-  override def internalAdmit = super.internalAdmit orElse {
-    case ContentView(view) => {
-      case S(s, d) =>
-        S(s, dataWithView(d, view)) <<
-          SetContentView(view, Some(this)).toAgentMachine
-    }
-    case CreateContentView => {
-      case s =>
-        s << layout.map(ContentView(_).back)
-    }
-  }
+  def transitions(comm: MComm): TreeViewTrans[_]
 }
 
-trait SimpleViewMachine
-extends IOViewMachine[ViewGroup]
-{
-  def admit: Admission = PartialFunction.empty
-}
-
-trait ViewAgent
-extends Agent
-with Views[Context, StreamIO]
+trait ViewAgentTrans
+extends MachineTransitions
 {
   def viewMachine: ViewMachine
 
-  override def machines = viewMachine :: super.machines
-
-  override def extraAdmit = super.extraAdmit orElse {
+  override def overrideAdmit = super.overrideAdmit orElse {
     case a: SetContentView => {
       _ << a.toParent
     }
@@ -133,50 +85,21 @@ with Views[Context, StreamIO]
     }
     case CreateContentView => {
       case s =>
-        s << viewMachine.sendP(CreateContentView)
+        s << CreateContentView.to(viewMachine)
     }
   }
 }
 
-trait IOViewAgent[A <: ViewGroup]
-extends ViewAgent
-{
-  import iota.module.TextCombinators.text
+trait ViewAgent
+extends Agent
+with Views[Context, StreamIO] { self =>
+  def viewMachine: ViewMachine
 
-  def viewMachine: IOViewMachine[A]
+  def machines: List[Machine] = viewMachine :: Nil
 
-  def dummyLayout: StreamIO[View, Context] =
-    (w[TextView] >>= text("Couldn't load content")) map(a => a: View)
-
-  lazy val layout = viewMachine.layout
-
-  // def setContentView = layout.map(v => act(_.setContentView(v)))
-}
-
-object ViewAgent
-{
-  def apply[A <: ViewGroup](lay: StreamIO[A, Context]) = new ViewAgent {
-    lazy val viewMachine = ViewMachine[A](lay)
-  }
-}
-
-trait FreeViewAgent[A <: ViewGroup]
-extends IOViewAgent[A]
-{
-  implicit def activity: Activity
-
-  def title: String
-
-  def safeViewP: Process[ZTask, View] = {
-    Process.eval(layout.unsafePerformIO)
-      .sideEffect { case v =>
-        log.debug(s"setting view for $title:\n${v.viewTree.drawTree}")
-      }
-  }
-
-  def safeView: View = {
-    safeViewP
-      .infraRunLastFor("obtain layout", 10 seconds)
-      .getOrElse(dummyLayout.unsafePerformIO.unsafePerformSync)
+  def transitions(mc: MComm) = new ViewAgentTrans {
+    def mcomm = mc
+    def viewMachine = self.viewMachine
+    def admit = PartialFunction.empty
   }
 }

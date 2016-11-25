@@ -10,8 +10,6 @@ import shapeless._
 
 import iota.effect._
 
-import scalaz.stream.Process._
-
 import view.io.misc._
 import view.io.text._
 import MainViewMessages.LoadUi

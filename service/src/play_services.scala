@@ -8,8 +8,6 @@ import view._
 
 import IOOperation._
 
-import scalaz.stream._, Process._
-
 import cats._
 import cats.syntax.all._
 import cats.instances.all._

@@ -19,31 +19,31 @@ extends StateSpec[A](cls)
 
   lazy val appStateMachine = root.appStateMachine
 
-  def activityAgent =
-    appStateMachine.current.get.unsafePerformSync.data match {
-      case AppState.ASData(_, Some(agent)) => agent
-    case _ => sys.error("no activity agent running")
-    }
+  // def activityAgent =
+  //   appStateMachine.current.get.unsafePerformSync.data match {
+  //     case AppState.ASData(_, Some(agent)) => agent
+  //   case _ => sys.error("no activity agent running")
+  //   }
 
-  def mainAgent =
-    activityAgent match {
-      case m: MainViewAgent => m
-      case _ => sys.error("activity agent is not a main view agent")
-    }
+  // def mainAgent =
+  //   activityAgent match {
+  //     case m: MainViewAgent => m
+  //     case _ => sys.error("activity agent is not a main view agent")
+  //   }
 
-  def mainUi: ViewAgent =
-    mainAgent.mvMachine.current.get.unsafePerformSync.data match {
-      case MVData(ui: ViewAgent) => ui
-      case _ => sys.error("main view has no ui")
-    }
+  // def mainUi: ViewAgent =
+  //   mainAgent.mvMachine.current.get.unsafePerformSync.data match {
+  //     case MVData(ui: ViewAgent) => ui
+  //     case _ => sys.error("main view has no ui")
+  //   }
 
-  def mainTree[A: ClassTag] =
-    mainUi.viewMachine.current.get.unsafePerformSync.data match {
-      case a: ViewDataI[_] =>
-        a.view match {
-        case tree: A => tree
-        case _ => sys.error(s"view tree has wrong class: ${a.view}")
-      }
-      case _ => sys.error("no view tree in main ui")
-    }
+  // def mainTree[A: ClassTag] =
+  //   mainUi.viewMachine.current.get.unsafePerformSync.data match {
+  //     case a: ViewDataI[_] =>
+  //       a.view match {
+  //       case tree: A => tree
+  //       case _ => sys.error(s"view tree has wrong class: ${a.view}")
+  //     }
+  //     case _ => sys.error("no view tree in main ui")
+  //   }
 }

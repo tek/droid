@@ -42,7 +42,7 @@ extends tryp.AndroidDeps
   )
 
   def view = ids(
-    pulsar("state"),
+    pulsar("fstate"),
     aar("com.android.support" % "support-v4" % "23.+"),
     aar("com.android.support" % "appcompat-v7" % "23.+"),
     aar("com.android.support" % "palette-v7" % "23.+"),
@@ -62,7 +62,7 @@ extends tryp.AndroidDeps
     "com.melnykov" % "floatingactionbutton" % "1.+",
     // "com.makeramen" % "roundedimageview" % "1.+",
     "com.squareup.okhttp3" % "okhttp" % "3.+"
-  )
+  ) ++ view
 
   def db = ids(
     pulsar("slick")

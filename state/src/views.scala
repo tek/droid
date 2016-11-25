@@ -2,20 +2,13 @@ package tryp
 package droid
 package state
 
-import tryp.state._
-
-import scalaz._, Scalaz._, concurrent._, stream._, Process._
 import android.widget._
 
-import core._
-import view._
-import view.core._
+import tryp.state.PublishMessage
 
 trait IODispatcher
-extends Machine
+extends MachineTransitions
 {
-  override def handle = "io"
-
   val admit: Admission = {
     case t: IOTask[_, _, _] => {
       case s =>
@@ -32,46 +25,29 @@ extends Machine
   }
 }
 
-import AppState.{StartActivity, ActivityAgentStarted}
+trait IODispatcherMachine
+extends Machine
+{
+  def transitions(c: MComm) = new IODispatcher {
+    def mcomm = c
+  }
+}
 
-@Publish(StartActivity)
+import AppState.ActivityAgentStarted
+
 trait ActivityAgentBase
 extends Agent
 
 trait ActivityAgent
 extends ActivityAgentBase { aa =>
-  lazy val activityMachine = new Machine {
-    override def handle = "activity"
-
-    def admit: Admission = {
-      case Create(_, _) => { s => s }
-    }
-
-    override def initialMessages = super.initialMessages ++
-      emit(PublishMessage(ActivityAgentStarted(aa)))
-  }
-
-  override def machines = activityMachine :: super.machines
-
   def activityClass: Class[_ <: Activity] = classOf[StateActivity]
 
-  def title = "ActivityAgent"
+  def name = "act_agent"
 
-  override def handle = "act_agent"
+  override def initialMessages =
+    super.initialMessages ++ Stream(PublishMessage(ActivityAgentStarted(aa)))
 }
-
-trait IOActivityAgent
-extends ActivityAgent
-with IOViewAgent[ViewGroup]
 
 trait TreeActivityAgent
 extends ActivityAgent
 with ViewAgent
-
-object ActivityAgent
-{
-  def apply(lay: StreamIO[ViewGroup, Context]) =
-    new ActivityAgent {
-      lazy val viewMachine = ViewMachine(lay)
-    }
-}

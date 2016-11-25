@@ -2,12 +2,10 @@ package tryp
 package droid
 package view
 
-import scalaz.concurrent.Task
-
-import scalaz.stream._, Process._
-import async.mutable._
-
 import cats.{Applicative, Unapply, Functor}
+
+import fs2._
+import async.mutable._
 
 import core._
 import state._
@@ -24,9 +22,10 @@ with IOStrategy
 
   override def loggerName = List("stream_io")
 
-  lazy val sig = async.signalOf[Option[A]](None)
+  lazy val sig = async.signalOf[Task, Option[A]](None).unsafeRun()
 
-  def view = sig.continuous flatMap(_.fold[Process[Task, A]](halt)(emit))
+  def view =
+    sig.continuous flatMap(_.fold[Stream[Task, A]](Stream())(Stream(_)))
 
   def ios[C2] = view map(a => IO[A, C2](_ => a))
 
@@ -39,14 +38,15 @@ import PerformIO.ops._
 
 trait StreamIOInstances
 {
-  implicit lazy val instance_ConsIO_StreamIO =
+  implicit def instance_ConsIO_StreamIO(implicit strat: Strategy) =
     new ConsIO[StreamIO] {
       def cons[A, C](fa: StreamIO[A, C])(c: C): A = fa.io(c)
       override def init[A, C](fa: StreamIO[A, C])(c: C): A = fa(c)
       def pure[A, C](run: C => A): StreamIO[A, C] = StreamIO(IO(run))
     }
 
-  implicit def instance_Monad_StreamIO[C]: Monad[StreamIO[?, C]] =
+  implicit def instance_Monad_StreamIO[C]
+  (implicit strat: Strategy): Monad[StreamIO[?, C]] =
     new Monad[StreamIO[?, C]] {
       def pure[A](a: A) = StreamIO(cats.Monad[IO[?, C]].pure(a))
 
@@ -59,13 +59,13 @@ trait StreamIOInstances
         defaultTailRecM(a)(f)
     }
 
-  implicit def instance_PerformIO_StreamIO =
+  implicit def instance_PerformIO_StreamIO(implicit strat: Strategy) =
     new PerformIO[StreamIO] {
       def unsafePerformIO[A, C](fa: StreamIO[A, C])(implicit c: C) =
         Task(fa(c))
 
       def main[A, C](fa: StreamIO[A, C])(timeout: Duration)
-      (implicit c: C) = {
+      (implicit c: C, sched: Scheduler) = {
         fa.run.mainTimed(timeout)
       }
     }
@@ -75,10 +75,10 @@ trait StreamIOFunctions
 {
   class Lifter[C]
   {
-    def apply[A](f: C => A) = StreamIO(IO(f))
+    def apply[A](f: C => A)(implicit strat: Strategy) = StreamIO(IO(f))
   }
 
-  def lift[C] = new Lifter[C]
+  def lift[C](implicit strat: Strategy) = new Lifter[C]
 }
 
 object StreamIO
@@ -86,10 +86,10 @@ extends Logging
 with StreamIOInstances
 with StreamIOFunctions
 {
-  def attachSignal[A, C](sig: Signal[Option[A]])(implicit log: Logger) =
+  def attachSignal[A, C](sig: Signal[Task, Option[A]])(implicit log: Logger) =
     K[A, C, IO] { a =>
       IO[A, C] { ctx =>
-        sig.set(Some(a)) !? "set signal for StreamIO"
+        // sig.set(Some(a)) !? "set signal for StreamIO"
         a
       }
     }
@@ -101,7 +101,7 @@ extends Views[Context, StreamIO]
 object StreamIOViews
 extends StreamIOViews
 
-case class ViewStream[A, C](view: Process[Task, IO[A, C]])
+case class ViewStream[A, C](view: Stream[Task, IO[A, C]])
 {
   def >>-[B >: A](ka: Kestrel[B, C, IO]) = ViewStream(view map(_ >>- ka))
 
@@ -113,7 +113,7 @@ trait ViewStreamInstances
   // TODO product and map are now implemented in Apply et al.
   implicit def instance_Applicative_ViewStream[C] =
     new Applicative[ViewStream[?, C]] {
-      def pure[A](a: A) = ViewStream(emit(IO[A, C](c => a)))
+      def pure[A](a: A) = ViewStream(Stream(IO[A, C](c => a)))
 
       def ap[A, B](ff: ViewStream[A => B, C])
       (fa: ViewStream[A, C]): ViewStream[B, C] =
@@ -138,7 +138,7 @@ trait ViewStreamInstances
 object ViewStream
 extends ViewStreamInstances
 
-final class IOProcess[F[_, _]: PerformIO, A, C](self: Process[Task, F[A, C]])
+final class IOProcess[F[_, _]: PerformIO, A, C](self: Stream[Task, F[A, C]])
 (implicit functor: Functor[F[?, C]])
 {
   def unit = self map(_.void)
@@ -147,7 +147,7 @@ final class IOProcess[F[_, _]: PerformIO, A, C](self: Process[Task, F[A, C]])
 trait TOIOProcess
 {
   implicit def TOIOProcess[F[_, _]: PerformIO, A, C]
-  (proc: Process[Task, F[A, C]])
+  (proc: Stream[Task, F[A, C]])
   (implicit functor: Functor[F[?, C]]) =
     new IOProcess(proc)
 }

@@ -3,8 +3,6 @@ package droid
 package state
 package service
 
-import scalaz.concurrent._, scalaz.stream._
-
 import cats.syntax.all._
 
 import com.google.android.gms
@@ -53,7 +51,7 @@ extends PlayServices
 
   def oneAccount = {
     send(Connect)
-    account |> Process.await1
+    account |> Stream.await1
   }
 
   override def builder =

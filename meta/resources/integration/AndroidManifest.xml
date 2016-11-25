@@ -12,6 +12,7 @@
     <activity
       android:name='${activityClass}'
       android:label='${appName}'
+      android:theme='@style/droid.int'
       >
       <intent-filter>
         <action android:name='android.intent.action.MAIN'/>

@@ -9,6 +9,8 @@ import android.test.ActivityInstrumentationTestCase2
 import android.widget._
 import android.support.v7.widget.RecyclerView
 
+import fs2.Scheduler
+
 import junit.framework.Assert._
 
 import com.robotium.solo._
@@ -17,9 +19,16 @@ class TrypIntegrationSpec[A <: Activity](cls: Class[A])
 extends ActivityInstrumentationTestCase2[A](cls)
 with HasSettings
 with TestHelpers
+with FixedPool
 {
+  def name = "spec"
+
+  val threads = 5
+
   // def frag[A <: Fragment: ClassTag](names: String*) =
   //   activity.findNestedFrag[A](names)
+
+  implicit def scheduler = Scheduler.fromFixedDaemonPool(1)
 
   def view = null
   implicit def activity: A = getActivity
@@ -99,7 +108,7 @@ with TestHelpers
   }
 
   def ui[A](f: => A) = {
-    cio(_ => f).main.unsafePerformSync
+    cio(_ => f).main.unsafeRun()
   }
 
   def sleep(secs: Double) = Thread.sleep((secs * 1000).toInt)

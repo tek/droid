@@ -2,15 +2,15 @@ package tryp
 package droid
 package state
 
-import scalaz.stream._
-import Process._
-
 import android.support.v7.app.AppCompatActivity
 
 import iota.ViewTree
 
-import tryp.state.AgentStateData._
+import fs2._
+
+// import tryp.state.AgentStateData._
 import IOOperation._
+import tryp.state.{StartAgent, StopAgent}
 
 object AppState
 {
@@ -62,15 +62,15 @@ object AppState
 }
 import AppState._
 
-trait AppStateMachine
-extends Machine
-with view.AnnotatedIO
+// @tryp.state.annotation.machine
+case class AppStateTrans(initialAgent: Option[ActivityAgent], mcomm: MComm)
+(implicit sender: Sender, strat: Strategy)
+extends view.AnnotatedIO
+with MachineTransitions
 {
-  override def handle = "app_state"
+  import AppState._
 
-  def initialAgent: Option[ActivityAgent]
-
-  def dbInfo: Option[DbInfo]
+  // def dbInfo: Option[DbInfo]
 
   def admit: Admission = {
     case AppState.StartActivity(a) => startActivity(a)
@@ -89,16 +89,16 @@ with view.AnnotatedIO
 
   def startActivity(agent: ActivityAgent): Transit = {
     case s @ S(Ready, ASData(_, _)) =>
-      s << con(_.startActivityCls(agent.activityClass)) <<
-        SetAgent(agent)
+      s << con(_.startActivityCls(agent.activityClass)) << SetAgent(agent).back
   }
 
   def setAgent(agent: ActivityAgent): Transit = {
     case S(Ready, ASData(act, None)) =>
-      S(Ready, ASData(act, agent.some)) << AddSub(Nel(agent)).toAgentMachine
+      S(Ready, ASData(act, agent.some)) <<
+        StartAgent(Stream(agent)).toAgentMachine
     case S(Ready, ASData(act, Some(old))) =>
-      S(Ready, ASData(act, agent.some)) << AddSub(Nel(agent)).toAgentMachine <<
-        StopSub(Nel(old))
+      S(Ready, ASData(act, agent.some)) <<
+        StartAgent(Stream(agent)).toAgentMachine << StopAgent(old)
   }
 
   private[this] def agentForActivity(a: Activity) =
@@ -117,7 +117,7 @@ with view.AnnotatedIO
 
   def initAgent: Transit = {
     case s @ S(Ready, ASData(_, Some(ag))) =>
-      s << ag.publish(Create(Map(), None))
+      s << Create(Map(), None).toAgent(ag)
   }
 
   def activityStarted(agent: ActivityAgent): Transit = {
@@ -154,44 +154,62 @@ with view.AnnotatedIO
 
   def activityLifecycleMessage(m: ActivityLifecycleMessage): Transit = {
     case s @ S(Ready, ASData(Some(act), Some(agent))) if act == m.activity =>
-      agent.publish(m)
+      m.toAgent(agent)
+  }
+}
+
+case class AppStateMachine(initialAgent: Option[ActivityAgent])
+(implicit strat: Strategy)
+extends Machine
+{
+  def transitions(mcomm: MComm) = AppStateTrans(initialAgent, mcomm)
+}
+
+case class StateAppAgentTrans(appStateMachine: AppStateMachine)
+(implicit sender: Sender)
+{
+  def admit: Admission = {
+    case a @ SetContentView(_, _) => _ << a.to(appStateMachine)
+    case a @ SetContentTree(_, _) => _ << a.to(appStateMachine)
   }
 }
 
 trait StateApplicationAgent
-extends RootAgent { app =>
-  override def handle = "state_app"
+extends Agent { app =>
+  implicit def strat: Strategy
 
-  lazy val appStateMachine = new AppStateMachine {
-    def initialAgent = app.initialAgent
-  }
+  lazy val appStateMachine = new AppStateMachine(initialAgent)
 
-  lazy val ioMachine = new IODispatcher {}
+  lazy val transitions = StateAppAgentTrans(appStateMachine)
 
-  override def machines = ioMachine :: appStateMachine :: super.machines
+  lazy val ioMachine = new IODispatcherMachine {}
+
+  def machines = ioMachine :: appStateMachine :: Nil
 
   def initialAgent: Option[ActivityAgent] = None
 
-
-  override def extraAdmit = super.extraAdmit orElse {
-    case a @ SetContentView(_, _) => _ << appStateMachine.sendP(a)
-    case a @ SetContentTree(_, _) => _ << appStateMachine.sendP(a)
-  }
   // def dbInfo: Option[DbInfo] = None
 
   def setActivity(act: Activity) = {
     log.debug(s"setting activity $act")
-    schedule1(SetActivity(act).toLocal)
+    // schedule1(SetActivity(act).toLocal)
+    // send(SetActivity(act))
   }
 
   def onStart(activity: Activity) =
-    appStateMachine.send(OnStart(activity))
+    ()
+    // appStateMachine.send(OnStart(activity))
+    // send(OnStart(activity))
 
   def onResume(activity: Activity) =
-    appStateMachine.send(OnResume(activity))
+    ()
+    // appStateMachine.send(OnResume(activity))
+    // send(OnResume(activity))
 }
 
 trait StateApplication
 {
-  def stateAppAgent: StateApplicationAgent
+  def agents: Agents
+
+  // def stateAppAgent: StateApplicationAgent
 }

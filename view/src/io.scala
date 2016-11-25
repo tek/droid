@@ -4,7 +4,7 @@ package view
 
 import reflect.macros.blackbox
 
-import scalaz.concurrent.Task
+import fs2._
 
 import android.support.v7.app.AppCompatActivity
 
@@ -36,12 +36,12 @@ trait IOXInstances
     def pure[A, C](run: C => A): IOX[A, C] = IOX(run, run.toString)
   }
 
-  implicit lazy val instance_PerformIO_IOX =
+  implicit def instance_PerformIO_IOX(implicit strat: Strategy) =
     new PerformIO[IOX] {
       def unsafePerformIO[A, C](fa: IOX[A, C])(implicit c: C) = Task(fa(c))
 
       def main[A, C](fa: IOX[A, C])(timeout: Duration = Duration.Inf)
-      (implicit c: C) = {
+      (implicit c: C, sched: Scheduler) = {
         PerformIO.mainTask(fa(c), timeout)
       }
     }

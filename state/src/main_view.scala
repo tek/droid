@@ -5,6 +5,7 @@ package state
 import iota._
 
 import tryp.state._
+import tryp.state.annotation._
 
 import android.view.ViewGroup.LayoutParams
 import android.view.{Gravity, LayoutInflater}
@@ -106,7 +107,7 @@ import MainViewMessages._
 
 abstract class MVContainer
 [A <: ViewTree[_ <: ViewGroup] with HasMainFrame: ClassTag]
-extends TreeViewMachine[A]
+extends TreeViewTrans[A]
 {
   override def internalAdmit = super.internalAdmit orElse {
     case SetContentView(view, _) => setMainView(view)
@@ -156,21 +157,35 @@ extends TreeViewMachine[A]
   override def handle = "mvc"
 }
 
-trait MVFrame
+abstract class MVContainerMachine
+[A <: ViewTree[_ <: ViewGroup] with HasMainFrame: ClassTag]
+extends ViewMachine
+{
+  def transitions(cm: MComm): MVContainer[A]
+}
+
+case class MVFrame(mcomm: MComm)
 extends MVContainer[MainViewLayout]
 {
   def infMain = inf[MainViewLayout]
+
+  def admit = PartialFunction.empty
+}
+
+trait MVFrameMachine
+extends MVContainerMachine[MainViewLayout]
+{
+  def transitions(comm: MComm) = MVFrame(comm)
 }
 
 case class MVData(ui: Agent)
 extends Data
 
+@machine
 trait MV
-extends IOMachine
+extends IOTrans
 {
-  override def handle = "mv"
-
-  override def description = "mv"
+  def name = "mv"
 
   def admit: Admission = {
     case LoadUi(ui) => loadUi(ui)
@@ -179,7 +194,7 @@ extends IOMachine
 
   def loadUi(ui: ViewAgent): Transit = {
     case S(s, _) =>
-      S(s, MVData(ui)) << AgentStateData.AddSub(Nel(ui)).toAgentMachine <<
+      S(s, MVData(ui)) << StartAgent(Stream(ui)).broadcast <<
         UiLoaded.toLocal
   }
 
@@ -189,18 +204,10 @@ extends IOMachine
   }
 }
 
-trait MainViewAgent
-extends TreeActivityAgent
+case class MVATrans(mcomm: MComm, viewMachine: ViewMachine, mvMachine: MV.MV,
+  initialUi: Option[ViewAgent])
+extends ViewAgentTrans
 {
-  import AppState._
-
-  def viewMachine: MVContainer[_]
-
-  lazy val mvMachine = new MV {
-  }
-
-  override def machines = mvMachine :: super.machines
-
   private[this] def setContentViewAdmit: Admission = {
     case m @ SetContentView(view, Some(sender)) if sender == viewMachine =>
       _ << m.toParent
@@ -212,27 +219,42 @@ extends TreeActivityAgent
       _ << m.to(viewMachine)
   }
 
-  override def extraAdmit = setContentViewAdmit orElse super.extraAdmit
+  override def overrideAdmit = setContentViewAdmit orElse super.overrideAdmit
 
-  protected def initialUi: Option[ViewAgent] = None
-
-  override def admit = super.admit orElse {
+  override def internalAdmit = super.internalAdmit orElse {
     case ContentViewReady(ag) if ag == this =>
       _ << MainViewReady.toLocal
     case ActivityAgentStarted(_) =>
       initialUi match {
-        case Some(agent) => _ << mvMachine.sendP(LoadUi(agent))
+        case Some(agent) => _ << LoadUi(agent).to(mvMachine)
         case _ => s => s
       }
   }
+
+  def admit = PartialFunction.empty
+}
+
+trait MainViewAgent
+extends TreeActivityAgent
+{
+  import AppState._
+
+  def viewMachine: MVContainerMachine[_]
+
+  override def transitions(comm: MComm) =
+    MVATrans(comm, viewMachine, mvMachine, initialUi)
+
+  lazy val mvMachine = MV.MV()
+
+  override def machines: List[Machine] = mvMachine :: super.machines
+
+  protected def initialUi: Option[ViewAgent] = None
 }
 
 trait MVAgent
 extends MainViewAgent
 {
-  lazy val viewMachine = new MVFrame {
-    def admit = PartialFunction.empty
-  }
+  lazy val viewMachine = new MVFrameMachine {}
 }
 
 case class Drawer(ctx: Context, container: DrawerLayout, mainFrame: MainFrame,
@@ -353,6 +375,7 @@ extends MVContainer[A]
     case DrawerViewReady(v) => {
       case s @ S(_, ViewData(main)) =>
         val io = (main.drawer.drawer >>- MainFrame.load(v))
+        IOEffect.ops.toIOEffectOps(io)
         s << io.map(_ => DrawerLoaded.toRoot).ui
     }
     case SyncToggle => {
@@ -377,7 +400,10 @@ extends ExtMVContainerBase[ExtMVLayout]
 trait ExtMV
 extends MainViewAgent
 {
-  lazy val viewMachine = new ExtMVContainer {
-    def admit = PartialFunction.empty
+  lazy val viewMachine = new MVContainerMachine[ExtMVLayout] {
+    def transitions(mc: MComm) = new ExtMVContainer {
+      def mcomm = mc
+      def admit = PartialFunction.empty
+    }
   }
 }

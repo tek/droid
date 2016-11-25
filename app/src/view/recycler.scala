@@ -4,20 +4,19 @@ package droid
 import iota._
 
 import state.AppState._
-import state.ViewMachine._
-import state.TreeViewMachine
+import state.TreeViewTrans
 
 trait RVTree
 {
   def recycler: RecyclerView
 }
 
-abstract class RVMachine[
+abstract class RVTrans[
 A <: RecyclerViewHolder,
 B,
 C <: RecyclerAdapter[A, B],
 D <: ViewTree[_ <: ViewGroup] with RVTree: ClassTag]
-extends TreeViewMachine[D]
+extends TreeViewTrans[D]
 {
   type RVA = C
 
@@ -125,7 +124,7 @@ with RVTree
 }
 
 abstract class SimpleRV[A <: RecyclerViewHolder, B, C <: RecyclerAdapter[A, B]]
-extends RVMachine[A, B, C, RVMain]
+extends RVTrans[A, B, C, RVMain]
 {
   def infMain = inf[RVMain]
 }

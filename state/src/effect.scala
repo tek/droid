@@ -4,10 +4,6 @@ package state
 
 import scala.annotation.implicitNotFound
 
-import scalaz._, Scalaz._
-
-import scalaz.stream.Process._
-
 import simulacrum._
 
 trait StateEffectInstances
@@ -20,11 +16,11 @@ trait StateEffectInstances
 //     }
 
   implicit def instance_StateEffect_IO[F[_, _]: PerformIO, A, C: IOMessage]
-  (implicit se: StateEffect[ZTask[A]])
+  (implicit se: StateEffect[Task[A]])
   : StateEffect[F[A, C]] =
     new StateEffect[F[A, C]] {
       def stateEffect(v: F[A, C]) = {
-        tryp.state.Effect(Process.emit(IOTask(v, v.toString).publish.success),
+        tryp.state.Effect(Stream.emit(IOTask(v, v.toString).publish.success),
           "IO")
       }
 

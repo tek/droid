@@ -3,7 +3,7 @@
 
 // import state.{GeofenceData, LocationInterface}
 
-// import scalaz._, Scalaz._, concurrent._, stream._, Process._
+// import scalaz._, Scalaz._, concurrent._, stream._, Stream._
 
 // import cats.syntax.all._
 
@@ -85,8 +85,8 @@
 //   def setupProcess(client: GoogleApiClient,
 //     locations: NonEmptyList[GeofenceData]) = {
 //     val geofences = GeofenceInterface(client, intent)
-//     Process.eval_(geofences.clear) ++
-//       Process.eval_(geofences.request(locations.toList))
+//     Stream.eval_(geofences.clear) ++
+//       Stream.eval_(geofences.request(locations.toList))
 //   }
 
 //   def setup(locations: Seq[GeofenceData]) = {

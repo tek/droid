@@ -4,38 +4,32 @@ package state
 
 import tryp.state._
 
-import scalaz.stream
-import stream.async
-
-import scalaz.syntax.std.option._
-import scalaz.syntax.apply._
-import scalaz.syntax.show._
-
 import cats._
 import cats.instances.all._
 
 case class MachineTerminated(z: Machine)
 extends Message
 
-trait IOMachine
-extends tryp.state.Machine
+trait IOTrans
+extends MachineTransitions
 with view.AnnotatedIO
 with view.core.ToIO
 {
-  def instance_PublishFilter_IOTask[F[_, _]: PerformIO, A: Operation, C]
-  : PublishFilter[IOTask[F, A, C]] = new PublishFilter[IOTask[F, A, C]] {
-    def allowed = true
+  def instance_MOutput_IOTask[F[_, _]: PerformIO, A: Operation, C]
+  : MOutput[IOTask[F, A, C]] = new MOutput[IOTask[F, A, C]] {
+    def broadcast = true
   }
 
-  def instance_PublishFilter_IOFun[A, C]
-  : PublishFilter[IOFun[A, C]] = new PublishFilter[IOFun[A, C]] {
-    def allowed = true
+  def instance_MOutput_IOFun[A, C]
+  : MOutput[IOFun[A, C]] = new MOutput[IOFun[A, C]] {
+    def broadcast = true
   }
 
   def actAs[A <: Activity: ClassTag, B: Operation](f: A => B)
+  (implicit strat: Strategy)
   : IOI[Effect, Activity] = act { a =>
     a match {
-      case aa: A => ZTask(f(aa)).stateEffect
+      case aa: A => fs2.Task(f(aa)).stateEffect
       case _ =>
         LogError("creating activity IO",
           s"Can't run '${className[A]}' task with current '${a.className}'")

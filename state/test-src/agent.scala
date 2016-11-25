@@ -6,8 +6,6 @@ import tryp.state._
 
 import org.specs2._, specification._, matcher._, concurrent._
 
-import scalaz._, Scalaz._, scalaz.concurrent._, stream.async
-
 import shapeless.HNil
 
 import droid.state._
