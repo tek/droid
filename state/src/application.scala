@@ -83,7 +83,7 @@ with view.AnnotatedIO
     case f @ ActivityFun(_, _) => activityFun(f)
     case f @ AppCompatActivityFun(_, _) => appCompatActivityFun(f)
     // case t @ DbTask(_) => dbTask(t)
-    case t @ ECTask(_) => ecTask(t)
+    // case t @ ECTask(_) => ecTask(t)
     case m: ActivityLifecycleMessage => activityLifecycleMessage(m)
   }
 
@@ -150,7 +150,7 @@ with view.AnnotatedIO
 
   // def dbTask(task: DbTask[_, _]): Transit = _ << task.effect(dbInfo)
 
-  def ecTask(task: ECTask[_]): Transit = _ << task.effect(ec)
+  // def ecTask(task: ECTask[_]): Transit = _ << task.effect(ec)
 
   def activityLifecycleMessage(m: ActivityLifecycleMessage): Transit = {
     case s @ S(Ready, ASData(Some(act), Some(agent))) if act == m.activity =>
@@ -164,7 +164,6 @@ extends RootAgent { app =>
 
   lazy val appStateMachine = new AppStateMachine {
     def initialAgent = app.initialAgent
-    def dbInfo = app.dbInfo
   }
 
   lazy val ioMachine = new IODispatcher {}
@@ -173,12 +172,12 @@ extends RootAgent { app =>
 
   def initialAgent: Option[ActivityAgent] = None
 
-  def dbInfo: Option[DbInfo] = None
 
   override def extraAdmit = super.extraAdmit orElse {
     case a @ SetContentView(_, _) => _ << appStateMachine.sendP(a)
     case a @ SetContentTree(_, _) => _ << appStateMachine.sendP(a)
   }
+  // def dbInfo: Option[DbInfo] = None
 
   def setActivity(act: Activity) = {
     log.debug(s"setting activity $act")

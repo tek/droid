@@ -5,7 +5,6 @@ import java.io.File
 
 import android.content.pm.ApplicationInfo
 
-import slick.DroidDbInfo
 import core.ApplicationI
 
 trait TrypApplication
