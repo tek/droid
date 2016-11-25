@@ -27,9 +27,10 @@
     <item name='drawer_arrow_color'>?colorBg</item>
 
     <item name='android:imageButtonStyle'>@style/button</item>
+    <item name='android:buttonStyle'>@style/button</item>
     <item name='android:windowBackground'>?colorBg</item>
   </style>
-  <style name='droid.light' parent='droid.light'>
+  <style name='droid.light' parent='droid.base'>
     <item name='android:windowDrawsSystemBarBackgrounds'>true</item>
     <item name='android:windowTranslucentStatus'>true</item>
     <item name='android:windowTranslucentNavigation'>true</item>
