@@ -2,6 +2,8 @@ package tryp
 package droid
 package integration
 
+import com.github.nscala_time.time.Imports._
+
 import scala.reflect.classTag
 
 import android.app.Instrumentation
@@ -20,6 +22,7 @@ extends ActivityInstrumentationTestCase2[A](cls)
 with HasSettings
 with TestHelpers
 with FixedPool
+with Logging
 {
   def name = "spec"
 
@@ -47,11 +50,18 @@ with FixedPool
     post()
   }
 
-  def pre() { }
+  lazy val startTime = DateTime.now
+
+  val dateFormat = DateTimeFormat.forPattern("hh:mm:ss.SSS")
+
+  def pre() {
+    log.info(s"starting at ${startTime.toString(dateFormat)}")
+  }
 
   def post() { }
 
   override def tearDown() {
+    log.info(s"finished at ${DateTime.now.toString(dateFormat)}")
     solo.finalize()
     activity.finish()
     super.tearDown()
