@@ -2,13 +2,13 @@ package tryp
 package droid
 package core
 
-@exportNames(android.app.Activity, android.view.View, android.view.ViewGroup,
+@exportTypes(android.app.Activity, android.view.View, android.view.ViewGroup,
   android.content.Context, android.os.Bundle, android.content.Intent,
   android.app.Fragment, android.widget.FrameLayout,
   android.widget.LinearLayout, android.widget.RelativeLayout,
   android.widget.TextView, android.widget.EditText
   )
-trait Names
+trait Types
 {
   def TrypKeys = droid.core.Keys
 
@@ -16,21 +16,21 @@ trait Names
   val MATCH_PARENT = android.view.ViewGroup.LayoutParams.MATCH_PARENT
 }
 
+@exportVals(GlobalResourceNamespace)
+trait Vals
+
 trait All
 extends syntax.std.ToBundleOps
 
 @exportNames(Resources, ResourcesAccess, ResourceNamespace,
   PrefixResourceNamespace, RId, ResId)
 trait Exports
-extends Names
+extends Types
+with Vals
 {
   val Tag = tryp.droid.core.Tag
-  val ResId = tryp.droid.core.ResId
-  val RId = tryp.droid.core.RId
-  val GlobalResourceNamespace = tryp.droid.core.GlobalResourceNamespace
-  val Resources = tryp.droid.core.Resources
 }
 
 @integrate(tryp)
 object `package`
-extends Names
+extends Types

@@ -3,14 +3,19 @@ package droid
 package view
 package core
 
-@exportNames(IO, IOI, Kestrel, Views, Combinators, ViewCombinators,
-  DescribedKestrel, PerformIO)
+@exportTypes(IOI, Kestrel, Views, Combinators, ViewCombinators, PerformIO)
+trait Types
+
+@exportNames(IO, DescribedKestrel)
+trait Names
+
+@export
 trait Exports
 extends droid.core.Exports
+with Names
+with Types
 {
   type CK[A] = Kestrel[A, Context, IO]
-  val IO = droid.view.core.IO
-  val DescribedKestrel = droid.view.core.DescribedKestrel
 }
 
 trait All

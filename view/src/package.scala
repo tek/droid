@@ -2,20 +2,18 @@ package tryp
 package droid
 package view
 
-@exportNames(
-  IOX, StreamIO, ViewStream, RootView,
-  android.support.v7.widget.RecyclerView,
-  android.support.v7.widget.Toolbar
-)
+@exportTypes(IOX, RootView, android.support.v7.widget.RecyclerView,
+  android.support.v7.widget.Toolbar)
+trait Types
+
+@exportNames(StreamIO, ViewStream)
 trait Names
-{
-  val StreamIO = droid.view.StreamIO
-}
 
 @export
 trait Exports
 extends tryp.state.Exports
 with view.core.Exports
+with Types
 with Names
 {
   type RecyclerViewHolder = android.support.v7.widget.RecyclerView.ViewHolder
@@ -46,4 +44,5 @@ extends All
 
 package object io
 extends All
+with Types
 with Names
