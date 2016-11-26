@@ -89,6 +89,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
       )
       .settingsV(
         aarModule := "integration",
+        logbackTemplate := metaRes.value / "integration" / logbackName,
         manifestTemplate := metaRes.value / "integration" / manifestName,
         debugIncludesTests := true
       )

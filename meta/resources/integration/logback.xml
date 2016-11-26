@@ -1,0 +1,18 @@
+<configuration>
+  <appender
+    name="LOGCAT"
+    class="ch.qos.logback.classic.android.LogcatAppender"
+    >
+    <tagEncoder>
+      <pattern>${tag}</pattern>
+    </tagEncoder>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %-5level %logger{35} | %msg%n</pattern>
+    </encoder>
+  </appender>
+  <logger name="tryp" level="debug" />
+  <logger name="tryp.dev" level="debug" />
+  <root>
+    <appender-ref ref="LOGCAT" />
+  </root>
+</configuration>

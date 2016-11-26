@@ -8,11 +8,8 @@ class IntStateSpec[A <: StateActivity](cls: Class[A])
 extends StateSpec[A](cls)
 {
   def stateApp = stateActivity.stateApp match {
-    case Right(a) => a match {
-      case a: IntApplication => a
-      case a => sys.error(s"application is not an IntApplication: $a")
-    }
-    case Left(a) => sys.error(a)
+    case a: IntApplication => a
+    case a => sys.error(s"application is not an IntApplication: $a")
   }
 
   lazy val root = stateApp.root

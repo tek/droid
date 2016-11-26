@@ -2,14 +2,14 @@ package tryp
 package droid
 package integration
 
-class AppSpec
+class BasicSpec
 extends StateSpec(classOf[IntStateActivity])
 with Logging
 {
-  def testSomething() = {
+  def testBasic() = {
     dbg("-------------")
     activity
-    sleep(3)
+    sleep(8)
     activity.showViewTree.dbg
   }
 }

@@ -41,6 +41,8 @@ extends ViewTree[FrameLayout]
 {
   label.gravity(Gravity.CENTER)
   label.setText("LABEL")
+
+  override def toString = "Main1"
 }
 
 class ViewAgent1
