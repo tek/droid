@@ -13,7 +13,7 @@ import iota.effect._
 import view.io.misc._
 import view.io.text._
 import MainViewMessages.LoadUi
-import state.AppState.{ActivityAgentStarted, StartActivity, ContentViewReady}
+import AppState.{ActivityAgentStarted, StartActivity, ContentViewReady}
 import IOOperation._
 
 

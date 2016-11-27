@@ -4,11 +4,8 @@ package droid
 import android.widget.{BaseAdapter,Filterable,Filter}
 import android.view.ViewGroup.LayoutParams._
 
-import view.AnnotatedIO
-
 abstract class ListAdapter(implicit val activity: Activity)
 extends BaseAdapter
-with Confirm
 with DefaultStrategy
 with ResourcesAccess
 with Logging
@@ -65,7 +62,6 @@ extends ListAdapter
 abstract class RecyclerAdapter[A <: RecyclerViewHolder, B: ClassTag]
 extends RecyclerViewAdapter[A]
 with Filterable
-with DefaultStrategy
 with Logging
 {
   implicit def context: Context

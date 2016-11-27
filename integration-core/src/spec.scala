@@ -11,11 +11,11 @@ import android.test.ActivityInstrumentationTestCase2
 import android.widget._
 import android.support.v7.widget.RecyclerView
 
-import fs2.Scheduler
-
 import junit.framework.Assert._
 
 import com.robotium.solo._
+
+import droid.state.{MVData, ViewDataI}
 
 class TrypIntegrationSpec[A <: Activity](cls: Class[A])
 extends ActivityInstrumentationTestCase2[A](cls)

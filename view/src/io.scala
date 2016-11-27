@@ -4,8 +4,6 @@ package view
 
 import reflect.macros.blackbox
 
-import fs2._
-
 import android.support.v7.app.AppCompatActivity
 
 import view.core._
@@ -36,11 +34,12 @@ trait IOXInstances
     def pure[A, C](run: C => A): IOX[A, C] = IOX(run, run.toString)
   }
 
-  implicit def instance_PerformIO_IOX(implicit strat: Strategy) =
+  implicit def instance_PerformIO_IOX =
     new PerformIO[IOX] {
-      def unsafePerformIO[A, C](fa: IOX[A, C])(implicit c: C) = Task(fa(c))
+      def unsafePerformIO[A, C](fa: IOX[A, C])(implicit c: C) =
+        Task.delay(fa(c))
 
-      def main[A, C](fa: IOX[A, C])(timeout: Duration = Duration.Inf)
+      def main[A, C](fa: IOX[A, C])(timeout: Duration = 5.seconds)
       (implicit c: C, sched: Scheduler) = {
         PerformIO.mainTask(fa(c), timeout)
       }

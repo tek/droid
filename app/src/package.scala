@@ -12,5 +12,5 @@ extends state.All
 with ToIntentOps
 with AndroidExt
 
-@integrate(state, tryp.state.StateDecls)
+@integrate(state)
 object `package`

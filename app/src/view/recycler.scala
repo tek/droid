@@ -3,7 +3,7 @@ package droid
 
 import iota._
 
-import state.AppState._
+import AppState._
 import state.TreeViewTrans
 
 trait RVTree
@@ -68,7 +68,7 @@ extends TreeViewTrans[D]
 
   override def machinePrefix = super.machinePrefix :+ "recycler"
 
-  val adapter: IOX[RVA, Context]
+  def adapter: IOX[RVA, Context]
 
   def recyclerConf: CK[RecyclerView] = nopK
 

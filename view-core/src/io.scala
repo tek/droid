@@ -3,8 +3,7 @@ package droid
 package view
 package core
 
-import fs2.{Task, Strategy, Scheduler}
-import fs2.interop.cats._
+// import fs2.interop.cats._
 
 import android.os.{Looper, Handler}
 
@@ -226,12 +225,12 @@ trait IOInstances
     def pure[A, C](run: C => A): IO[A, C] = IO(run)
   }
 
-  implicit def instance_PerformIO_IO
-  (implicit strat: Strategy) =
+  implicit def instance_PerformIO_IO =
     new PerformIO[IO] {
-      def unsafePerformIO[A, C](fa: IO[A, C])(implicit c: C) = Task(fa(c))
+      def unsafePerformIO[A, C](fa: IO[A, C])(implicit c: C) =
+        Task.delay(fa(c))
 
-      def main[A, C](fa: IO[A, C])(timeout: Duration = Duration.Inf)
+      def main[A, C](fa: IO[A, C])(timeout: Duration = 5.seconds)
       (implicit c: C, sched: Scheduler) = {
         PerformIO.mainTask(fa(c), timeout)
       }
@@ -332,18 +331,19 @@ trait PerformIOExecution
   }
 
   def main[A](task: Task[A], timeout: Duration)
-  (implicit strat: Strategy, sched: Scheduler): Task[A] = {
+  (implicit sched: Scheduler): Task[A] = {
+    implicit val strat = Strategy.fromExecutor(AndroidMainExecutorService)
     val timed = timeout match {
       case concurrent.duration.Duration.Inf => task
       case f: FiniteDuration => task.unsafeTimed(f)
       case _ => task
     }
-    timed.async(Strategy.fromExecutor(AndroidMainExecutorService))
+    timed.async(strat)
   }
 
   def mainTask[A](f: => A, timeout: Duration)
-  (implicit strat: Strategy, sched: Scheduler): Task[A] = {
-    main(Task(f)(Strategy.fromExecutor(AndroidMainExecutorService)), timeout)
+  (implicit sched: Scheduler): Task[A] = {
+    main(Task.delay(f), timeout)
   }
 
   object AndroidMainExecutionContext
@@ -355,12 +355,11 @@ trait PerformIOExecution
     override def reportFailure(t: Throwable) = Log.e(t)
   }
 
-  def mainFuture[A](f: => A, timeout: Duration)
-  (implicit strat: Strategy): Task[A] = {
-    Task {
-      Await.result(
-        ScalaFuture(f)(AndroidMainExecutionContext), timeout)
-    }
+  def mainFuture[A](f: => A, timeout: Duration): Task[A] = {
+    implicit val strat = Strategy.fromExecutor(AndroidMainExecutorService)
+    Task.fromFuture(
+      ScalaFuture(f)(AndroidMainExecutionContext))(
+        strat, AndroidMainExecutionContext)
   }
 }
 
@@ -380,7 +379,7 @@ extends PerformIOExecution
     }
 
     def main(implicit c: C, sched: Scheduler): Task[A] = {
-      typeClassInstance.main[A, C](self)(Duration.Inf)
+      typeClassInstance.main[A, C](self)(5.seconds)
     }
 
     def mainTimed(timeout: Duration)

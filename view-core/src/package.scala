@@ -3,10 +3,10 @@ package droid
 package view
 package core
 
-@exportTypes(IOI, Kestrel, Views, Combinators, ViewCombinators, PerformIO)
+@exportTypes(IOI, Kestrel, Views, Combinators, ViewCombinators)
 trait Types
 
-@exportNames(IO, DescribedKestrel)
+@exportNames(IO, DescribedKestrel, PerformIO)
 trait Names
 
 @export

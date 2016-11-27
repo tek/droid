@@ -26,10 +26,9 @@ with view.core.ToIO
   }
 
   def actAs[A <: Activity: ClassTag, B: Operation](f: A => B)
-  (implicit strat: Strategy)
   : IOI[Effect, Activity] = act { a =>
     a match {
-      case aa: A => fs2.Task(f(aa)).stateEffect
+      case aa: A => fs2.Task.delay(f(aa)).stateEffect
       case _ =>
         LogError("creating activity IO",
           s"Can't run '${className[A]}' task with current '${a.className}'")

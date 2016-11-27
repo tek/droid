@@ -20,12 +20,12 @@
 //   def request(locations: Seq[GeofenceData]) = {
 //     val builder = new GeofencingRequest.Builder
 //     locations foreach { loc => builder.addGeofence(geofence(loc)) }
-//     Task(GeofencingApi.addGeofences(apiClient, builder.build, intent))
+//     Task.delay(GeofencingApi.addGeofences(apiClient, builder.build, intent))
 //       .map(attachResultCallback("installed", locations))
 //   }
 
 //   def clear = {
-//     Task(GeofencingApi.removeGeofences(apiClient, intent))
+//     Task.delay(GeofencingApi.removeGeofences(apiClient, intent))
 //       .map(attachResultCallback("removed", Nil))
 //   }
 

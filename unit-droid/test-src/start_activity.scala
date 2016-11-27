@@ -5,8 +5,6 @@ package unit
 import org.robolectric.Shadows
 
 import state._
-import AppState._
-
 class StartActivitySpec
 extends StateAppSpec
 {

@@ -3,7 +3,7 @@ package droid
 package view
 
 @exportTypes(IOX, RootView, android.support.v7.widget.RecyclerView,
-  android.support.v7.widget.Toolbar)
+  android.support.v7.widget.Toolbar, AnnotatedIO)
 trait Types
 
 @exportNames(StreamIO, ViewStream)

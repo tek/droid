@@ -38,7 +38,7 @@
 //   override def onStartCommand(intent: Intent, flags: Int, startId: Int): Int =
 //   {
 //     start
-//     Task(handleIntent(intent)).unsafePerformAsync {
+//     Task.delay(handleIntent(intent)).unsafePerformAsync {
 //       case -\/(err) => log.error(err)(s"starting intent $intent")
 //       case _ =>
 //     }

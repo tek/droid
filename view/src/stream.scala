@@ -4,11 +4,9 @@ package view
 
 import cats.{Applicative, Unapply, Functor}
 
-import fs2._
-import async.mutable._
+import fs2.async
 
-import core._
-import state._
+import view.core.{IOStrategy, ApplyKestrel, ConsIO, K}
 
 case class StreamIO[A, C](io: IO[A, C])
 extends Logging
@@ -38,15 +36,14 @@ import PerformIO.ops._
 
 trait StreamIOInstances
 {
-  implicit def instance_ConsIO_StreamIO(implicit strat: Strategy) =
+  implicit def instance_ConsIO_StreamIO =
     new ConsIO[StreamIO] {
       def cons[A, C](fa: StreamIO[A, C])(c: C): A = fa.io(c)
       override def init[A, C](fa: StreamIO[A, C])(c: C): A = fa(c)
       def pure[A, C](run: C => A): StreamIO[A, C] = StreamIO(IO(run))
     }
 
-  implicit def instance_Monad_StreamIO[C]
-  (implicit strat: Strategy): Monad[StreamIO[?, C]] =
+  implicit def instance_Monad_StreamIO[C]: Monad[StreamIO[?, C]] =
     new Monad[StreamIO[?, C]] {
       def pure[A](a: A) = StreamIO(cats.Monad[IO[?, C]].pure(a))
 
@@ -59,10 +56,10 @@ trait StreamIOInstances
         defaultTailRecM(a)(f)
     }
 
-  implicit def instance_PerformIO_StreamIO(implicit strat: Strategy) =
+  implicit def instance_PerformIO_StreamIO =
     new PerformIO[StreamIO] {
       def unsafePerformIO[A, C](fa: StreamIO[A, C])(implicit c: C) =
-        Task(fa(c))
+        Task.delay(fa(c))
 
       def main[A, C](fa: StreamIO[A, C])(timeout: Duration)
       (implicit c: C, sched: Scheduler) = {
@@ -75,10 +72,10 @@ trait StreamIOFunctions
 {
   class Lifter[C]
   {
-    def apply[A](f: C => A)(implicit strat: Strategy) = StreamIO(IO(f))
+    def apply[A](f: C => A) = StreamIO(IO(f))
   }
 
-  def lift[C](implicit strat: Strategy) = new Lifter[C]
+  def lift[C] = new Lifter[C]
 }
 
 object StreamIO
@@ -86,7 +83,7 @@ extends Logging
 with StreamIOInstances
 with StreamIOFunctions
 {
-  def attachSignal[A, C](sig: Signal[Task, Option[A]])(implicit log: Logger) =
+  def attachSignal[A, C](sig: Signal[Option[A]])(implicit log: Logger) =
     K[A, C, IO] { a =>
       IO[A, C] { ctx =>
         // sig.set(Some(a)) !? "set signal for StreamIO"

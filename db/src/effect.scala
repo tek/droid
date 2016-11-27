@@ -20,7 +20,7 @@ case class DbTask[A: Operation, E <: SlickEffect](action: SlickAction[A, E])
 extends Message
 {
   def task(dbi: DbInfo): Effect = {
-    Task(Await.result(dbi.db() run(action), Duration.Inf)).stateEffect
+    Task.delay(Await.result(dbi.db() run(action), 5.seconds)).stateEffect
   }
 
   def effect(dbi: Option[DbInfo]): Effect = {

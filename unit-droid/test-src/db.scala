@@ -12,7 +12,7 @@ object DbSpecSchema
 
 trait DbSpecData
 {
-  import state.AppState._
+  import AppState._
   import MainViewMessages._
   import Db._
   import IOOperation.exports._

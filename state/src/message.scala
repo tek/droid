@@ -41,10 +41,13 @@ object IOMessage
 abstract class IOFun[A: StateEffect, C]
 extends Message
 {
+  def desc: String
+
   def run: C => A
 
-  def task(c: C)(implicit strat: Strategy) =
-    fs2.Task(run(c)).map(_.stateEffect)
+  def task(c: C) = Task.delay(run(c)).map(_.stateEffect)
+
+  override def toString = s"${this.className}($desc)"
 }
 
 case class ContextFun[A: StateEffect](run: Context => A, desc: String)
@@ -73,14 +76,14 @@ object FromContext
 trait InternalIOMessage
 extends Message
 {
-  def effect: Effect
+  def effect(implicit sender: Sender): Effect
 }
 
 case class FromContextIO[F[_, _]: PerformIO, A, C: FromContext]
 (io: F[A, C])(implicit cv: Contravariant[F[A, ?]], se: StateEffect[Task[A]])
 extends InternalIOMessage
 {
-  def effect = {
+  def effect(implicit sender: Sender) = {
     IOTask(io contramap FromContext[C].summon, io.toString).effect
   }
 }
@@ -97,7 +100,10 @@ extends Message
 {
   val task = (c: C) => io.unsafePerformIO(c)
 
-  def effect = cm.pure(task, desc).toRoot.stateEffect
+  def effect(implicit sender: Sender) =
+    cm.pure(task, desc).broadcast.stateEffect
+
+  override def toString = s"IOTask($desc)"
 }
 
 // TODO maybe allow A to have an Operation and asynchronously enqueue the
@@ -107,10 +113,10 @@ case class IOMainTask[F[_, _]: PerformIO, A, C]
 (implicit cm: IOMessage[C], se: StateEffect[Task[A]])
 extends Message
 {
-  def effect(implicit sched: Scheduler) =
-    cm.pure(io.mainTimed(timeout)(_, sched), desc).publish
+  def effect(implicit sched: Scheduler, sender: Sender) =
+    cm.pure(io.mainTimed(timeout)(_, sched), desc).broadcast
 
-  override def toString = desc
+  override def toString = s"IOMainTask($desc)"
 }
 
 case class IOFork[F[_, _]: PerformIO, C](io: F[Unit, C], desc: String)
@@ -126,8 +132,9 @@ extends Message
 final class IOEffect[F[_, _]: PerformIO]
 extends AnyRef
 {
-  def ui[A: Operation, C](fa: F[A, C])(implicit cm: IOMessage[C]) =
-    IOMainTask(fa, fa.toString).publish.success
+  def ui[A: Operation, C](fa: F[A, C])
+  (implicit cm: IOMessage[C], sender: Sender) =
+    IOMainTask(fa, fa.toString).broadcast.success
 }
 
 object IOEffect
@@ -136,6 +143,7 @@ object IOEffect
     new IOEffect[F]
 
   abstract class Ops[F[_, _]: PerformIO, A, C: IOMessage]
+  (implicit sender: Sender)
   {
     def typeClassInstance: IOEffect[F]
     def self: F[A, C]
@@ -151,7 +159,7 @@ object IOEffect
   {
     implicit def toIOEffectOps[F[_, _]: PerformIO, A, C: IOMessage]
     (fa: F[A, C])
-    (implicit tc: IOEffect[F]) =
+    (implicit tc: IOEffect[F], sender: Sender) =
       new Ops[F, A, C] {
         val self = fa
         val typeClassInstance = tc
@@ -165,9 +173,9 @@ object IOEffect
 // FIXME this should be handled by the same machine and thus not need
 // Effect and publish
 case class ViewStreamTask[A, C: IOMessage](
-  stream: ViewStream[A, C], desc: String, timeout: Duration = 30 seconds,
+  stream: ViewStream[A, C], desc: String, timeout: Duration = 5.seconds,
   main: Boolean = false)
-(implicit se: StateEffect[Task[A]], strat: Strategy)
+(implicit se: StateEffect[Task[A]])
 extends Message
 {
   private[this] val taskCtor: IO[A, C] => Message =
@@ -186,7 +194,7 @@ object IOOperation
 {
   @export(Instantiated)
   implicit def instance_Operation_ViewStream[A: Operation, C: IOMessage]
-  (implicit strat: Strategy): Operation[ViewStream[A, C]] =
+  : Operation[ViewStream[A, C]] =
     new ParcelOperation[ViewStream[A, C]] {
       def parcel(v: ViewStream[A, C]) = {
         ViewStreamTask(v, v.desc).publish
@@ -197,7 +205,7 @@ object IOOperation
 
   @export(Instantiated)
   implicit def instance_StateEffect_ViewStream[A, C: IOMessage]
-  (implicit se: StateEffect[Task[A]], strat: Strategy)
+  (implicit se: StateEffect[Task[A]])
   : StateEffect[ViewStream[A, C]] =
     new StateEffect[ViewStream[A, C]] {
       def stateEffect(v: ViewStream[A, C]) = {
@@ -233,7 +241,7 @@ object IOOperation
 final class ViewStreamMessageOps[A: Operation, C: IOMessage]
 (val self: ViewStream[A, C])
 {
-  def main(implicit strat: Strategy) =
+  def main =
     ViewStreamTask(self, self.desc, main = true).publish
 }
 

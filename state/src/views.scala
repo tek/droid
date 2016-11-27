@@ -42,8 +42,6 @@ trait ActivityAgent
 extends ActivityAgentBase { aa =>
   def activityClass: Class[_ <: Activity] = classOf[StateActivity]
 
-  def name = "act_agent"
-
   override def initialMessages =
     super.initialMessages ++ Stream(PublishMessage(ActivityAgentStarted(aa)))
 }
