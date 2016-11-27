@@ -124,11 +124,57 @@ with Logging
   def sleep(secs: Double) = Thread.sleep((secs * 1000).toInt)
 }
 
-class StateSpec[A <: StateActivity](cls: Class[A])
+abstract class StateSpec[A <: StateActivity](cls: Class[A])
 extends TrypIntegrationSpec[A](cls)
 {
   def stateActivity = activity match {
     case a: StateActivity => a
     case _ => sys.error("activity is not a StateActivity")
   }
+
+  def stateApp = stateActivity.stateApp match {
+    case a: StateApplication => a
+    case a => sys.error(s"application is not an IntApplication: $a")
+  }
+
+  lazy val root: StateApplicationAgent = stateApp.root
+
+  lazy val appStateMachine = root.appStateMachine
+
+  def agent: ActivityAgent
+
+  override def post() = {
+    super.post()
+    activity
+    sleep(1)
+    stateApp.agents.unsafeSend(AppState.SetAgent(agent))
+  }
+
+  def activityAgent =
+    appStateMachine.current.get.data match {
+      case droid.state.AppState.ASData(_, Some(agent)) => agent
+    case _ => sys.error("no activity agent running")
+    }
+
+  def mainAgent =
+    activityAgent match {
+      case m: MainViewAgent => m
+      case _ => sys.error("activity agent is not a main view agent")
+    }
+
+  def mainUi: ViewAgent =
+    mainAgent.mvMachine.current.get.data match {
+      case MVData(ui: ViewAgent) => ui
+      case _ => sys.error("main view has no ui")
+    }
+
+  def mainTree[A: ClassTag] =
+    mainUi.viewMachine.current.get.data match {
+      case a: ViewDataI[_] =>
+        a.view match {
+        case tree: A => tree
+        case _ => sys.error(s"view tree has wrong class: ${a.view}")
+      }
+      case _ => sys.error("no view tree in main ui")
+    }
 }

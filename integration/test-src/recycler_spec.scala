@@ -2,15 +2,15 @@ package tryp
 package droid
 package integration
 
-class BasicSpec
+class RecyclerSpec
 extends SimpleIntStateSpec(classOf[IntStateActivity])
 {
-  override def initialUi = ViewAgent1.some
+  override def initialUi = RecyclerAgent.some
 
-  def testBasic() = {
+  def testRecycler() = {
     dbg("-------------")
     activity
-    sleep(8)
+    activity.nonEmptyRecycler(10)
     activity.showViewTree.dbg
   }
 }

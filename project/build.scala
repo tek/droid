@@ -78,6 +78,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val integration =
     (apk("integration") << integrationCore << view << state)
+      .transitive
       .integration
       .protify
       .manifest(

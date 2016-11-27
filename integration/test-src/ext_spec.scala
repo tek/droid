@@ -2,12 +2,12 @@ package tryp
 package droid
 package integration
 
-class BasicSpec
-extends SimpleIntStateSpec(classOf[IntStateActivity])
+class ExtSpec
+extends ExtIntStateSpec(classOf[IntStateActivity])
 {
   override def initialUi = ViewAgent1.some
 
-  def testBasic() = {
+  def testExt() = {
     dbg("-------------")
     activity
     sleep(8)

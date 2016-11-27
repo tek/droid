@@ -2,45 +2,31 @@ package tryp
 package droid
 package integration
 
-import droid.state.{AppState, MVData, ViewDataI}
-
-class IntStateSpec[A <: StateActivity](cls: Class[A])
+abstract class IntStateSpec[A <: StateActivity](cls: Class[A])
 extends StateSpec[A](cls)
-{
-  def stateApp = stateActivity.stateApp match {
+{ self =>
+  override def stateApp = super.stateApp match {
     case a: IntApplication => a
     case a => sys.error(s"application is not an IntApplication: $a")
   }
 
-  lazy val root = stateApp.root
+  def initialUi: Option[ViewAgent] = None
+}
 
-  lazy val appStateMachine = root.appStateMachine
+case class SimpleAg(override val initialUi: Option[ViewAgent])
+extends Simple
 
-  // def activityAgent =
-  //   appStateMachine.current.get.unsafePerformSync.data match {
-  //     case AppState.ASData(_, Some(agent)) => agent
-  //   case _ => sys.error("no activity agent running")
-  //   }
+class SimpleIntStateSpec[A <: StateActivity](cls: Class[A])
+extends IntStateSpec[A](cls)
+{
+  def agent: ActivityAgent = SimpleAg(initialUi)
+}
 
-  // def mainAgent =
-  //   activityAgent match {
-  //     case m: MainViewAgent => m
-  //     case _ => sys.error("activity agent is not a main view agent")
-  //   }
+case class ExtAg(override val initialUi: Option[ViewAgent])
+extends Ext
 
-  // def mainUi: ViewAgent =
-  //   mainAgent.mvMachine.current.get.unsafePerformSync.data match {
-  //     case MVData(ui: ViewAgent) => ui
-  //     case _ => sys.error("main view has no ui")
-  //   }
-
-  // def mainTree[A: ClassTag] =
-  //   mainUi.viewMachine.current.get.unsafePerformSync.data match {
-  //     case a: ViewDataI[_] =>
-  //       a.view match {
-  //       case tree: A => tree
-  //       case _ => sys.error(s"view tree has wrong class: ${a.view}")
-  //     }
-  //     case _ => sys.error("no view tree in main ui")
-  //   }
+class ExtIntStateSpec[A <: StateActivity](cls: Class[A])
+extends IntStateSpec[A](cls)
+{
+  def agent: ActivityAgent = ExtAg(initialUi)
 }

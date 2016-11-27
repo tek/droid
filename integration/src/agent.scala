@@ -17,24 +17,9 @@ import state.TreeViewTrans
 
 class Simple
 extends state.MVAgent
-{
-  lazy val tMachine = new Machine {
-    def name = "t"
 
-    def transitions(mc: MComm) =
-      new MachineTransitions {
-        def mcomm = mc
-
-        def admit: Admission = {
-          case ActivityAgentStarted(_) => _ << LoadUi(new ViewAgent1).broadcast
-        }
-      }
-  }
-
-  override def machines = tMachine :: super.machines
-
-  def agents = Nil
-}
+class Ext
+extends state.ExtMV
 
 case class Main1(container: FrameLayout, label: TextView)
 extends ViewTree[FrameLayout]
@@ -45,13 +30,9 @@ extends ViewTree[FrameLayout]
   override def toString = "Main1"
 }
 
-class ViewAgent1
+object ViewAgent1
 extends ViewAgent
 {
-  def name = "view_1"
-
-  def agents = Nil
-
   lazy val viewMachine =
     new state.ViewMachine {
       def transitions(mc: MComm) =
