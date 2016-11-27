@@ -102,6 +102,9 @@ object MainViewMessages
 
   case object InitUi
   extends Message
+
+  case class ToMainView(m: Message)
+  extends Message
 }
 import MainViewMessages._
 
@@ -185,16 +188,21 @@ extends Data
 trait MV
 extends IOTrans
 {
-  def name = "mv"
-
   def admit: Admission = {
     case LoadUi(ui) => loadUi(ui)
     case InitUi => initUi
   }
 
+  private[this] def integrate = (ag: Agent) => {
+    (comm: Comm) => ag.integrate(comm).map {
+      case UnwrapMessage(m: SetContentTree) => ToMainView(m)
+      case a => a
+    }
+  }
+
   def loadUi(ui: ViewAgent): Transit = {
     case S(s, _) =>
-      S(s, MVData(ui)) << StartAgent(Stream(ui)).broadcast <<
+      S(s, MVData(ui)) << StartAgentExt(Stream(ui), integrate).broadcast <<
         UiLoaded.toLocal
   }
 
@@ -209,21 +217,21 @@ case class MVATrans(mcomm: MComm, viewMachine: ViewMachine, mvMachine: MV.MV,
 extends ViewAgentTrans
 {
   private[this] def setContentViewAdmit: Admission = {
-    case m @ SetContentView(view, Some(sender)) if sender == viewMachine =>
-      _ << m.toParent
+    case m @ SetContentView(view, Some(sender)) if sender != viewMachine =>
+      _ << m.to(viewMachine).publish
     case m @ SetContentView(_, _) =>
-      _ << m.to(viewMachine)
-    case m @ SetContentTree(view, Some(sender)) if sender == viewMachine =>
-      _ << m.toParent
+      _ << ToAppState(m).publish
+    case m @ SetContentTree(view, Some(sender)) if sender != viewMachine =>
+      _ << m.to(viewMachine).publish
     case m @ SetContentTree(_, _) =>
-      _ << m.to(viewMachine)
+      _ << ToAppState(m).publish
   }
 
   override def overrideAdmit = setContentViewAdmit orElse super.overrideAdmit
 
   override def internalAdmit = super.internalAdmit orElse {
-    case ContentViewReady(ag) if ag == this =>
-      _ << MainViewReady.toLocal
+    case ContentViewReady(ag) if mcomm.agent.contains(ag) =>
+      _ << MainViewReady.broadcast
     case ActivityAgentStarted(_) =>
       initialUi match {
         case Some(agent) => _ << LoadUi(agent).to(mvMachine)
@@ -249,6 +257,11 @@ extends TreeActivityAgent
   override def machines: List[Machine] = mvMachine :: super.machines
 
   protected def initialUi: Option[ViewAgent] = None
+
+  override def transformIn = {
+    case ToMainView(m) => m.to(viewMachine)
+    case a => super.transformIn(a)
+  }
 }
 
 trait MVAgent
@@ -272,7 +285,7 @@ with HasMainFrame
   drawer.setLayoutParams(lp)
   drawer.desc("drawer")
 
-  override def toString = className
+  override def toString = this.className
 }
 
 trait HasDrawer
@@ -291,7 +304,7 @@ with HasDrawer
   container.setOrientation(LinearLayout.VERTICAL)
   container.desc("ext mv")
 
-  override def toString = className
+  override def toString = this.className
 
   def mainFrame = drawer.mainFrame
 }
@@ -348,8 +361,8 @@ extends MVContainer[A]
   protected def toggleAdmit: Admission = {
     case MainViewReady => {
       case s @ S(_, ViewData(main)) =>
-        s << DrawerReady.toRoot << CreateDrawerView.toRoot << SetupActionBar <<
-          CreateToggle
+        s << DrawerReady.broadcast << CreateDrawerView.broadcast <<
+          SetupActionBar << CreateToggle
     }
     case SetupActionBar => {
       case s @ S(_, ViewData(main)) =>
@@ -376,7 +389,7 @@ extends MVContainer[A]
       case s @ S(_, ViewData(main)) =>
         val io = (main.drawer.drawer >>- MainFrame.load(v))
         IOEffect.ops.toIOEffectOps(io)
-        s << io.map(_ => DrawerLoaded.toRoot).ui
+        s << io.map(_ => DrawerLoaded.broadcast).ui
     }
     case SyncToggle => {
       case s @ S(_, ExtMVData(_, toggle, _)) =>
