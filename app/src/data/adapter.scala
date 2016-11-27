@@ -174,3 +174,7 @@ with Views[Context, StreamIO]
     }
   }
 }
+
+case class StringRA(context: Context)
+(implicit val scheduler: Scheduler)
+extends StringRecyclerAdapter

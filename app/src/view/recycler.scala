@@ -128,3 +128,9 @@ extends RVTrans[A, B, C, RVMain]
 {
   def infMain = inf[RVMain]
 }
+
+abstract class StringRV
+extends SimpleRV[StringHolder, String, StringRA]
+{
+  lazy val adapter = con(StringRA(_))
+}
