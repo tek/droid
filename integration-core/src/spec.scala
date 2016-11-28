@@ -41,11 +41,14 @@ with AnnotatedIO
 
   def settings = Settings.defaultSettings
 
+  def setPrefs(): Unit = ()
+
   override def setUp() {
     super.setUp()
     pre()
     settings.user.clear()
     settings.app.clear()
+    setPrefs()
     setActivityInitialTouchMode(false)
     solo
     post()
@@ -80,7 +83,7 @@ with AnnotatedIO
 
   def waitFor(timeout: Int)(predicate: => Boolean) {
     val end = System.currentTimeMillis + timeout
-    while(!predicate && System.currentTimeMillis < end) Thread.sleep(100)
+    while(!predicate && System.currentTimeMillis < end) Thread.sleep(200)
   }
 
   def assertion(isTrue: => Boolean, msg: => String) = assert(isTrue, msg)
