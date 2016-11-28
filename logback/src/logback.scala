@@ -19,6 +19,8 @@ extends tryp.Logging
 {
   lazy val DEBUG = ch.qos.logback.classic.Level.DEBUG
 
+  lazy val TRACE = ch.qos.logback.classic.Level.TRACE
+
   def overrideLevel(name: String, level: Level) = {
     getLogger(name).logger match {
       case l: LLogger => l.setLevel(level)
@@ -27,4 +29,6 @@ extends tryp.Logging
   }
 
   def debugTryp() = overrideLevel("tryp", DEBUG)
+
+  def traceTryp() = overrideLevel("tryp", TRACE)
 }
