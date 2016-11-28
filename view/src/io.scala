@@ -8,64 +8,30 @@ import android.support.v7.app.AppCompatActivity
 
 import view.core._
 
-case class IOX[A, C](run: C => A, desc: String)
-extends IOI[A, C]
-{
-  def apply(implicit c: C): A = run(c)
-}
-
-trait IOXInstances
-{
-  implicit def instance_Monad_IOX[C]: Monad[IOX[?, C]] = new Monad[IOX[?, C]]
-  {
-    def pure[A](a: A) = IOX(c => a, a.toString)
-
-    def flatMap[A, B](fa: IOX[A, C])(f: A => IOX[B, C]) = {
-      IOX(c => f(fa.run(c)).run(c), s"${fa.desc}.flatMap($f)")
-    }
-
-    def tailRecM[A, B](a: A)(f: A => IOX[Either[A, B], C])
-    : IOX[B, C] =
-      defaultTailRecM(a)(f)
-  }
-
-  implicit lazy val instance_ConsIO_IOX = new ConsIO[IOX] {
-    def cons[A, C](fa: IOX[A, C])(c: C): A = fa(c)
-    def pure[A, C](run: C => A): IOX[A, C] = IOX(run, run.toString)
-  }
-
-  implicit def instance_PerformIO_IOX =
-    new PerformIO[IOX] {
-      def unsafePerformIO[A, C](fa: IOX[A, C])(implicit c: C) =
-        Task.delay(fa(c))
-
-      def main[A, C](fa: IOX[A, C])(timeout: Duration = 5.seconds)
-      (implicit c: C, sched: Scheduler) = {
-        PerformIO.mainTask(fa(c), timeout)
-      }
-    }
-}
-
-object IOX
-extends IOXInstances
-
 trait AnnotatedIO
 {
-  def con[A](f: Context => A): IOX[A, Context] =
+  def con[A](f: Context => A): IO[A, Context] =
     macro AnnotatedIOM.inst[A, Context]
-  def act[A](f: Activity => A): IOX[A, Activity] =
+  def act[A](f: Activity => A): IO[A, Activity] =
     macro AnnotatedIOM.inst[A, Activity]
-  def acact[A](f: AppCompatActivity => A): IOX[A, AppCompatActivity] =
+  def acact[A](f: AppCompatActivity => A): IO[A, AppCompatActivity] =
     macro AnnotatedIOM.inst[A, AppCompatActivity]
-  def res[A](f: Resources => A): IOX[A, Resources] =
+  def res[A](f: Resources => A): IO[A, Resources] =
     macro AnnotatedIOM.inst[A, Resources]
 
-  def conS[A](f: Context => A): StreamIO[A, Context] =
-    macro AnnotatedIOM.instS[A, Context]
-  def actS[A](f: Activity => A): StreamIO[A, Activity] =
-    macro AnnotatedIOM.instS[A, Activity]
-  def resS[A](f: Resources => A): StreamIO[A, Resources] =
-    macro AnnotatedIOM.instS[A, Resources]
+  // def conS[A](f: Context => A): StreamIO[A, Context] =
+  //   macro AnnotatedIOM.instS[A, Context]
+  // def actS[A](f: Activity => A): StreamIO[A, Activity] =
+  //   macro AnnotatedIOM.instS[A, Activity]
+  // def resS[A](f: Resources => A): StreamIO[A, Resources] =
+  //   macro AnnotatedIOM.instS[A, Resources]
+
+  implicit def viewToIOX[A <: View](a: A): IO[A, Context] =
+    macro AnnotatedIOM.now[A, Context]
+
+  implicit def viewToApplyKestrelX[A <: View](a: A)
+  : ApplyKestrel.Ops[IO, A, Context] =
+    macro AnnotatedIOM.nowAK[A, Context]
 }
 
 class AnnotatedIOM(val c: blackbox.Context)
@@ -74,94 +40,48 @@ extends AndroidMacros
   import c.universe._
   import c.Expr
 
-  def inst[A: WeakTypeTag, C: WeakTypeTag](f: Expr[C => A])
-  : Expr[IOX[A, C]] = {
+  private[this] def withRepr
+  [A: WeakTypeTag, C: WeakTypeTag, F[_, _]]
+  (f: Expr[C => A], repr: String)
+  (implicit fType: WeakTypeTag[F[_, _]])
+  : Expr[F[A, C]] = {
     val aType = weakTypeOf[A]
     val cType = weakTypeOf[C]
-    val content = f.tree.toString
-    val iType = typeOf[IOX[_, _]].typeSymbol
+    val ctor = weakTypeOf[F[_, _]].typeSymbol
     Expr {
       q"""
-      new $iType[$aType, $cType]($f, $content)
+      new $ctor[$aType, $cType]($f, $repr)
       """
     }
   }
 
-  def instwrap[A: WeakTypeTag, C: WeakTypeTag](f: Expr[C => A])
-  : Expr[IO[A, C]] = {
+  def inst[A: WeakTypeTag, C: WeakTypeTag](f: Expr[C => A]): Expr[IO[A, C]] =
+    withRepr[A, C, IO](f, showCode(f.tree))
+
+  // def instS[A: WeakTypeTag, C: WeakTypeTag](f: Expr[C => A])
+  // : Expr[StreamIO[A, C]] = {
+  //   val io = inst[A, C](f)
+  //   val comp = typeOf[StreamIO[_, _]].typeSymbol.companion
+  //   Expr[StreamIO[A, C]] {
+  //     q"""
+  //     $comp($io)
+  //     """
+  //   }
+  // }
+
+  def now[A: WeakTypeTag, C: WeakTypeTag](a: Expr[A]): Expr[IO[A, C]] =
+    withRepr[A, C, IO](Expr(q"(_: Context) => $a"), showCode(a.tree))
+
+  def nowAK[A: WeakTypeTag, C: WeakTypeTag](a: Expr[A])
+  : Expr[ApplyKestrel.Ops[IO, A, C]] = {
     val aType = weakTypeOf[A]
     val cType = weakTypeOf[C]
-    val content = f.tree.toString
-    val iType = typeOf[IO[_, _]].typeSymbol
-    Expr {
-      q"""
-      new $iType[$aType, $cType]($f)
-      """
-    }
-  }
-
-  def instS[A: WeakTypeTag, C: WeakTypeTag](f: Expr[C => A])
-  : Expr[StreamIO[A, C]] = {
-    val io = instwrap[A, C](f)
-    val comp = typeOf[StreamIO[_, _]].typeSymbol.companion
-    Expr[StreamIO[A, C]] {
-      q"""
-      $comp($io)
-      """
-    }
-  }
-}
-
-class IOXwrap[A, C](run: C => A, desc: String)
-extends IO(run)
-{
-  override def toString = s"IO($desc)"
-}
-
-trait AnnotatedIOwrap
-{
-  def con[A](f: Context => A): IO[A, Context] =
-    macro AnnotatedIOMwrap.inst[A, Context]
-  def act[A](f: Activity => A): IO[A, Activity] =
-    macro AnnotatedIOMwrap.inst[A, Activity]
-  def res[A](f: Resources => A): IO[A, Resources] =
-    macro AnnotatedIOMwrap.inst[A, Resources]
-
-  def conS[A](f: Context => A): StreamIO[A, Context] =
-    macro AnnotatedIOMwrap.instS[A, Context]
-  def actS[A](f: Activity => A): StreamIO[A, Activity] =
-    macro AnnotatedIOMwrap.instS[A, Activity]
-  def resS[A](f: Resources => A): StreamIO[A, Resources] =
-    macro AnnotatedIOMwrap.instS[A, Resources]
-}
-
-class AnnotatedIOMwrap(val c: blackbox.Context)
-extends AndroidMacros
-{
-  import c.universe._
-  import c.Expr
-
-  def inst[A: WeakTypeTag, C: WeakTypeTag](f: Expr[C => A])
-  : Expr[IO[A, C]] = {
-    val aType = weakTypeOf[A]
-    val cType = weakTypeOf[C]
-    val content = f.tree.toString
-    val iType = typeOf[IOX[_, _]].typeSymbol
-    Expr {
-      q"""
-      new $iType[$aType, $cType]($f, $content)
-      """
-    }
-  }
-
-  def instS[A: WeakTypeTag, C: WeakTypeTag](f: Expr[C => A])
-  : Expr[StreamIO[A, C]] = {
-    val io = inst[A, C](f)
-    val comp = typeOf[StreamIO[_, _]].typeSymbol.companion
-    Expr[StreamIO[A, C]] {
-      q"""
-      $comp($io)
-      """
-    }
+    val iType = weakTypeOf[IO[_, _]]
+    val io = now[A, C](a)
+    val akt = typeOf[ApplyKestrel.ops.type]
+    val ak = akt.termSymbol
+    val tako = typeOf[ApplyKestrel.ToApplyKestrelOps]
+    val toAk = tako.member(TermName("toApplyKestrelOps"))
+    Expr(q"$ak.toApplyKestrelOps(${io.tree})")
   }
 }

@@ -3,4 +3,4 @@ package droid
 package view
 
 trait BuilderOps
-extends ToTextViewOps
+// extends ToTextViewOps

@@ -23,6 +23,7 @@ with HasSettings
 with TestHelpers
 with FixedPool
 with Logging
+with AnnotatedIO
 {
   def name = "spec"
 

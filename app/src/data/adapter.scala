@@ -72,7 +72,7 @@ with Logging
 
   def items: Seq[B]
 
-  def updateItems(newItems: Seq[B]): IOX[Unit, Context]
+  def updateItems(newItems: Seq[B]): IO[Unit, Context]
 
   var visibleItems: Seq[B] = Seq()
 
@@ -154,7 +154,7 @@ extends RecyclerViewHolder(tree.container)
 
 trait StringRecyclerAdapter
 extends SimpleRecyclerAdapter[StringHolder, String]
-with Views[Context, StreamIO]
+with Views[Context, IO]
 {
   def onCreateViewHolder(parent: ViewGroup, viewType: Int) = {
     val tree = ViewTree.inflate(context, StringElement)

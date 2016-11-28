@@ -20,8 +20,8 @@ extends MachineTransitions
     case t @ IOMainTask(_, _, _) => {
       case s => s << t.effect
     }
-    case t @ ViewStreamTask(_, _, _, _) =>
-      _ << t.effect
+    // case t @ ViewStreamTask(_, _, _, _) =>
+    //   _ << t.effect
   }
 }
 

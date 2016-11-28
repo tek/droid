@@ -15,7 +15,7 @@ extends Data
 
 trait ViewTrans
 extends IOTrans
-with Views[Context, StreamIO]
+with Views[Context, IO]
 {
   override def machinePrefix = super.machinePrefix :+ "view"
 }
@@ -49,7 +49,7 @@ extends ViewTrans
   case class VData(view: A)
   extends ViewData
 
-  protected def infMain: StreamIO[A, Context]
+  protected def infMain: IO[A, Context]
 
   protected def dataWithTree(data: Data, tree: A): Data =
     VData(tree)
@@ -92,7 +92,6 @@ extends MachineTransitions
 
 trait ViewAgent
 extends Agent
-with Views[Context, StreamIO]
 { self =>
   def viewMachine: ViewMachine
 

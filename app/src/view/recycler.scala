@@ -68,7 +68,7 @@ extends TreeViewTrans[D]
 
   override def machinePrefix = super.machinePrefix :+ "recycler"
 
-  def adapter: IOX[RVA, Context]
+  def adapter: IO[RVA, Context]
 
   def recyclerConf: CK[RecyclerView] = nopK
 

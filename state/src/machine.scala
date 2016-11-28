@@ -13,7 +13,6 @@ extends Message
 trait IOTrans
 extends MachineTransitions
 with view.AnnotatedIO
-with view.core.ToIO
 {
   def instance_MOutput_IOTask[F[_, _]: PerformIO, A: Operation, C]
   : MOutput[IOTask[F, A, C]] = new MOutput[IOTask[F, A, C]] {

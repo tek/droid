@@ -25,6 +25,7 @@ trait ConsIO[F[_, _]]
   def cons[A, C](fa: F[A, C])(c: C): A
   def init[A, C](fa: F[A, C])(c: C): A = cons[A, C](fa)(c)
   def pure[A, C](run: C => A): F[A, C]
+  def pureDesc[A, C](run: C => A, desc: String): F[A, C]
 
   def withContext[A, C, D <: C](fa: F[A, C]): F[A, D] =
     pure[A, D](d => cons[A, C](fa)(d))
@@ -58,18 +59,23 @@ object ConsIO
   extends ToConsIOOps
 }
 
+@tc trait DescribeIO[F[_, _]]
+{
+  def desc[A, C](fa: F[A, C]): String
+}
+
 trait IOI[A, C]
 {
   def run: C => A
   def desc: String
 }
 
-case class IO[A, C](run: C => A)
+case class IO[A, C](run: C => A, desc: String)
 extends IOI[A, C]
 {
   def apply(implicit c: C): A = run(c)
 
-  def desc = run.toString
+  override def toString = s"IO($desc)"
 }
 
 trait Kestrel[A, C, F[_, _]]
@@ -77,6 +83,8 @@ trait Kestrel[A, C, F[_, _]]
   def run: A => F[A, C]
 
   def apply(a: A) = run(a)
+
+  def impl: String
 }
 
 trait KestrelInstances
@@ -99,7 +107,7 @@ trait KestrelInstances
 trait KestrelFunctions1
 {
   implicit def liftDefault[A, B, C](f: A => B): Kestrel[A, C, IO] = {
-    K[A, C, IO](a => IO(ctx => { f(a); a }))
+    K[A, C, IO](a => IO(ctx => { f(a); a }, f.toString))
   }
 }
 
@@ -117,6 +125,9 @@ with KestrelFunctions
 
 case class K[A, C, F[_, _]](run: A => F[A, C])
 extends Kestrel[A, C, F]
+{
+  def impl = run.toString
+}
 
 case class DescribedKestrel[A, C, F[_, _]](name: String, impl: String,
   run: A => F[A, C])
@@ -209,10 +220,10 @@ trait IOInstances
 {
   implicit def instance_Monad_IO[C]: Monad[IO[?, C]] = new Monad[IO[?, C]]
   {
-    def pure[A](a: A) = IO(c => a)
+    def pure[A](a: A) = IO(c => a, a.toString)
 
     def flatMap[A, B](fa: IO[A, C])(f: A => IO[B, C]) = {
-      IO(c => f(fa.run(c)).run(c))
+      IO(c => f(fa.run(c)).run(c), s"${fa.desc}.flatMap($f)")
     }
 
     def tailRecM[A, B](a: A)(f: A => IO[Either[A, B], C])
@@ -222,7 +233,8 @@ trait IOInstances
 
   implicit lazy val instance_ConsIO_IO = new ConsIO[IO] {
     def cons[A, C](fa: IO[A, C])(c: C): A = fa(c)
-    def pure[A, C](run: C => A): IO[A, C] = IO(run)
+    def pure[A, C](run: C => A): IO[A, C] = IO(run, run.toString)
+    def pureDesc[A, C](run: C => A, desc: String): IO[A, C] = IO(run, desc)
   }
 
   implicit def instance_PerformIO_IO =
@@ -235,20 +247,27 @@ trait IOInstances
         PerformIO.mainTask(fa(c), timeout)
       }
     }
+
+  implicit def instance_DescribeIO_IO: DescribeIO[IO] =
+    new DescribeIO[IO] {
+      def desc[A, C](fa: IO[A, C]) = fa.desc
+    }
 }
 
 object IO
 extends IOInstances
 
-class ApplyKestrel[F[_, _]: ConsIO]
+class ApplyKestrel[F[_, _]: ConsIO: DescribeIO]
 {
   import PerformIO.ops._
+  import DescribeIO.ops._
 
   def applyKestrel[A, B >: A, C, G[_, _]: ConsIO]
   (fa: F[A, C])
   (k: Kestrel[B, C, G])
   : F[A, C] = {
-    ConsIO[F].pure[A, C](combineRun[A, B, C, G](fa)(k))
+    ConsIO[F].pureDesc[A, C](combineRun[A, B, C, G](fa)(k),
+      s"${fa.desc} >>- ${k.impl}")
   }
 
   def combineRun[A, B >: A, C, G[_, _]: ConsIO]
@@ -259,12 +278,14 @@ class ApplyKestrel[F[_, _]: ConsIO]
       ConsIO[G].cons(b)(c)
       a
   }
+
+
 }
 
 object ApplyKestrel
 extends ToIotaKestrelOps
 {
-  implicit def instance_ApplyKestrel[F[_, _]: ConsIO]
+  implicit def instance_ApplyKestrel[F[_, _]: ConsIO: DescribeIO]
   : ApplyKestrel[F] = new ApplyKestrel
 
   def apply[F[_, _]](implicit instance: ApplyKestrel[F]): ApplyKestrel[F] =
@@ -416,7 +437,7 @@ trait CKFunctions
   def apply[A](run: A => IO[A, Context]) = K(run)
 
   def lift[A, B, F[_, _]: ConsIO](f: A => B): CK[A] = {
-    liftF(a => IO(ctx => { f(a); a }))
+    liftF(a => IO(ctx => { f(a); a }, "from CKFunctions.lift"))
   }
 
   def nopK[A, F[_, _]: ConsIO]: CK[A] = lift[A, Unit, F](_ => ())

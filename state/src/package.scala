@@ -18,7 +18,7 @@ with Types
 
 trait All
 extends view.All
-with ToViewStreamMessageOps
+// with ToViewStreamMessageOps
 with StateEffectInstances
 with IOEffect.ToIOEffectOps
 with view.FragmentManagement.ToFragmentManagementOps

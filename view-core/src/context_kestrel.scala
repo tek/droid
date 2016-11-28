@@ -60,7 +60,7 @@ with AndroidMacros
               val kst: $rhsTpe = { ..$impl }
               $invoke
               a
-            })
+            }, $content)
         })
       """
     }
@@ -139,7 +139,7 @@ with Logging
 with ToCKIotaKestrelOps
 {
   def kraw[A, B](f: Context => A => B): CK[A] =
-    CK(a => IO(ctx => { f(ctx)(a); a }))
+    CK(a => IO(ctx => { f(ctx)(a); a }, "from CKCombinators.kraw"))
 }
 
 trait Combinators[P]

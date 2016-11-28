@@ -88,8 +88,8 @@ object MainViewMessages
   case object CreateMainView
   extends Message
 
-  case class SetMainView[A <: ViewGroup](view: StreamIO[A, Context])
-  extends Message
+  // case class SetMainView[A <: ViewGroup](view: StreamIO[A, Context])
+  // extends Message
 
   case class SetMainTree[A <: ViewGroup](tree: ViewTree[A])
   extends Message
