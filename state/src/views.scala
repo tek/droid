@@ -6,7 +6,7 @@ import android.widget._
 
 import tryp.state.PublishMessage
 
-trait IODispatcher
+case class IODispatcher(mcomm: MComm)
 extends MachineTransitions
 {
   val admit: Admission = {
@@ -28,9 +28,7 @@ extends MachineTransitions
 trait IODispatcherMachine
 extends Machine
 {
-  def transitions(c: MComm) = new IODispatcher {
-    def mcomm = c
-  }
+  def transitions(c: MComm) = IODispatcher(c)
 }
 
 import AppState.ActivityAgentStarted

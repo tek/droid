@@ -134,13 +134,12 @@ extends TreeViewTrans[A]
    */
   def setMainView(view: View): Transit = {
     case s @ S(_, ViewData(main)) =>
-      val io = act { a =>
-        a.replaceFragment(main.mainFrame.getId, MainFragment(view), true,
+      def replaceFragment(v: View)(a: Activity) = {
+        a.replaceFragment(main.mainFrame.getId, MainFragment(v), true,
           "mainframe", false)
+        MainViewLoaded.publish
       }
-      io
-        .map(_ => MainViewLoaded.publish)
-        .ui
+      act(replaceFragment(view)).ui
   }
 
   def contentViewReady: Transit = {
@@ -361,7 +360,7 @@ extends MVContainer[A]
   protected def toggleAdmit: Admission = {
     case MainViewReady => {
       case s @ S(_, ViewData(main)) =>
-        s << DrawerReady.broadcast << CreateDrawerView.broadcast <<
+        DrawerReady.broadcast << CreateDrawerView.broadcast <<
           SetupActionBar << CreateToggle
     }
     case SetupActionBar => {
@@ -388,16 +387,15 @@ extends MVContainer[A]
     case DrawerViewReady(v) => {
       case s @ S(_, ViewData(main)) =>
         val io = (main.drawer.drawer >>- MainFrame.load(v))
-        IOEffect.ops.toIOEffectOps(io)
         s << io.map(_ => DrawerLoaded.broadcast).ui
     }
     case SyncToggle => {
       case s @ S(_, ExtMVData(_, toggle, _)) =>
-        cio(_ => toggle.syncState()).unitUi
+        con(_ => toggle.syncState()).unitUi
     }
     case CloseDrawer => {
       case s @ S(_, ExtMVData(main, _, _)) =>
-        cio(_ => main.drawer.container.closeDrawer(Gravity.LEFT)).unitUi
+        con(_ => main.drawer.container.closeDrawer(Gravity.LEFT)).unitUi
     }
   }
 
@@ -415,7 +413,7 @@ extends MainViewAgent
 {
   lazy val viewMachine = new MVContainerMachine[ExtMVLayout] {
     def transitions(mc: MComm) = new ExtMVContainer {
-      def mcomm = mc
+      val mcomm = mc
       def admit = PartialFunction.empty
     }
   }

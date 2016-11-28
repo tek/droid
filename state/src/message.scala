@@ -127,6 +127,8 @@ extends Message
     implicit c => Fork(io.unsafePerformIO.stateEffect, desc).publish.success,
     desc
   ).stateEffect
+
+  override def toString = s"IOFork($desc)"
 }
 
 final class IOEffect[F[_, _]: PerformIO]

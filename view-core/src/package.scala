@@ -27,9 +27,6 @@ with ConsIO.ToConsIOOps
 with IOOrphans
 with PerformIO.ToPerformIOOps
 with ToCKIotaKestrelOps
-{
-  def cio[A](f: Context => A): IO[A, Context] = IO[A, Context](f)
-}
 
 @integrate(droid.core)
 object `package`
