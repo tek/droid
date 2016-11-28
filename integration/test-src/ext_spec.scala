@@ -3,7 +3,7 @@ package droid
 package integration
 
 class ExtSpec
-extends ExtIntStateSpec(classOf[IntStateActivity])
+extends ExtIntStateSpec
 {
   override def initialUi = ViewAgent1.some
 

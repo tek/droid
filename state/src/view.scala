@@ -92,7 +92,8 @@ extends MachineTransitions
 
 trait ViewAgent
 extends Agent
-with Views[Context, StreamIO] { self =>
+with Views[Context, StreamIO]
+{ self =>
   def viewMachine: ViewMachine
 
   def machines: List[Machine] = viewMachine :: Nil

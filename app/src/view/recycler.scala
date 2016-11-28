@@ -103,7 +103,7 @@ extends TreeViewTrans[D]
     }
     case MainViewMessages.MainViewLoaded => {
       case S(_, RVData(main, adapter)) =>
-        val io = con(_ => main.recycler) >>- recyclerAdapter(adapter) >>-
+        val io = main.recycler >>- recyclerAdapter(adapter) >>-
           recyclerConf >>- recyclerLayout
         io.unitUi << AdapterInstalled
     }
