@@ -4,6 +4,8 @@ package droid
 import android.widget.{BaseAdapter,Filterable,Filter}
 import android.view.ViewGroup.LayoutParams._
 
+import iota.ViewTree
+
 abstract class ListAdapter(implicit val activity: Activity)
 extends BaseAdapter
 with DefaultStrategy
@@ -61,12 +63,12 @@ extends ListAdapter
 
 abstract class RecyclerAdapter[A <: RecyclerViewHolder, B: ClassTag]
 extends RecyclerViewAdapter[A]
-with Filterable
+// with Filterable
 with Logging
 {
   implicit def context: Context
 
-  implicit def scheduler: Scheduler
+  // implicit def scheduler: Scheduler
 
   def items: Seq[B]
 
@@ -80,45 +82,44 @@ with Logging
 
   var currentFilter = ""
 
-  def filter(constraint: String) = {
-    currentFilter = constraint
-    applyFilter
-  }
+  // def filter(constraint: String) = {
+  //   currentFilter = constraint
+  //   applyFilter
+  // }
 
-  def applyFilter = IO((c: Context) => getFilter.filter(currentFilter))
+  // def applyFilter = IO((c: Context) => getFilter.filter(currentFilter))
 
   def updateVisibleData(newItems: Seq[B]) {
     visibleItems = sort(newItems)
     notifyDataSetChanged()
-    dataUpdated()
   }
 
   def sort(items: Seq[B]) = items
 
   def dataUpdated() {}
 
-  lazy val getFilter = {
-    new Filter {
-      def publishResults(q: CharSequence, results: Filter.FilterResults) {
-        results.values match {
-          case v: Seq[B] =>
-            IO((c: Context) => updateVisibleData(v))
-              .main !? "update visible data"
-          case v => {
-            Log.e(s"Error casting filtering results in ${this.className}")
-          }
-        }
-      }
+  // lazy val getFilter = {
+  //   new Filter {
+  //     def publishResults(q: CharSequence, results: Filter.FilterResults) {
+  //       results.values match {
+  //         case v: Seq[B] =>
+  //           IO((c: Context) => updateVisibleData(v))
+  //             .main !? "update visible data"
+  //         case v => {
+  //           Log.e(s"Error casting filtering results in ${this.className}")
+  //         }
+  //       }
+  //     }
 
-      def performFiltering(constraint: CharSequence) = {
-        val values = items filter { filterItem(_, constraint) }
-        new Filter.FilterResults tap { result =>
-          result.count = values.length
-          result.values = values
-        }
-      }
-    }
-  }
+  //     def performFiltering(constraint: CharSequence) = {
+  //       val values = items filter { filterItem(_, constraint) }
+  //       new Filter.FilterResults tap { result =>
+  //         result.count = values.length
+  //         result.values = values
+  //       }
+  //     }
+  //   }
+  // }
 
   def filterItem(item: B, constraint: CharSequence) = true
 }
@@ -140,37 +141,29 @@ with AnnotatedIO
   }
 }
 
-case class StringHolder(view: View, content: ViewStream[TextView, Context])
-extends RecyclerViewHolder(view)
+case class StringElement(container: FrameLayout, label: TextView)
+extends ViewTree[FrameLayout]
+{
+  container.matchWidth()
+  label.matchWidth()
+  override def toString = this.className
+}
+
+case class StringHolder(tree: StringElement)
+extends RecyclerViewHolder(tree.container)
 
 trait StringRecyclerAdapter
 extends SimpleRecyclerAdapter[StringHolder, String]
 with Views[Context, StreamIO]
 {
-  import iota.effect._
-  import view.io.frame._
-  import view.io.text._
-
   def onCreateViewHolder(parent: ViewGroup, viewType: Int) = {
-    val tv = w[TextView]
-    val lay = l[FrameLayout](tv)
-    val v = c[FrameLayout](
-      (lay >>= lp[FrameLayout](MATCH_PARENT, MATCH_PARENT)) >>-
-        selectableFg
-    )
-    val layout =
-      v.unsafePerformIO !? "create layout for string recycler item" getOrElse(
-        new FrameLayout(context))
-    StringHolder(layout, tv.v)
+    val tree = ViewTree.inflate(context, StringElement)
+    StringHolder(tree)
   }
 
   def onBindViewHolder(holder: StringHolder, position: Int) {
     items.lift(position) foreach { s =>
-      val io = holder.content >>- text(s)
-      io.view
-        .flatMap(a => Stream.eval(a.main))
-        .run
-        .infraRun("bind view holder")
+      holder.tree.label.setText(s)
     }
   }
 }
