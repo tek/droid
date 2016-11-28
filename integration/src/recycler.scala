@@ -7,7 +7,6 @@ extends StringRV
 {
   def admit = {
     case AdapterInstalled =>
-      // s => s
       _ << Update(List("a", "b", "c"))
   }
 }
