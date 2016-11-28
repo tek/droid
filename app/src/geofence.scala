@@ -3,8 +3,6 @@
 
 // import state.{GeofenceData, LocationInterface}
 
-// import scalaz._, Scalaz._, concurrent._, stream._, Stream._
-
 // import cats.syntax.all._
 
 // import android.app.PendingIntent

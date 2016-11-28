@@ -1,7 +1,5 @@
 // package tryp.droid
 
-// import scalaz._, Scalaz._, concurrent._
-
 // import android.app.Service
 // import android.os.{Binder, IBinder}
 

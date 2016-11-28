@@ -6,8 +6,6 @@ import state.{PlayServices, PlusAccount}
 import state.service.PlusInterface
 import PlayServices._
 
-import scalaz._, Scalaz._, concurrent._
-
 import com.google.android.gms
 import gms.common.{api => gapi}
 import gapi.GoogleApiClient

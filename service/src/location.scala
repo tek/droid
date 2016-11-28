@@ -5,8 +5,6 @@ package state
 import android.app.PendingIntent
 import android.location.Location
 
-import scalaz._, Scalaz._, concurrent._, stream._, Stream._
-
 import com.google.android.gms.location._
 import LocationServices.{FusedLocationApi => LocApi}
 import com.google.android.gms.common._

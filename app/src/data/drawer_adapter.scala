@@ -1,8 +1,6 @@
 // package tryp
 // package droid
 
-// import scalaz._, Scalaz._
-
 // import android.widget._
 // import android.support.v7.widget.RecyclerView
 // import android.graphics.{Color,PorterDuff}

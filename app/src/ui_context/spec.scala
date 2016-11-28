@@ -1,7 +1,5 @@
 // package tryp.droid
 
-// import scalaz._, Scalaz._, concurrent._
-
 // import com.google.android.gms.common.ConnectionResult
 // import com.google.android.gms.auth.GoogleAuthUtil
 

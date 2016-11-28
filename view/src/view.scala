@@ -4,7 +4,7 @@ package view
 
 import android.widget._
 
-import scalaz._, concurrent.Task
+import scalaz.Show
 
 trait ViewMetadata
 {
