@@ -4,38 +4,36 @@ package state
 
 import android.support.v7.app.AppCompatActivity
 
+import AppState._
+
 class StateActivity
 extends AppCompatActivity
 with Logging
 {
-  def stateApp = getApplication match {
-    case a: StateApplication => Right(a)
-    case _ => Left("Application is not a StateApplication")
+  lazy val stateApp = getApplication match {
+    case a: StateApplication => a
+    case _ => sys.error("application is not a StateApplication")
   }
 
-  // def stateAppAgent = stateApp map (_.stateAppAgent)
-  
-  def agents = stateApp map (_.agents)
+  lazy val agents = stateApp.agents
 
-  // def state[A](f: StateApplicationAgent => A) =
-  //   stateAppAgent.fold(log.error(_), f)
+  import stateApp.{strategy, scheduler}
 
   protected def mainViewTimeout = 5 seconds
 
   override def onCreate(saved: Bundle) = {
     super.onCreate(saved)
-    // agents.map(_.send(AppState.SetActivity(this))).unsafeRun()
-    // state(_.setActivity(this))
+    agents.send(SetActivity(this)) !? s"send SetActivity($this)"
   }
 
   override def onStart() = {
     super.onStart()
-    // state(_.onStart(this))
+    agents.send(OnStart(this)) !? s"send OnStart($this)"
   }
 
   override def onResume() = {
     super.onResume()
-    // state(_.onResume(this))
+    agents.send(OnResume(this)) !? s"send OnResume($this)"
   }
 
   def agent: Option[ActivityAgent] = None

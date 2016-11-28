@@ -6,9 +6,6 @@ import android.support.v7.app.AppCompatActivity
 
 import iota.ViewTree
 
-import fs2._
-
-// import tryp.state.AgentStateData._
 import IOOperation._
 import tryp.state.{StartAgent, StopAgent}
 
@@ -59,17 +56,17 @@ object AppState
 
   case class OnResume(activity: Activity)
   extends ActivityLifecycleMessage
+
+  case class ToAppState(message: Message)
+  extends Message
 }
 import AppState._
 
 // @tryp.state.annotation.machine
 case class AppStateTrans(initialAgent: Option[ActivityAgent], mcomm: MComm)
-(implicit sender: Sender, strat: Strategy)
 extends view.AnnotatedIO
 with MachineTransitions
 {
-  import AppState._
-
   // def dbInfo: Option[DbInfo]
 
   def admit: Admission = {
@@ -94,11 +91,10 @@ with MachineTransitions
 
   def setAgent(agent: ActivityAgent): Transit = {
     case S(Ready, ASData(act, None)) =>
-      S(Ready, ASData(act, agent.some)) <<
-        StartAgent(Stream(agent)).toAgentMachine
+      S(Ready, ASData(act, agent.some)) << StartAgent(Stream(agent))
     case S(Ready, ASData(act, Some(old))) =>
-      S(Ready, ASData(act, agent.some)) <<
-        StartAgent(Stream(agent)).toAgentMachine << StopAgent(old)
+      S(Ready, ASData(act, agent.some)) << StartAgent(Stream(agent)) <<
+        StopAgent(old)
   }
 
   private[this] def agentForActivity(a: Activity) =
@@ -127,7 +123,8 @@ with MachineTransitions
 
   def setContentView(view: View): Transit = {
     case s @ S(Ready, ASData(Some(_), Some(ag))) =>
-      s << act(_.setContentView(view)).map(_ => ContentViewReady(ag).toSub).ui
+      s << act(_.setContentView(view))
+        .map(_ => ContentViewReady(ag).broadcast).ui
   }
 
   def contextFun(fun: ContextFun[_]): Transit = {
@@ -148,10 +145,6 @@ with MachineTransitions
       }
   }
 
-  // def dbTask(task: DbTask[_, _]): Transit = _ << task.effect(dbInfo)
-
-  // def ecTask(task: ECTask[_]): Transit = _ << task.effect(ec)
-
   def activityLifecycleMessage(m: ActivityLifecycleMessage): Transit = {
     case s @ S(Ready, ASData(Some(act), Some(agent))) if act == m.activity =>
       m.toAgent(agent)
@@ -159,28 +152,16 @@ with MachineTransitions
 }
 
 case class AppStateMachine(initialAgent: Option[ActivityAgent])
-(implicit strat: Strategy)
 extends Machine
 {
   def transitions(mcomm: MComm) = AppStateTrans(initialAgent, mcomm)
 }
 
-case class StateAppAgentTrans(appStateMachine: AppStateMachine)
-(implicit sender: Sender)
-{
-  def admit: Admission = {
-    case a @ SetContentView(_, _) => _ << a.to(appStateMachine)
-    case a @ SetContentTree(_, _) => _ << a.to(appStateMachine)
-  }
-}
-
 trait StateApplicationAgent
 extends Agent { app =>
-  implicit def strat: Strategy
+  lazy val appStateMachine = AppStateMachine(initialAgent)
 
-  lazy val appStateMachine = new AppStateMachine(initialAgent)
-
-  lazy val transitions = StateAppAgentTrans(appStateMachine)
+  def transitions(mcomm: MComm) = NoTrans
 
   lazy val ioMachine = new IODispatcherMachine {}
 
@@ -188,28 +169,29 @@ extends Agent { app =>
 
   def initialAgent: Option[ActivityAgent] = None
 
-  // def dbInfo: Option[DbInfo] = None
-
-  def setActivity(act: Activity) = {
-    log.debug(s"setting activity $act")
-    // schedule1(SetActivity(act).toLocal)
-    // send(SetActivity(act))
+  override def transformIn = {
+    case ToAppState(m) =>
+      ToMachine(m, appStateMachine)
+    case m =>
+      super.transformIn(m)
   }
+}
 
-  def onStart(activity: Activity) =
-    ()
-    // appStateMachine.send(OnStart(activity))
-    // send(OnStart(activity))
-
-  def onResume(activity: Activity) =
-    ()
-    // appStateMachine.send(OnResume(activity))
-    // send(OnResume(activity))
+object DefaultScheduler
+{
+  implicit lazy val scheduler: Scheduler = Scheduler.fromFixedDaemonPool(10)
 }
 
 trait StateApplication
+extends BoundedCachedPool
+with Logging
 {
-  def agents: Agents
+  implicit def scheduler = DefaultScheduler.scheduler
 
-  // def stateAppAgent: StateApplicationAgent
+  def root: StateApplicationAgent
+
+  lazy val agents =
+    CreateAgents(root)
+      .infraRunLastFor("initialize agents", 10.seconds)
+      .getOrElse(sys.error("agents haven't initialized"))
 }
