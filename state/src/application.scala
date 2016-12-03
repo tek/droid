@@ -3,6 +3,7 @@ package droid
 package state
 
 import android.support.v7.app.AppCompatActivity
+import android.app.Application
 
 import iota.ViewTree
 
@@ -42,7 +43,8 @@ object AppState
   case object Ready
   extends BasicState
 
-  case class ASData(activity: Option[Activity], agent: Option[ActivityAgent])
+  case class ASData(app: Application, activity: Option[Activity],
+    agent: Option[ActivityAgent])
   extends Data
 
   trait ActivityLifecycleMessage
@@ -59,6 +61,12 @@ object AppState
 
   case class ToAppState(message: Message)
   extends Message
+
+  case object InitApp
+  extends Message
+
+  case class SetApplication(app: Application)
+  extends Message
 }
 import AppState._
 
@@ -70,6 +78,8 @@ with MachineTransitions
   // def dbInfo: Option[DbInfo]
 
   def admit: Admission = {
+    case InitApp => init
+    case SetApplication(app) => setApplication(app)
     case AppState.StartActivity(a) => startActivity(a)
     case SetActivity(a) => setActivity(a)
     case SetAgent(a) => setAgent(a)
@@ -84,17 +94,30 @@ with MachineTransitions
     case m: ActivityLifecycleMessage => activityLifecycleMessage(m)
   }
 
+  def init: Transit = {
+    case s =>
+      android.os.Process.setThreadPriority(-15)
+      s
+  }
+
+  def setApplication(app: Application): Transit = {
+    case S(s, ASData(_, act, ag)) =>
+      S(Ready, ASData(app, act, ag))
+    case S(s, _) =>
+      S(Ready, ASData(app, None, None))
+  }
+
   def startActivity(agent: ActivityAgent): Transit = {
-    case s @ S(Ready, ASData(_, _)) =>
+    case s @ S(Ready, ASData(_, _, _)) =>
       s << con(_.startActivityCls(agent.activityClass)) << SetAgent(agent).back
   }
 
   def setAgent(agent: ActivityAgent): Transit = {
-    case S(Ready, ASData(act, None)) =>
-      S(Ready, ASData(act, agent.some)) << StartAgent(Stream(agent))
-    case S(Ready, ASData(act, Some(old))) =>
-      S(Ready, ASData(act, agent.some)) << StartAgent(Stream(agent)) <<
-        StopAgent(old)
+    case S(Ready, ASData(app, act, None)) =>
+      S(Ready, ASData(app, act, agent.some)) << StartAgent(Stream(agent)).broadcast
+    case S(Ready, ASData(app, act, Some(old))) =>
+      S(Ready, ASData(app, act, agent.some)) <<
+        StartAgent(Stream(agent)).broadcast << StopAgent(old).broadcast
   }
 
   private[this] def agentForActivity(a: Activity) =
@@ -104,41 +127,44 @@ with MachineTransitions
     }
 
   def setActivity(a: Activity): Transit = {
-    case S(Pristine, NoData) =>
+    case S(Ready, ASData(app, None, ag)) =>
+      import android.os.Process
+      dbg("setting prio")
+      Process.setThreadPriority(-5)
       val agent = agentForActivity(a) orElse initialAgent
-      S(Ready, ASData(Some(a), None)) << agent.map(SetAgent(_))
-    case S(Ready, ASData(_, ag)) =>
-      S(Ready, ASData(Some(a), ag)) << agentForActivity(a).map(SetAgent(_))
+      S(Ready, ASData(app, Some(a), ag)) << agent.map(SetAgent(_))
+    case S(Ready, ASData(app, _, ag)) =>
+      S(Ready, ASData(app, Some(a), ag)) << agentForActivity(a).map(SetAgent(_))
   }
 
   def initAgent: Transit = {
-    case s @ S(Ready, ASData(_, Some(ag))) =>
+    case s @ S(Ready, ASData(app, _, Some(ag))) =>
       s << Create(Map(), None).toAgent(ag)
   }
 
   def activityStarted(agent: ActivityAgent): Transit = {
-    case s @ S(Ready, ASData(Some(act), Some(ag))) if agent == ag =>
+    case s @ S(Ready, ASData(app, Some(act), Some(ag))) if agent == ag =>
       s << CreateContentView.to(agent)
   }
 
   def setContentView(view: View): Transit = {
-    case s @ S(Ready, ASData(Some(_), Some(ag))) =>
+    case s @ S(Ready, ASData(app, Some(_), Some(ag))) =>
       s << act(_.setContentView(view))
         .map(_ => ContentViewReady(ag).broadcast).ui
   }
 
   def contextFun(fun: ContextFun[_]): Transit = {
-    case s @ S(Ready, ASData(Some(act), _)) =>
-      s << fun.task(act).effect(fun.desc)
+    case s @ S(Ready, ASData(app, _, _)) =>
+      s << fun.task(app).effect(fun.desc)
   }
 
   def activityFun(fun: ActivityFun[_]): Transit = {
-    case s @ S(Ready, ASData(Some(act), _)) =>
+    case s @ S(Ready, ASData(app, Some(act), _)) =>
       s << fun.task(act).effect(fun.desc)
   }
 
   def appCompatActivityFun(fun: AppCompatActivityFun[_]): Transit = {
-    case s @ S(Ready, ASData(Some(act), _)) =>
+    case s @ S(Ready, ASData(app, Some(act), _)) =>
       act match {
         case aca: AppCompatActivity => s << fun.task(aca).effect(fun.desc)
         case _ => s << LogError(s"executing $fun", s"wrong type $act")
@@ -146,8 +172,8 @@ with MachineTransitions
   }
 
   def activityLifecycleMessage(m: ActivityLifecycleMessage): Transit = {
-    case s @ S(Ready, ASData(Some(act), Some(agent))) if act == m.activity =>
-      m.toAgent(agent)
+    case s @ S(Ready, ASData(app, Some(act), Some(ag))) if act == m.activity =>
+      m.toAgent(ag)
   }
 }
 
@@ -155,6 +181,8 @@ case class AppStateMachine(initialAgent: Option[ActivityAgent])
 extends Machine
 {
   def transitions(mcomm: MComm) = AppStateTrans(initialAgent, mcomm)
+
+  override def initialMessages = Stream(InitApp)
 }
 
 trait StateApplicationAgent
