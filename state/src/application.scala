@@ -78,7 +78,6 @@ with MachineTransitions
   // def dbInfo: Option[DbInfo]
 
   def admit: Admission = {
-    case InitApp => init
     case SetApplication(app) => setApplication(app)
     case AppState.StartActivity(a) => startActivity(a)
     case SetActivity(a) => setActivity(a)
@@ -92,12 +91,6 @@ with MachineTransitions
     // case t @ DbTask(_) => dbTask(t)
     // case t @ ECTask(_) => ecTask(t)
     case m: ActivityLifecycleMessage => activityLifecycleMessage(m)
-  }
-
-  def init: Transit = {
-    case s =>
-      android.os.Process.setThreadPriority(-15)
-      s
   }
 
   def setApplication(app: Application): Transit = {
@@ -181,8 +174,6 @@ case class AppStateMachine(initialAgent: Option[ActivityAgent])
 extends Machine
 {
   def transitions(mcomm: MComm) = AppStateTrans(initialAgent, mcomm)
-
-  override def initialMessages = Stream(InitApp)
 }
 
 trait StateApplicationAgent
