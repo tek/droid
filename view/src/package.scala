@@ -6,9 +6,6 @@ package view
   android.support.v7.widget.Toolbar, AnnotatedIO)
 trait Types
 
-// @exportNames(StreamIO, ViewStream)
-// trait Names
-
 @export
 trait Exports
 extends tryp.state.Exports

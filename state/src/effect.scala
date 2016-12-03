@@ -8,20 +8,12 @@ import simulacrum._
 
 trait StateEffectInstances
 {
-//   implicit def instance_StateEffect_IO
-//   [F[_, _]: PerformIO, A: Operation, C: IOMessage]
-//   (implicit O: Operation[F[A, C]])
-//   = new StateEffect[F[A, C]] {
-//       def stateEffect(fa: F[A, C]) = O.result(fa).stateEffect
-//     }
-
-  implicit def instance_StateEffect_IO[F[_, _]: PerformIO, A, C: IOMessage]
-  (implicit se: StateEffect[Task[A]])
+  implicit def instance_StateEffect_IO
+  [F[_, _]: PerformIO: DescribeIO, A: StateEffect, C: IOMessage]
   : StateEffect[F[A, C]] =
     new StateEffect[F[A, C]] {
       def stateEffect(v: F[A, C]) = {
-        tryp.state.Effect(Stream.emit(IOTask(v, v.toString).publish.success),
-          "IO")
+        Effect.now(IOTask(v, v.desc).publish, "IO")
       }
 
       override def toString = "StateEffect[ViewStream]"

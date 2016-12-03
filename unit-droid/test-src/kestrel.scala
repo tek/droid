@@ -20,7 +20,7 @@ extends UnitSpecs2Spec[Activity]
     val v1 = 9
     val v2 = 47
     val kest = { (a: Muto) => a.state = v2; Muto(v1 + v2) }
-    val s = StreamIO.lift[Int](v => Muto(v)) >>- kest
+    val s = IO.lift[Int](v => Muto(v)) >>- kest
     s.main()(v1) will_== Muto(v2)
   }
 }

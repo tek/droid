@@ -3,7 +3,7 @@ package droid
 package view
 package core
 
-@exportTypes(IOI, Kestrel, Views, Combinators, ViewCombinators)
+@exportTypes(IOI, Kestrel, Views, Combinators, ViewCombinators, DescribeIO)
 trait Types
 
 @exportNames(IO, DescribedKestrel, PerformIO)
@@ -26,6 +26,7 @@ with ApplyKestrel.ToApplyKestrelOps
 with ConsIO.ToConsIOOps
 with IOOrphans
 with PerformIO.ToPerformIOOps
+with DescribeIO.ToDescribeIOOps
 with ToCKIotaKestrelOps
 
 @integrate(droid.core)

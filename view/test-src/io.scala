@@ -51,17 +51,3 @@ with Views[Context, IO]
     1 === 1
   }
 }
-
-class StreamIOSpec
-extends Spec
-with Views[Activity, StreamIO]
-{
-  def is = s2"""
-  test $test
-  """
-
-  def test = {
-    val mapped: StreamIO[Unit, Activity] = w[TextView].map(a => ())
-    1 === 1
-  }
-}

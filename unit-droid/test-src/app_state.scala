@@ -7,7 +7,7 @@ import state._
 
 class AppStateSpec
 extends StateAppSpec
-with StreamIOViews
+with IOViews
 {
   def is = s2"""
   Application with RootAgent managing agents and activities

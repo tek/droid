@@ -88,9 +88,6 @@ object MainViewMessages
   case object CreateMainView
   extends Message
 
-  // case class SetMainView[A <: ViewGroup](view: StreamIO[A, Context])
-  // extends Message
-
   case class SetMainTree[A <: ViewGroup](tree: ViewTree[A])
   extends Message
 
@@ -128,10 +125,6 @@ extends TreeViewTrans[A]
       s << InitUi.toLocal
   }
 
-  /** `view` has to be executed before its signal can be used, so the effect
-   *  has to be a StreamIO IOTask, which produces a ViewStreamTask of `content`
-   *  setting its view to `view`'s result.
-   */
   def setMainView(view: View): Transit = {
     case s @ S(_, ViewData(main)) =>
       def replaceFragment(v: View)(a: Activity) = {

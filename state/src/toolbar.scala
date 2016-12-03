@@ -20,7 +20,7 @@
 //   val t = theme.dimension("actionBarSize")
 //     .map(a => T.minHeight(a.toInt)).toOption
 
-//   def belowToolbarLayout: StreamIO[_ <: View, Context]
+//   def belowToolbarLayout: IO[_ <: View, Context]
 
 //   lazy val toolbar =
 //     l[Toolbar](

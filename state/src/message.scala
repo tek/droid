@@ -10,7 +10,7 @@ import simulacrum._
 
 import export._
 
-import tryp.state.{Fork, ParcelOperation}
+import tryp.state.Fork
 
 trait IOMessage[C]
 {
@@ -79,8 +79,8 @@ extends Message
   def effect(implicit sender: Sender): Effect
 }
 
-case class FromContextIO[F[_, _]: PerformIO, A, C: FromContext]
-(io: F[A, C])(implicit cv: Contravariant[F[A, ?]], se: StateEffect[Task[A]])
+case class FromContextIO[F[_, _]: PerformIO, A: StateEffect, C: FromContext]
+(io: F[A, C])(implicit cv: Contravariant[F[A, ?]])
 extends InternalIOMessage
 {
   def effect(implicit sender: Sender) = {
@@ -94,8 +94,9 @@ extends Message
   def effect = (ec: EC) => (run(ec).stateEffect)
 }
 
-case class IOTask[F[_, _]: PerformIO, A, C](io: F[A, C], desc: String)
-(implicit cm: IOMessage[C], se: StateEffect[Task[A]])
+case class IOTask[F[_, _]: PerformIO, A: StateEffect, C]
+(io: F[A, C], desc: String)
+(implicit cm: IOMessage[C])
 extends Message
 {
   val task = (c: C) => io.unsafePerformIO(c)
@@ -124,7 +125,7 @@ case class IOFork[F[_, _]: PerformIO, C](io: F[Unit, C], desc: String)
 extends Message
 {
   def effect(implicit sender: Sender) = im.pure (
-    implicit c => Fork(io.unsafePerformIO.stateEffect, desc).publish.success,
+    implicit c => Fork(io.unsafePerformIO.stateEffect, desc).publish,
     desc
   ).stateEffect
 
@@ -136,7 +137,7 @@ extends AnyRef
 {
   def ui[A: Operation, C](fa: F[A, C])
   (implicit cm: IOMessage[C], sender: Sender) =
-    IOMainTask(fa, fa.toString).broadcast.success
+    IOMainTask(fa, fa.toString).broadcast
 }
 
 object IOEffect
@@ -172,51 +173,9 @@ object IOEffect
   extends ToIOEffectOps
 }
 
-// FIXME this should be handled by the same machine and thus not need
-// Effect and publish
-// case class ViewStreamTask[A, C: IOMessage](
-//   stream: ViewStream[A, C], desc: String, timeout: Duration = 5.seconds,
-//   main: Boolean = false)
-// (implicit se: StateEffect[Task[A]])
-// extends Message
-// {
-//   private[this] val taskCtor: IO[A, C] => Message =
-//     if(main) IOMainTask(_, desc) else IOTask(_, desc)
-
-//   def effect: Effect = {
-//     val eff = stream.view.take(1).map(taskCtor(_).publish.success)
-//     Effect(eff, "view stream")
-//   }
-
-//   override def toString = "ViewStreamTask"
-// }
-
 @exports
 object IOOperation
 {
-  // @export(Instantiated)
-  // implicit def instance_Operation_ViewStream[A: Operation, C: IOMessage]
-  // : Operation[ViewStream[A, C]] =
-  //   new ParcelOperation[ViewStream[A, C]] {
-  //     def parcel(v: ViewStream[A, C]) = {
-  //       ViewStreamTask(v, v.desc).publish
-  //     }
-
-  //     override def toString = "Operation[ViewStream]"
-  //   }
-
-  // @export(Instantiated)
-  // implicit def instance_StateEffect_ViewStream[A, C: IOMessage]
-  // (implicit se: StateEffect[Task[A]])
-  // : StateEffect[ViewStream[A, C]] =
-  //   new StateEffect[ViewStream[A, C]] {
-  //     def stateEffect(v: ViewStream[A, C]) = {
-  //       ViewStreamTask(v, v.desc).publish.stateEffect
-  //     }
-
-  //     override def toString = "StateEffect[ViewStream]"
-  //   }
-
   @export(Instantiated)
   implicit def instance_Operation_IO
   [F[_, _]: PerformIO, A: Operation, C: IOMessage]: Operation[F[A, C]]
@@ -239,17 +198,3 @@ object IOOperation
       }
     }
 }
-
-// final class ViewStreamMessageOps[A: Operation, C: IOMessage]
-// (val self: ViewStream[A, C])
-// {
-//   def main =
-//     ViewStreamTask(self, self.desc, main = true).publish
-// }
-
-// trait ToViewStreamMessageOps
-// {
-//   implicit def ToViewStreamMessageOps[A: Operation, C: IOMessage]
-//   (vs: ViewStream[A, C]) =
-//     new ViewStreamMessageOps(vs)
-// }
