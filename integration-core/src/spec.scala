@@ -17,23 +17,38 @@ import com.robotium.solo._
 
 import droid.state.{MVData, ViewDataI}
 
-class TrypIntegrationSpec[A <: Activity](cls: Class[A])
+class IntegrationBase[A <: Activity](cls: Class[A])
 extends ActivityInstrumentationTestCase2[A](cls)
-with HasSettings
-with TestHelpers
 with FixedPool
 with Logging
-with AnnotatedIO
 {
   def name = "spec"
 
-  val threads = 5
-
-  // def frag[A <: Fragment: ClassTag](names: String*) =
-  //   activity.findNestedFrag[A](names)
+  val threads = 50
 
   implicit def scheduler = Scheduler.fromFixedDaemonPool(1)
 
+  lazy val startTime = DateTime.now
+
+  val dateFormat = DateTimeFormat.forPattern("hh:mm:ss.SSS")
+
+  override def setUp() = {
+    log.info(s"starting at ${startTime.toString(dateFormat)}")
+    super.setUp()
+  }
+
+  override def tearDown() {
+    log.info(s"finished at ${DateTime.now.toString(dateFormat)}")
+    super.tearDown()
+  }
+}
+
+class IntegrationSpec[A <: Activity](cls: Class[A])
+extends IntegrationBase[A](cls)
+with HasSettings
+with TestHelpers
+with AnnotatedIO
+{
   def view = null
   implicit def activity: A = getActivity
   def instr: Instrumentation = getInstrumentation
@@ -54,18 +69,12 @@ with AnnotatedIO
     post()
   }
 
-  lazy val startTime = DateTime.now
-
-  val dateFormat = DateTimeFormat.forPattern("hh:mm:ss.SSS")
-
   def pre() {
-    log.info(s"starting at ${startTime.toString(dateFormat)}")
   }
 
   def post() { }
 
   override def tearDown() {
-    log.info(s"finished at ${DateTime.now.toString(dateFormat)}")
     solo.finalize()
     activity.finish()
     super.tearDown()
@@ -129,7 +138,7 @@ with AnnotatedIO
 }
 
 abstract class StateSpec[A <: StateActivity](cls: Class[A])
-extends TrypIntegrationSpec[A](cls)
+extends IntegrationSpec[A](cls)
 {
   def stateActivity = activity match {
     case a: StateActivity => a
@@ -156,7 +165,7 @@ extends TrypIntegrationSpec[A](cls)
 
   def activityAgent =
     appStateMachine.current.get.data match {
-      case droid.state.AppState.ASData(_, Some(agent)) => agent
+      case droid.state.AppState.ASData(_, _, Some(agent)) => agent
     case _ => sys.error("no activity agent running")
     }
 
