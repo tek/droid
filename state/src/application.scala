@@ -189,7 +189,7 @@ trait StateApplicationAgent
 extends Agent { app =>
   lazy val appStateMachine = AppStateMachine(initialAgent)
 
-  def transitions(mcomm: MComm) = NoTrans
+  def transitions(mcomm: MComm) = NoTrans(mcomm)
 
   lazy val ioMachine = new IODispatcherMachine {}
 
