@@ -179,14 +179,30 @@ extends Agent { app =>
 
 object DefaultScheduler
 {
-  implicit lazy val scheduler: Scheduler = Scheduler.fromFixedDaemonPool(10)
+  implicit lazy val scheduler: Scheduler = Scheduler.fromFixedDaemonPool(1)
+}
+
+object StatePool
+extends ExecutionStrategyPool
+with Logging
+{
+  def name = "state"
+
+  def hook(t: Thread) = {
+    t
+  }
+
+  implicit lazy val executor =
+    BoundedCachedExecutor.withHook(name, 1, 10, 100, hook)
 }
 
 trait StateApplication
-extends BoundedCachedPool
+extends ExecutionStrategy
 with Logging
 {
   implicit def scheduler = DefaultScheduler.scheduler
+
+  def pool = StatePool
 
   def root: StateApplicationAgent
 
