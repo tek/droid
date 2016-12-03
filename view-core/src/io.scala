@@ -3,8 +3,6 @@ package droid
 package view
 package core
 
-// import fs2.interop.cats._
-
 import android.os.{Looper, Handler}
 
 import cats.Monoid
@@ -337,8 +335,11 @@ trait PerformIOExecution
 
   val poolQueue = new LinkedBlockingQueue[Runnable]()
 
+  val mainName = "android main"
+
   object AndroidMainExecutorService
-  extends PoolExecutor("android main", "android", 1, 1, 0L, poolQueue)
+  extends PoolExecutor(mainName, "android", 1, 1, 0L, poolQueue,
+    PoolExecutor.defaultFactory(mainName))
   {
     lazy val handler = new Handler(Looper.getMainLooper)
 
