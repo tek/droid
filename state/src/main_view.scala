@@ -250,9 +250,9 @@ extends TreeActivityAgent
 
   protected def initialUi: Option[ViewAgent] = None
 
-  override def transformIn = {
+  override def transformAgentIn = {
     case ToMainView(m) => m.to(viewMachine)
-    case a => super.transformIn(a)
+    case a => super.transformAgentIn(a)
   }
 }
 

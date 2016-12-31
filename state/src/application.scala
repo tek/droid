@@ -188,11 +188,11 @@ extends Agent { app =>
 
   def initialAgent: Option[ActivityAgent] = None
 
-  override def transformIn = {
+  override def transformAgentIn = {
     case ToAppState(m) =>
       ToMachine(m, appStateMachine)
     case m =>
-      super.transformIn(m)
+      super.transformAgentIn(m)
   }
 }
 
