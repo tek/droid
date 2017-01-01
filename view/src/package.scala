@@ -8,8 +8,7 @@ trait Types
 
 @export
 trait Exports
-extends tryp.state.Exports
-with view.core.Exports
+extends view.core.Exports
 with Types
 // with Names
 {
@@ -19,8 +18,7 @@ with Types
 }
 
 trait All
-extends state.All
-with view.core.All
+extends view.core.All
 with RootView.ToRootViewOps
 with ToSearchable
 with ToSearchView
@@ -35,7 +33,7 @@ with Auth.ToAuthOps
 // with TOIOProcess
 with BuilderOps
 
-@integrate(tryp.state, view.core)
+@integrate(view.core)
 object `package`
 extends All
 
