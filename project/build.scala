@@ -48,6 +48,8 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val state = "state" / "state machine" << view
 
+  lazy val tstate = "tstate" / "state machine" << view
+
   lazy val service =
     "service" / "machines providing services" << state << viewCore
 

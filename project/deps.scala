@@ -11,6 +11,8 @@ extends tryp.AndroidDeps
     "core" -> core,
     "view-core" -> viewCore,
     "view" -> view,
+    "state" -> state,
+    "tstate" -> tstate,
     "service" -> service,
     "app" -> app,
     "db" -> db,
@@ -42,13 +44,20 @@ extends tryp.AndroidDeps
   )
 
   def view = ids(
-    pulsar("fstate"),
     aar("com.android.support" % "support-v4" % "23.+"),
     aar("com.android.support" % "appcompat-v7" % "23.+"),
     aar("com.android.support" % "palette-v7" % "23.+"),
     aar("com.android.support" % "recyclerview-v7" % "23.+"),
     aar("com.android.support" % "cardview-v7" % "23.+"),
     aar("com.android.support" % "support-v13" % "23.+")
+  )
+
+  def state = ids(
+    pulsar("fstate")
+  )
+  
+  def tstate = ids(
+    pulsar("tstate")
   )
 
   def service = ids(
