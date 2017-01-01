@@ -147,18 +147,18 @@ class Resources(implicit internal: ResourcesInternal,
 
   def namespaced[A](name: String, suffix: Option[String], getter: String => A) =
   {
-    Try(getter(ns.format(name, suffix))) recoverWith {
+    Try(getter(ns.format(name, suffix))).recoverWith {
       case e: InvalidResource if (ns != global) =>
         Try(getter(global.format(name, suffix)))
       case e => Failure(e)
-    } recoverWith {
+    }.recoverWith {
       case e: InvalidResource =>
         Failure(InvalidResource(
           s"Couldn't resolve attr '${name}' with suffix '${suffix}' in " +
           s"namespace ${ns}")
         )
       case e => Failure(e)
-    } get
+    }.get
   }
 
   def xmlId(name: String) = typedId(name, "xml")

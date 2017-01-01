@@ -54,11 +54,11 @@ with Logging
     a.root match {
       case v: B => Seq(v)
       case layout: ViewGroup =>
-        layout.children map {
+        layout.children.map {
           case v: B => Seq(v)
           case sub: ViewGroup => sub.viewsOfType[B]
           case _ => Nil
-        } flatten
+        }.flatten
       case _ => Nil
     }
   }
