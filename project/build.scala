@@ -75,24 +75,28 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
       )
       .logback("tag" -> "tryp") << app << logback
 
-  lazy val integration =
-    (apk("integration") << integrationCore << view << state)
+  def mkInt(name: String) =
+    (apk(name) << view)
       .transitive
       .integration
       .protify
       .manifest(
-        "package" -> "tryp.droid.integration",
+        "package" -> s"tryp.droid.$name",
         "minSdk" -> "21",
-        "activityClass" -> "tryp.droid.integration.IntStateActivity",
-        "appName" -> "tryp integration",
-        "appClass" -> "tryp.droid.integration.IntApplication"
+        "activityClass" -> s"tryp.droid.$name.IntStateActivity",
+        "appName" -> s"tryp $name",
+        "appClass" -> s"tryp.droid.$name.IntApplication"
       )
       .settingsV(
-        aarModule := "integration",
+        aarModule := name,
         logbackTemplate := metaRes.value / "integration" / logbackName,
         manifestTemplate := metaRes.value / "integration" / manifestName,
         debugIncludesTests := true
       )
+
+  lazy val integration = mkInt("integration") << integrationCore << state
+
+  lazy val tstatei = mkInt("tstatei") << tstate
 
   lazy val unit = (tdp("unit") << unitCore << app << debug)
     .map(_.disablePlugins(CoursierPlugin))

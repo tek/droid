@@ -21,6 +21,7 @@ extends tryp.AndroidDeps
     "unit-droid" -> unitDroid,
     "unit" -> unit,
     "integration-core" -> integrationCore,
+    "tstatei" -> integrationCore,
     "logback" -> logback,
     "macro-console" -> macroConsole
   )
@@ -53,11 +54,11 @@ extends tryp.AndroidDeps
   )
 
   def state = ids(
-    pulsar("fstate")
+    pulsar("fstate").no
   )
   
   def tstate = ids(
-    pulsar("tstate")
+    pulsar("state-reflect")
   )
 
   def service = ids(

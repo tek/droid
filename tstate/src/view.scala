@@ -8,29 +8,21 @@ import shapeless._
 
 import tryp.state.annotation.machine
 
-case object State1
-extends MState
-
-case class ToViewMachine(payload: Message)
-extends Parcel
+case class ToViewMachine(payload: Message, agent: Machine)
+extends InternalMessage
 
 trait ViewDataI[A]
 extends MState
 {
   def view: A
-}
 
-trait ViewMachineBase
-extends Views[Context, IO]
-{
+  def sub: MState
 }
 
 @machine
-abstract class ViewMachine[A <: ViewTree[_ <: ViewGroup]: ClassTag]
-extends ViewMachineBase
+abstract class ViewMachine[A <: ViewTree[_ <: ViewGroup]]
+extends Views[Context, IO]
 {
-  type Accepts = ToViewMachine :: HNil
-
   case class ContentTree(tree: A)
   extends Message
   {
@@ -39,31 +31,23 @@ extends ViewMachineBase
 
   abstract class ViewData
   extends ViewDataI[A]
-  {
-    def view: A
-  }
 
   object ViewData
   {
-    def unapply(a: ViewData) = Some(a.view)
+    def unapply(a: ViewData) = Some((a.view, a.sub))
   }
 
-  case class VData(view: A)
+  case class VData(view: A, sub: MState)
   extends ViewData
 
   protected def infMain: IO[A, Context]
 
-  protected def stateWithTree(state: MState, tree: A): MState =
-    VData(tree)
+  protected def stateWithTree(state: MState, tree: A): MState = VData(tree, Pristine)
 
   def vmTrans: Transitions = {
-    case CreateContentView => {
-      infMain.map(ContentTree(_).back) :: HNil
-    }
-    case ContentTree(tree: A) => {
-      case s =>
-        stateWithTree(s, tree) ::
-          SetContentTree(tree, Some(this)).toAgentMachine :: HNil
+    case CreateContentView => infMain.map(ContentTree(_).back) :: HNil
+    case ContentTree(tree) => {
+      case s => stateWithTree(s, tree) :: SetContentTree(tree, Some(this)).toAgentMachine :: HNil
     }
   }
 }
@@ -78,6 +62,6 @@ trait ViewAgent
     // case a: SetContentTree => {
     //   _ << a.toParent
     // }
-    case CreateContentView => ToViewMachine(CreateContentView) :: HNil
+    case CreateContentView => ToViewMachine(CreateContentView, this) :: HNil
   }
 }
