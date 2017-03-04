@@ -12,7 +12,6 @@ extends tryp.AndroidDeps
     "view-core" -> viewCore,
     "view" -> view,
     "state" -> state,
-    "tstate" -> tstate,
     "service" -> service,
     "app" -> app,
     "db" -> db,
@@ -54,10 +53,6 @@ extends tryp.AndroidDeps
   )
 
   def state = ids(
-    pulsar("fstate").no
-  )
-  
-  def tstate = ids(
     pulsar("state-reflect")
   )
 

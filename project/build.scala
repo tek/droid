@@ -46,13 +46,9 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val state = "state" / "state machine" << view
 
-  lazy val tstate = "tstate" / "state machine" << view
-
   lazy val service = "service" / "machines providing services" << state << viewCore
 
   lazy val app = "app" / "android commons" << view
-
-  lazy val stateApp = "state-app" / "app/state stuff" << app << state
 
   lazy val db = "db" / "slick/sqldroid" << state
 
@@ -94,9 +90,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
         debugIncludesTests := true
       )
 
-  lazy val integration = mkInt("integration") << integrationCore << state
-
-  lazy val tstatei = mkInt("tstatei") << tstate
+  lazy val integration = mkInt("integration") << state
 
   lazy val unit = (tdp("unit") << unitCore << app << debug)
     .map(_.disablePlugins(CoursierPlugin))

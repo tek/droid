@@ -4,30 +4,24 @@ package state
 
 import iota._
 
-import IOOperation._
-import AppState._
+import shapeless._
+
+import tryp.state.annotation.machine
+
+case class ToViewMachine(payload: Message, agent: Machine)
+extends InternalMessage
 
 trait ViewDataI[A]
-extends Data
+extends MState
 {
   def view: A
+
+  def sub: MState
 }
 
-trait ViewTrans
-extends IOTrans
-with Views[Context, IO]
-{
-  override def machinePrefix = super.machinePrefix :+ "view"
-}
-
-trait ViewMachine
-extends Machine
-{
-  def transitions(comm: MComm): ViewTrans
-}
-
-abstract class TreeViewTrans[A <: ViewTree[_ <: ViewGroup]: ClassTag]
-extends ViewTrans
+@machine
+abstract class ViewMachine[A <: ViewTree[_ <: ViewGroup]]
+extends Views[Context, IO]
 {
   case class ContentTree(tree: A)
   extends Message
@@ -37,69 +31,37 @@ extends ViewTrans
 
   abstract class ViewData
   extends ViewDataI[A]
-  {
-    def view: A
-  }
 
   object ViewData
   {
-    def unapply(a: ViewData) = Some(a.view)
+    def unapply(a: ViewData) = Some((a.view, a.sub))
   }
 
-  case class VData(view: A)
+  case class VData(view: A, sub: MState)
   extends ViewData
 
   protected def infMain: IO[A, Context]
 
-  protected def dataWithTree(data: Data, tree: A): Data =
-    VData(tree)
+  protected def stateWithTree(state: MState, tree: A): MState = VData(tree, Pristine)
 
-  override def internalAdmit = super.internalAdmit orElse {
-    case CreateContentView =>
-      _ << infMain.map(ContentTree(_).back)
-    case ContentTree(tree: A) => {
-      case S(s, d) =>
-        val data = dataWithTree(d, tree)
-        S(s, data) << SetContentTree(tree, Some(sender)).toAgentMachine
+  def vmTrans: Transitions = {
+    case CreateContentView => infMain.map(ContentTree(_).back) :: HNil
+    case ContentTree(tree) => {
+      case s => stateWithTree(s, tree) :: SetContentTree(tree, Some(this)).toAgentMachine :: HNil
     }
   }
 }
 
-trait TreeViewMachine
-extends ViewMachine
-{
-  def transitions(comm: MComm): TreeViewTrans[_]
-}
-
-trait ViewAgentTrans
-extends MachineTransitions
-{
-  def viewMachine: ViewMachine
-
-  override def overrideAdmit = super.overrideAdmit orElse {
-    case a: SetContentView => {
-      _ << a.toParent
-    }
-    case a: SetContentTree => {
-      _ << a.toParent
-    }
-    case CreateContentView => {
-      case s =>
-        s << CreateContentView.to(viewMachine)
-    }
-  }
-}
-
+@machine
 trait ViewAgent
-extends Agent
-{ self =>
-  def viewMachine: ViewMachine
-
-  def machines: List[Machine] = viewMachine :: Nil
-
-  def transitions(mc: MComm) = new ViewAgentTrans {
-    def mcomm = mc
-    def viewMachine = self.viewMachine
-    def admit = PartialFunction.empty
+{
+  def trans: Transitions = {
+    // case a: SetContentView => {
+    //   _ << a.toParent
+    // }
+    // case a: SetContentTree => {
+    //   _ << a.toParent
+    // }
+    case CreateContentView => ToViewMachine(CreateContentView, this) :: HNil
   }
 }

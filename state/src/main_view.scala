@@ -2,6 +2,8 @@ package tryp
 package droid
 package state
 
+import shapeless._
+
 import iota._
 
 import tryp.state._
@@ -15,8 +17,8 @@ import android.support.v7.app.ActionBarDrawerToggle
 
 import view.io.text._
 import view.io.misc._
-import AppState._
-import IOOperation.exports._
+// import AppState._
+// import IOOperation.exports._
 
 case class MainFragment(view: View)
 extends Fragment
@@ -105,309 +107,276 @@ object MainViewMessages
 }
 import MainViewMessages._
 
+@machine
 abstract class MVContainer
 [A <: ViewTree[_ <: ViewGroup] with HasMainFrame: ClassTag]
-extends TreeViewTrans[A]
+extends ViewMachine[A]
+with AnnotatedIO
 {
-  override def internalAdmit = super.internalAdmit orElse {
-    case SetContentView(view, _) => setMainView(view)
-    case SetContentTree(tree, _) => setMainView(tree.container)
-    case Back => back
-    case ContentViewReady(agent) => contentViewReady
-    case UiLoaded => uiLoaded
+  def mvcTrans: Transitions = {
+    // case SetContentView(view, _) => setMainView(view)
+    case SetContentTree(tree, _) => {
+      case ViewData(main, sub) => setMainView(main, tree.container) :: HNil
+    }
+    case Back => act(_.onBackPressed()) :: HNil
+    case ContentViewReady(agent) => {
+      case ViewData(v, _) =>
+        (VData(v, Ready): MState) :: InitUi :: HNil
+        // InitUi.toLocal
+    }
+      case UiLoaded => {
+      /** If the main frame has already been installed (state Ready), immediately
+      *  request the main view
+      */
+      case ViewData(_, Ready) => InitUi :: HNil
+        // InitUi.toLocal
+    }
   }
 
-  /** If the main frame has already been installed (state Ready), immediately
-   *  request the main view
-   */
-  def uiLoaded: Transit = {
-    case s @ S(Ready, _) =>
-      s << InitUi.toLocal
+  def setMainView(main: A, view: View) = {
+    def replaceFragment(v: View)(a: Activity) = {
+      a.replaceFragment(main.mainFrame.getId, MainFragment(v), true, "mainframe", false)
+      MainViewLoaded
+    }
+    act(replaceFragment(view)).ui
   }
-
-  def setMainView(view: View): Transit = {
-    case s @ S(_, ViewData(main)) =>
-      def replaceFragment(v: View)(a: Activity) = {
-        a.replaceFragment(main.mainFrame.getId, MainFragment(v), true,
-          "mainframe", false)
-        MainViewLoaded.publish
-      }
-      act(replaceFragment(view)).ui
-  }
-
-  def contentViewReady: Transit = {
-    case S(_, d) =>
-      S(Ready, d) << InitUi.toLocal
-  }
-
-  def back: Transit = {
-    case s =>
-      s << nativeBack
-  }
-
-  // FIXME must be overridden in activity to delegate to here. then implement
-  // and call nativeBack() in activity
-  def nativeBack = act(_.onBackPressed())
-
-  override def handle = "mvc"
 }
 
-abstract class MVContainerMachine
-[A <: ViewTree[_ <: ViewGroup] with HasMainFrame: ClassTag]
-extends ViewMachine
-{
-  def transitions(cm: MComm): MVContainer[A]
-}
-
-case class MVFrame(mcomm: MComm)
-extends MVContainer[MainViewLayout]
+trait MVContainerMain
+extends Views[Context, IO]
 {
   def infMain = inf[MainViewLayout]
-
-  def admit = PartialFunction.empty
 }
-
-trait MVFrameMachine
-extends MVContainerMachine[MainViewLayout]
-{
-  def transitions(comm: MComm) = MVFrame(comm)
-}
-
-case class MVData(ui: Agent)
-extends Data
 
 @machine
-trait MV
-extends IOTrans
-{
-  def admit: Admission = {
-    case LoadUi(ui) => loadUi(ui)
-    case InitUi => initUi
-  }
+object MVFrame
+extends MVContainer[MainViewLayout]
+with MVContainerMain
 
-  private[this] def integrate = (ag: Agent) => {
-    (comm: Comm) => ag.integrate(comm).map {
-      case UnwrapMessage(m: SetContentTree) => ToMainView(m)
-      case a => a
-    }
-  }
+// case class MVData(ui: Agent)
+// extends MState
 
-  def loadUi(ui: ViewAgent): Transit = {
-    case S(s, _) =>
-      S(s, MVData(ui)) << StartAgentExt(Stream(ui), integrate).broadcast <<
-        UiLoaded.toLocal
-  }
+// @machine
+// trait MV
+// extends IOTrans
+// {
+//   def mvTrans: Transitions = {
+//     case LoadUi(ui) => loadUi(ui)
+//     case InitUi => initUi
+//   }
 
-  def initUi: Transit = {
-    case s @ S(_, MVData(agent)) =>
-      s << CreateContentView.to(agent)
-  }
-}
+//   private[this] def integrate = (ag: Agent) => {
+//     (comm: Comm) => ag.integrate(comm).map {
+//       case UnwrapMessage(m: SetContentTree) => ToMainView(m)
+//       case a => a
+//     }
+//   }
 
-case class MVATrans(mcomm: MComm, viewMachine: ViewMachine, mvMachine: MV.MV,
-  initialUi: Option[ViewAgent])
-extends ViewAgentTrans
-{
-  private[this] def setContentViewAdmit: Admission = {
-    case m @ SetContentView(view, Some(sender)) if sender != viewMachine =>
-      _ << m.to(viewMachine).publish
-    case m @ SetContentView(_, _) =>
-      _ << ToAppState(m).publish
-    case m @ SetContentTree(view, Some(sender)) if sender != viewMachine =>
-      _ << m.to(viewMachine).publish
-    case m @ SetContentTree(_, _) =>
-      _ << ToAppState(m).publish
-  }
+//   def loadUi(ui: ViewAgent): Transit = {
+//     case S(s, _) =>
+//       S(s, MVData(ui)) << StartAgentExt(Stream(ui), integrate).broadcast <<
+//         UiLoaded.toLocal
+//   }
 
-  override def overrideAdmit = setContentViewAdmit orElse super.overrideAdmit
+//   def initUi: Transit = {
+//     case s @ S(_, MVData(agent)) =>
+//       s << CreateContentView.to(agent)
+//   }
+// }
 
-  override def internalAdmit = super.internalAdmit orElse {
-    case ContentViewReady(ag) if mcomm.agent.contains(ag) =>
-      _ << MainViewReady.broadcast
-    case ActivityAgentStarted(_) =>
-      initialUi match {
-        case Some(agent) => _ << LoadUi(agent).to(mvMachine)
-        case _ => s => s
-      }
-  }
+// class MVATrans(viewMachine: ViewMachine, mvMachine: MV.MV,
+//   initialUi: Option[ViewAgent])
+// extends ViewAgentTrans
+// {
+//   def setContentViewAdmit: Transitions = {
+//     case m @ SetContentView(view, Some(sender)) if sender != viewMachine =>
+//       _ << m.to(viewMachine).publish
+//     case m @ SetContentView(_, _) =>
+//       _ << ToAppState(m).publish
+//     case m @ SetContentTree(view, Some(sender)) if sender != viewMachine =>
+//       _ << m.to(viewMachine).publish
+//     case m @ SetContentTree(_, _) =>
+//       _ << ToAppState(m).publish
+//   }
 
-  def admit = PartialFunction.empty
-}
+//   def internalAdmit: Transitions = {
+//     case ContentViewReady(ag) if mcomm.agent.contains(ag) =>
+//       _ << MainViewReady.broadcast
+//     case ActivityAgentStarted(_) =>
+//       initialUi match {
+//         case Some(agent) => _ << LoadUi(agent).to(mvMachine)
+//         case _ => s => s
+//       }
+//   }
+// }
 
-trait MainViewAgent
-extends TreeActivityAgent
-{
-  import AppState._
+// // trait MainViewAgent
+// // extends TreeActivityAgent
+// // {
+// //   import AppState._
 
-  def viewMachine: MVContainerMachine[_]
+// //   def viewMachine: MVContainerMachine[_]
 
-  override def transitions(comm: MComm) =
-    MVATrans(comm, viewMachine, mvMachine, initialUi)
+// //   override def transitions(comm: MComm) =
+// //     MVATrans(comm, viewMachine, mvMachine, initialUi)
 
-  lazy val mvMachine = MV.MV()
+// //   lazy val mvMachine = MV.MV()
 
-  override def machines: List[Machine] = mvMachine :: super.machines
+// //   override def machines: List[Machine] = mvMachine :: super.machines
 
-  protected def initialUi: Option[ViewAgent] = None
+// //   protected def initialUi: Option[ViewAgent] = None
 
-  override def transformAgentIn = {
-    case ToMainView(m) => m.to(viewMachine)
-    case a => super.transformAgentIn(a)
-  }
-}
+// //   override def transformAgentIn = {
+// //     case ToMainView(m) => m.to(viewMachine)
+// //     case a => super.transformAgentIn(a)
+// //   }
+// // }
 
-trait MVAgent
-extends MainViewAgent
-{
-  lazy val viewMachine = new MVFrameMachine {}
-}
+// // trait MVAgent
+// // extends MainViewAgent
+// // {
+// //   lazy val viewMachine = new MVFrameMachine {}
+// // }
 
-case class Drawer(ctx: Context, container: DrawerLayout, mainFrame: MainFrame,
-  drawer: MainFrame)
-extends ViewTree[DrawerLayout]
-with HasMainFrame
-{
-  implicit val c = ctx
-  container.lp(MATCH_PARENT, MATCH_PARENT)
-  container.desc("drawer root")
-  mainFrame.desc("drawer main")
-  drawer.setId(res.R.id.drawer)
-  val lp = new DrawerLayout.LayoutParams(200.dp, MATCH_PARENT)
-  lp.gravity = Gravity.START
-  drawer.setLayoutParams(lp)
-  drawer.desc("drawer")
+// case class Drawer(ctx: Context, container: DrawerLayout, mainFrame: MainFrame,
+//   drawer: MainFrame)
+// extends ViewTree[DrawerLayout]
+// with HasMainFrame
+// {
+//   implicit val c = ctx
+//   container.lp(MATCH_PARENT, MATCH_PARENT)
+//   container.desc("drawer root")
+//   mainFrame.desc("drawer main")
+//   drawer.setId(res.R.id.drawer)
+//   val lp = new DrawerLayout.LayoutParams(200.dp, MATCH_PARENT)
+//   lp.gravity = Gravity.START
+//   drawer.setLayoutParams(lp)
+//   drawer.desc("drawer")
 
-  override def toString = this.className
-}
+//   override def toString = this.className
+// }
 
-trait HasDrawer
-extends HasMainFrame
-{
-  def drawer: Drawer
-  def toolbar: Toolbar
-}
+// trait HasDrawer
+// extends HasMainFrame
+// {
+//   def drawer: Drawer
+//   def toolbar: Toolbar
+// }
 
-case class ExtMVLayout(container: LinearLayout, toolbar: Toolbar,
-  drawer: Drawer)
-extends ViewTree[LinearLayout]
-with HasDrawer
-{
-  container.lp(MATCH_PARENT, MATCH_PARENT)
-  container.setOrientation(LinearLayout.VERTICAL)
-  container.desc("ext mv")
+// case class ExtMVLayout(container: LinearLayout, toolbar: Toolbar,
+//   drawer: Drawer)
+// extends ViewTree[LinearLayout]
+// with HasDrawer
+// {
+//   container.lp(MATCH_PARENT, MATCH_PARENT)
+//   container.setOrientation(LinearLayout.VERTICAL)
+//   container.desc("ext mv")
 
-  override def toString = this.className
+//   override def toString = this.className
 
-  def mainFrame = drawer.mainFrame
-}
+//   def mainFrame = drawer.mainFrame
+// }
 
-object ExtMVContainerData
-{
-  type Toggle = ActionBarDrawerToggle
+// object ExtMVContainerData
+// {
+//   type Toggle = ActionBarDrawerToggle
 
-  case class StoreDrawerToggle(toggle: Toggle)
-  extends Message
+//   case class StoreDrawerToggle(toggle: Toggle)
+//   extends Message
 
-  case object DrawerReady
-  extends Message
+//   case object DrawerReady
+//   extends Message
 
-  case object CreateDrawerView
-  extends Message
+//   case object CreateDrawerView
+//   extends Message
 
-  case class DrawerViewReady(view: View)
-  extends Message
+//   case class DrawerViewReady(view: View)
+//   extends Message
 
-  case object DrawerLoaded
-  extends Message
+//   case object DrawerLoaded
+//   extends Message
 
-  case object SetupActionBar
-  extends Message
+//   case object SetupActionBar
+//   extends Message
 
-  case object CreateToggle
-  extends Message
+//   case object CreateToggle
+//   extends Message
 
-  case object SyncToggle
-  extends Message
+//   case object SyncToggle
+//   extends Message
 
-  case object CloseDrawer
-  extends Message
-}
-import ExtMVContainerData._
+//   case object CloseDrawer
+//   extends Message
+// }
+// import ExtMVContainerData._
 
-abstract class ExtMVContainerBase
-[A <: ViewTree[_ <: ViewGroup] with HasDrawer: ClassTag]
-extends MVContainer[A]
-{
-  trait ExtMVDataBase
-  extends ViewData
-  {
-    def toggle: Toggle
-  }
+// @machine
+// abstract class ExtMVContainerBase
+// [A <: ViewTree[_ <: ViewGroup] with HasDrawer: ClassTag]
+// extends MVContainer[A]
+// {
+//   trait ExtMVDataBase
+//   extends ViewData
+//   {
+//     def toggle: Toggle
+//   }
 
-  case class ExtMVData(view: A, toggle: Toggle, open: Boolean)
-  extends ExtMVDataBase
+//   case class ExtMVData(view: A, toggle: Toggle, open: Boolean)
+//   extends ExtMVDataBase
 
-  protected def dataWithToggle(main: A, toggle: Toggle): Data =
-    ExtMVData(main, toggle, false)
+//   protected def dataWithToggle(main: A, toggle: Toggle): Data =
+//     ExtMVData(main, toggle, false)
 
-  protected def toggleAdmit: Admission = {
-    case MainViewReady => {
-      case s @ S(_, ViewData(main)) =>
-        DrawerReady.broadcast << CreateDrawerView.broadcast <<
-          SetupActionBar << CreateToggle
-    }
-    case SetupActionBar => {
-      case s @ S(_, ViewData(main)) =>
-        val action = acact { a =>
-          a.setSupportActionBar(main.toolbar)
-          a.getSupportActionBar.setHomeButtonEnabled(true)
-          a.getSupportActionBar.setDisplayHomeAsUpEnabled(true)
-        }
-        s << action.unitUi
-    }
-    case CreateToggle => {
-      case s @ S(_, ViewData(main)) =>
-        val createToggle = act(a => new Toggle(
-          a, main.drawer.container, main.toolbar,
-          droid.res.R.string.drawer_open, droid.res.R.string.drawer_close)
-        )
-        s << createToggle.map(StoreDrawerToggle(_).back)
-    }
-    case StoreDrawerToggle(toggle) => {
-      case S(s, ViewData(main)) =>
-        S(s, dataWithToggle(main, toggle)) << SyncToggle
-    }
-    case DrawerViewReady(v) => {
-      case s @ S(_, ViewData(main)) =>
-        val io = (main.drawer.drawer >>- MainFrame.load(v))
-        s << io.map(_ => DrawerLoaded.broadcast).ui
-    }
-    case SyncToggle => {
-      case s @ S(_, ExtMVData(_, toggle, _)) =>
-        con(_ => toggle.syncState()).unitUi
-    }
-    case CloseDrawer => {
-      case s @ S(_, ExtMVData(main, _, _)) =>
-        con(_ => main.drawer.container.closeDrawer(Gravity.LEFT)).unitUi
-    }
-  }
+//   def toggleTrans: Transitions = {
+//     case MainViewReady => {
+//       case s @ S(_, ViewData(main)) =>
+//         DrawerReady.broadcast << CreateDrawerView.broadcast <<
+//           SetupActionBar << CreateToggle
+//     }
+//     case SetupActionBar => {
+//       case s @ S(_, ViewData(main)) =>
+//         val action = acact { a =>
+//           a.setSupportActionBar(main.toolbar)
+//           a.getSupportActionBar.setHomeButtonEnabled(true)
+//           a.getSupportActionBar.setDisplayHomeAsUpEnabled(true)
+//         }
+//         s << action.unitUi
+//     }
+//     case CreateToggle => {
+//       case s @ S(_, ViewData(main)) =>
+//         val createToggle = act(a => new Toggle(
+//           a, main.drawer.container, main.toolbar,
+//           droid.res.R.string.drawer_open, droid.res.R.string.drawer_close)
+//         )
+//         s << createToggle.map(StoreDrawerToggle(_).back)
+//     }
+//     case StoreDrawerToggle(toggle) => {
+//       case S(s, ViewData(main)) =>
+//         S(s, dataWithToggle(main, toggle)) << SyncToggle
+//     }
+//     case DrawerViewReady(v) => {
+//       case s @ S(_, ViewData(main)) =>
+//         val io = (main.drawer.drawer >>- MainFrame.load(v))
+//         s << io.map(_ => DrawerLoaded.broadcast).ui
+//     }
+//     case SyncToggle => {
+//       case s @ S(_, ExtMVData(_, toggle, _)) =>
+//         con(_ => toggle.syncState()).unitUi
+//     }
+//     case CloseDrawer => {
+//       case s @ S(_, ExtMVData(main, _, _)) =>
+//         con(_ => main.drawer.container.closeDrawer(Gravity.LEFT)).unitUi
+//     }
+//   }
+// }
 
-  override def internalAdmit = toggleAdmit orElse super.internalAdmit
-}
-
-trait ExtMVContainer
-extends ExtMVContainerBase[ExtMVLayout]
-{
-  def infMain = inf[ExtMVLayout]
-}
-
-trait ExtMV
-extends MainViewAgent
-{
-  lazy val viewMachine = new MVContainerMachine[ExtMVLayout] {
-    def transitions(mc: MComm) = new ExtMVContainer {
-      val mcomm = mc
-      def admit = PartialFunction.empty
-    }
-  }
-}
+// // trait ExtMV
+// // extends MainViewAgent
+// // {
+// //   lazy val viewMachine = new MVContainerMachine[ExtMVLayout] {
+// //     def transitions(mc: MComm) = new ExtMVContainer {
+// //       val mcomm = mc
+// //       def admit = PartialFunction.empty
+// //     }
+// //   }
+// // }
