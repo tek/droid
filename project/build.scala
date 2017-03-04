@@ -40,26 +40,23 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val core = "core" / "android basics"
 
-  lazy val viewCore =
-    "view-core" / "context abstraction core" << core
+  lazy val viewCore = "view-core" / "context abstraction core" << core
 
-  lazy val view =
-    "view" / "view IO streaming and iota wrappers" << viewCore
+  lazy val view = "view" / "view IO streaming and iota wrappers" << viewCore
 
   lazy val state = "state" / "state machine" << view
 
   lazy val tstate = "tstate" / "state machine" << view
 
-  lazy val service =
-    "service" / "machines providing services" << state << viewCore
+  lazy val service = "service" / "machines providing services" << state << viewCore
 
-  lazy val app =
-    "app" / "android commons" << state
+  lazy val app = "app" / "android commons" << view
 
-  lazy val db =
-    "db" / "slick/sqldroid" << state
+  lazy val stateApp = "state-app" / "app/state stuff" << app << state
 
-  lazy val logback = "logback" / "logback deps" << app
+  lazy val db = "db" / "slick/sqldroid" << state
+
+  lazy val logback = "logback" / "logback deps" << view
 
   lazy val test = "test" << app
 

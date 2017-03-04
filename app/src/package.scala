@@ -8,9 +8,9 @@ trait Exports
 }
 
 trait All
-extends state.All
+extends view.All
 with ToIntentOps
 with AndroidExt
 
-@integrate(state)
+@integrate(view)
 object `package`
