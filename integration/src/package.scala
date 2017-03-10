@@ -1,6 +1,6 @@
 package tryp
 package droid
-package tstatei
+package integration
 
 @integrate(view, tryp.state, tryp.state.core)
 object `package`

@@ -1,6 +1,6 @@
 package tryp
 package droid
-package tstatei
+package integration
 
 class BasicSpec
 extends StateSpec[IntStateActivity](classOf[IntStateActivity])

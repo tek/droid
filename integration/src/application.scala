@@ -1,6 +1,6 @@
 package tryp
 package droid
-package tstatei
+package integration
 
 import shapeless._
 
@@ -23,26 +23,29 @@ extends MState
 case object Dummy
 extends Message
 
+case class MessageTask(task: Task[Message])
+
 @machine
 object IOMac
-extends AnnotatedIO
+extends AnnotatedTIO
 {
+  implicit def sched = DefaultScheduler.scheduler
+
   def tv(c: Context) = {
     val t = new TextView(c)
-    t.setText("foo")
+    t.setText("success")
+    t.setTextSize(50)
     t
   }
 
   def trans: Transitions = {
     case Msg =>
-      dbg("msg")
-      (IOTask(act(a => a.setContentView(tv(a))), "test"): IOTaskBase) :: HNil
+      act(a => a.setContentView(tv(a))).main :: HNil
     case SetActivity(act) =>
-      dbg(s"act: $act")
       IOMState(act) :: HNil
-    case m: IOTaskBase =>
-      dbg(s"io: ${m.msg}")
-      HNil
+    case m: ActivityIO => {
+      case IOMState(act) => StateIO(MessageTask(m.task(act))) :: HNil
+    }
   }
 }
 
@@ -82,10 +85,22 @@ extends Activity
 class IntApplication
 extends android.app.Application
 with ExecutionStrategy
-{ ia =>
+{
   implicit def scheduler = DefaultScheduler.scheduler
 
   def pool = StatePool
+
+  def stateIO(io: StateIO): Stream[Task, Message] = {
+    io match {
+      case StateIO(MessageTask(t)) => Stream.eval(t)
+      case StateIO(t: Task[_]) => Stream.eval(t).drain
+      case _ => Stream()
+    }
+  }
+
+  def result(in: Queue[Message], state: ExecuteTransition.StateI): Stream[Task, ExecuteTransition.StateI] = {
+    Stream.emits(state.ios).flatMap(stateIO).to(in.enqueue).drain ++ Stream(state)
+  }
 
   def ctor = {
     val (agent, state) = Agent.pristine(IOMac.aux :: HNil)
@@ -94,7 +109,7 @@ with ExecutionStrategy
       term <- async.signalOf[Task, Boolean](false)
       io1 <- io
       (in, out) = io1
-      loop <- Task.start(term.interrupt(out).runLog)
+      loop <- Task.start(term.interrupt(out.flatMap(result(in, _))).runLog)
     } yield (term, in, loop)
   }
 

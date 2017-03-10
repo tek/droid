@@ -2,6 +2,8 @@ package tryp
 package droid
 package state
 
+import reflect.macros.blackbox
+
 import android.support.v7.app.AppCompatActivity
 
 import scala.concurrent.Await
@@ -12,51 +14,53 @@ import export._
 
 trait IOMessage[C]
 {
-  def pure[A: Parcel](f: C => A, desc: String): Message
+  def pure[A: Parcel](f: C => A, desc: String): Message = cons(f andThen (_.msg), desc)
+
+  def cons(f: C => Message, desc: String): Message
 }
 
 object IOMessage
 {
   implicit def instance_IOMessage_Context =
     new IOMessage[Context] {
-      def pure[A: Parcel](f: Context => A, desc: String) =
+      def cons(f: Context => Message, desc: String) =
         ContextFun(f, desc)
     }
 
   implicit def instance_IOMessage_Activity =
     new IOMessage[Activity] {
-      def pure[A: Parcel](f: Activity => A, desc: String) =
+      def cons(f: Activity => Message, desc: String) =
         ActivityFun(f, desc)
     }
 
   implicit def instance_IOMessage_AppCompatActivity =
     new IOMessage[AppCompatActivity] {
-      def pure[A: Parcel](f: AppCompatActivity => A, desc: String) =
+      def cons(f: AppCompatActivity => Message, desc: String) =
         AppCompatActivityFun(f, desc)
     }
 }
 
-abstract class IOFun[A: Parcel, C]
+abstract class IOFun[C]
 extends Message
 {
   def desc: String
 
-  def run: C => A
+  def run: C => Message
 
-  def task(c: C) = Task.delay(run(c)).map(_.msg)
+  def task(c: C) = Task.delay(run(c))
 
   override def toString = s"${this.className}($desc)"
 }
 
-case class ContextFun[A: Parcel](run: Context => A, desc: String)
-extends IOFun[A, Context]
+case class ContextFun(run: Context => Message, desc: String)
+extends IOFun[Context]
 
-case class ActivityFun[A: Parcel](run: Activity => A, desc: String)
-extends IOFun[A, Activity]
+case class ActivityFun(run: Activity => Message, desc: String)
+extends IOFun[Activity]
 
-case class AppCompatActivityFun[A: Parcel]
-(run: AppCompatActivity => A, desc: String)
-extends IOFun[A, AppCompatActivity]
+case class AppCompatActivityFun
+(run: AppCompatActivity => Message, desc: String)
+extends IOFun[AppCompatActivity]
 
 @typeclass trait FromContext[C]
 {
@@ -100,13 +104,13 @@ extends Message
 
 case class IOTask[F[_, _]: PerformIO, A: Parcel, C]
 (io: F[A, C], desc: String)
-(implicit cm: IOMessage[C])
+(implicit ioMessage: IOMessage[C])
 extends IOTaskBase
 {
   val task = (c: C) => io.unsafePerformIO(c)
 
   def msg(implicit sender: Sender): Message =
-    cm.pure(task, desc)
+    ioMessage.pure(task, desc)
 
   override def toString = s"IOTask($desc)"
 }
@@ -115,11 +119,11 @@ extends IOTaskBase
 // results in Machine.asyncTask
 case class IOMainTask[F[_, _]: PerformIO, A, C]
 (io: F[A, C], desc: String, timeout: Duration = 3.second)
-(implicit cm: IOMessage[C], se: Parcel[Task[A]])
+(implicit ioMessage: IOMessage[C], se: Parcel[Task[A]])
 extends Message
 {
   def msg(implicit sched: Scheduler, sender: Sender) =
-    cm.pure(io.mainTimed(timeout)(_, sched), desc)
+    ioMessage.pure(io.mainTimed(timeout)(_, sched), desc)
 
   override def toString = s"IOMainTask($desc)"
 }
@@ -139,7 +143,7 @@ extends Message
 final class IOEffect[F[_, _]: PerformIO]
 extends AnyRef
 {
-  def ui[A: Parcel, C](fa: F[A, C])(implicit cm: IOMessage[C], sender: Sender) =
+  def ui[A: Parcel, C](fa: F[A, C])(implicit ioMessage: IOMessage[C], sender: Sender) =
     IOMainTask(fa, fa.toString)
 }
 
@@ -196,3 +200,70 @@ object IOEffect
 //       def msg(io: F[A, C]) = IOTask(io.void, io.toString).publish.msg
 //     }
 // }
+
+trait IORunner[A]
+extends Message
+{
+  def io: IO[Message, A]
+
+  def runOnMain: Boolean = false
+
+  def task(a: A)(implicit sched: Scheduler): Task[Message] =
+    if (runOnMain) io.mainTimed(3.seconds)(a, sched)
+    else io.unsafePerformIO(a)
+}
+
+class ContextIO(val io: IO[Message, Context], val desc: String)
+extends IORunner[Context]
+{
+  def main = new ContextIO(io, desc) { override def runOnMain = true }
+}
+
+class ActivityIO(val io: IO[Message, Activity], val desc: String)
+extends IORunner[Activity]
+{
+  def main = new ActivityIO(io, desc) { override def runOnMain = true }
+}
+
+class AppCompatActivityIO(val io: IO[Message, AppCompatActivity], val desc: String)
+extends IORunner[AppCompatActivity]
+{
+  def main = new AppCompatActivityIO(io, desc) { override def runOnMain = true }
+}
+
+trait AnnotatedTIO
+{
+  def con[A](f: Context => A): ContextIO =
+    macro AnnotatedTIOM.inst[A, Context, ContextIO]
+
+  def act[A](f: Activity => A): ActivityIO =
+    macro AnnotatedTIOM.inst[A, Activity, ActivityIO]
+
+  def acact[A](f: AppCompatActivity => A): AppCompatActivityIO =
+    macro AnnotatedTIOM.inst[A, AppCompatActivity, AppCompatActivityIO]
+}
+
+class AnnotatedTIOM(val c: blackbox.Context)
+extends AndroidMacros
+{
+  import c.universe._
+  import c.Expr
+
+  private[this] def withRepr[A: WeakTypeTag, C: WeakTypeTag, F]
+  (f: Expr[C => A], repr: String)
+  (implicit fType: WeakTypeTag[F])
+  : Expr[F] = {
+    val aType = weakTypeOf[A]
+    val cType = weakTypeOf[C]
+    val ctor = weakTypeOf[F].typeSymbol
+    Expr {
+      q"""
+      val io = IO[$aType, $cType]($f, $repr).map(_.msg)
+      new $ctor(io, $repr)
+      """
+    }
+  }
+
+  def inst[A: WeakTypeTag, C: WeakTypeTag, IO: WeakTypeTag](f: Expr[C => A]): Expr[IO] =
+    withRepr[A, C, IO](f, showCode(f.tree))
+}

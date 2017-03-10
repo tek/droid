@@ -1,6 +1,6 @@
 package tryp
 package droid
-package tstatei
+package integration
 
 import com.github.nscala_time.time.Imports._
 

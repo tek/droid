@@ -20,7 +20,7 @@ extends tryp.AndroidDeps
     "unit-droid" -> unitDroid,
     "unit" -> unit,
     "integration-core" -> integrationCore,
-    "tstatei" -> integrationCore,
+    "integration" -> integration,
     "logback" -> logback,
     "macro-console" -> macroConsole
   )
