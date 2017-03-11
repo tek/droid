@@ -17,8 +17,6 @@ case class MessageTask(task: Task[Message])
 case class IOMState(act: Activity)
 extends MState
 
-case class AppState()
-
 @machine
 class AndroidMachine
 (implicit sched: Scheduler)
@@ -37,12 +35,11 @@ class AndroidMachine
   }
 }
 
-trait StateApplication
-extends android.app.Application
-with ExecutionStrategy
-with Logging
+trait AppState
+extends Logging
 {
-  implicit def scheduler: Scheduler
+  implicit val pool: SchedulerStrategyPool
+  import pool._
 
   def loopCtor: Task[(Queue[Message], Stream[Task, ExecuteTransition.StateI])]
 
@@ -69,13 +66,25 @@ with Logging
 
   lazy val (term, in, loop) = ctor.unsafeRun()
 
-  override def onCreate(): Unit = {
-    loop.unsafeRunAsync { case a => log.info(s"finished with $a") }
-    super.onCreate()
-  }
+  def run() = loop.unsafeRunAsync { case a => log.info(s"finished with $a") }
 
   def send(msg: Message) = in.enqueue1(msg).unsafeRun()
 
   // FIXME doesn't work, but doing the same from within the activity does
   def setActivity = SetActivity.apply _ andThen send _
+}
+
+trait StateApplication
+extends android.app.Application
+{
+  def state: AppState
+
+  override def onCreate(): Unit = {
+    state.run()
+    super.onCreate()
+  }
+
+  def send = state.send _
+
+  def setActivity = state.setActivity _
 }

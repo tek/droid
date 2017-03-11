@@ -22,8 +22,13 @@ extends Message
 case object Dummy
 extends Message
 
+object DefaultScheduler
+{
+  implicit lazy val scheduler: Scheduler = Scheduler.fromFixedDaemonPool(1)
+}
+
 object StatePool
-extends ExecutionStrategyPool
+extends SchedulerStrategyPool
 with Logging
 {
   def name = "state"
@@ -33,11 +38,8 @@ with Logging
   }
 
   implicit lazy val executor = BoundedCachedExecutor.withHook(name, 1, 10, 100, hook)
-}
 
-object DefaultScheduler
-{
-  implicit lazy val scheduler: Scheduler = Scheduler.fromFixedDaemonPool(1)
+  implicit def scheduler = DefaultScheduler.scheduler
 }
 
 class IntStateActivity
@@ -55,16 +57,17 @@ extends Activity
   }
 }
 
-class IntApplication
-extends StateApplication
+class IntAppState
+extends AppState
 {
-  implicit def scheduler = DefaultScheduler.scheduler
+  implicit val pool = StatePool
 
-  def pool = StatePool
+  import pool._
 
   @machine
   object android
   extends AndroidMachine
+  with AnnotatedTIO
   {
     def tv(c: Context) = {
       val t = new TextView(c)
@@ -87,4 +90,11 @@ extends StateApplication
     val (agent, state) = Agent.pristine(android.aux :: HNil)
     Loop.ags(agent :: HNil, state :: HNil)
   }
+
+}
+
+class IntApplication
+extends StateApplication
+{
+  lazy val state = new IntAppState
 }
