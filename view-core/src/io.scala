@@ -224,6 +224,10 @@ trait IOInstances
       IO(c => f(fa.run(c)).run(c), s"${fa.desc}.flatMap($f)")
     }
 
+    override def map[A, B](fa: IO[A, C])(f: A => B) = {
+      IO(c => f(fa.run(c)), s"${fa.desc}.map($f)")
+    }
+
     def tailRecM[A, B](a: A)(f: A => IO[Either[A, B], C])
     : IO[B, C] =
       defaultTailRecM(a)(f)

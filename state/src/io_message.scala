@@ -14,7 +14,8 @@ import export._
 
 trait IOMessage[C]
 {
-  def pure[A: Parcel](f: C => A, desc: String): Message = cons(f andThen (_.msg), desc)
+  def pure[A, M <: Message](f: C => A, desc: String)(implicit P: Parcel.Aux[A, M]): Message =
+    cons(f andThen (P.msg), desc)
 
   def cons(f: C => Message, desc: String): Message
 }
@@ -81,20 +82,20 @@ extends Message
   def msg(implicit sender: Sender): Message
 }
 
-case class FromContextIO[F[_, _]: PerformIO, A: Parcel, C: FromContext]
-(io: F[A, C])(implicit cv: Contravariant[F[A, ?]])
-extends InternalIOMessage
-{
-  def msg(implicit sender: Sender) = {
-    IOTask(io contramap FromContext[C].summon, io.toString).msg
-  }
-}
+// case class FromContextIO[F[_, _]: PerformIO, A: Parcel, C: FromContext]
+// (io: F[A, C])(implicit cv: Contravariant[F[A, ?]])
+// extends InternalIOMessage
+// {
+//   def msg(implicit sender: Sender) = {
+//     IOTask(io contramap FromContext[C].summon, io.toString).msg
+//   }
+// }
 
-case class ECTask[A: Parcel](run: EC => A)
-extends Message
-{
-  def msg = (ec: EC) => (run(ec).msg)
-}
+// case class ECTask[A: Parcel](run: EC => A)
+// extends Message
+// {
+//   def msg = (ec: EC) => (run(ec).msg)
+// }
 
 trait IOTaskBase
 extends Message
@@ -102,31 +103,31 @@ extends Message
   def msg(implicit sender: Sender): Message
 }
 
-case class IOTask[F[_, _]: PerformIO, A: Parcel, C]
-(io: F[A, C], desc: String)
-(implicit ioMessage: IOMessage[C])
-extends IOTaskBase
-{
-  val task = (c: C) => io.unsafePerformIO(c)
+// case class IOTask[F[_, _]: PerformIO, A: Parcel, C]
+// (io: F[A, C], desc: String)
+// (implicit ioMessage: IOMessage[C])
+// extends IOTaskBase
+// {
+//   val task = (c: C) => io.unsafePerformIO(c)
 
-  def msg(implicit sender: Sender): Message =
-    ioMessage.pure(task, desc)
+//   def msg(implicit sender: Sender): Message =
+//     ioMessage.pure(task, desc)
 
-  override def toString = s"IOTask($desc)"
-}
+//   override def toString = s"IOTask($desc)"
+// }
 
-// TODO maybe allow A to have an Operation and asynchronously enqueue the
-// results in Machine.asyncTask
-case class IOMainTask[F[_, _]: PerformIO, A, C]
-(io: F[A, C], desc: String, timeout: Duration = 3.second)
-(implicit ioMessage: IOMessage[C], se: Parcel[Task[A]])
-extends Message
-{
-  def msg(implicit sched: Scheduler, sender: Sender) =
-    ioMessage.pure(io.mainTimed(timeout)(_, sched), desc)
+// // TODO maybe allow A to have an Operation and asynchronously enqueue the
+// // results in Machine.asyncTask
+// case class IOMainTask[F[_, _]: PerformIO, A, C]
+// (io: F[A, C], desc: String, timeout: Duration = 3.second)
+// (implicit ioMessage: IOMessage[C], se: Parcel[Task[A]])
+// extends Message
+// {
+//   def msg(implicit sched: Scheduler, sender: Sender) =
+//     ioMessage.pure(io.mainTimed(timeout)(_, sched), desc)
 
-  override def toString = s"IOMainTask($desc)"
-}
+//   override def toString = s"IOMainTask($desc)"
+// }
 
 // case class IOFork[F[_, _]: PerformIO, C](io: F[Unit, C], desc: String)
 // (implicit im: IOMessage[C])
@@ -140,45 +141,45 @@ extends Message
 //   override def toString = s"IOFork($desc)"
 // }
 
-final class IOEffect[F[_, _]: PerformIO]
-extends AnyRef
-{
-  def ui[A: Parcel, C](fa: F[A, C])(implicit ioMessage: IOMessage[C], sender: Sender) =
-    IOMainTask(fa, fa.toString)
-}
+// final class IOEffect[F[_, _]: PerformIO]
+// extends AnyRef
+// {
+//   def ui[A: Parcel, C](fa: F[A, C])(implicit ioMessage: IOMessage[C], sender: Sender) =
+//     IOMainTask(fa, fa.toString)
+// }
 
-object IOEffect
-{
-  implicit def instance_IOEffect_PerformIO[F[_, _]: PerformIO]: IOEffect[F] =
-    new IOEffect[F]
+// object IOEffect
+// {
+//   implicit def instance_IOEffect_PerformIO[F[_, _]: PerformIO]: IOEffect[F] =
+//     new IOEffect[F]
 
-  abstract class Ops[F[_, _]: PerformIO, A, C: IOMessage]
-  (implicit sender: Sender)
-  {
-    def typeClassInstance: IOEffect[F]
-    def self: F[A, C]
+//   abstract class Ops[F[_, _]: PerformIO, A, C: IOMessage]
+//   (implicit sender: Sender)
+//   {
+//     def typeClassInstance: IOEffect[F]
+//     def self: F[A, C]
 
-    def ui(implicit prc: Parcel[A]) =
-      typeClassInstance.ui[A, C](self)
+//     def ui(implicit prc: Parcel[A]) =
+//       typeClassInstance.ui[A, C](self)
 
-    def unitUi(implicit M: Monad[F[?, C]]) =
-      typeClassInstance.ui[Unit, C](self map (_ => ()))
-  }
+//     def unitUi(implicit M: Monad[F[?, C]]) =
+//       typeClassInstance.ui[Unit, C](self map (_ => ()))
+//   }
 
-  trait ToIOEffectOps
-  {
-    implicit def toIOEffectOps[F[_, _]: PerformIO, A, C: IOMessage]
-    (fa: F[A, C])
-    (implicit tc: IOEffect[F], sender: Sender) =
-      new Ops[F, A, C] {
-        val self = fa
-        val typeClassInstance = tc
-      }
-  }
+//   trait ToIOEffectOps
+//   {
+//     implicit def toIOEffectOps[F[_, _]: PerformIO, A, C: IOMessage]
+//     (fa: F[A, C])
+//     (implicit tc: IOEffect[F], sender: Sender) =
+//       new Ops[F, A, C] {
+//         val self = fa
+//         val typeClassInstance = tc
+//       }
+//   }
 
-  object ops
-  extends ToIOEffectOps
-}
+//   object ops
+//   extends ToIOEffectOps
+// }
 
 // @exports
 // object IOOperation
@@ -201,69 +202,13 @@ object IOEffect
 //     }
 // }
 
-trait IORunner[A]
-extends Message
+trait IOParcel
 {
-  def io: IO[Message, A]
-
-  def runOnMain: Boolean = false
-
-  def task(a: A)(implicit sched: Scheduler): Task[Message] =
-    if (runOnMain) io.mainTimed(3.seconds)(a, sched)
-    else io.unsafePerformIO(a)
-}
-
-class ContextIO(val io: IO[Message, Context], val desc: String)
-extends IORunner[Context]
-{
-  def main = new ContextIO(io, desc) { override def runOnMain = true }
-}
-
-class ActivityIO(val io: IO[Message, Activity], val desc: String)
-extends IORunner[Activity]
-{
-  def main = new ActivityIO(io, desc) { override def runOnMain = true }
-}
-
-class AppCompatActivityIO(val io: IO[Message, AppCompatActivity], val desc: String)
-extends IORunner[AppCompatActivity]
-{
-  def main = new AppCompatActivityIO(io, desc) { override def runOnMain = true }
-}
-
-trait AnnotatedTIO
-{
-  def con[A](f: Context => A): ContextIO =
-    macro AnnotatedTIOM.inst[A, Context, ContextIO]
-
-  def act[A](f: Activity => A): ActivityIO =
-    macro AnnotatedTIOM.inst[A, Activity, ActivityIO]
-
-  def acact[A](f: AppCompatActivity => A): AppCompatActivityIO =
-    macro AnnotatedTIOM.inst[A, AppCompatActivity, AppCompatActivityIO]
-}
-
-class AnnotatedTIOM(val c: blackbox.Context)
-extends AndroidMacros
-{
-  import c.universe._
-  import c.Expr
-
-  private[this] def withRepr[A: WeakTypeTag, C: WeakTypeTag, F]
-  (f: Expr[C => A], repr: String)
-  (implicit fType: WeakTypeTag[F])
-  : Expr[F] = {
-    val aType = weakTypeOf[A]
-    val cType = weakTypeOf[C]
-    val ctor = weakTypeOf[F].typeSymbol
-    Expr {
-      q"""
-      val io = IO[$aType, $cType]($f, $repr).map(_.msg)
-      new $ctor(io, $repr)
-      """
+  implicit def instance_Parcel_IO_Context[A, M <: Message]
+  (implicit P: Parcel.Aux[A, M])
+  : Parcel.Aux[IO[A, Context], ContextIO] =
+    new Parcel[IO[A, Context]] {
+      type M = ContextIO
+      def msg(a: IO[A, Context]) = ContextIO(a.map(P.msg))
     }
-  }
-
-  def inst[A: WeakTypeTag, C: WeakTypeTag, IO: WeakTypeTag](f: Expr[C => A]): Expr[IO] =
-    withRepr[A, C, IO](f, showCode(f.tree))
 }

@@ -44,7 +44,9 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val view = "view" / "view IO streaming and iota wrappers" << viewCore
 
-  lazy val state = "state" / "state machine" << view
+  lazy val stateCore = "state-core" / "state machine macros" << view
+
+  lazy val state = "state" / "state machine" << stateCore
 
   lazy val service = "service" / "machines providing services" << state << viewCore
 

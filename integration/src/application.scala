@@ -8,9 +8,9 @@ import shapeless._
 
 import fs2.async
 
-import tryp.state.annotation._
+import iota._
 
-import state._
+import tryp.state.annotation._
 import tryp.state.core.{Loop, Exit}
 
 case object Msg
@@ -43,17 +43,31 @@ with Logging
 }
 
 class IntStateActivity
-extends Activity
+extends StateActivity
 {
-  lazy val stateApp = getApplication match {
-    case a: StateApplication => a
-    case _ => sys.error("application is not a StateApplication")
-  }
-
   override def onCreate(state: Bundle) = {
-    stateApp.send(SetActivity(this))
     super.onCreate(state)
-    stateApp.send(Msg)
+    // stateApp.send(Msg)
+  }
+}
+
+case class IntMain(container: FrameLayout, tv: TextView)
+extends ViewTree[FrameLayout]
+{
+  tv.setText("success")
+  tv.setTextSize(50)
+
+  override def toString = "IntMain"
+}
+
+@machine
+object IntView
+extends ViewMachine[IntMain]
+{
+  def infMain = inflate[IntMain]
+
+  def trans: Transitions = {
+    case Msg => HNil
   }
 }
 
@@ -67,7 +81,6 @@ extends AppState
   @machine
   object android
   extends AndroidMachine
-  with AnnotatedTIO
   {
     def tv(c: Context) = {
       val t = new TextView(c)
@@ -78,7 +91,7 @@ extends AppState
 
     def trans: Transitions = {
       case Msg =>
-      dbg("init")
+        dbg("init")
         act { a => a.setContentView(tv(a)); Msg2 }.main :: HNil
       case Msg2 =>
         dbg("success")
@@ -87,10 +100,9 @@ extends AppState
   }
 
   lazy val loopCtor = {
-    val (agent, state) = Agent.pristine(android.aux :: HNil)
+    val (agent, state) = Agent.pristine(android.aux :: MVFrame.aux :: IntView.aux :: HNil)
     Loop.ags(agent :: HNil, state :: HNil)
   }
-
 }
 
 class IntApplication

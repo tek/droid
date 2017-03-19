@@ -12,7 +12,7 @@ import tryp.state.annotation._
 
 import tryp.state.core.{Loop, Exit, AgsTrans}
 
-case class MessageTask(task: Task[Message])
+case class MessageTask(task: Task[Message], desc: String)
 
 case class IOMState(act: Activity)
 extends MState
@@ -20,18 +20,26 @@ extends MState
 @machine
 class AndroidMachine
 (implicit sched: Scheduler)
+extends AnnotatedTIO
 {
   def trans: Transitions = {
-    case SetActivity(act) => IOMState(act) :: HNil
+    case SetActivity(act) =>
+      dbg("SetActivity")
+      IOMState(act) :: HNil
     case m: ContextIO => {
-      case IOMState(act) => StateIO(MessageTask(m.task(act))) :: HNil
+      case IOMState(act) =>
+        dbg(s"ContextIO $m")
+        StateIO(MessageTask(m.task(act), m.desc)) :: HNil
     }
     case m: ActivityIO => {
-      case IOMState(act) => StateIO(MessageTask(m.task(act))) :: HNil
+      case IOMState(act) =>
+        dbg(s"ActivityIO $m")
+        StateIO(MessageTask(m.task(act), m.desc)) :: HNil
     }
     case m: AppCompatActivityIO => {
-      case IOMState(act: AppCompatActivity) => StateIO(MessageTask(m.task(act))) :: HNil
+      case IOMState(act: AppCompatActivity) => StateIO(MessageTask(m.task(act), m.desc)) :: HNil
     }
+    case SetContentTree(t) => act(_.setContentView(t.container)) :: HNil
   }
 }
 
@@ -44,14 +52,18 @@ extends Logging
   def loopCtor: Task[(Queue[Message], Stream[Task, ExecuteTransition.StateI])]
 
   def stateIO(io: StateIO): Stream[Task, Message] = {
+    dbg(s"io: $io")
     io match {
-      case StateIO(MessageTask(t)) => Stream.eval(t)
+      case StateIO(MessageTask(t, _)) => Stream.eval(t)
       case StateIO(t: Task[_]) => Stream.eval(t).drain
-      case _ => Stream()
+      case a =>
+        log.error(s"invalid IO: $a")
+        Stream()
     }
   }
 
   def result(in: Queue[Message], state: ExecuteTransition.StateI): Stream[Task, ExecuteTransition.StateI] = {
+    dbg(s"result: $state")
     Stream.emits(state.ios).flatMap(stateIO).to(in.enqueue).drain ++ Stream(state)
   }
 
@@ -87,4 +99,19 @@ extends android.app.Application
   def send = state.send _
 
   def setActivity = state.setActivity _
+}
+
+class StateActivity
+extends Activity
+{
+  lazy val stateApp = getApplication match {
+    case a: StateApplication => a
+    case _ => sys.error("application is not a StateApplication")
+  }
+
+  override def onCreate(state: Bundle) = {
+    stateApp.send(SetActivity(this))
+    super.onCreate(state)
+    stateApp.send(CreateContentView)
+  }
 }

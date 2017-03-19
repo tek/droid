@@ -25,11 +25,10 @@ extends Message
 case object CreateContentView
 extends Message
 
-case class SetContentView(view: View, sender: Option[Machine])
+case class SetContentView(view: View)
 extends Message
 
-case class SetContentTree(tree: ViewTree[_ <: ViewGroup],
-  sender: Option[Machine])
+case class SetContentTree(tree: ViewTree[_ <: ViewGroup])
 extends Message
 
 case class ContentViewReady(agent: ActivityAgent)

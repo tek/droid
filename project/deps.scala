@@ -11,7 +11,7 @@ extends tryp.AndroidDeps
     "core" -> core,
     "view-core" -> viewCore,
     "view" -> view,
-    "state" -> state,
+    "state-core" -> state,
     "service" -> service,
     "app" -> app,
     "db" -> db,
