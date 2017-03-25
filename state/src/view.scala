@@ -58,13 +58,9 @@ abstract class ViewMachine[A <: AnyTree: ClassTag]
 extends ViewMachineBase[A]
 {
   def trans: Transitions = {
-    case CreateMainView =>
-      dbg("CreateMainView")
-      ContextIO(infMain.map(MainTree(_))) :: HNil
+    case CreateMainView => ContextIO(infMain.map(MainTree(_))) :: HNil
     case MainTree(tree: A) => {
-      case s =>
-        dbg(s"MainTree: $s")
-        stateWithTree(s, tree) :: SetMainTree(tree) :: HNil
+      case s => stateWithTree(s, tree) :: SetMainTree(tree) :: HNil
     }
   }
 }

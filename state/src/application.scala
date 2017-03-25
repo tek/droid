@@ -23,18 +23,12 @@ class AndroidMachine
 extends AnnotatedTIO
 {
   def trans: Transitions = {
-    case SetActivity(act) =>
-      dbg("SetActivity")
-      IOMState(act) :: HNil
+    case SetActivity(act) => IOMState(act) :: HNil
     case m: ContextIO => {
-      case IOMState(act) =>
-        dbg(s"ContextIO $m")
-        StateIO(MessageTask(m.task(act), m.desc)) :: HNil
+      case IOMState(act) => StateIO(MessageTask(m.task(act), m.desc)) :: HNil
     }
     case m: ActivityIO => {
-      case IOMState(act) =>
-        dbg(s"ActivityIO $m")
-        StateIO(MessageTask(m.task(act), m.desc)) :: HNil
+      case IOMState(act) => StateIO(MessageTask(m.task(act), m.desc)) :: HNil
     }
     case m: AppCompatActivityIO => {
       case IOMState(act: AppCompatActivity) => StateIO(MessageTask(m.task(act), m.desc)) :: HNil
@@ -52,7 +46,6 @@ extends Logging
   def loopCtor: Task[(Queue[Message], Stream[Task, ExecuteTransition.StateI])]
 
   def stateIO(io: StateIO): Stream[Task, Message] = {
-    dbg(s"io: $io")
     io match {
       case StateIO(MessageTask(t, _)) => Stream.eval(t)
       case StateIO(t: Task[_]) => Stream.eval(t).drain
@@ -63,7 +56,6 @@ extends Logging
   }
 
   def result(in: Queue[Message], state: ExecuteTransition.StateI): Stream[Task, ExecuteTransition.StateI] = {
-    dbg(s"result: $state")
     Stream.emits(state.ios).flatMap(stateIO).to(in.enqueue).drain ++ Stream(state)
   }
 

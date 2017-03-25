@@ -118,18 +118,12 @@ extends ViewMachineBase[A]
 {
   def mvcTrans: Transitions = {
     case CreateContentView =>
-      dbg("CreateContentView")
       CreateMainView :: ContextIO(infMain.map(ContentTree(_))) :: HNil
     case ContentTree(tree: A) => {
-      case s => {
-        dbg(s"ContentTree: $s")
-        stateWithTree(s, tree) :: act(_.setContentView(tree.container)).main :: HNil
-      }
+      case s => stateWithTree(s, tree) :: act(_.setContentView(tree.container)).main :: HNil
     }
     case SetMainTree(tree) => {
-      case ViewData(main, sub) =>
-        dbg(s"SetMainTree: $main, $sub")
-        setMainView(main, tree.container) :: HNil
+      case ViewData(main, sub) => setMainView(main, tree.container) :: HNil
     }
     case Back => act(_.onBackPressed()) :: HNil
     case ContentViewReady(agent) => {
@@ -162,176 +156,175 @@ object MVFrame
 extends MVContainer[MainViewLayout]
 with MVContainerMain
 
-// // case class MVData(ui: Agent)
-// // extends MState
+// case class MVData(ui: Agent)
+// extends MState
 
-// // @machine
-// // trait MV
-// // extends IOTrans
-// // {
-// //   def mvTrans: Transitions = {
-// //     case LoadUi(ui) => loadUi(ui)
-// //     case InitUi => initUi
-// //   }
+// @machine
+// trait MV
+// extends IOTrans
+// {
+//   def mvTrans: Transitions = {
+//     case LoadUi(ui) => loadUi(ui)
+//     case InitUi => initUi
+//   }
 
-// //   private[this] def integrate = (ag: Agent) => {
-// //     (comm: Comm) => ag.integrate(comm).map {
-// //       case UnwrapMessage(m: SetMainTree) => ToMainView(m)
-// //       case a => a
-// //     }
-// //   }
+//   private[this] def integrate = (ag: Agent) => {
+//     (comm: Comm) => ag.integrate(comm).map {
+//       case UnwrapMessage(m: SetMainTree) => ToMainView(m)
+//       case a => a
+//     }
+//   }
 
-// //   def loadUi(ui: ViewAgent): Transit = {
-// //     case S(s, _) =>
-// //       S(s, MVData(ui)) << StartAgentExt(Stream(ui), integrate).broadcast <<
-// //         UiLoaded.toLocal
-// //   }
+//   def loadUi(ui: ViewAgent): Transit = {
+//     case S(s, _) =>
+//       S(s, MVData(ui)) << StartAgentExt(Stream(ui), integrate).broadcast <<
+//         UiLoaded.toLocal
+//   }
 
-// //   def initUi: Transit = {
-// //     case s @ S(_, MVData(agent)) =>
-// //       s << CreateContentView.to(agent)
-// //   }
-// // }
+//   def initUi: Transit = {
+//     case s @ S(_, MVData(agent)) =>
+//       s << CreateContentView.to(agent)
+//   }
+// }
 
-// // case class Drawer(ctx: Context, container: DrawerLayout, mainFrame: MainFrame,
-// //   drawer: MainFrame)
-// // extends ViewTree[DrawerLayout]
-// // with HasMainFrame
-// // {
-// //   implicit val c = ctx
-// //   container.lp(MATCH_PARENT, MATCH_PARENT)
-// //   container.desc("drawer root")
-// //   mainFrame.desc("drawer main")
-// //   drawer.setId(res.R.id.drawer)
-// //   val lp = new DrawerLayout.LayoutParams(200.dp, MATCH_PARENT)
-// //   lp.gravity = Gravity.START
-// //   drawer.setLayoutParams(lp)
-// //   drawer.desc("drawer")
+case class Drawer(ctx: Context, container: DrawerLayout, mainFrame: MainFrame, drawer: MainFrame)
+extends ViewTree[DrawerLayout]
+with HasMainFrame
+{
+  implicit val c = ctx
+  container.lp(MATCH_PARENT, MATCH_PARENT)
+  container.desc("drawer root")
+  mainFrame.desc("drawer main")
+  drawer.setId(res.R.id.drawer)
+  val lp = new DrawerLayout.LayoutParams(200.dp, MATCH_PARENT)
+  lp.gravity = Gravity.START
+  drawer.setLayoutParams(lp)
+  drawer.desc("drawer")
 
-// //   override def toString = this.className
-// // }
+  override def toString = this.className
+}
 
-// // trait HasDrawer
-// // extends HasMainFrame
-// // {
-// //   def drawer: Drawer
-// //   def toolbar: Toolbar
-// // }
+trait HasDrawer
+extends HasMainFrame
+{
+  def drawer: Drawer
+  def toolbar: Toolbar
+}
 
-// // case class ExtMVLayout(container: LinearLayout, toolbar: Toolbar,
-// //   drawer: Drawer)
-// // extends ViewTree[LinearLayout]
-// // with HasDrawer
-// // {
-// //   container.lp(MATCH_PARENT, MATCH_PARENT)
-// //   container.setOrientation(LinearLayout.VERTICAL)
-// //   container.desc("ext mv")
+case class ExtMVLayout(container: LinearLayout, toolbar: Toolbar,
+  drawer: Drawer)
+extends ViewTree[LinearLayout]
+with HasDrawer
+{
+  container.lp(MATCH_PARENT, MATCH_PARENT)
+  container.setOrientation(LinearLayout.VERTICAL)
+  container.desc("ext mv")
 
-// //   override def toString = this.className
+  override def toString = this.className
 
-// //   def mainFrame = drawer.mainFrame
-// // }
+  def mainFrame = drawer.mainFrame
+}
 
-// // object ExtMVContainerData
-// // {
-// //   type Toggle = ActionBarDrawerToggle
+object ExtMVContainerData
+{
+  type Toggle = ActionBarDrawerToggle
 
-// //   case class StoreDrawerToggle(toggle: Toggle)
-// //   extends Message
+  case class StoreDrawerToggle(toggle: Toggle)
+  extends Message
 
-// //   case object DrawerReady
-// //   extends Message
+  case object DrawerReady
+  extends Message
 
-// //   case object CreateDrawerView
-// //   extends Message
+  case object CreateDrawerView
+  extends Message
 
-// //   case class DrawerViewReady(view: View)
-// //   extends Message
+  case class DrawerViewReady(view: View)
+  extends Message
 
-// //   case object DrawerLoaded
-// //   extends Message
+  case object DrawerLoaded
+  extends Message
 
-// //   case object SetupActionBar
-// //   extends Message
+  case object SetupActionBar
+  extends Message
 
-// //   case object CreateToggle
-// //   extends Message
+  case object CreateToggle
+  extends Message
 
-// //   case object SyncToggle
-// //   extends Message
+  case object SyncToggle
+  extends Message
 
-// //   case object CloseDrawer
-// //   extends Message
-// // }
-// // import ExtMVContainerData._
+  case object CloseDrawer
+  extends Message
+}
+import ExtMVContainerData._
 
-// // @machine
-// // abstract class ExtMVContainerBase
-// // [A <: ViewTree[_ <: ViewGroup] with HasDrawer: ClassTag]
-// // extends MVContainer[A]
-// // {
-// //   trait ExtMVDataBase
-// //   extends ViewData
-// //   {
-// //     def toggle: Toggle
-// //   }
+// @machine
+// abstract class ExtMVContainerBase
+// [A <: ViewTree[_ <: ViewGroup] with HasDrawer: ClassTag]
+// extends MVContainer[A]
+// {
+//   trait ExtMVDataBase
+//   extends ViewData
+//   {
+//     def toggle: Toggle
+//   }
 
-// //   case class ExtMVData(view: A, toggle: Toggle, open: Boolean)
-// //   extends ExtMVDataBase
+//   case class ExtMVData(view: A, toggle: Toggle, open: Boolean)
+//   extends ExtMVDataBase
 
-// //   protected def dataWithToggle(main: A, toggle: Toggle): Data =
-// //     ExtMVData(main, toggle, false)
+//   protected def dataWithToggle(main: A, toggle: Toggle): Data =
+//     ExtMVData(main, toggle, false)
 
-// //   def toggleTrans: Transitions = {
-// //     case MainViewReady => {
-// //       case s @ S(_, ViewData(main)) =>
-// //         DrawerReady.broadcast << CreateDrawerView.broadcast <<
-// //           SetupActionBar << CreateToggle
-// //     }
-// //     case SetupActionBar => {
-// //       case s @ S(_, ViewData(main)) =>
-// //         val action = acact { a =>
-// //           a.setSupportActionBar(main.toolbar)
-// //           a.getSupportActionBar.setHomeButtonEnabled(true)
-// //           a.getSupportActionBar.setDisplayHomeAsUpEnabled(true)
-// //         }
-// //         s << action.unitUi
-// //     }
-// //     case CreateToggle => {
-// //       case s @ S(_, ViewData(main)) =>
-// //         val createToggle = act(a => new Toggle(
-// //           a, main.drawer.container, main.toolbar,
-// //           droid.res.R.string.drawer_open, droid.res.R.string.drawer_close)
-// //         )
-// //         s << createToggle.map(StoreDrawerToggle(_).back)
-// //     }
-// //     case StoreDrawerToggle(toggle) => {
-// //       case S(s, ViewData(main)) =>
-// //         S(s, dataWithToggle(main, toggle)) << SyncToggle
-// //     }
-// //     case DrawerViewReady(v) => {
-// //       case s @ S(_, ViewData(main)) =>
-// //         val io = (main.drawer.drawer >>- MainFrame.load(v))
-// //         s << io.map(_ => DrawerLoaded.broadcast).ui
-// //     }
-// //     case SyncToggle => {
-// //       case s @ S(_, ExtMVData(_, toggle, _)) =>
-// //         con(_ => toggle.syncState()).unitUi
-// //     }
-// //     case CloseDrawer => {
-// //       case s @ S(_, ExtMVData(main, _, _)) =>
-// //         con(_ => main.drawer.container.closeDrawer(Gravity.LEFT)).unitUi
-// //     }
-// //   }
-// // }
+//   def toggleTrans: Transitions = {
+//     case MainViewReady => {
+//       case s @ S(_, ViewData(main)) =>
+//         DrawerReady.broadcast << CreateDrawerView.broadcast <<
+//           SetupActionBar << CreateToggle
+//     }
+//     case SetupActionBar => {
+//       case s @ S(_, ViewData(main)) =>
+//         val action = acact { a =>
+//           a.setSupportActionBar(main.toolbar)
+//           a.getSupportActionBar.setHomeButtonEnabled(true)
+//           a.getSupportActionBar.setDisplayHomeAsUpEnabled(true)
+//         }
+//         s << action.unitUi
+//     }
+//     case CreateToggle => {
+//       case s @ S(_, ViewData(main)) =>
+//         val createToggle = act(a => new Toggle(
+//           a, main.drawer.container, main.toolbar,
+//           droid.res.R.string.drawer_open, droid.res.R.string.drawer_close)
+//         )
+//         s << createToggle.map(StoreDrawerToggle(_).back)
+//     }
+//     case StoreDrawerToggle(toggle) => {
+//       case S(s, ViewData(main)) =>
+//         S(s, dataWithToggle(main, toggle)) << SyncToggle
+//     }
+//     case DrawerViewReady(v) => {
+//       case s @ S(_, ViewData(main)) =>
+//         val io = (main.drawer.drawer >>- MainFrame.load(v))
+//         s << io.map(_ => DrawerLoaded.broadcast).ui
+//     }
+//     case SyncToggle => {
+//       case s @ S(_, ExtMVData(_, toggle, _)) =>
+//         con(_ => toggle.syncState()).unitUi
+//     }
+//     case CloseDrawer => {
+//       case s @ S(_, ExtMVData(main, _, _)) =>
+//         con(_ => main.drawer.container.closeDrawer(Gravity.LEFT)).unitUi
+//     }
+//   }
+// }
 
-// // // trait ExtMV
-// // // extends MainViewAgent
-// // // {
-// // //   lazy val viewMachine = new MVContainerMachine[ExtMVLayout] {
-// // //     def transitions(mc: MComm) = new ExtMVContainer {
-// // //       val mcomm = mc
-// // //       def admit = PartialFunction.empty
-// // //     }
-// // //   }
-// // // }
+// trait ExtMV
+// extends MainViewAgent
+// {
+//   lazy val viewMachine = new MVContainerMachine[ExtMVLayout] {
+//     def transitions(mc: MComm) = new ExtMVContainer {
+//       val mcomm = mc
+//       def admit = PartialFunction.empty
+//     }
+//   }
+// }

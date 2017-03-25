@@ -45,10 +45,6 @@ with Logging
 class IntStateActivity
 extends StateActivity
 {
-  override def onCreate(state: Bundle) = {
-    super.onCreate(state)
-    // stateApp.send(Msg)
-  }
 }
 
 case class IntMain(container: FrameLayout, tv: TextView)
@@ -81,23 +77,6 @@ extends AppState
   @machine
   object android
   extends AndroidMachine
-  {
-    def tv(c: Context) = {
-      val t = new TextView(c)
-      t.setText("success")
-      t.setTextSize(50)
-      t
-    }
-
-    def trans: Transitions = {
-      case Msg =>
-        dbg("init")
-        act { a => a.setContentView(tv(a)); Msg2 }.main :: HNil
-      case Msg2 =>
-        dbg("success")
-        HNil
-    }
-  }
 
   lazy val loopCtor = {
     val (agent, state) = Agent.pristine(android.aux :: MVFrame.aux :: IntView.aux :: HNil)
