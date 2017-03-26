@@ -36,6 +36,7 @@ extends Message
 
 trait ViewMachineBase[A <: AnyTree]
 extends AnnotatedTIO
+with view.ViewToIO
 {
   abstract class ViewData
   extends ViewDataI[A]
@@ -48,9 +49,12 @@ extends AnnotatedTIO
   case class VData(view: A, sub: MState)
   extends ViewData
 
-  protected def infMain: IO[A, Context]
+  def infMain: IO[A, Context]
 
-  protected def stateWithTree(state: MState, tree: A): MState = VData(tree, Pristine)
+  def stateWithTree(state: MState, tree: A): MState = state match {
+    case ViewData(_, sub) => VData(tree, sub)
+    case _ => VData(tree, Pristine)
+  }
 }
 
 @machine

@@ -17,8 +17,8 @@ import android.support.v7.app.ActionBarDrawerToggle
 
 import view.io.text._
 import view.io.misc._
-// import AppState._
-// import IOOperation.exports._
+import droid.res.R
+import ViewMachineTypes._
 
 case class MainFragment(view: View)
 extends Fragment
@@ -89,7 +89,7 @@ object MainViewMessages
   case object CreateMainView
   extends Message
 
-  case class SetMainTree(tree: ViewTree[_ <: ViewGroup])
+  case class SetMainTree(tree: AnyTree)
   extends Message
 
   case object Back
@@ -104,7 +104,7 @@ object MainViewMessages
   case class ToMainView(m: Message)
   extends Message
 
-  case class ContentTree(tree: ViewTree[_ <: ViewGroup])
+  case class ContentTree(tree: AnyTree)
   extends Message
   {
     override def toString = "ContentTree"
@@ -113,7 +113,7 @@ object MainViewMessages
 import MainViewMessages._
 
 @machine
-abstract class MVContainer[A <: ViewTree[_ <: ViewGroup] with HasMainFrame: ClassTag]
+abstract class MVContainer[A <: AnyTree with HasMainFrame: ClassTag]
 extends ViewMachineBase[A]
 {
   def mvcTrans: Transitions = {
@@ -155,37 +155,6 @@ extends AnnotatedTIO
 object MVFrame
 extends MVContainer[MainViewLayout]
 with MVContainerMain
-
-// case class MVData(ui: Agent)
-// extends MState
-
-// @machine
-// trait MV
-// extends IOTrans
-// {
-//   def mvTrans: Transitions = {
-//     case LoadUi(ui) => loadUi(ui)
-//     case InitUi => initUi
-//   }
-
-//   private[this] def integrate = (ag: Agent) => {
-//     (comm: Comm) => ag.integrate(comm).map {
-//       case UnwrapMessage(m: SetMainTree) => ToMainView(m)
-//       case a => a
-//     }
-//   }
-
-//   def loadUi(ui: ViewAgent): Transit = {
-//     case S(s, _) =>
-//       S(s, MVData(ui)) << StartAgentExt(Stream(ui), integrate).broadcast <<
-//         UiLoaded.toLocal
-//   }
-
-//   def initUi: Transit = {
-//     case s @ S(_, MVData(agent)) =>
-//       s << CreateContentView.to(agent)
-//   }
-// }
 
 case class Drawer(ctx: Context, container: DrawerLayout, mainFrame: MainFrame, drawer: MainFrame)
 extends ViewTree[DrawerLayout]
@@ -258,73 +227,57 @@ object ExtMVContainerData
 }
 import ExtMVContainerData._
 
-// @machine
-// abstract class ExtMVContainerBase
-// [A <: ViewTree[_ <: ViewGroup] with HasDrawer: ClassTag]
-// extends MVContainer[A]
-// {
-//   trait ExtMVDataBase
-//   extends ViewData
-//   {
-//     def toggle: Toggle
-//   }
+@machine
+abstract class ExtMVContainerBase[A <: AnyTree with HasDrawer: ClassTag]
+extends MVContainer[A]
+{
+  trait ExtMVDataBase
+  extends ViewData
+  {
+    def toggle: Toggle
+  }
 
-//   case class ExtMVData(view: A, toggle: Toggle, open: Boolean)
-//   extends ExtMVDataBase
+  case class ExtMVData(view: A, sub: MState, toggle: Toggle, open: Boolean)
+  extends ExtMVDataBase
 
-//   protected def dataWithToggle(main: A, toggle: Toggle): Data =
-//     ExtMVData(main, toggle, false)
+  def dataWithToggle(main: A, sub: MState, toggle: Toggle): MState =
+    ExtMVData(main, sub, toggle, false)
 
-//   def toggleTrans: Transitions = {
-//     case MainViewReady => {
-//       case s @ S(_, ViewData(main)) =>
-//         DrawerReady.broadcast << CreateDrawerView.broadcast <<
-//           SetupActionBar << CreateToggle
-//     }
-//     case SetupActionBar => {
-//       case s @ S(_, ViewData(main)) =>
-//         val action = acact { a =>
-//           a.setSupportActionBar(main.toolbar)
-//           a.getSupportActionBar.setHomeButtonEnabled(true)
-//           a.getSupportActionBar.setDisplayHomeAsUpEnabled(true)
-//         }
-//         s << action.unitUi
-//     }
-//     case CreateToggle => {
-//       case s @ S(_, ViewData(main)) =>
-//         val createToggle = act(a => new Toggle(
-//           a, main.drawer.container, main.toolbar,
-//           droid.res.R.string.drawer_open, droid.res.R.string.drawer_close)
-//         )
-//         s << createToggle.map(StoreDrawerToggle(_).back)
-//     }
-//     case StoreDrawerToggle(toggle) => {
-//       case S(s, ViewData(main)) =>
-//         S(s, dataWithToggle(main, toggle)) << SyncToggle
-//     }
-//     case DrawerViewReady(v) => {
-//       case s @ S(_, ViewData(main)) =>
-//         val io = (main.drawer.drawer >>- MainFrame.load(v))
-//         s << io.map(_ => DrawerLoaded.broadcast).ui
-//     }
-//     case SyncToggle => {
-//       case s @ S(_, ExtMVData(_, toggle, _)) =>
-//         con(_ => toggle.syncState()).unitUi
-//     }
-//     case CloseDrawer => {
-//       case s @ S(_, ExtMVData(main, _, _)) =>
-//         con(_ => main.drawer.container.closeDrawer(Gravity.LEFT)).unitUi
-//     }
-//   }
-// }
-
-// trait ExtMV
-// extends MainViewAgent
-// {
-//   lazy val viewMachine = new MVContainerMachine[ExtMVLayout] {
-//     def transitions(mc: MComm) = new ExtMVContainer {
-//       val mcomm = mc
-//       def admit = PartialFunction.empty
-//     }
-//   }
-// }
+  def toggleTrans: Transitions = {
+    case MainViewReady => {
+      case ViewData(main, _) =>
+        DrawerReady :: CreateDrawerView :: SetupActionBar :: CreateToggle :: HNil
+    }
+    case SetupActionBar => {
+      case ViewData(main, _) =>
+        acact { a =>
+          a.setSupportActionBar(main.toolbar)
+          a.getSupportActionBar.setHomeButtonEnabled(true)
+          a.getSupportActionBar.setDisplayHomeAsUpEnabled(true)
+        } :: HNil
+    }
+    case CreateToggle => {
+      case ViewData(main, _) =>
+        act { a =>
+          val t = new Toggle(a, main.drawer.container, main.toolbar, R.string.drawer_open, R.string.drawer_close)
+          StoreDrawerToggle(t)
+        } :: HNil
+    }
+    case StoreDrawerToggle(toggle) => {
+      case ViewData(main, sub) =>
+        dataWithToggle(main, sub, toggle) :: SyncToggle :: HNil
+    }
+    case DrawerViewReady(v) => {
+      case ViewData(main, _) =>
+        (main.drawer.drawer >>- MainFrame.load(v)).map(_ => DrawerLoaded) :: HNil
+    }
+    case SyncToggle => {
+      case ExtMVData(_, _, toggle, _) =>
+        con(_ => toggle.syncState()) :: HNil
+    }
+    case CloseDrawer => {
+      case ExtMVData(main, _, _, _) =>
+        con(_ => main.drawer.container.closeDrawer(Gravity.LEFT)) :: HNil
+    }
+  }
+}

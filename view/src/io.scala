@@ -18,7 +18,10 @@ trait AnnotatedIO
     macro AnnotatedIOM.inst[A, AppCompatActivity]
   def res[A](f: Resources => A): IO[A, Resources] =
     macro AnnotatedIOM.inst[A, Resources]
+}
 
+trait ViewToIO
+{
   implicit def viewToIOX[A <: View](a: A): IO[A, Context] =
     macro AnnotatedIOM.now[A, Context]
 
