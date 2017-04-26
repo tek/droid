@@ -10,7 +10,7 @@ import okhttp3.{Request => OkRequest, _}
 import scalaz.syntax.validation._
 import scalaz.syntax.foldable._
 
-import cats.data.Xor._
+import cats.data.Either._
 
 import _root_.slick.dbio.DBIO
 

@@ -3,9 +3,12 @@ package droid
 package view
 package core
 
+import scala.annotation.tailrec
+
 import android.os.{Looper, Handler}
 
 import cats.Monoid
+import fs2.interop.cats._
 
 import concurrent.Await
 
@@ -228,9 +231,11 @@ trait IOInstances
       IO(c => f(fa.run(c)), s"${fa.desc}.map($f)")
     }
 
-    def tailRecM[A, B](a: A)(f: A => IO[Either[A, B], C])
-    : IO[B, C] =
-      defaultTailRecM(a)(f)
+    def tailRecM[A, B](a: A)(f: A => IO[Either[A, B], C]): IO[B, C] =
+      f(a).flatMap {
+        case Right(b) => pure(b)
+        case Left(a1) => tailRecM(a1)(f)
+      }
   }
 
   implicit lazy val instance_ConsIO_IO = new ConsIO[IO] {

@@ -34,7 +34,7 @@ with Logging
 
   protected def invalidId(id: String)(implicit res: Resources) = {
     if (TrypEnv.release)
-      Xor.left[Throwable, View](new Exception(s"invalid view id: $id"))
+      Either.left[Throwable, View](new Exception(s"invalid view id: $id"))
     else {
       val msg = s"Couldn't find a view with id '$id'! " +
       s"Current views: ${RId.ids}\n" +
@@ -43,9 +43,9 @@ with Logging
     }
   }
 
-  def findId(id: Int)(implicit res: Resources): Xor[Throwable, View] = {
+  def findId(id: Int)(implicit res: Resources): Either[Throwable, View] = {
     Option(searcher.findViewById(id)) match {
-      case Some(v) => Xor.right[Throwable, View](v)
+      case Some(v) => Either.right[Throwable, View](v)
       case _ => invalidId(id.toString)
     }
   }

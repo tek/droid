@@ -4,8 +4,6 @@ package view
 
 import language.dynamics
 
-import cats.data.Xor._
-
 import simulacrum._
 
 trait ProxyBase {
@@ -24,7 +22,7 @@ extends ToSearchView
 {
   implicit def resources = a.res
 
-  type TypedResult[B <: View] = Throwable Xor B
+  type TypedResult[B <: View] = Throwable Either B
 
   type SearchResult = TypedResult[View]
 

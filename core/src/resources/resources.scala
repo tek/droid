@@ -6,8 +6,6 @@ import reflect.macros.blackbox
 
 import android.content.res.{Resources => AResources}
 
-import cats.data.Xor
-
 import simulacrum._
 
 @typeclass trait ResId[A]
@@ -15,15 +13,15 @@ import simulacrum._
   def id(a: A)(implicit res: ResourcesInternal) = typed(a, "id")
 
   def typed(a: A, defType: String)
-  (implicit res: ResourcesInternal): Throwable Xor RId
+  (implicit res: ResourcesInternal): Throwable Either RId
 }
 
 object ResId
 {
   implicit val intResId = new ResId[Int] {
     def typed(a: Int, defType: String)(implicit res: ResourcesInternal) = {
-      if (a > 0) Xor.right(a: RId)
-      else Xor.left(new Throwable(s"Bad Int id for type '$defType': $a"))
+      if (a > 0) Either.right(a: RId)
+      else Either.left(new Throwable(s"Bad Int id for type '$defType': $a"))
     }
   }
 
@@ -45,12 +43,12 @@ extends java.lang.RuntimeException(msg)
 
 trait ResourcesInternal
 {
-  def identifier(defType: String, input: String): Throwable Xor Int
+  def identifier(defType: String, input: String): Throwable Either Int
 
   def resourceName(id: Int): String
 
   def res[B](id: Int, defType: String)
-  (callback: AResources => Int => B): Throwable Xor B
+  (callback: AResources => Int => B): Throwable Either B
 }
 
 object ResourcesInternal
@@ -77,22 +75,22 @@ extends ResourcesInternal
 {
   def resources = context.getResources
 
-  def identifier(defType: String, input: String): Throwable Xor Int = {
+  def identifier(defType: String, input: String): Throwable Either Int = {
     val id = resources.getIdentifier(input, defType, context.getPackageName)
-    if (id > 0) Xor.right(id)
-    else Xor.left(
+    if (id > 0) Either.right(id)
+    else Either.left(
       new Throwable(s"no identifier found for $defType id '$input'"))
   }
 
   def resourceName(_id: Int) = resources.getResourceName(_id)
 
   def res[B](id: Int, defType: String)
-  (callback: AResources => Int => B): Throwable Xor B = {
-    Xor.catchNonFatal(callback(resources)(id)) recoverWith {
+  (callback: AResources => Int => B): Throwable Either B = {
+    Either.catchNonFatal(callback(resources)(id)) recoverWith {
       case e: AResources.NotFoundException =>
         val msg = s"no resource found for $defType id '$id'"
         Log.e(msg)
-        Xor.left(new Throwable(msg))
+        Either.left(new Throwable(msg))
     }
   }
 }
@@ -106,12 +104,12 @@ class Resources(implicit internal: ResourcesInternal,
 
   def id[A: ResId](input: A) = typedId(input, "id")
 
-  def typedId[A: ResId](input: A, defType: String): Throwable Xor RId = {
+  def typedId[A: ResId](input: A, defType: String): Throwable Either RId = {
     input.typed(defType)
   }
 
   def res[A: ResId, B](id: A, defType: String)
-  (callback: AResources => (Int => B)): Throwable Xor B =
+  (callback: AResources => (Int => B)): Throwable Either B =
     for {
       id <- typedId(id, defType) leftMap(a => new Throwable(a))
       r <- internal.res(id, defType)(callback)

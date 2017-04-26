@@ -33,9 +33,11 @@ trait IotaOrphans
       fa.flatMap(f)
     }
 
-    def tailRecM[A, B](a: A)(f: A => IO[Either[A, B]])
-    : IO[B] =
-      defaultTailRecM(a)(f)
+    def tailRecM[A, B](a: A)(f: A => IO[Either[A, B]]): IO[B] =
+      f(a).flatMap {
+        case Left(a1) => tailRecM(a1)(f)
+        case Right(b) => pure(b)
+      }
   }
 }
 
@@ -173,7 +175,7 @@ trait ToIotaKestrelOps
 
 //   protected def nopK[A <: P]: CK[A] = k[A, Unit](_ => ())
 
-//   def resK[A <: P, B](res: Throwable Xor B)(impl: B => P => Unit): CK[A] = {
+//   def resK[A <: P, B](res: Throwable Either B)(impl: B => P => Unit): CK[A] = {
 //     res
 //       .map(r => k[A, Unit](impl(r)))
 //       .getOrElse(nopK[A])

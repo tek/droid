@@ -15,7 +15,7 @@ import annotation._
 //     _.setId(id)
 
 //   @contextfold def foldId(id: Int) =
-//     Xor.right(id).map(setId)
+//     Either.right(id).map(setId)
 
 //   @context def wrapId(id: String) =
 //     setId(ctx.getResources.getIdentifier(id, "", ""))

@@ -35,10 +35,10 @@ extends ViewCombinators
     setId(id)
 
   @contextfold def foldId(id: Int) =
-    Xor.Right(id).map(i => (_: View).setId(i))
+    Either.Right(id).map(i => (_: View).setId(i))
 
   @contextwrapfold def wrapFoldId(id: Int) =
-    Xor.Right(id).map(setId)
+    Either.Right(id).map(setId)
 }
 
 class CKSpec

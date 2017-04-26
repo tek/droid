@@ -166,7 +166,7 @@ with cats.instances.FunctionInstances
 
   protected def nopKSub[A <: P]: CK[A] = ksub(_ => ())
 
-  def resK[A <: P, B](res: Throwable Xor B)(impl: B => P => Unit): CK[A] = {
+  def resK[A <: P, B](res: Throwable Either B)(impl: B => P => Unit): CK[A] = {
     res
       .map(r => ksub[A, Unit](impl(r)))
       .getOrElse(nopKSub[A])

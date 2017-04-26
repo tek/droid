@@ -14,11 +14,11 @@ import cats.syntax.traverse._
 
 class Theme(implicit internal: ThemeInternal)
 {
-  def drawable(name: String): Throwable Xor Drawable = {
+  def drawable(name: String): Throwable Either Drawable = {
     styledAttribute(name, _.getDrawable(0))
   }
 
-  def color(name: String): Throwable Xor Int = {
+  def color(name: String): Throwable Either Int = {
     styledAttribute(name, _.getColor(0, 0))
   }
 
@@ -26,7 +26,7 @@ class Theme(implicit internal: ThemeInternal)
     styledAttribute(name, _.getDimension(0, defValue))
   }
 
-  def colorStateList(name: String): Throwable Xor ColorStateList = {
+  def colorStateList(name: String): Throwable Either ColorStateList = {
     styledAttribute(name, _.getColorStateList(0))
   }
 
@@ -35,9 +35,9 @@ class Theme(implicit internal: ThemeInternal)
   }
 
   def styledAttributes[T]
-  (names: List[String], getter: TypedArray => T): Throwable Xor T = {
+  (names: List[String], getter: TypedArray => T): Throwable Either T = {
     internal.styledAttrs(names) flatMap { attrs =>
-      Xor.catchNonFatal(getter(attrs)) tap(_ => attrs.recycle)
+      Either.catchNonFatal(getter(attrs)) tap(_ => attrs.recycle)
     }
   }
 }
@@ -49,7 +49,7 @@ object Theme
 
 trait ThemeInternal
 {
-  def styledAttrs(names: List[String]): Throwable Xor TypedArray
+  def styledAttrs(names: List[String]): Throwable Either TypedArray
 }
 
 object ThemeInternal
@@ -74,11 +74,11 @@ extends AndroidMacros
 class AndroidThemeInternal(implicit context: Context, res: ResourcesInternal)
 extends ThemeInternal
 {
-  def styledAttrs(names: List[String]): Throwable Xor TypedArray = {
+  def styledAttrs(names: List[String]): Throwable Either TypedArray = {
     cats.Traverse.ops.toAllTraverseOps(names).traverseU(attrId)
     .leftMap(a => new Throwable(a))
     .flatMap { attrIds =>
-      Xor.catchNonFatal {
+      Either.catchNonFatal {
         context.obtainStyledAttributes(attrIds.toArray)
       }
     }
