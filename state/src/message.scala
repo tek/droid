@@ -35,11 +35,11 @@ case class ContentViewReady(agent: ActivityAgent)
 extends Message
 
 case object Ready
-extends MState
+extends CState
 
 case class ASData(app: Application, activity: Option[Activity],
   agent: Option[ActivityAgent])
-extends MState
+extends CState
 
 trait ActivityLifecycleMessage
 extends Message

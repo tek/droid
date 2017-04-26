@@ -152,7 +152,7 @@ extends IntegrationSpec[A](cls)
 
   lazy val root: StateApplicationAgent = stateApp.root
 
-  lazy val appStateMachine = root.appStateMachine
+  lazy val appStateCell = root.appStateCell
 
   def agent: ActivityAgent
 
@@ -164,7 +164,7 @@ extends IntegrationSpec[A](cls)
   }
 
   def activityAgent =
-    appStateMachine.current.get.data match {
+    appStateCell.current.get.data match {
       case droid.state.AppState.ASData(_, _, Some(agent)) => agent
     case _ => sys.error("no activity agent running")
     }
@@ -176,13 +176,13 @@ extends IntegrationSpec[A](cls)
     }
 
   def mainUi: ViewAgent =
-    mainAgent.mvMachine.current.get.data match {
+    mainAgent.mvCell.current.get.data match {
       case MVData(ui: ViewAgent) => ui
       case _ => sys.error("main view has no ui")
     }
 
   def mainTree[A: ClassTag] =
-    mainUi.viewMachine.current.get.data match {
+    mainUi.viewCell.current.get.data match {
       case a: ViewDataI[_] =>
         a.view match {
         case tree: A => tree

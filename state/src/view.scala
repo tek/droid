@@ -6,25 +6,25 @@ import iota._
 
 import shapeless._
 
-import tryp.state.annotation.machine
+import tryp.state.annotation.cell
 
 import MainViewMessages._
 
-object ViewMachineTypes
+object ViewCellTypes
 {
   type AnyTree = ViewTree[_ <: ViewGroup]
 }
-import ViewMachineTypes._
+import ViewCellTypes._
 
-case class ToViewMachine(payload: Message, agent: Machine)
+case class ToViewCell(payload: Message, agent: Cell)
 extends InternalMessage
 
 trait ViewDataI[A]
-extends MState
+extends CState
 {
   def view: A
 
-  def sub: MState
+  def sub: CState
 }
 
 case class MainTree(tree: AnyTree)
@@ -34,7 +34,7 @@ extends Message
 }
 
 
-trait ViewMachineBase[A <: AnyTree]
+trait ViewCellBase[A <: AnyTree]
 extends AnnotatedTIO
 with view.ViewToIO
 {
@@ -46,20 +46,20 @@ with view.ViewToIO
     def unapply(a: ViewData) = Some((a.view, a.sub))
   }
 
-  case class VData(view: A, sub: MState)
+  case class VData(view: A, sub: CState)
   extends ViewData
 
   def infMain: IO[A, Context]
 
-  def stateWithTree(state: MState, tree: A): MState = state match {
+  def stateWithTree(state: CState, tree: A): CState = state match {
     case ViewData(_, sub) => VData(tree, sub)
     case _ => VData(tree, Pristine)
   }
 }
 
-@machine
-abstract class ViewMachine[A <: AnyTree: ClassTag]
-extends ViewMachineBase[A]
+@cell
+abstract class ViewCell[A <: AnyTree: ClassTag]
+extends ViewCellBase[A]
 {
   def trans: Transitions = {
     case CreateMainView => ContextIO(infMain.map(MainTree(_))) :: HNil

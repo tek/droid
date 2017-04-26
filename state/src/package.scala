@@ -2,13 +2,13 @@ package tryp
 package droid
 package state
 
-@exportTypes(StateApplication, AndroidMachine, StateActivity, AppState)
+@exportTypes(StateApplication, AndroidCell, StateActivity, AppState)
 trait Types
 {
-  type ViewMachine[A <: tryp.droid.state.ViewMachineTypes.AnyTree] = tryp.droid.state.ViewMachine[A]
+  type ViewCell[A <: tryp.droid.state.ViewCellTypes.AnyTree] = tryp.droid.state.ViewCell[A]
 }
 
-@exportVals(MVFrame)
+@exportVals(MVFrame, ExtMVFrame)
 trait Vals
 
 @export

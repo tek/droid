@@ -12,13 +12,15 @@ extends StateSpec[IntStateActivity](classOf[IntStateActivity])
     val tv = for {
       ll <- activity.viewTree.subForest.headOption
       fl1 <- ll.subForest.lift(1)
-      mf <- fl1.subForest.headOption
+      emv <- fl1.subForest.headOption
+      dl <- emv.subForest.lift(1)
+      mf <- dl.subForest.headOption
       fl2 <- mf.subForest.headOption
       t <- fl2.subForest.headOption
     } yield t.rootLabel
     val text = tv match {
       case Some(t: TextView) => t.getText
-      case _ => ""
+      case a => a.toString
     }
     assert(text == "success")
   }

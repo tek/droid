@@ -18,15 +18,12 @@ import android.support.v7.app.ActionBarDrawerToggle
 import view.io.text._
 import view.io.misc._
 import droid.res.R
-import ViewMachineTypes._
+import ViewCellTypes._
 
 case class MainFragment(view: View)
 extends Fragment
 {
-  override def onCreateView
-  (inflater: LayoutInflater, container: ViewGroup, state: Bundle) = {
-    view
-  }
+  override def onCreateView(inflater: LayoutInflater, container: ViewGroup, state: Bundle) = view
 }
 
 class MainFrame(c: Context)
@@ -112,12 +109,13 @@ object MainViewMessages
 }
 import MainViewMessages._
 
-@machine
+@cell
 abstract class MVContainer[A <: AnyTree with HasMainFrame: ClassTag]
-extends ViewMachineBase[A]
+extends ViewCellBase[A]
 {
   def mvcTrans: Transitions = {
     case CreateContentView =>
+      dbg("CCV")
       CreateMainView :: ContextIO(infMain.map(ContentTree(_))) :: HNil
     case ContentTree(tree: A) => {
       case s => stateWithTree(s, tree) :: act(_.setContentView(tree.container)).main :: HNil
@@ -127,7 +125,7 @@ extends ViewMachineBase[A]
     }
     case Back => act(_.onBackPressed()) :: HNil
     case ContentViewReady(agent) => {
-      case ViewData(v, _) => (VData(v, Ready): MState) :: InitUi :: HNil
+      case ViewData(v, _) => (VData(v, Ready): CState) :: InitUi :: HNil
     }
       case UiLoaded => {
       /** If the main frame has already been installed (state Ready), immediately request the main view
@@ -151,7 +149,7 @@ extends AnnotatedTIO
   def infMain = inflate[MainViewLayout]
 }
 
-@machine
+@cell
 object MVFrame
 extends MVContainer[MainViewLayout]
 with MVContainerMain
@@ -180,8 +178,7 @@ extends HasMainFrame
   def toolbar: Toolbar
 }
 
-case class ExtMVLayout(container: LinearLayout, toolbar: Toolbar,
-  drawer: Drawer)
+case class ExtMVLayout(container: LinearLayout, toolbar: Toolbar, drawer: Drawer)
 extends ViewTree[LinearLayout]
 with HasDrawer
 {
@@ -227,8 +224,8 @@ object ExtMVContainerData
 }
 import ExtMVContainerData._
 
-@machine
-abstract class ExtMVContainerBase[A <: AnyTree with HasDrawer: ClassTag]
+@cell
+abstract class ExtMVContainer[A <: AnyTree with HasDrawer: ClassTag]
 extends MVContainer[A]
 {
   trait ExtMVDataBase
@@ -237,11 +234,14 @@ extends MVContainer[A]
     def toggle: Toggle
   }
 
-  case class ExtMVData(view: A, sub: MState, toggle: Toggle, open: Boolean)
+  case class ExtMVData(view: A, sub: CState, toggle: Toggle, open: Boolean)
   extends ExtMVDataBase
 
-  def dataWithToggle(main: A, sub: MState, toggle: Toggle): MState =
+  def dataWithToggle(main: A, sub: CState, toggle: Toggle): CState =
     ExtMVData(main, sub, toggle, false)
+
+  def createToggle(a: Activity, main: A) =
+    new Toggle(a, main.drawer.container, main.toolbar, R.string.drawer_open, R.string.drawer_close)
 
   def toggleTrans: Transitions = {
     case MainViewReady => {
@@ -258,10 +258,7 @@ extends MVContainer[A]
     }
     case CreateToggle => {
       case ViewData(main, _) =>
-        act { a =>
-          val t = new Toggle(a, main.drawer.container, main.toolbar, R.string.drawer_open, R.string.drawer_close)
-          StoreDrawerToggle(t)
-        } :: HNil
+        act(a => StoreDrawerToggle(createToggle(a, main))) :: HNil
     }
     case StoreDrawerToggle(toggle) => {
       case ViewData(main, sub) =>
@@ -280,4 +277,12 @@ extends MVContainer[A]
         con(_ => main.drawer.container.closeDrawer(Gravity.LEFT)) :: HNil
     }
   }
+}
+
+@cell
+object ExtMVFrame
+extends ExtMVContainer[ExtMVLayout]
+with AnnotatedTIO
+{
+  def infMain = inflate[ExtMVLayout]
 }

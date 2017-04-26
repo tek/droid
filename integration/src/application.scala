@@ -11,7 +11,6 @@ import fs2.async
 import iota._
 
 import tryp.state.annotation._
-import tryp.state.core.{Loop, Exit}
 
 case object Msg
 extends Message
@@ -24,7 +23,7 @@ extends Message
 
 object DefaultScheduler
 {
-  implicit lazy val scheduler: Scheduler = Scheduler.fromFixedDaemonPool(1)
+  implicit lazy val scheduler: Scheduler = Scheduler.fromFixedDaemonPool(4)
 }
 
 object StatePool
@@ -56,9 +55,9 @@ extends ViewTree[FrameLayout]
   override def toString = "IntMain"
 }
 
-@machine
+@cell
 object IntView
-extends ViewMachine[IntMain]
+extends ViewCell[IntMain]
 {
   def infMain = inflate[IntMain]
 
@@ -74,14 +73,12 @@ extends AppState
 
   import pool._
 
-  @machine
+  @cell
   object android
-  extends AndroidMachine
+  extends AndroidCell
 
-  lazy val loopCtor = {
-    val (agent, state) = Agent.pristine(android.aux :: MVFrame.aux :: IntView.aux :: HNil)
-    Loop.ags(agent :: HNil, state :: HNil)
-  }
+  lazy val loopCtor =
+    Loop.cells(android.aux :: ExtMVFrame.aux :: IntView.aux :: HNil, Pristine :: Pristine :: Pristine :: Nil)
 }
 
 class IntApplication

@@ -117,7 +117,7 @@ extends Message
 // }
 
 // // TODO maybe allow A to have an Operation and asynchronously enqueue the
-// // results in Machine.asyncTask
+// // results in Cell.asyncTask
 // case class IOMainTask[F[_, _]: PerformIO, A, C]
 // (io: F[A, C], desc: String, timeout: Duration = 3.second)
 // (implicit ioMessage: IOMessage[C], se: Parcel[Task[A]])

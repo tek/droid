@@ -10,28 +10,26 @@ import fs2.async
 
 import tryp.state.annotation._
 
-import tryp.state.core.{Loop, Exit, AgsTrans}
-
-case class MessageTask(task: Task[Message], desc: String)
-
 case class IOMState(act: Activity)
-extends MState
+extends CState
 
-@machine
-class AndroidMachine
+@cell
+class AndroidCell
 (implicit sched: Scheduler)
 extends AnnotatedTIO
 {
   def trans: Transitions = {
-    case SetActivity(act) => IOMState(act) :: HNil
+    case SetActivity(act) =>
+      IOMState(act) :: HNil
     case m: ContextIO => {
-      case IOMState(act) => StateIO(MessageTask(m.task(act), m.desc)) :: HNil
+      case IOMState(act) =>
+        tryp.state.core.NopMessage :: TaskIO(m.task(act), m.desc) :: HNil
     }
     case m: ActivityIO => {
-      case IOMState(act) => StateIO(MessageTask(m.task(act), m.desc)) :: HNil
+      case IOMState(act) => TaskIO(m.task(act), m.desc) :: HNil
     }
     case m: AppCompatActivityIO => {
-      case IOMState(act: AppCompatActivity) => StateIO(MessageTask(m.task(act), m.desc)) :: HNil
+      case IOMState(act: AppCompatActivity) => TaskIO(m.task(act), m.desc) :: HNil
     }
     case SetContentTree(t) => act(_.setContentView(t.container)) :: HNil
   }
@@ -43,36 +41,21 @@ extends Logging
   implicit val pool: SchedulerStrategyPool
   import pool._
 
-  def loopCtor: Task[(Queue[Message], Stream[Task, ExecuteTransition.StateI])]
-
-  def stateIO(io: StateIO): Stream[Task, Message] = {
-    io match {
-      case StateIO(MessageTask(t, _)) => Stream.eval(t)
-      case StateIO(t: Task[_]) => Stream.eval(t).drain
-      case a =>
-        log.error(s"invalid IO: $a")
-        Stream()
-    }
-  }
-
-  def result(in: Queue[Message], state: ExecuteTransition.StateI): Stream[Task, ExecuteTransition.StateI] = {
-    Stream.emits(state.ios).flatMap(stateIO).to(in.enqueue).drain ++ Stream(state)
-  }
+  def loopCtor: Task[(Loop.MQueue, Signal[Boolean], Loop.OStream)]
 
   def ctor = {
     for {
-      term <- async.signalOf[Task, Boolean](false)
-      io1 <- loopCtor
-      (in, out) = io1
-      loop <- Task.start(term.interrupt(out.flatMap(result(in, _))).runLog)
-    } yield (term, in, loop)
+      ito <- loopCtor
+      (in, term, out) = ito
+      loop <- Task.start(out.runLog)
+    } yield (in, term, loop)
   }
 
-  lazy val (term, in, loop) = ctor.unsafeRun()
+  lazy val (in, term, loop) = ctor.unsafeRun()
 
   def run() = loop.unsafeRunAsync { case a => log.info(s"finished with $a") }
 
-  def send(msg: Message) = in.enqueue1(msg).unsafeRun()
+  def send(msg: Message) = in.publish1(msg).unsafeRun()
 
   // FIXME doesn't work, but doing the same from within the activity does
   def setActivity = SetActivity.apply _ andThen send _
