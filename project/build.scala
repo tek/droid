@@ -52,7 +52,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val app = "app" / "android commons" << view
 
-  lazy val db = "db" / "slick/sqldroid" << state
+  // lazy val db = "db" / "slick/sqldroid" << state
 
   lazy val logback = "logback" / "logback deps" << view
 
@@ -140,15 +140,15 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
         manifestTokens += ("package" -> androidPackage.value),
         aarModule := "unit",
         typedResources := true,
-        javaOptions += "-Drobolectric.logging=stdout",
-        logbackOutput := outputLayout.value(projectLayout.value).classes /
-          "assets" / logbackName
+        javaOptions += "-Drobolectric.logging=stdout"
+        // ,
+        // logbackOutput := outputLayout.value(projectLayout.value).classes /
+        //   "assets" / logbackName
       )
       .logback("tag" -> "tryp")
 
   lazy val all = mpb("all")
-    .aggregate(core.!, viewCore.!, view.!, state.!, service.!, app.!,
-      logback.!, debug.!, test.!)
+    .aggregate(core.!, viewCore.!, view.!, state.!, service.!, app.!, logback.!, debug.!, test.!)
 
   override def consoleImports = """
   import cats._, data._, syntax.all._, instances.all._
