@@ -42,7 +42,7 @@ with Logging
 
 class IntegrationSpec[A <: Activity](cls: Class[A])
 extends IntegrationBase[A](cls)
-with HasSettings
+// with HasSettings
 with TestHelpers
 with AnnotatedIO
 {
@@ -51,16 +51,16 @@ with AnnotatedIO
   def instr: Instrumentation = getInstrumentation
   lazy val solo: Solo = new Solo(instr, activity)
 
-  def settings = Settings.defaultSettings
+  // def settings = Settings.defaultSettings
 
   def setPrefs(): Unit = ()
 
   override def setUp() {
     super.setUp()
     pre()
-    settings.user.clear()
-    settings.app.clear()
-    setPrefs()
+    // settings.user.clear()
+    // settings.app.clear()
+    // setPrefs()
     setActivityInitialTouchMode(false)
     solo
     post()

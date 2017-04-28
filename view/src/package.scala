@@ -2,8 +2,7 @@ package tryp
 package droid
 package view
 
-@exportTypes(RootView, android.support.v7.widget.RecyclerView,
-  android.support.v7.widget.Toolbar, AnnotatedIO)
+@exportTypes(RootView, android.support.v7.widget.RecyclerView, android.support.v7.widget.Toolbar, AnnotatedIO)
 trait Types
 
 @export

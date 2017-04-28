@@ -5,6 +5,7 @@ package io
 
 import android.widget._
 import android.support.v7.widget._
+import android.util.AttributeSet
 
 import view.core._
 
@@ -39,8 +40,9 @@ extends Combinators[RecyclerView]
   @contextwrap def grid(count: Long) =
     layoutManager(new GridLayoutManager(ctx, count.toInt))
 
+  // FIXME DividerItemDecoration seems to be in android now
   @context def divider = 
-    _.addItemDecoration(new DividerItemDecoration(ctx, null))
+    _.addItemDecoration(new view.DividerItemDecoration(ctx, null.asInstanceOf[AttributeSet]))
 
   def dataChanged = k(_.getAdapter.notifyDataSetChanged)
 

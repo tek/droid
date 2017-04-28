@@ -16,13 +16,12 @@ import coursier.CoursierPlugin
 object DroidBuild
 extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 {
-  val sdkVersion = 23
+  val sdkVersion = 24
 
   override val platform = s"android-$sdkVersion"
 
   override def adp(name: String) = {
     super.adp(name)
-      .map(_.disablePlugins(CoursierPlugin))
       .manifest("minSdkVersion" -> "21")
       .settingsV(
         fork := true,
@@ -48,22 +47,21 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val state = "state" / "state machine" << stateCore
 
-  lazy val service = "service" / "machines providing services" << state << viewCore
+  // lazy val service = "service" / "machines providing services" << state << viewCore
 
-  lazy val app = "app" / "android commons" << view
+  // lazy val app = "app" / "android commons" << view
 
   // lazy val db = "db" / "slick/sqldroid" << state
 
   lazy val logback = "logback" / "logback deps" << view
 
-  lazy val test = "test" << app
+  // lazy val test = "test" << app
+  // lazy val test = "test" << app
 
-  lazy val unitCore = ("unit-core" << test)
-    .settingsV(aarModule := "unit.core")
+  // lazy val debug = "debug" << app
 
-  lazy val debug = "debug" << app
-
-  lazy val integrationCore = "integration-core" << app
+  // lazy val integrationCore = "integration-core" << app
+  lazy val integrationCore = "integration-core"
 
   def apk(name: String) =
     adp(name)
@@ -71,7 +69,8 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
         aarModule := name,
         dexMaxHeap := "4G"
       )
-      .logback("tag" -> "tryp") << app << logback
+      // .logback("tag" -> "tryp") << app << logback
+      .logback("tag" -> "tryp") << logback
 
   def mkInt(name: String) =
     (apk(name) << view)
@@ -94,61 +93,8 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val integration = mkInt("integration") << state
 
-  lazy val unit = (tdp("unit") << unitCore << app << debug)
-    .map(_.disablePlugins(CoursierPlugin))
-    .settingsV(logbackTemplate := metaRes.value / "unit" / "logback.xml")
-    .logback()
-
-  lazy val trial = adp("trial")
-    .protify
-    .settingsV(apkbuildDebug ~= { a => a(true); a })
-    .map(_.disablePlugins(CoursierPlugin))
-    .manifest(
-      "appName" -> "tryp trial",
-      "appClass" -> "tryp.droid.trial.TApplication",
-      "minSdk" -> "21",
-      "targetSdk" -> "21",
-      "activityClass" -> "tryp.droid.state.StateActivity",
-      "versionCode" -> "1",
-      "versionName" -> "1.0",
-      "extra" -> ""
-    )
-    .settingsV(
-      aarModule := "trial",
-      manifestTemplate := metaRes.value / "trial" / manifestName,
-      manifestTokens += ("package" -> androidPackage.value),
-      dexMulti := true,
-      dexMinimizeMain := false
-    )
-    .logback("tag" -> "tryp") << logback
-
-  lazy val unitDroid =
-    (adp("unit-droid") << unitCore << logback << debug << view << service)
-      .map(_.disablePlugins(CoursierPlugin))
-      .robotest
-      .manifest(
-        "appName" -> "tryp",
-        "appClass" -> "android.app.Application",
-        "minSdk" -> "21",
-        "targetSdk" -> "21",
-        "versionCode" -> "1",
-        "extra" -> "",
-        "activityClass" -> "android.app.Activity"
-      )
-      .settingsV(
-        manifestTemplate := metaRes.value / "unit" / manifestName,
-        manifestTokens += ("package" -> androidPackage.value),
-        aarModule := "unit",
-        typedResources := true,
-        javaOptions += "-Drobolectric.logging=stdout"
-        // ,
-        // logbackOutput := outputLayout.value(projectLayout.value).classes /
-        //   "assets" / logbackName
-      )
-      .logback("tag" -> "tryp")
-
   lazy val all = mpb("all")
-    .aggregate(core.!, viewCore.!, view.!, state.!, service.!, app.!, logback.!, debug.!, test.!)
+    .aggregate(core.!, viewCore.!, view.!, state.!, logback.!)
 
   override def consoleImports = """
   import cats._, data._, syntax.all._, instances.all._

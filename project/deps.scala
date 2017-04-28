@@ -44,12 +44,12 @@ extends tryp.AndroidDeps
   )
 
   def view = ids(
-    aar("com.android.support" % "support-v4" % "23.+"),
-    aar("com.android.support" % "appcompat-v7" % "23.+"),
-    aar("com.android.support" % "palette-v7" % "23.+"),
-    aar("com.android.support" % "recyclerview-v7" % "23.+"),
-    aar("com.android.support" % "cardview-v7" % "23.+"),
-    aar("com.android.support" % "support-v13" % "23.+")
+    "com.android.support" % "support-v4" % "23.+",
+    "com.android.support" % "appcompat-v7" % "25.3.1",
+    "com.android.support" % "palette-v7" % "25.3.1",
+    "com.android.support" % "recyclerview-v7" % "25.3.1",
+    "com.android.support" % "cardview-v7" % "25.3.1",
+    "com.android.support" % "support-v13" % "25.3.1"
   )
 
   def state = ids(
