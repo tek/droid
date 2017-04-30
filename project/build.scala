@@ -22,7 +22,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   override def adp(name: String) = {
     super.adp(name)
-      .manifest("minSdkVersion" -> "21")
+      .manifest("minSdkVersion" -> "24")
       .settingsV(
         fork := true,
         publishArtifact in (Compile, packageDoc) := false,
@@ -79,7 +79,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
       .protify
       .manifest(
         "package" -> s"tryp.droid.$name",
-        "minSdk" -> "21",
+        "minSdk" -> "24",
         "activityClass" -> s"tryp.droid.$name.IntStateActivity",
         "appName" -> s"tryp $name",
         "appClass" -> s"tryp.droid.$name.IntApplication"
