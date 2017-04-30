@@ -77,8 +77,9 @@ extends AppState
   object android
   extends AndroidCell
 
-  lazy val loopCtor =
-    Loop.cells(android.aux :: ExtMVFrame.aux :: IntView.aux :: HNil, Pristine :: Pristine :: Pristine :: Nil)
+  val mainView = ExtMVFrame.aux
+
+  def loopCtor = Loop.cells(android.aux :: mainView :: IntView.aux :: HNil, Nil)
 }
 
 class IntApplication

@@ -22,8 +22,7 @@ extends AnnotatedTIO
     case SetActivity(act) =>
       IOMState(act) :: HNil
     case m: ContextIO => {
-      case IOMState(act) =>
-        tryp.state.core.NopMessage :: TaskIO(m.task(act), m.desc) :: HNil
+      case IOMState(act) => TaskIO(m.task(act), m.desc) :: HNil
     }
     case m: ActivityIO => {
       case IOMState(act) => TaskIO(m.task(act), m.desc) :: HNil
@@ -77,7 +76,7 @@ extends android.app.Application
 }
 
 class StateActivity
-extends Activity
+extends AppCompatActivity
 {
   lazy val stateApp = getApplication match {
     case a: StateApplication => a

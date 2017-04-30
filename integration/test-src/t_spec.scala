@@ -5,23 +5,34 @@ package integration
 class BasicSpec
 extends StateSpec[IntStateActivity](classOf[IntStateActivity])
 {
+  def intAppState = activity.stateApp.state match {
+    case a: IntAppState => a
+    case _ => sys.error("no IntApp")
+  }
+
+  def mainLayout = intAppState.mainView.mainView match {
+    case Some(a) => a
+    case _ => sys.error("no main view")
+  }
+
+  def mainFrame = mainLayout.mainFrame
+
+  def showTree(tree: String) = log.info("\n" + tree)
+
+  def showWindow = showTree(activity.showViewTree)
+
   def testBasic() = {
     activity
-    sleep(3)
-    activity.showViewTree.dbg
+    sleep(1)
     val tv = for {
-      ll <- activity.viewTree.subForest.headOption
-      fl1 <- ll.subForest.lift(1)
-      emv <- fl1.subForest.headOption
-      dl <- emv.subForest.lift(1)
-      mf <- dl.subForest.headOption
-      fl2 <- mf.subForest.headOption
-      t <- fl2.subForest.headOption
+      fl <- mainFrame.viewTree.subForest.headOption
+      t <- fl.subForest.lift(0)
     } yield t.rootLabel
     val text = tv match {
       case Some(t: TextView) => t.getText
       case a => a.toString
     }
+    showTree(mainFrame.showViewTree)
     assert(text == "success")
   }
 }
