@@ -77,7 +77,7 @@ object MainViewMessages
   case class LoadFragment(fragment: () => Fragment, tag: String)
   extends Message
 
-  case object MainViewReady
+  case object MVCReady
   extends Message
 
   case object MainViewLoaded
@@ -115,19 +115,20 @@ extends ViewCellBase[A]
 {
   def mvcTrans: Transitions = {
     case CreateContentView =>
-      dbg("CCV")
-      CreateMainView :: ContextIO(infMain.map(ContentTree(_))) :: HNil
+      ContextIO(infMain.map(ContentTree(_))) :: HNil
     case ContentTree(tree: A) => {
-      case s => stateWithTree(s, tree) :: act(_.setContentView(tree.container)).main :: HNil
+      case s =>
+        mainView = Some(tree)
+        stateWithTree(s, tree) :: act(_.setContentView(tree.container)).main :: MVCReady :: HNil
     }
     case SetMainTree(tree) => {
       case ViewData(main, sub) => setMainView(main, tree.container) :: HNil
     }
     case Back => act(_.onBackPressed()) :: HNil
     case ContentViewReady(agent) => {
-      case ViewData(v, _) => (VData(v, Ready): CState) :: InitUi :: HNil
+      case ViewData(v, _) => InitUi :: HNil
     }
-      case UiLoaded => {
+    case UiLoaded => {
       /** If the main frame has already been installed (state Ready), immediately request the main view
       */
       case ViewData(_, Ready) => InitUi :: HNil
@@ -141,6 +142,8 @@ extends ViewCellBase[A]
     }
     act(replaceFragment(view)).main
   }
+
+  var mainView: Option[A] = None
 }
 
 trait MVContainerMain
@@ -153,6 +156,11 @@ extends AnnotatedTIO
 object MVFrame
 extends MVContainer[MainViewLayout]
 with MVContainerMain
+{
+  def mvfTrans: Transitions = {
+    case MVCReady => CreateMainView :: HNil
+  }
+}
 
 case class Drawer(ctx: Context, container: DrawerLayout, mainFrame: MainFrame, drawer: MainFrame)
 extends ViewTree[DrawerLayout]
@@ -194,6 +202,9 @@ with HasDrawer
 object ExtMVContainerData
 {
   type Toggle = ActionBarDrawerToggle
+
+  case object LoadDrawerLayout
+  extends Message
 
   case class StoreDrawerToggle(toggle: Toggle)
   extends Message
@@ -244,7 +255,7 @@ extends MVContainer[A]
     new Toggle(a, main.drawer.container, main.toolbar, R.string.drawer_open, R.string.drawer_close)
 
   def toggleTrans: Transitions = {
-    case MainViewReady => {
+    case LoadDrawerLayout => {
       case ViewData(main, _) =>
         DrawerReady :: CreateDrawerView :: SetupActionBar :: CreateToggle :: HNil
     }
@@ -254,7 +265,7 @@ extends MVContainer[A]
           a.setSupportActionBar(main.toolbar)
           a.getSupportActionBar.setHomeButtonEnabled(true)
           a.getSupportActionBar.setDisplayHomeAsUpEnabled(true)
-        } :: HNil
+        }.main :: HNil
     }
     case CreateToggle => {
       case ViewData(main, _) =>
@@ -270,11 +281,11 @@ extends MVContainer[A]
     }
     case SyncToggle => {
       case ExtMVData(_, _, toggle, _) =>
-        con(_ => toggle.syncState()) :: HNil
+        con(_ => toggle.syncState()).main :: HNil
     }
     case CloseDrawer => {
       case ExtMVData(main, _, _, _) =>
-        con(_ => main.drawer.container.closeDrawer(Gravity.LEFT)) :: HNil
+        con(_ => main.drawer.container.closeDrawer(Gravity.LEFT)).main :: HNil
     }
   }
 }
@@ -285,4 +296,9 @@ extends ExtMVContainer[ExtMVLayout]
 with AnnotatedTIO
 {
   def infMain = inflate[ExtMVLayout]
+
+  def emvfTrans: Transitions = {
+    case MVCReady => LoadDrawerLayout :: HNil
+    case CreateDrawerView => CreateMainView :: HNil
+  }
 }
