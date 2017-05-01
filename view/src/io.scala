@@ -10,13 +10,13 @@ import view.core._
 
 trait AnnotatedIO
 {
-  def con[A](f: Context => A): IO[A, Context] =
+  def conIO[A](f: Context => A): IO[A, Context] =
     macro AnnotatedIOM.inst[A, Context]
-  def act[A](f: Activity => A): IO[A, Activity] =
+  def actIO[A](f: Activity => A): IO[A, Activity] =
     macro AnnotatedIOM.inst[A, Activity]
-  def acact[A](f: AppCompatActivity => A): IO[A, AppCompatActivity] =
+  def acactIO[A](f: AppCompatActivity => A): IO[A, AppCompatActivity] =
     macro AnnotatedIOM.inst[A, AppCompatActivity]
-  def res[A](f: Resources => A): IO[A, Resources] =
+  def resIO[A](f: Resources => A): IO[A, Resources] =
     macro AnnotatedIOM.inst[A, Resources]
 }
 

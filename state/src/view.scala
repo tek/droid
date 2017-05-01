@@ -10,19 +10,13 @@ import tryp.state.annotation.cell
 
 import MainViewMessages._
 
-object ViewCellTypes
-{
-  type AnyTree = ViewTree[_ <: ViewGroup]
-}
-import ViewCellTypes._
-
 case class ToViewCell(payload: Message, agent: Cell)
 extends InternalMessage
 
 trait ViewDataI[A]
 extends CState
 {
-  def view: A
+  def tree: A
 
   def sub: CState
 }
@@ -33,38 +27,49 @@ extends Message
   override def toString = "MainTree"
 }
 
-
-trait ViewCellBase[A <: AnyTree]
+trait ViewCellBase
 extends AnnotatedTIO
+with AnnotatedIO
 with view.ViewToIO
 {
+  type CellTree <: AnyTree
+
   abstract class ViewData
-  extends ViewDataI[A]
+  extends ViewDataI[CellTree]
 
   object ViewData
   {
-    def unapply(a: ViewData) = Some((a.view, a.sub))
+    def apply(tree: CellTree, sub: CState) = VData(tree, sub)
+
+    def unapply(a: ViewData) = Some((a.tree, a.sub))
   }
 
-  case class VData(view: A, sub: CState)
+  case class VData(tree: CellTree, sub: CState)
   extends ViewData
 
-  def infMain: IO[A, Context]
+  def infMain: IO[CellTree, Context]
 
-  def stateWithTree(state: CState, tree: A): CState = state match {
-    case ViewData(_, sub) => VData(tree, sub)
-    case _ => VData(tree, Pristine)
+  def stateWithTree(state: CState, tree: CellTree, sub: Option[CState]): CState = state match {
+    case ViewData(_, s) => VData(tree, sub | s)
+    case _ => VData(tree, sub | Pristine)
+  }
+
+  def narrowTree(tree: AnyTree): Option[CellTree]
+
+  object CellTree
+  {
+    def unapply(tree: AnyTree): Option[CellTree] = narrowTree(tree)
   }
 }
 
 @cell
-abstract class ViewCell[A <: AnyTree: ClassTag]
-extends ViewCellBase[A]
+abstract class ViewCell
+extends ViewCellBase
 {
   def trans: Transitions = {
-    case CreateMainView => ContextIO(infMain.map(MainTree(_))) :: HNil
-    case MainTree(tree: A) => {
-      case s => stateWithTree(s, tree) :: SetMainTree(tree) :: HNil
+    case CreateMainView => ContextIO(infMain.map(MainTree(_))).broadcast :: HNil
+    case MainTree(CellTree(tree)) => {
+      case s => stateWithTree(s, tree, None) :: SetMainTree(tree).broadcast :: HNil
     }
   }
 }

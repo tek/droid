@@ -18,7 +18,6 @@ import android.support.v7.app.ActionBarDrawerToggle
 import view.io.text._
 import view.io.misc._
 import droid.res.R
-import ViewCellTypes._
 
 case class MainFragment(view: View)
 extends Fragment
@@ -110,16 +109,18 @@ object MainViewMessages
 import MainViewMessages._
 
 @cell
-abstract class MVContainer[A <: AnyTree with HasMainFrame: ClassTag]
-extends ViewCellBase[A]
+abstract class MVContainer
+extends ViewCellBase
 {
+  type CellTree <: AnyTree with HasMainFrame
+
   def mvcTrans: Transitions = {
     case CreateContentView =>
       ContextIO(infMain.map(ContentTree(_))) :: HNil
-    case ContentTree(tree: A) => {
+    case ContentTree(CellTree(tree)) => {
       case s =>
         mainView = Some(tree)
-        stateWithTree(s, tree) :: act(_.setContentView(tree.container)).main :: MVCReady :: HNil
+        stateWithTree(s, tree, None) :: act(_.setContentView(tree.container)).main :: MVCReady :: HNil
     }
     case SetMainTree(tree) => {
       case ViewData(main, sub) => setMainView(main, tree.container) :: HNil
@@ -135,7 +136,7 @@ extends ViewCellBase[A]
     }
   }
 
-  def setMainView(main: A, view: View) = {
+  def setMainView(main: CellTree, view: View) = {
     def replaceFragment(v: View)(a: Activity) = {
       a.replaceFragment(main.mainFrame.getId, MainFragment(v), true, "mainframe", false)
       MainViewLoaded
@@ -143,7 +144,7 @@ extends ViewCellBase[A]
     act(replaceFragment(view)).main
   }
 
-  var mainView: Option[A] = None
+  var mainView: Option[CellTree] = None
 }
 
 trait MVContainerMain
@@ -154,9 +155,16 @@ extends AnnotatedTIO
 
 @cell
 object MVFrame
-extends MVContainer[MainViewLayout]
+extends MVContainer
 with MVContainerMain
 {
+  type CellTree = MainViewLayout
+
+  def narrowTree(tree: AnyTree) = tree match {
+    case t: MainViewLayout => Some(t)
+    case _ => None
+  }
+
   def mvfTrans: Transitions = {
     case MVCReady => CreateMainView :: HNil
   }
@@ -236,69 +244,86 @@ object ExtMVContainerData
 import ExtMVContainerData._
 
 @cell
-abstract class ExtMVContainer[A <: AnyTree with HasDrawer: ClassTag]
-extends MVContainer[A]
+abstract class ExtMVContainer
+extends MVContainer
 {
+  type CellTree <: AnyTree with HasDrawer
+
   trait ExtMVDataBase
   extends ViewData
   {
     def toggle: Toggle
   }
 
-  case class ExtMVData(view: A, sub: CState, toggle: Toggle, open: Boolean)
+  case class ExtMVData(tree: CellTree, sub: CState, toggle: Toggle, open: Boolean)
   extends ExtMVDataBase
 
-  def dataWithToggle(main: A, sub: CState, toggle: Toggle): CState =
+  def dataWithToggle(main: CellTree, sub: CState, toggle: Toggle): CState =
     ExtMVData(main, sub, toggle, false)
 
-  def createToggle(a: Activity, main: A) =
+  def createToggle(a: Activity, main: CellTree) =
     new Toggle(a, main.drawer.container, main.toolbar, R.string.drawer_open, R.string.drawer_close)
 
   def toggleTrans: Transitions = {
     case LoadDrawerLayout => {
       case ViewData(main, _) =>
-        DrawerReady :: CreateDrawerView :: SetupActionBar :: CreateToggle :: HNil
-    }
-    case SetupActionBar => {
-      case ViewData(main, _) =>
         acact { a =>
           a.setSupportActionBar(main.toolbar)
           a.getSupportActionBar.setHomeButtonEnabled(true)
           a.getSupportActionBar.setDisplayHomeAsUpEnabled(true)
-        }.main :: HNil
+          val toggle = createToggle(a, main)
+          toggle.syncState()
+          NopMessage
+        }.main :: CreateDrawerView :: HNil
+        // DrawerReady :: CreateDrawerView :: SetupActionBar :: CreateToggle :: HNil
     }
-    case CreateToggle => {
-      case ViewData(main, _) =>
-        act(a => StoreDrawerToggle(createToggle(a, main))) :: HNil
-    }
-    case StoreDrawerToggle(toggle) => {
-      case ViewData(main, sub) =>
-        dataWithToggle(main, sub, toggle) :: SyncToggle :: HNil
-    }
+    // case SetupActionBar => {
+    //   case ViewData(main, _) =>
+    //     acact { a =>
+    //       a.setSupportActionBar(main.toolbar)
+    //       a.getSupportActionBar.setHomeButtonEnabled(true)
+    //       a.getSupportActionBar.setDisplayHomeAsUpEnabled(true)
+    //     }.main :: HNil
+    // }
+    // case CreateToggle => {
+    //   case ViewData(main, _) =>
+    //     act(a => StoreDrawerToggle(createToggle(a, main))) :: HNil
+    // }
+    // case StoreDrawerToggle(toggle) => {
+    //   case ViewData(main, sub) =>
+    //     dataWithToggle(main, sub, toggle) :: SyncToggle :: HNil
+    // }
     case DrawerViewReady(v) => {
       case ViewData(main, _) =>
         (main.drawer.drawer >>- MainFrame.load(v)).map(_ => DrawerLoaded) :: HNil
     }
-    case SyncToggle => {
-      case ExtMVData(_, _, toggle, _) =>
-        con(_ => toggle.syncState()).main :: HNil
-    }
-    case CloseDrawer => {
-      case ExtMVData(main, _, _, _) =>
-        con(_ => main.drawer.container.closeDrawer(Gravity.LEFT)).main :: HNil
-    }
+    // case SyncToggle => {
+    //   case ExtMVData(_, _, toggle, _) =>
+    //     con(_ => toggle.syncState()).main :: HNil
+    // }
+    // case CloseDrawer => {
+    //   case ExtMVData(main, _, _, _) =>
+    //     con(_ => main.drawer.container.closeDrawer(Gravity.LEFT)).main :: HNil
+    // }
   }
 }
 
 @cell
 object ExtMVFrame
-extends ExtMVContainer[ExtMVLayout]
+extends ExtMVContainer
 with AnnotatedTIO
 {
+  type CellTree = ExtMVLayout
+
   def infMain = inflate[ExtMVLayout]
+
+  def narrowTree(tree: AnyTree) = tree match {
+    case t: ExtMVLayout => Some(t)
+    case _ => None
+  }
 
   def emvfTrans: Transitions = {
     case MVCReady => LoadDrawerLayout :: HNil
-    case CreateDrawerView => CreateMainView :: HNil
+    case CreateDrawerView => CreateMainView.broadcast :: HNil
   }
 }

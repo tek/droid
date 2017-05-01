@@ -8,6 +8,7 @@ import shapeless._, ops.hlist._
 
 import fs2.async
 
+import tryp.state.core.SLR
 import tryp.state.annotation._
 
 case class IOMState(act: Activity)
@@ -34,11 +35,35 @@ extends AnnotatedTIO
   }
 }
 
+object DefaultScheduler
+{
+  implicit lazy val scheduler: Scheduler = Scheduler.fromFixedDaemonPool(4)
+}
+
+object StatePool
+extends BoundedCachedPool
+with Logging
+{
+  def name = "state"
+
+  implicit def scheduler = DefaultScheduler.scheduler
+}
+import StatePool._
+
 trait AppState
 extends Logging
 {
-  implicit val pool: SchedulerStrategyPool
-  import pool._
+  @cell
+  object android
+  extends AndroidCell
+
+  val mainView = ExtMVFrame.aux
+
+  type AndroidCells = android.Aux :: ExtMVFrame.Aux :: HNil
+  def androidCells: AndroidCells = android.aux :: mainView :: HNil
+
+  implicit def androidCellsTransition: transition.Case.Aux[AndroidCells, Message, SLR] =
+    transition.dyn
 
   def loopCtor: Task[(Loop.MQueue, Signal[Boolean], Loop.OStream)]
 
@@ -84,6 +109,7 @@ extends AppCompatActivity
   }
 
   override def onCreate(state: Bundle) = {
+    Thread.sleep(500)
     stateApp.send(SetActivity(this))
     super.onCreate(state)
     stateApp.send(CreateContentView)

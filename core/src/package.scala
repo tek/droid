@@ -2,12 +2,9 @@ package tryp
 package droid
 package core
 
-@exportTypes(android.app.Activity, android.view.View, android.view.ViewGroup,
-  android.content.Context, android.os.Bundle, android.content.Intent,
-  android.app.Fragment, android.widget.FrameLayout,
-  android.widget.LinearLayout, android.widget.RelativeLayout,
-  android.widget.TextView, android.widget.EditText
-  )
+@exportTypes(android.app.Activity, android.view.View, android.view.ViewGroup, android.content.Context,
+  android.os.Bundle, android.content.Intent, android.app.Fragment, android.widget.FrameLayout,
+  android.widget.LinearLayout, android.widget.RelativeLayout, android.widget.TextView, android.widget.EditText)
 trait Types
 {
   def TrypKeys = droid.core.Keys
@@ -22,8 +19,7 @@ trait Vals
 trait All
 extends syntax.std.ToBundleOps
 
-@exportNames(Resources, ResourcesAccess, ResourceNamespace,
-  PrefixResourceNamespace, RId, ResId)
+@exportNames(Resources, ResourcesAccess, ResourceNamespace, PrefixResourceNamespace, RId, ResId)
 trait Exports
 extends Types
 with Vals

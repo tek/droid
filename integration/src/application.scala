@@ -15,31 +15,8 @@ import tryp.state.annotation._
 case object Msg
 extends Message
 
-case object Msg2
-extends Message
-
 case object Dummy
 extends Message
-
-object DefaultScheduler
-{
-  implicit lazy val scheduler: Scheduler = Scheduler.fromFixedDaemonPool(4)
-}
-
-object StatePool
-extends SchedulerStrategyPool
-with Logging
-{
-  def name = "state"
-
-  def hook(t: Thread) = {
-    t
-  }
-
-  implicit lazy val executor = BoundedCachedExecutor.withHook(name, 1, 10, 100, hook)
-
-  implicit def scheduler = DefaultScheduler.scheduler
-}
 
 class IntStateActivity
 extends StateActivity
@@ -57,9 +34,16 @@ extends ViewTree[FrameLayout]
 
 @cell
 object IntView
-extends ViewCell[IntMain]
+extends ViewCell
 {
+  type CellTree = IntMain
+
   def infMain = inflate[IntMain]
+
+  def narrowTree(tree: state.AnyTree) = tree match {
+    case t: IntMain => Some(t)
+    case _ => None
+  }
 
   def trans: Transitions = {
     case Msg => HNil
@@ -69,17 +53,9 @@ extends ViewCell[IntMain]
 class IntAppState
 extends AppState
 {
-  implicit val pool = StatePool
+  import state.StatePool._
 
-  import pool._
-
-  @cell
-  object android
-  extends AndroidCell
-
-  val mainView = ExtMVFrame.aux
-
-  def loopCtor = Loop.cells(android.aux :: mainView :: IntView.aux :: HNil, Nil)
+  def loopCtor = Loop.cells(androidCells :: (IntView.aux :: HNil) :: HNil, Nil)
 }
 
 class IntApplication
