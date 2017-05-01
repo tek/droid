@@ -1,5 +1,6 @@
 package tryp
 package droid
+package recycler
 
 import android.widget.{BaseAdapter,Filterable,Filter}
 import android.view.ViewGroup.LayoutParams._
@@ -133,7 +134,7 @@ with AnnotatedIO
   def items = simpleItems
 
   def updateItems(newItems: Seq[B]) = {
-    con { _ =>
+    conIO { _ =>
       simpleItems = newItems.toVector
       // applyFilter
       updateVisibleData(simpleItems)
@@ -169,5 +170,4 @@ with Views[Context, IO]
 }
 
 case class StringRA(context: Context)
-(implicit val scheduler: Scheduler)
 extends StringRecyclerAdapter

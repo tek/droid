@@ -47,6 +47,8 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val state = "state" / "state machine" << stateCore
 
+  lazy val recycler = "recycler" / "recycler view machine" << state
+
   // lazy val service = "service" / "machines providing services" << state << viewCore
 
   // lazy val app = "app" / "android commons" << view
@@ -91,7 +93,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
         debugIncludesTests := true
       )
 
-  lazy val integration = mkInt("integration") << state
+  lazy val integration = mkInt("integration") << state << recycler
 
   lazy val all = mpb("all")
     .aggregate(core.!, viewCore.!, view.!, state.!, logback.!)
