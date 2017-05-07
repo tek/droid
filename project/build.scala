@@ -62,9 +62,6 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   // lazy val debug = "debug" << app
 
-  // lazy val integrationCore = "integration-core" << app
-  lazy val integrationCore = "integration-core"
-
   def apk(name: String) =
     adp(name)
       .settingsV(
