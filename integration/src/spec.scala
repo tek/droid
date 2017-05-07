@@ -134,7 +134,24 @@ with AnnotatedIO
   def sleep(secs: Double) = Thread.sleep((secs * 1000).toInt)
 }
 
-abstract class StateSpec[A <: Activity](cls: Class[A])
+abstract class StateSpec[A <: StateActivity](cls: Class[A])
 extends IntegrationSpec[A](cls)
 {
+  def intAppState = activity.stateApp.state match {
+    case a: IntAppState => a
+    case _ => sys.error("no IntApp")
+  }
+
+  def mainLayout = intAppState.mainView.mainView match {
+    case Some(a) => a
+    case _ => sys.error("no main view")
+  }
+
+  def mainFrame = mainLayout.mainFrame
+
+  def showTree(tree: String) = log.info("\n" + tree)
+
+  def showWindow = showTree(activity.showViewTree)
+
+  def send = intAppState.send _
 }
