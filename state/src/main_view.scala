@@ -109,7 +109,7 @@ object MainViewMessages
 import MainViewMessages._
 
 @cell
-abstract class MVContainer
+trait MVContainer
 extends ViewCellBase
 {
   type CellTree <: AnyTree with HasMainFrame

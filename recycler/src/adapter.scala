@@ -62,8 +62,11 @@ extends ListAdapter
   }
 }
 
+trait RecyclerAdapterI
+
 abstract class RecyclerAdapter[A <: RecyclerViewHolder, B: ClassTag]
 extends RecyclerViewAdapter[A]
+with RecyclerAdapterI
 // with Filterable
 with Logging
 {

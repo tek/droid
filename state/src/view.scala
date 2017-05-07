@@ -34,12 +34,12 @@ with view.ViewToIO
 {
   type CellTree <: AnyTree
 
-  abstract class ViewData
+  trait ViewData
   extends ViewDataI[CellTree]
 
   object ViewData
   {
-    def apply(tree: CellTree, sub: CState) = VData(tree, sub)
+    def apply(tree: CellTree, sub: CState): ViewData = VData(tree, sub)
 
     def unapply(a: ViewData) = Some((a.tree, a.sub))
   }
@@ -63,7 +63,7 @@ with view.ViewToIO
 }
 
 @cell
-abstract class ViewCell
+trait ViewCell
 extends ViewCellBase
 {
   def trans: Transitions = {

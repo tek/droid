@@ -73,7 +73,7 @@ extends AndroidMacros
     val aType = weakTypeOf[A]
     val ctor = weakTypeOf[IO].typeSymbol
     val io = ioWithRepr[A, C](f)
-    Expr(q"new $ctor($io.map(a => implicitly[Parcel[$aType]].msg(a): Message))")
+    Expr(q"new $ctor($io.map(a => implicitly[Parcel[$aType]].msg(a): tryp.state.core.Message))")
   }
 
   def inflate[A: WeakTypeTag]: Expr[IO[A, Context]] = {
