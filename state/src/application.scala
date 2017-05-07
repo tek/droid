@@ -11,30 +11,6 @@ import fs2.async
 import tryp.state.core.SLR
 import tryp.state.annotation._
 
-case class IOMState(act: Activity)
-extends CState
-
-@cell
-class AndroidCell
-(implicit sched: Scheduler)
-extends AnnotatedTIO
-{
-  def trans: Transitions = {
-    case SetActivity(act) =>
-      IOMState(act) :: HNil
-    case m: ContextIO => {
-      case IOMState(act) => TaskIO(m.task(act), m.desc) :: HNil
-    }
-    case m: ActivityIO => {
-      case IOMState(act) => TaskIO(m.task(act), m.desc) :: HNil
-    }
-    case m: AppCompatActivityIO => {
-      case IOMState(act: AppCompatActivity) => TaskIO(m.task(act), m.desc) :: HNil
-    }
-    case SetContentTree(t) => act(_.setContentView(t.container)) :: HNil
-  }
-}
-
 object DefaultScheduler
 {
   implicit lazy val scheduler: Scheduler = Scheduler.fromFixedDaemonPool(4)
@@ -42,6 +18,7 @@ object DefaultScheduler
 
 object StatePool
 extends BoundedCachedPool
+with SchedulerStrategyPool
 with Logging
 {
   def name = "state"
@@ -50,17 +27,36 @@ with Logging
 }
 import StatePool._
 
+case class IOMState(act: Activity)
+extends CState
+
+@cell
+object AndroidCell
+extends AnnotatedTIO
+{
+  def trans: Transitions = {
+    case SetActivity(act) =>
+      IOMState(act) :: HNil
+    case m: ContextIO => {
+      case IOMState(act) => (strat: Strategy) => TaskIO(m.task(act), m.desc) :: HNil
+    }
+    case m: ActivityIO => {
+      case IOMState(act) => (strat: Strategy) => TaskIO(m.task(act), m.desc) :: HNil
+    }
+    case m: AppCompatActivityIO => {
+      case IOMState(act: AppCompatActivity) => (strat: Strategy) => TaskIO(m.task(act), m.desc) :: HNil
+    }
+    case SetContentTree(t) => act(_.setContentView(t.container)) :: HNil
+  }
+}
+
 trait AppState
 extends Logging
 {
-  @cell
-  object android
-  extends AndroidCell
-
   val mainView = ExtMVFrame.aux
 
-  type AndroidCells = android.Aux :: ExtMVFrame.Aux :: HNil
-  def androidCells: AndroidCells = android.aux :: mainView :: HNil
+  type AndroidCells = AndroidCell.Aux :: ExtMVFrame.Aux :: HNil
+  def androidCells: AndroidCells = AndroidCell.aux :: mainView :: HNil
 
   implicit def androidCellsTransition: transition.Case.Aux[AndroidCells, Message, SLR] =
     transition.dyn

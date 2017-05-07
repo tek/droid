@@ -4,35 +4,51 @@ package recycler
 
 import iota.ViewTree
 
+import tryp.state.annotation.cell
+
 import view.io.recycler._
 import state.MainViewMessages.{CreateMainView, SetMainTree}
-import state.MainTree
+import state.{MainTree, ViewCellBase}
 
 trait RVTree
 {
   def recycler: RecyclerView
 }
 
-abstract class RVCell[A <: RecyclerViewHolder, B, C <: RecyclerAdapter[A, B]]
-extends ViewCell
-{
-  type CellTree <: AnyTree with RVTree
-  type RVA = C
+case class SetAdapter(adapter: Any)
+extends Message
 
+object RVData
+{
   case object CreateAdapter
   extends Message
 
   case object AdapterInstalled
   extends Message
 
-  case class Update(items: Seq[B])
+  case class Update(items: Seq[Any])
   extends Message
 
-  case class RecyclerData(adapter: RVA)
+  case class RecyclerData(adapter: RecyclerAdapterI)
   extends CState
+}
 
-  case class SetAdapter(adapter: RVA)
-  extends Message
+import RVData._
+
+@cell
+abstract class RVCell[A <: RecyclerViewHolder, B: ClassTag, RVA <: RecyclerAdapter[A, B]: ClassTag]
+extends ViewCellBase
+{
+  type CellTree <: AnyTree with RVTree
+
+  object AdapterExtractor
+  {
+    def unapply(s: CState) = s match {
+      case RecyclerData(a) => Some(a)
+      case ViewData(_, RecyclerData(a)) => Some(a)
+      case _ => None
+    }
+  }
 
   def adapter: IO[RVA, Context]
 
@@ -59,13 +75,17 @@ extends ViewCell
   def trans: Transitions = {
     case CreateMainView =>
       ContextIO(adapter.map(SetAdapter(_))).broadcast :: ContextIO(infMain.map(MainTree(_))).broadcast :: HNil
-    case SetAdapter(adapter) => {
+    case SetAdapter(adapter: RVA) => {
       case s => stateWithAdapter(s, adapter) :: HNil
     }
     case MainTree(CellTree(tree)) => {
-      case s @ ViewData(_, RecyclerData(adapter)) =>
-        val io = tree.recycler >>- recyclerAdapter(adapter) >>- recyclerConf >>- recyclerLayout
-        stateWithTree(s, tree, None) :: SetMainTree(tree).broadcast :: ContextIO(io.map(_ => NopMessage)).main :: HNil
+      case AdapterExtractor(a: RVA) =>
+        val io = tree.recycler >>- recyclerAdapter(a) >>- recyclerConf >>- recyclerLayout
+        stateWithTree(RecyclerData(a), tree, None) :: SetMainTree(tree).broadcast :: ContextIO(io.map(_ => NopMessage)).main.broadcast :: HNil
+    }
+    case Update(items: Seq[B]) => {
+      case AdapterExtractor(a: RVA) =>
+        ContextIO(a.updateItems(items).map(_ => NopMessage)).main.broadcast :: HNil
     }
   }
 }
@@ -77,15 +97,22 @@ with RVTree
   override def toString = "RVMain"
 }
 
-trait SimpleRV[A <: RecyclerViewHolder, B, C <: RecyclerAdapter[A, B]]
+@cell
+abstract class SimpleRV[A <: RecyclerViewHolder, B: ClassTag, C <: RecyclerAdapter[A, B]: ClassTag]
 extends RVCell[A, B, C]
 {
   type CellTree = RVMain
 
   def infMain = inflate[RVMain]
+
+  def narrowTree(tree: state.AnyTree) = tree match {
+    case t: RVMain => Some(t)
+    case _ => None
+  }
 }
 
-abstract class StringRV
+@cell
+trait StringRV
 extends SimpleRV[StringHolder, String, StringRA]
 {
   lazy val adapter = conIO(StringRA(_))

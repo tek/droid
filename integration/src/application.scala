@@ -4,13 +4,8 @@ package integration
 
 import android.support.v7.app.AppCompatActivity
 
-import shapeless._
-
-import fs2.async
-
-import iota._
-
-import tryp.state.annotation._
+import tryp.state.annotation.cell
+import recycler.StringRV
 
 case object Msg
 extends Message
@@ -23,31 +18,11 @@ extends StateActivity
 {
 }
 
-case class IntMain(container: FrameLayout, tv: TextView)
-extends ViewTree[FrameLayout]
-{
-  tv.setText("success")
-  tv.setTextSize(50)
-
-  override def toString = "IntMain"
-}
 
 @cell
 object IntView
-extends ViewCell
+extends StringRV
 {
-  type CellTree = IntMain
-
-  def infMain = inflate[IntMain]
-
-  def narrowTree(tree: state.AnyTree) = tree match {
-    case t: IntMain => Some(t)
-    case _ => None
-  }
-
-  def trans: Transitions = {
-    case Msg => HNil
-  }
 }
 
 class IntAppState
