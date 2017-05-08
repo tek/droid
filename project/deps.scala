@@ -32,8 +32,8 @@ extends tryp.AndroidDeps
   )
 
   def pulsar(pro: String) = {
-    dd("tryp" %% s"pulsar-$pro" % trypV, "tek/pulsar", pro)
-    // "tryp" %% s"pulsar-$pro" % trypV
+    // dd("tryp" %% s"pulsar-$pro" % trypV, "tek/pulsar", pro)
+    "tryp" %% s"pulsar-$pro" % trypV
   }
 
   def core = ids(
