@@ -10,21 +10,19 @@ import TrypAndroid.autoImport._
 import TrypBuildKeys._
 import Templates.autoImport._
 
-import coursier.Keys._
-import coursier.CoursierPlugin
-
 object DroidBuild
 extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 {
-  val sdkVersion = 24
+  val sdkVersion = 23
 
   override val platform = s"android-$sdkVersion"
 
   override def adp(name: String) = {
     super.adp(name)
-      .manifest("minSdkVersion" -> "24")
+      .manifest("minSdkVersion" -> sdkVersion.toString)
       .settingsV(
         fork := true,
+        buildToolsVersion := Some("23.0.2"),
         publishArtifact in (Compile, packageDoc) := false,
         manifestTemplate := metaRes.value / "aar" / manifestName,
         packageForR := "tryp.droid.res",
@@ -78,7 +76,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
       .protify
       .manifest(
         "package" -> s"tryp.droid.$name",
-        "minSdk" -> "24",
+        "minSdk" -> sdkVersion.toString,
         "activityClass" -> s"tryp.droid.$name.IntStateActivity",
         "appName" -> s"tryp $name",
         "appClass" -> s"tryp.droid.$name.IntApplication"
@@ -92,8 +90,9 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val integration = mkInt("integration") << state << recycler
 
-  lazy val all = mpb("all")
-    .aggregate(core.!, viewCore.!, view.!, state.!, logback.!)
+  lazy val public = mpb("public")
+    .settings(publish := ())
+    .aggregate(core.!, viewCore.!, view.!, stateCore.!, state.!, recycler.!, logback.!)
 
   override def consoleImports = """
   import cats._, data._, syntax.all._, instances.all._

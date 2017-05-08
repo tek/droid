@@ -7,6 +7,8 @@ import android.Keys._
 object DroidDeps
 extends tryp.AndroidDeps
 {
+  val trypV = "+"
+
   override def deps = super.deps ++ Map(
     "core" -> core,
     "view-core" -> viewCore,
@@ -19,7 +21,6 @@ extends tryp.AndroidDeps
     "unit-core" -> unitCore,
     "unit-droid" -> unitDroid,
     "unit" -> unit,
-    "integration-core" -> integrationCore,
     "integration" -> integration,
     "logback" -> logback,
     "macro-console" -> macroConsole
@@ -31,25 +32,28 @@ extends tryp.AndroidDeps
   )
 
   def pulsar(pro: String) = {
-    dd("tryp" %% s"pulsar-$pro" % "+", "tek/pulsar", pro)
+    dd("tryp" %% s"pulsar-$pro" % trypV, "tek/pulsar", pro)
+    // "tryp" %% s"pulsar-$pro" % trypV
   }
 
   def core = ids(
+    // "codes.reactive" %% "scala-time" % "0.4.1",
     pulsar("main")
-    // "tryp" %% "pulsar-unit-core" % "+" % "test"
   )
 
   def viewCore = ids(
     "com.hanhuy.android" %% "iota" % "2.0.0-SNAPSHOT"
   )
 
+  val supportV = "23.4.0"
+
   def view = ids(
-    "com.android.support" % "support-v4" % "23.+",
-    "com.android.support" % "appcompat-v7" % "25.3.1",
-    "com.android.support" % "palette-v7" % "25.3.1",
-    "com.android.support" % "recyclerview-v7" % "25.3.1",
-    "com.android.support" % "cardview-v7" % "25.3.1",
-    "com.android.support" % "support-v13" % "25.3.1"
+    "com.android.support" % "support-v4" % supportV,
+    "com.android.support" % "appcompat-v7" % supportV,
+    "com.android.support" % "palette-v7" % supportV,
+    "com.android.support" % "recyclerview-v7" % supportV,
+    "com.android.support" % "cardview-v7" % supportV,
+    "com.android.support" % "support-v13" % supportV
   )
 
   def state = ids(
@@ -93,10 +97,10 @@ extends tryp.AndroidDeps
     "org.xerial" % "sqlite-jdbc" % "3.+" % "test"
   )
 
-  def integrationCore = super.integration ++ ids(
-    "junit" % "junit" % "4.12" % "provided",
-    "com.android.support.test" % "runner" % "0.+" exclude("junit", "junit"),
-    "com.android.support" % "multidex-instrumentation" % "1.+"
+  override def integration = super.integration ++ ids(
+    // "junit" % "junit" % "4.12" exclude("junit", "junit"),
+    // "com.android.support.test" % "runner" % "0.5",
+    // "com.android.support.test" % "rules" % "0.5"
   )
 
   def macroConsole = ids(

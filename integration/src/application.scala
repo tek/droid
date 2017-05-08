@@ -18,7 +18,6 @@ extends StateActivity
 {
 }
 
-
 @cell
 object IntView
 extends StringRV
