@@ -92,7 +92,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val public = mpb("public")
     .settings(publish := ())
-    .aggregate(core, viewCore, view, stateCore, state, recycler, logback)
+    .aggregate(core, viewCore, view, stateCore, state, recycler, logback, integration)
 
   override def consoleImports = """
   import cats._, data._, syntax.all._, instances.all._
