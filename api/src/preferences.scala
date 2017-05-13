@@ -1,15 +1,11 @@
 package tryp
 package droid
+package api
 
 import scala.collection.convert.wrapAll._
 
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
-
-import rx._
-import rx.ops._
-
-import ScalazGlobals._
 
 class PreferencesFacade(val prefs: SharedPreferences)
 {
@@ -21,7 +17,7 @@ class PreferencesFacade(val prefs: SharedPreferences)
 
   object PrefCaches
   {
-    type Cache[A] = MMap[String, (Var[A], Obs)]
+    type Cache[A] = MMap[String, A]
 
     implicit val cacheString: Cache[String] = MMap()
 
@@ -67,7 +63,7 @@ class PreferencesFacade(val prefs: SharedPreferences)
 
       def getter = (key: String, default: Long) => {
         val s = prefs.getString(key, default.toString)
-        Try { s.toLong } getOrElse {
+        Try(s.toLong) getOrElse {
           Log.e(s"Failed to convert pref '$key' to Long: $s")
           default
         }
@@ -90,24 +86,15 @@ class PreferencesFacade(val prefs: SharedPreferences)
   {
     import PrefCaches.Cache
 
-    def get[A](name: String, default: A)(implicit cache: Cache[A],
-      reader: PrefReader[A]) =
-    {
+    def get[A](name: String, default: A)(implicit cache: Cache[A], reader: PrefReader[A]) = {
       val key = mkKey(name)
-      cache.getOrElseUpdate(key, adapt(key, reader(key, default)))._1
-    }
-
-    private def adapt[A](key: String, value: A) = {
-      val v = Var(value)
-      v -> Obs(v, skipInitial = true)(set(key, v(), false))
+      cache.getOrElseUpdate(key, reader(key, default))
     }
 
     def invalidate[A](name: String)
     (implicit cache: Cache[A], reader: PrefReader[A]) {
       val key = mkKey(name)
-      cache.get(key) foreach { case (v, o) =>
-        v() = reader(key)
-      }
+      cache(key) = reader(key)
     }
   }
 
@@ -174,7 +161,7 @@ class PreferencesFacade(val prefs: SharedPreferences)
   }
 
   def error(name: String, value: Any) {
-    val prefType = (value == null) ? "Null" | value.className
+    val prefType = if (value == null) "Null" else value.className
     Log.e(s"Incompatible pref type ${prefType} for key '${name}'")
   }
 
@@ -193,7 +180,7 @@ class PreferencesFacade(val prefs: SharedPreferences)
   }
 
   private def updateString(name: String, value: String) {
-    Try(value.toLong) match {
+    Try((value: collection.immutable.StringOps).toLong) match {
       case util.Success(int) => PrefCache.invalidate[Long](name)
       case util.Failure(_) => PrefCache.invalidate[String](name)
     }

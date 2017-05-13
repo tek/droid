@@ -7,7 +7,7 @@ import android.Keys._
 object DroidDeps
 extends tryp.AndroidDeps
 {
-  val trypV = "0.6"
+  val trypV = "0.7-SNAPSHOT"
 
   override def deps = super.deps ++ Map(
     "core" -> core,

@@ -21,6 +21,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
     super.adp(name)
       .manifest("minSdkVersion" -> sdkVersion.toString)
       .settingsV(
+        setScala := true,
         fork := true,
         buildToolsVersion := Some("23.0.2"),
         publishArtifact in (Compile, packageDoc) := false,
@@ -47,6 +48,8 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val recycler = "recycler" / "recycler view machine" << state
 
+  lazy val api = "api" / "android api helpers" << core
+
   // lazy val service = "service" / "machines providing services" << state << viewCore
 
   // lazy val app = "app" / "android commons" << view
@@ -70,7 +73,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
       .logback("tag" -> "tryp") << logback
 
   def mkInt(name: String) =
-    (apk(name) << view)
+    (apk(name) << view << api)
       .transitive
       .integration
       .protify
@@ -91,8 +94,8 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
   lazy val integration = mkInt("integration") << state << recycler
 
   lazy val public = mpb("public")
-    .settings(publish := ())
-    .aggregate(core, viewCore, view, stateCore, state, recycler, logback, integration)
+    .settingsV(publish := (), publishLocal := ())
+    .aggregate(core, viewCore, view, stateCore, state, recycler, api, logback, integration)
 
   override def consoleImports = """
   import cats._, data._, syntax.all._, instances.all._
