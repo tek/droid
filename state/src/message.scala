@@ -10,17 +10,17 @@ import iota.ViewTree
 case class SetActivity(activity: Activity)
 extends Message
 
-case class StartActivity(agent: ActivityAgent)
-extends Message
+// case class StartActivity(agent: ActivityAgent)
+// extends Message
 
-case class SetAgent(agent: ActivityAgent)
-extends Message
+// case class SetAgent(agent: ActivityAgent)
+// extends Message
 
 case object AgentInitialized
 extends Message
 
-case class ActivityAgentStarted(agent: ActivityAgent)
-extends Message
+// case class ActivityAgentStarted(agent: ActivityAgent)
+// extends Message
 
 case object CreateContentView
 extends Message
@@ -31,15 +31,15 @@ extends Message
 case class SetContentTree(tree: ViewTree[_ <: ViewGroup])
 extends Message
 
-case class ContentViewReady(agent: ActivityAgent)
-extends Message
+// case class ContentViewReady(agent: ActivityAgent)
+// extends Message
 
 case object Ready
 extends CState
 
-case class ASData(app: Application, activity: Option[Activity],
-  agent: Option[ActivityAgent])
-extends CState
+// case class ASData(app: Application, activity: Option[Activity],
+//   agent: Option[ActivityAgent])
+// extends CState
 
 trait ActivityLifecycleMessage
 extends Message

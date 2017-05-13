@@ -126,9 +126,9 @@ extends ViewCellBase
       case ViewData(main, sub) => setMainView(main, tree.container) :: HNil
     }
     case Back => act(_.onBackPressed()) :: HNil
-    case ContentViewReady(agent) => {
-      case ViewData(v, _) => InitUi :: HNil
-    }
+    // case ContentViewReady(agent) => {
+    //   case ViewData(v, _) => InitUi :: HNil
+    // }
     case UiLoaded => {
       /** If the main frame has already been installed (state Ready), immediately request the main view
       */

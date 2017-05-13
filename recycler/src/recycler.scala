@@ -8,7 +8,7 @@ import tryp.state.annotation.cell
 
 import view.io.recycler._
 import state.MainViewMessages.{CreateMainView, SetMainTree}
-import state.{MainTree, ViewCellBase}
+import state.MainTree
 
 trait RVTree
 {
