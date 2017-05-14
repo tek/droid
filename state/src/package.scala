@@ -2,10 +2,10 @@ package tryp
 package droid
 package state
 
-@exportTypes(StateApplication, StateActivity, AppState, ViewCell, ViewCellBase)
+@exportTypes(StateApplication, StateActivity, AppState, ViewCell, ViewCellBase, ExtMVAppState)
 trait Types
 
-@exportVals(MVFrame, ExtMVFrame, DefaultScheduler)
+@exportVals(MVFrame, ExtMVFrame, DefaultScheduler, ViewCellData)
 trait Vals
 
 @export

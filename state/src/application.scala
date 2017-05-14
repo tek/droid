@@ -53,15 +53,9 @@ extends AnnotatedTIO
 trait AppState
 extends Logging
 {
-  val mainView = ExtMVFrame.aux
-
-  type AndroidCells = AndroidCell.Aux :: ExtMVFrame.Aux :: HNil
-  def androidCells: AndroidCells = AndroidCell.aux :: mainView :: HNil
-
-  implicit def androidCellsTransition: transition.Case.Aux[AndroidCells, Message, SLR] =
-    transition.dyn
-
   def loopCtor: Task[(Loop.MQueue, Signal[Boolean], Loop.OStream)]
+
+  val mainView: MVContainer
 
   def ctor = {
     for {
@@ -79,6 +73,18 @@ extends Logging
 
   // FIXME doesn't work, but doing the same from within the activity does
   def setActivity = SetActivity.apply _ andThen send _
+}
+
+trait ExtMVAppState
+extends AppState
+{
+  val mainView = ExtMVFrame.aux
+
+  type AndroidCells = AndroidCell.Aux :: ExtMVFrame.Aux :: HNil
+  def androidCells: AndroidCells = AndroidCell.aux :: mainView :: HNil
+
+  implicit def androidCellsTransition: transition.Case.Aux[AndroidCells, Message, SLR] =
+    transition.dyn
 }
 
 trait StateApplication
