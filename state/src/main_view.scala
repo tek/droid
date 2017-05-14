@@ -120,7 +120,7 @@ extends ViewCellBase
     case ContentTree(CellTree(tree)) => {
       case s =>
         mainView = Some(tree)
-        stateWithTree(s, tree, None) :: act(_.setContentView(tree.container)).main :: MVCReady :: HNil
+        stateWithTree(s, tree, None, None) :: act(_.setContentView(tree.container)).main :: MVCReady :: HNil
     }
     case SetMainTree(tree) => {
       case ViewData(main, sub) => setMainView(main, tree.container) :: HNil

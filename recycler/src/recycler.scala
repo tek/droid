@@ -56,12 +56,12 @@ extends ViewCellBase
 
   def recyclerLayout = linear
 
-  override def stateWithTree(state: CState, tree: CellTree, sub: Option[CState]) = {
+  override def stateWithTree(state: CState, tree: CellTree, sub: Option[CState], extra: Option[CState]) = {
     val adapter = state match {
       case r @ RecyclerData(adapter) => Some(r)
       case _ => None
     }
-    super.stateWithTree(state, tree, sub.orElse(adapter))
+    super.stateWithTree(state, tree, sub.orElse(adapter), extra)
   }
 
   def stateWithAdapter(state: CState, adapter: RVA): CState = {
@@ -79,9 +79,9 @@ extends ViewCellBase
       case s => stateWithAdapter(s, adapter) :: HNil
     }
     case MainTree(CellTree(tree)) => {
-      case AdapterExtractor(a: RVA) =>
+      case s @ AdapterExtractor(a: RVA) =>
         val io = tree.recycler >>- recyclerAdapter(a) >>- recyclerConf >>- recyclerLayout
-        stateWithTree(RecyclerData(a), tree, None) :: SetMainTree(tree).broadcast :: ContextIO(io.map(_ => NopMessage)).main.broadcast :: HNil
+        stateWithTree(s, tree, Some(RecyclerData(a)), None) :: SetMainTree(tree).broadcast :: ContextIO(io.map(_ => NopMessage)).main.broadcast :: HNil
     }
     case Update(items: Seq[B]) => {
       case AdapterExtractor(a: RVA) =>
