@@ -3,7 +3,7 @@ package droid
 package integration
 
 class BasicSpec
-extends StateSpec[IntStateActivity](classOf[IntStateActivity])
+extends Spec
 {
   def testBasic() = {
     activity

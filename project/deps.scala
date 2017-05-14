@@ -53,7 +53,8 @@ extends tryp.AndroidDeps
     "com.android.support" % "palette-v7" % supportV,
     "com.android.support" % "recyclerview-v7" % supportV,
     "com.android.support" % "cardview-v7" % supportV,
-    "com.android.support" % "support-v13" % supportV
+    "com.android.support" % "support-v13" % supportV,
+    "com.android.support" % "design" % supportV
   )
 
   def state = ids(
@@ -67,9 +68,7 @@ extends tryp.AndroidDeps
   )
 
   def app = ids(
-    "com.lihaoyi" %% "scalarx" % "0.2.8",
-    "com.melnykov" % "floatingactionbutton" % "1.+",
-    // "com.makeramen" % "roundedimageview" % "1.+",
+    "com.makeramen" % "roundedimageview" % "1.+",
     "com.squareup.okhttp3" % "okhttp" % "3.+"
   ) ++ view
 

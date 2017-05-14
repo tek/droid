@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity
 
 import tryp.state.annotation.cell
 import recycler.StringRV
+import state.StatePool._
 
 case object Msg
 extends Message
@@ -15,20 +16,14 @@ extends Message
 
 class IntStateActivity
 extends StateActivity
-{
-}
 
 @cell
 object IntView
 extends StringRV
-{
-}
 
 class IntAppState
-extends AppState
+extends ExtMVAppState
 {
-  import state.StatePool._
-
   def loopCtor = Loop.cells(androidCells :: (IntView.aux :: HNil) :: HNil, Nil)
 }
 

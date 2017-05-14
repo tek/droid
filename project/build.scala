@@ -59,9 +59,10 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
   lazy val logback = "logback" / "logback deps" << view
 
   // lazy val test = "test" << app
-  // lazy val test = "test" << app
 
   // lazy val debug = "debug" << app
+
+  lazy val integrationCore = "integration-core" / "integration basics" << state
 
   def apk(name: String) =
     adp(name)
@@ -73,7 +74,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
       .logback("tag" -> "tryp") << logback
 
   def mkInt(name: String) =
-    (apk(name) << view << api)
+    (apk(name) << integrationCore)
       .transitive
       .integration
       .protify
@@ -91,11 +92,11 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
         debugIncludesTests := true
       )
 
-  lazy val integration = mkInt("integration") << state << recycler
+  lazy val integration = mkInt("integration") << recycler << api
 
   lazy val public = mpb("public")
     .settingsV(publish := (), publishLocal := ())
-    .aggregate(core, viewCore, view, stateCore, state, recycler, api, logback, integration)
+    .aggregate(core, viewCore, view, stateCore, state, recycler, api, logback, integrationCore)
 
   override def consoleImports = """
   import cats._, data._, syntax.all._, instances.all._
