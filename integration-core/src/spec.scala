@@ -27,7 +27,9 @@ with AnnotatedIO
 {
   implicit def activity: A
 
-  def setup() = {
+  def instr: Instrumentation
+
+  def setup(): Unit = {
     startTime
   }
 
@@ -41,7 +43,10 @@ with AnnotatedIO
     idleSync()
   }
 
-  def idleSync(): Unit
+  def idleSync() = {
+    activity
+    instr.waitForIdleSync()
+  }
 
   def ui[A](f: => A) = {
     conIO(_ => f).main.unsafeRun()
@@ -76,7 +81,7 @@ class InstrumentationSpec[A <: Activity](cls: Class[A])
 extends ActivityInstrumentationTestCase2[A](cls)
 with IntegrationSpec[A]
 {
-  def activity = getActivity
+  implicit def activity = getActivity
 
   def instr: Instrumentation = getInstrumentation
 
@@ -89,11 +94,6 @@ with IntegrationSpec[A]
   override def tearDown() {
     teardown()
     super.tearDown()
-  }
-
-  def idleSync() = {
-    activity
-    instr.waitForIdleSync()
   }
 }
 
