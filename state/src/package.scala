@@ -5,7 +5,7 @@ package state
 @exportTypes(StateApplication, StateActivity, AppState, ViewCell, ViewCellBase, ExtMVAppState)
 trait Types
 
-@exportVals(MVFrame, ExtMVFrame, DefaultScheduler, ViewCellData)
+@exportVals(MVFrame, ExtMVFrame, DefaultScheduler, ViewCellData, AndroidCell)
 trait Vals
 
 @export
