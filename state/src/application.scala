@@ -106,7 +106,7 @@ extends android.app.Application
   def setActivity = state.setActivity _
 }
 
-class StateActivity
+abstract class StateActivity
 extends AppCompatActivity
 {
   lazy val stateApp = getApplication match {
@@ -114,10 +114,13 @@ extends AppCompatActivity
     case _ => sys.error("application is not a StateApplication")
   }
 
+  def initialMessages: List[Message]
+
   override def onCreate(state: Bundle) = {
     Thread.sleep(500)
     stateApp.send(SetActivity(this))
     super.onCreate(state)
     stateApp.send(CreateContentView)
+    initialMessages foreach stateApp.send
   }
 }
