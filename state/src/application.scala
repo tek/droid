@@ -66,7 +66,12 @@ extends Logging
 
   lazy val (in, term, loop) = ctor.unsafeRun()
 
-  def run() = loop.unsafeRunAsync { case a => log.info(s"finished with $a") }
+  def run() = loop.unsafeRunAsync {
+    case Left(a: Throwable) =>
+      val trace = a.getStackTrace.toList.mkString("\n")
+      log.info(s"finished with $a:\n$trace")
+    case a => log.info(s"finished with $a")
+  }
 
   def send(msg: Message) = in.publish1(msg).unsafeRun()
 
