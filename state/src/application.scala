@@ -8,7 +8,6 @@ import shapeless._, ops.hlist._
 
 import fs2.async
 
-import tryp.state.core.SLR
 import tryp.state.annotation._
 
 object DefaultScheduler
@@ -53,7 +52,7 @@ extends AnnotatedTIO
 trait AppState
 extends Logging
 {
-  def loopCtor: Task[(Loop.MQueue, Signal[Boolean], Loop.OStream)]
+  def loopCtor: Task[(LoopData.MQueue, Signal[Boolean], LoopData.OStream)]
 
   val mainView: MVContainer
 
