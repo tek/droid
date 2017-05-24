@@ -10,9 +10,6 @@ import tryp.state.annotation.cell
 
 import MainViewMessages._
 
-case class ToViewCell(payload: Message, agent: Cell)
-extends InternalMessage
-
 trait ViewDataI[A]
 extends CState
 {
