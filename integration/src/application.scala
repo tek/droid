@@ -16,6 +16,9 @@ extends Message
 
 class IntStateActivity
 extends StateActivity
+{
+  def initialMessages = Nil
+}
 
 @cell
 object IntView
