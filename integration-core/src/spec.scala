@@ -100,3 +100,9 @@ with IntegrationSpec[A]
 class StateInstrumentationSpec[A <: StateActivity](cls: Class[A])
 extends InstrumentationSpec[A](cls)
 with StateSpec[A]
+
+abstract class SpecsSpec[A <: StateActivity](cls: Class[A])
+extends StateInstrumentationSpec[A](cls)
+with SpecsBase
+with ViewMatchers
+with BiMustExpectations

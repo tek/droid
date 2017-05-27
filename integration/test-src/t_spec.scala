@@ -5,9 +5,11 @@ package integration
 class BasicSpec
 extends Spec
 {
-  def testBasic() = {
-    activity
-    sleep(1)
+  def is = s2"""
+  basic $basic
+  """
+
+  def basic = {
     val strings = List("first", "second")
     send(UpdateInt(strings))
     sleep(1)
@@ -24,6 +26,6 @@ extends Spec
       case a => a.toString
     }
     showTree(mainFrame.showViewTree)
-    assert(labels == strings)
+    labels must_== strings
   }
 }

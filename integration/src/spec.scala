@@ -2,8 +2,8 @@ package tryp
 package droid
 package integration
 
-class Spec
-extends StateInstrumentationSpec[IntStateActivity](classOf[IntStateActivity])
+abstract class Spec
+extends SpecsSpec[IntStateActivity](classOf[IntStateActivity])
 {
   def intAppState = appState match {
     case a: IntAppState => a

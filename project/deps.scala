@@ -7,7 +7,8 @@ import android.Keys._
 object DroidDeps
 extends tryp.AndroidDeps
 {
-  val pulsarV = "0.7"
+  val pulsarV = "0.8-SNAPSHOT"
+  val specsV = "3.8.9"
 
   override def deps = super.deps ++ Map(
     "core" -> core,
@@ -21,6 +22,7 @@ extends tryp.AndroidDeps
     "unit-core" -> unitCore,
     "unit-droid" -> unitDroid,
     "unit" -> unit,
+    "integration-core" -> integrationCore,
     "integration" -> integration,
     "logback" -> logback,
     "macro-console" -> macroConsole
@@ -94,6 +96,10 @@ extends tryp.AndroidDeps
 
   def unitDroid = ids(
     "org.xerial" % "sqlite-jdbc" % "3.+" % "test"
+  )
+
+  def integrationCore = ids(
+    "tryp" %% "pulsar-unit-main" % pulsarV
   )
 
   override def integration = super.integration ++ ids(
