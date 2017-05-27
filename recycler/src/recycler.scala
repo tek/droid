@@ -19,7 +19,8 @@ trait RVTree
 case class SetAdapter[A](adapter: A)
 extends Message
 
-object RVData
+trait RVCellBase[A <: RecyclerViewHolder, B, RVA <: RecyclerAdapter[A, B]]
+extends ViewCellBase
 {
   case object CreateAdapter
   extends Message
@@ -27,17 +28,11 @@ object RVData
   case object AdapterInstalled
   extends Message
 
-  case class RecyclerData(adapter: RecyclerAdapterI)
-  extends CState
-}
-
-import RVData._
-
-trait RVCellBase[A <: RecyclerViewHolder, B, RVA <: RecyclerAdapter[A, B]]
-extends ViewCellBase
-{
   case object InsertAdapter
   extends Message
+
+  case class RecyclerData(adapter: RVA)
+  extends CState
 
   object AdapterExtractor
   {
@@ -87,16 +82,6 @@ with RVCellBase[A, B, RVA]
     super.stateWithTree(state, tree, sub.orElse(adapter), extra)
   }
 
-  def update(state: CState, items: Seq[B]): Option[ContextIO] =
-    state match {
-      case ViewData(v, RecyclerData(a: RVA)) =>
-        dbg(v.recycler.hashCode)
-        dbg(v.recycler.getAdapter.hashCode)
-        dbg(a.hashCode)
-        Some(ContextIO(a.updateItems(items).map(_ => NopMessage)).main)
-      case _ => None
-    }
-
   def trans: Transitions = {
     case SetAdapter(adapter) => { case s => setAdapter(s, adapter) }
     case InsertAdapter => {
@@ -109,8 +94,8 @@ with RVCellBase[A, B, RVA]
         ContextIO(adapter.map(SetAdapter(_))) :: HNil
     }
     case Update(items) => {
-      case AdapterExtractor(a: RVA) =>
-        ContextIO(a.updateItems(items).map(_ => NopMessage)).main :: HNil
+      case AdapterExtractor(a) =>
+        a.updateItems(items).unitMain :: HNil
     }
   }
 }

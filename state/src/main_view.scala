@@ -219,7 +219,7 @@ object ExtMVContainerData
   case object CreateDrawerView
   extends Message
 
-  case class SetDrawerView(view: View)
+  case class SetDrawerTree(tree: AnyTree)
   extends Message
 
   case object DrawerLoaded
@@ -292,7 +292,7 @@ extends MVContainer
     //   case ViewData(main, sub) =>
     //     dataWithToggle(main, sub, toggle) :: SyncToggle :: HNil
     // }
-    // case SetDrawerView(v) => {
+    // case SetDrawerTree(v) => {
     //   case ViewData(main, _) =>
     //     (main.drawer.drawer >>- MainFrame.load(v)).map(_ => DrawerLoaded) :: HNil
     // }
@@ -323,7 +323,7 @@ with AnnotatedTIO
 
   def emvfTrans: Transitions = {
     case MVCReady => LoadDrawerLayout :: HNil
-    case CreateExtMainView => CreateMainView.broadcast :: HNil
+    case CreateExtMainView => CreateMainView :: HNil
   }
 }
 
@@ -332,16 +332,17 @@ trait MainViewCell
 extends ViewCell
 {
   def trans: Transitions = {
-    case CreateDrawerView => CreateTree :: HNil
+    case CreateMainView => CreateTree :: HNil
     case InsertTree(tree) => insertTree(SetMainTree(tree))
   }
 }
 
-// @cell
-// trait DrawerViewCell
-// extends ViewCell
-// {
-//   def trans: Transitions = {
-//     case InsertTree(tree) => insertTree(SetDrawerView(tree.container))
-//   }
-// }
+@cell
+trait DrawerViewCell
+extends ViewCell
+{
+  def trans: Transitions = {
+    case CreateDrawerView => CreateTree :: HNil
+    case InsertTree(tree) => insertTree(SetDrawerTree(tree))
+  }
+}
