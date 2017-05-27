@@ -87,8 +87,8 @@ extends AppState
   type AndroidCells = AndroidCell.Aux :: ExtMVFrame.Aux :: HNil
   def androidCells: AndroidCells = AndroidCell.aux :: mainView :: HNil
 
-  implicit def androidCellsTransition: transition.Case.Aux[AndroidCells, Message, SLR] =
-    transition.dyn
+//   implicit def androidCellsTransition: transition.Case.Aux[AndroidCells, Message, SLR] =
+//     transition.dyn
 }
 
 trait StateApplication

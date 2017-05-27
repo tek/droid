@@ -79,7 +79,6 @@ object FromContext
 trait InternalIOMessage
 extends Message
 {
-  def msg(implicit sender: Sender): Message
 }
 
 // case class FromContextIO[F[_, _]: PerformIO, A: Parcel, C: FromContext]
@@ -100,7 +99,6 @@ extends Message
 trait IOTaskBase
 extends Message
 {
-  def msg(implicit sender: Sender): Message
 }
 
 // case class IOTask[F[_, _]: PerformIO, A: Parcel, C]

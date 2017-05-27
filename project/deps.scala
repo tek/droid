@@ -7,7 +7,7 @@ import android.Keys._
 object DroidDeps
 extends tryp.AndroidDeps
 {
-  val trypV = "0.7-SNAPSHOT"
+  val pulsarV = "0.7-SNAPSHOT"
 
   override def deps = super.deps ++ Map(
     "core" -> core,
@@ -32,8 +32,8 @@ extends tryp.AndroidDeps
   )
 
   def pulsar(pro: String) = {
-    // dd("tryp" %% s"pulsar-$pro" % trypV, "tek/pulsar", pro)
-    "tryp" %% s"pulsar-$pro" % trypV
+    // dd("tryp" %% s"pulsar-$pro" % pulsarV, "tek/pulsar", pro)
+    "tryp" %% s"pulsar-$pro" % pulsarV
   }
 
   def core = ids(

@@ -72,8 +72,6 @@ with Logging
 {
   implicit def context: Context
 
-  // implicit def scheduler: Scheduler
-
   def items: Seq[B]
 
   def updateItems(newItems: Seq[B]): IO[Unit, Context]
@@ -95,12 +93,11 @@ with Logging
 
   def updateVisibleData(newItems: Seq[B]) {
     visibleItems = sort(newItems)
+    dbg(this.hashCode)
     notifyDataSetChanged()
   }
 
   def sort(items: Seq[B]) = items
-
-  def dataUpdated() {}
 
   // lazy val getFilter = {
   //   new Filter {

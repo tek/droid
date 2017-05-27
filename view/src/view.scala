@@ -93,8 +93,8 @@ extends ToViewOps
 
 final class ViewGroupOps(vg: ViewGroup)
 {
-  def children: Seq[View] = {
-    (0 until vg.getChildCount) map { i => vg.getChildAt(i) }
+  def children: List[View] = {
+    (0 until vg.getChildCount).map { i => vg.getChildAt(i) }.toList
   }
 }
 

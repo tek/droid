@@ -50,12 +50,12 @@ with Logging
     }
   }
 
-  def viewsOfType[B <: View: ClassTag]: Seq[B] = {
+  def viewsOfType[B <: View: ClassTag]: List[B] = {
     a.root match {
-      case v: B => Seq(v)
+      case v: B => List(v)
       case layout: ViewGroup =>
         layout.children.map {
-          case v: B => Seq(v)
+          case v: B => List(v)
           case sub: ViewGroup => sub.viewsOfType[B]
           case _ => Nil
         }.flatten
