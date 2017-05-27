@@ -85,6 +85,9 @@ object MainViewMessages
   case object CreateMainView
   extends Message
 
+  case object CreateExtMainView
+  extends Message
+
   case class SetMainTree(tree: AnyTree)
   extends Message
 
@@ -110,33 +113,22 @@ import MainViewMessages._
 
 @cell
 trait MVContainer
-extends ViewCellBase
+extends ViewCell
 {
   type CellTree <: AnyTree with HasMainFrame
 
   def mvcTrans: Transitions = {
-    case CreateContentView =>
-      ContextIO(infMain.map(ContentTree(_))) :: HNil
-    case ContentTree(CellTree(tree)) => {
-      case s =>
-        mainView = Some(tree)
-        stateWithTree(s, tree, None, None) :: act(_.setContentView(tree.container)).main :: MVCReady :: HNil
-    }
+    case CreateContentView => CreateTree :: HNil
+    case InsertTree(tree) => insertTree(setContentView(tree))
+    case TreeInserted => MVCReady :: HNil
     case SetMainTree(tree) => {
       case ViewData(main, sub) => setMainView(main, tree.container) :: HNil
     }
     case Back => act(_.onBackPressed()) :: HNil
-    // case ContentViewReady(agent) => {
-    //   case ViewData(v, _) => InitUi :: HNil
-    // }
-    case UiLoaded => {
-      /** If the main frame has already been installed (state Ready), immediately request the main view
-      */
-      case ViewData(_, Ready) => InitUi :: HNil
-    }
   }
 
   def setMainView(main: CellTree, view: View) = {
+    mainView = Some(main)
     def replaceFragment(v: View)(a: Activity) = {
       a.replaceFragment(main.mainFrame.getId, MainFragment(v), true, "mainframe", false)
       MainViewLoaded
@@ -145,6 +137,10 @@ extends ViewCellBase
   }
 
   var mainView: Option[CellTree] = None
+
+  def setContentView(tree: CellTree) = act(_.setContentView(tree.container)).main
+
+  def createView = ContextIO(infMain.map(ContentTree(_))) :: HNil
 }
 
 trait MVContainerMain
@@ -223,7 +219,7 @@ object ExtMVContainerData
   case object CreateDrawerView
   extends Message
 
-  case class DrawerViewReady(view: View)
+  case class SetDrawerView(view: View)
   extends Message
 
   case object DrawerLoaded
@@ -264,17 +260,20 @@ extends MVContainer
   def createToggle(a: Activity, main: CellTree) =
     new Toggle(a, main.drawer.container, main.toolbar, R.string.drawer_open, R.string.drawer_close)
 
+  def setupActionBar(main: CellTree) =
+    acact { a =>
+      a.setSupportActionBar(main.toolbar)
+      a.getSupportActionBar.setHomeButtonEnabled(true)
+      a.getSupportActionBar.setDisplayHomeAsUpEnabled(true)
+      val toggle = createToggle(a, main)
+      toggle.syncState()
+      NopMessage
+    }
+
   def toggleTrans: Transitions = {
     case LoadDrawerLayout => {
       case ViewData(main, _) =>
-        acact { a =>
-          a.setSupportActionBar(main.toolbar)
-          a.getSupportActionBar.setHomeButtonEnabled(true)
-          a.getSupportActionBar.setDisplayHomeAsUpEnabled(true)
-          val toggle = createToggle(a, main)
-          toggle.syncState()
-          NopMessage
-        }.main :: CreateDrawerView :: HNil
+        setupActionBar(main).main :: CreateExtMainView :: CreateDrawerView :: HNil
         // DrawerReady :: CreateDrawerView :: SetupActionBar :: CreateToggle :: HNil
     }
     // case SetupActionBar => {
@@ -293,10 +292,10 @@ extends MVContainer
     //   case ViewData(main, sub) =>
     //     dataWithToggle(main, sub, toggle) :: SyncToggle :: HNil
     // }
-    case DrawerViewReady(v) => {
-      case ViewData(main, _) =>
-        (main.drawer.drawer >>- MainFrame.load(v)).map(_ => DrawerLoaded) :: HNil
-    }
+    // case SetDrawerView(v) => {
+    //   case ViewData(main, _) =>
+    //     (main.drawer.drawer >>- MainFrame.load(v)).map(_ => DrawerLoaded) :: HNil
+    // }
     // case SyncToggle => {
     //   case ExtMVData(_, _, toggle, _) =>
     //     con(_ => toggle.syncState()).main :: HNil
@@ -324,6 +323,25 @@ with AnnotatedTIO
 
   def emvfTrans: Transitions = {
     case MVCReady => LoadDrawerLayout :: HNil
-    case CreateDrawerView => CreateMainView.broadcast :: HNil
+    case CreateExtMainView => CreateMainView.broadcast :: HNil
   }
 }
+
+@cell
+trait MainViewCell
+extends ViewCell
+{
+  def trans: Transitions = {
+    case CreateDrawerView => CreateTree :: HNil
+    case InsertTree(tree) => insertTree(SetMainTree(tree))
+  }
+}
+
+// @cell
+// trait DrawerViewCell
+// extends ViewCell
+// {
+//   def trans: Transitions = {
+//     case InsertTree(tree) => insertTree(SetDrawerView(tree.container))
+//   }
+// }

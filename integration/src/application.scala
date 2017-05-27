@@ -23,6 +23,7 @@ extends StateActivity
 @cell
 object IntView
 extends StringRV
+with MainViewCell
 
 class IntAppState
 extends ExtMVAppState

@@ -4,18 +4,19 @@ package recycler
 
 import iota.ViewTree
 
+import shapeless.{Typeable, ::}
+
 import tryp.state.annotation.cell
 
 import view.io.recycler._
 import state.MainViewMessages.{CreateMainView, SetMainTree}
-import state.MainTree
 
 trait RVTree
 {
   def recycler: RecyclerView
 }
 
-case class SetAdapter(adapter: Any)
+case class SetAdapter[A](adapter: A)
 extends Message
 
 object RVData
@@ -26,20 +27,17 @@ object RVData
   case object AdapterInstalled
   extends Message
 
-  case class Update(items: Seq[Any])
-  extends Message
-
   case class RecyclerData(adapter: RecyclerAdapterI)
   extends CState
 }
 
 import RVData._
 
-@cell
-abstract class RVCell[A <: RecyclerViewHolder, B: ClassTag, RVA <: RecyclerAdapter[A, B]: ClassTag]
+trait RVCellBase[A <: RecyclerViewHolder, B, RVA <: RecyclerAdapter[A, B]]
 extends ViewCellBase
 {
-  type CellTree <: AnyTree with RVTree
+  case object InsertAdapter
+  extends Message
 
   object AdapterExtractor
   {
@@ -49,6 +47,31 @@ extends ViewCellBase
       case _ => None
     }
   }
+
+  def stateWithRecyclerData(data: RecyclerData): CState => CState = {
+    case ViewData(main, _) => ViewData(main, data)
+    case _ => data
+  }
+
+  def stateWithAdapter(adapter: RVA) = stateWithRecyclerData(RecyclerData(adapter))
+
+  def setAdapter(s: CState, adapter: Any)(implicit ct: ClassTag[RVA]) = {
+    adapter match {
+      case a: RVA => Some(stateWithAdapter(a)(s) :: InsertAdapter :: HNil)
+      case _ => None
+    }
+  }
+}
+
+@cell
+abstract class RVCell[A <: RecyclerViewHolder, B: ClassTag, RVA <: RecyclerAdapter[A, B]: ClassTag]
+extends ViewCell
+with RVCellBase[A, B, RVA]
+{
+  type CellTree <: AnyTree with RVTree
+
+  case class Update(items: Seq[B])
+  extends Message
 
   def adapter: IO[RVA, Context]
 
@@ -64,28 +87,30 @@ extends ViewCellBase
     super.stateWithTree(state, tree, sub.orElse(adapter), extra)
   }
 
-  def stateWithAdapter(state: CState, adapter: RVA): CState = {
-    val data = RecyclerData(adapter)
+  def update(state: CState, items: Seq[B]): Option[ContextIO] =
     state match {
-      case ViewData(main, _) => ViewData(main, data)
-      case _ => data
+      case ViewData(v, RecyclerData(a: RVA)) =>
+        dbg(v.recycler.hashCode)
+        dbg(v.recycler.getAdapter.hashCode)
+        dbg(a.hashCode)
+        Some(ContextIO(a.updateItems(items).map(_ => NopMessage)).main)
+      case _ => None
     }
-  }
 
   def trans: Transitions = {
-    case CreateMainView =>
-      ContextIO(adapter.map(SetAdapter(_))).broadcast :: ContextIO(infMain.map(MainTree(_))).broadcast :: HNil
-    case SetAdapter(adapter: RVA) => {
-      case s => stateWithAdapter(s, adapter) :: HNil
-    }
-    case MainTree(CellTree(tree)) => {
-      case s @ AdapterExtractor(a: RVA) =>
+    case SetAdapter(adapter) => { case s => setAdapter(s, adapter) }
+    case InsertAdapter => {
+      case ViewData(tree, RecyclerData(a: RVA)) =>
         val io = tree.recycler >>- recyclerAdapter(a) >>- recyclerConf >>- recyclerLayout
-        stateWithTree(s, tree, Some(RecyclerData(a)), None) :: SetMainTree(tree).broadcast :: ContextIO(io.map(_ => NopMessage)).main.broadcast :: HNil
+        ContextIO(io.map(_ => AdapterInstalled)).main :: HNil
     }
-    case Update(items: Seq[B]) => {
+    case TreeInserted => {
+      case ViewData(tree, _) =>
+        ContextIO(adapter.map(SetAdapter(_))) :: HNil
+    }
+    case Update(items) => {
       case AdapterExtractor(a: RVA) =>
-        ContextIO(a.updateItems(items).map(_ => NopMessage)).main.broadcast :: HNil
+        ContextIO(a.updateItems(items).map(_ => NopMessage)).main :: HNil
     }
   }
 }
