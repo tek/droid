@@ -124,7 +124,7 @@ extends ViewCell
     case SetMainTree(tree) => {
       case ViewData(main, sub) => setMainView(main, tree.container) :: HNil
     }
-    case Back => act(_.onBackPressed()) :: HNil
+    case Back => actU(_.onBackPressed()) :: HNil
   }
 
   def setMainView(main: CellTree, view: View) = {
@@ -138,7 +138,7 @@ extends ViewCell
 
   var mainView: Option[CellTree] = None
 
-  def setContentView(tree: CellTree) = act(_.setContentView(tree.container)).main
+  def setContentView(tree: CellTree) = actU(_.setContentView(tree.container)).main
 
   def createView = ContextIO(infMain.map(ContentTree(_))) :: HNil
 }

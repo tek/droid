@@ -45,7 +45,7 @@ extends AnnotatedTIO
     case m: AppCompatActivityIO => {
       case IOMState(act: AppCompatActivity) => (strat: Strategy) => TaskIO(m.task(act), m.desc) :: HNil
     }
-    case SetContentTree(t) => act(_.setContentView(t.container)) :: HNil
+    case SetContentTree(t) => actU(_.setContentView(t.container)) :: HNil
   }
 }
 

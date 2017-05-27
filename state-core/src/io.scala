@@ -59,9 +59,9 @@ object ToIORunner
     }
 }
 
-final class IOStateOps[C](val io: IO[Message, C])
+final class IOStateOps[A <: Message, C](val io: IO[A, C])
 {
-  def runner(implicit toRunner: ToIORunner[C]) = toRunner.pure(io)
+  def runner(implicit toRunner: ToIORunner[C]) = toRunner.pure(io.widen[Message])
 
   def main(implicit toRunner: ToIORunner[C]) = runner.main
 }
@@ -75,8 +75,8 @@ final class IOStateAnyOps[A, C](val io: IO[A, C])
 
 trait ToIOStateOps
 {
-  implicit def ToIOStateOps[C](io: IO[Message, C]): IOStateOps[C] =
-    new IOStateOps[C](io)
+  implicit def ToIOStateOps[A <: Message, C](io: IO[A, C]): IOStateOps[A, C] =
+    new IOStateOps[A, C](io)
 
   implicit def ToIOStateAnyOps[A, C](io: IO[A, C]): IOStateAnyOps[A, C] =
     new IOStateAnyOps[A, C](io)
@@ -92,6 +92,15 @@ trait AnnotatedTIO
 
   def acact[A](f: AppCompatActivity => A): AppCompatActivityIO =
     macro AnnotatedTIOM.inst[A, AppCompatActivity, AppCompatActivityIO]
+
+  def conU(f: Context => Unit): ContextIO =
+    macro AnnotatedTIOM.instU[Context, ContextIO]
+
+  def actU(f: Activity => Unit): ActivityIO =
+    macro AnnotatedTIOM.instU[Activity, ActivityIO]
+
+  def acactU(f: AppCompatActivity => Unit): AppCompatActivityIO =
+    macro AnnotatedTIOM.instU[AppCompatActivity, AppCompatActivityIO]
 
   def inflate[A]: IO[A, Context] =
     macro AnnotatedTIOM.inflate[A]
@@ -117,9 +126,33 @@ extends AndroidMacros
     Expr(q"new $ctor($io.map(a => implicitly[Parcel[$aType]].msg(a): tryp.state.core.Message))")
   }
 
+  def instU[C: WeakTypeTag, IO: WeakTypeTag](f: Expr[C => Unit]): Expr[IO] = {
+    val ctor = weakTypeOf[IO].typeSymbol
+    val io = ioWithRepr[Unit, C](f)
+    Expr(q"new $ctor($io.map(_ => NopMessage))")
+  }
+
   def inflate[A: WeakTypeTag]: Expr[IO[A, Context]] = {
     val aType = weakTypeOf[A]
     val vtree = aType.typeSymbol.companion
     ioWithRepr[A, Context](Expr[Context => A](q"(ctx: Context) => iota.ViewTree.inflate(ctx, $vtree)"))
   }
+}
+
+trait IOParcel
+{
+  implicit def instance_Parcel_IO_Message_Context[A, M <: Message]
+  (implicit P: Parcel.Aux[A, M])
+  : Parcel.Aux[IO[A, Context], ContextIO] =
+    new Parcel[IO[A, Context]] {
+      type M = ContextIO
+      def msg(a: IO[A, Context]) = ContextIO(a.map(P.msg))
+    }
+
+  implicit def instance_Parcel_IO_Message_Message[A <: Message]
+  : Parcel.Aux[IO[A, Context], ContextIO] =
+    new Parcel[IO[A, Context]] {
+      type M = ContextIO
+      def msg(a: IO[A, Context]) = ContextIO(a.widen[Message])
+    }
 }
