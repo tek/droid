@@ -238,18 +238,18 @@ trait IOInstances
       }
   }
 
-  implicit lazy val instance_ConsIO_IO = new ConsIO[IO] {
+  implicit lazy val instance_ConsIO_IO: ConsIO[IO] = new ConsIO[IO] {
     def cons[A, C](fa: IO[A, C])(c: C): A = fa(c)
     def pure[A, C](run: C => A): IO[A, C] = IO(run, run.toString)
     def pureDesc[A, C](run: C => A, desc: String): IO[A, C] = IO(run, desc)
   }
 
-  implicit def instance_PerformIO_IO =
+  implicit def instance_PerformIO_IO: PerformIO[IO] =
     new PerformIO[IO] {
-      def unsafePerformIO[A, C](fa: IO[A, C])(implicit c: C) =
+      def perform[A, C](fa: IO[A, C])(implicit c: C) =
         Task.delay(fa(c))
 
-      def main[A, C](fa: IO[A, C])(timeout: Duration = 5.seconds)
+      def performMain[A, C](fa: IO[A, C])(timeout: Duration = 5.seconds)
       (implicit c: C, sched: Scheduler) = {
         PerformIO.mainTask(fa(c), timeout)
       }
@@ -332,9 +332,9 @@ extends ToIotaKestrelOps
 
 trait PerformIO[F[_, _]]
 {
-  def unsafePerformIO[A, C](fa: F[A, C])(implicit c: C): Task[A]
+  def perform[A, C](fa: F[A, C])(implicit c: C): Task[A]
 
-  def main[A, C](fa: F[A, C])(timeout: Duration)
+  def performMain[A, C](fa: F[A, C])(timeout: Duration)
   (implicit c: C, scheduler: Scheduler): Task[A]
 }
 
@@ -347,8 +347,7 @@ trait PerformIOExecution
   val mainName = "android main"
 
   object AndroidMainExecutorService
-  extends PoolExecutor(mainName, "android", 1, 1, 0L, poolQueue,
-    PoolExecutor.defaultFactory(mainName))
+  extends PoolExecutor(mainName, "android", 1, 1, 0L, poolQueue, PoolExecutor.defaultFactory(mainName))
   {
     lazy val handler = new Handler(Looper.getMainLooper)
 
@@ -361,7 +360,7 @@ trait PerformIOExecution
     }
   }
 
-  def main[A](task: Task[A], timeout: Duration)
+  def performMain[A](task: Task[A], timeout: Duration)
   (implicit sched: Scheduler): Task[A] = {
     implicit val strat = Strategy.fromExecutor(AndroidMainExecutorService)
     val timed = timeout match {
@@ -372,9 +371,10 @@ trait PerformIOExecution
     timed.async(strat)
   }
 
+  // use `Task.delay` here because `performMain` wraps the task into an `Async` with strategy
   def mainTask[A](f: => A, timeout: Duration)
   (implicit sched: Scheduler): Task[A] = {
-    main(Task.delay(f), timeout)
+    performMain(Task.delay(f), timeout)
   }
 
   object AndroidMainExecutionContext
@@ -405,20 +405,20 @@ extends PerformIOExecution
     def typeClassInstance: PerformIO[F]
     def self: F[A, C]
 
-    def unsafePerformIO(implicit c: C): Task[A] = {
-      typeClassInstance.unsafePerformIO[A, C](self)
+    def perform(implicit c: C): Task[A] = {
+      typeClassInstance.perform[A, C](self)
     }
 
-    def main(implicit c: C, sched: Scheduler): Task[A] = {
-      typeClassInstance.main[A, C](self)(5.seconds)
+    def performMain(implicit c: C, sched: Scheduler): Task[A] = {
+      typeClassInstance.performMain[A, C](self)(5.seconds)
     }
 
     def mainTimed(timeout: Duration)
     (implicit c: C, sched: Scheduler): Task[A] = {
-      typeClassInstance.main[A, C](self)(timeout)
+      typeClassInstance.performMain[A, C](self)(timeout)
     }
 
-    def mainUnit(implicit c: C, sched: Scheduler): Task[Unit] = main.void
+    def mainUnit(implicit c: C, sched: Scheduler): Task[Unit] = performMain.void
 
     def mainUnit(timeout: Duration)
     (implicit c: C, sched: Scheduler): Task[Unit] =

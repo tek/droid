@@ -9,7 +9,7 @@ import android.support.v7.app.AppCompatActivity
 
 import view.core._
 
-trait IORunner[A]
+trait IORunner[A, B]
 extends Message
 {
   def io: IO[Message, A]
@@ -18,27 +18,68 @@ extends Message
 
   def runOnMain: Boolean = false
 
+  def main: B
+
   def task(a: A)(implicit sched: Scheduler): Task[Message] =
     if (runOnMain) io.mainTimed(3.seconds)(a, sched)
-    else io.unsafePerformIO(a)
+    else io.perform(a)
 }
 
 case class ContextIO(io: IO[Message, Context])
-extends IORunner[Context]
+extends IORunner[Context, ContextIO]
 {
   def main = new ContextIO(io) { override def runOnMain = true }
 }
 
 case class ActivityIO(io: IO[Message, Activity])
-extends IORunner[Activity]
+extends IORunner[Activity, ActivityIO]
 {
   def main = new ActivityIO(io) { override def runOnMain = true }
 }
 
 case class AppCompatActivityIO(io: IO[Message, AppCompatActivity])
-extends IORunner[AppCompatActivity]
+extends IORunner[AppCompatActivity, AppCompatActivityIO]
 {
   def main = new AppCompatActivityIO(io) { override def runOnMain = true }
+}
+
+trait ToIORunner[C]
+{
+  type R <: IORunner[C, R]
+
+  def pure(io: IO[Message, C]): R
+}
+
+object ToIORunner
+{
+  implicit def ToIORunner_Context: ToIORunner[Context] =
+    new ToIORunner[Context] {
+      type R = ContextIO
+      def pure(io: IO[Message, Context]) = ContextIO(io)
+    }
+}
+
+final class IOStateOps[C](val io: IO[Message, C])
+{
+  def runner(implicit toRunner: ToIORunner[C]) = toRunner.pure(io)
+
+  def main(implicit toRunner: ToIORunner[C]) = runner.main
+}
+
+final class IOStateAnyOps[A, C](val io: IO[A, C])
+{
+  def unit(implicit toRunner: ToIORunner[C]) = toRunner.pure(io.map(_ => NopMessage))
+
+  def unitMain(implicit toRunner: ToIORunner[C]) = unit.main
+}
+
+trait ToIOStateOps
+{
+  implicit def ToIOStateOps[C](io: IO[Message, C]): IOStateOps[C] =
+    new IOStateOps[C](io)
+
+  implicit def ToIOStateAnyOps[A, C](io: IO[A, C]): IOStateAnyOps[A, C] =
+    new IOStateAnyOps[A, C](io)
 }
 
 trait AnnotatedTIO

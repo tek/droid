@@ -49,7 +49,7 @@ with AnnotatedIO
   }
 
   def ui[A](f: => A) = {
-    conIO(_ => f).main.unsafeRun()
+    conIO(_ => f).performMain.unsafeRun()
   }
 
   def sleep(secs: Double) = Thread.sleep((secs * 1000).toInt)

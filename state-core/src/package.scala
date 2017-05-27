@@ -14,5 +14,8 @@ trait Exports
 extends Types
 with Names
 
+trait All
+extends ToIOStateOps
+
 @integrate(view, tryp.state.core, tryp.state)
 object `package`

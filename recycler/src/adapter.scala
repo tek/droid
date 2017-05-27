@@ -93,7 +93,6 @@ with Logging
 
   def updateVisibleData(newItems: Seq[B]) {
     visibleItems = sort(newItems)
-    dbg(this.hashCode)
     notifyDataSetChanged()
   }
 
