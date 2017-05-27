@@ -20,10 +20,20 @@ extends StateActivity
   def initialMessages = Nil
 }
 
+case class UpdateInt(strings: List[String])
+extends Message
+
 @cell
 object IntView
 extends StringRV
 with MainViewCell
+{
+  def trans: Transitions = {
+    case UpdateInt(strings) => {
+      Update(strings).local :: HNil
+    }
+  }
+}
 
 class IntAppState
 extends ExtMVAppState

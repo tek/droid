@@ -9,7 +9,7 @@ extends Spec
     activity
     sleep(1)
     val strings = List("first", "second")
-    send(recycler.RVData.Update(strings))
+    send(UpdateInt(strings))
     sleep(1)
     val tv = for {
       fl <- mainFrame.viewTree.subForest.headOption
