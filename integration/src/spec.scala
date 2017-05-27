@@ -9,4 +9,8 @@ extends StateInstrumentationSpec[IntStateActivity](classOf[IntStateActivity])
     case a: IntAppState => a
     case _ => sys.error("no IntApp")
   }
+
+  def mainView = intAppState.mainView
+
+  def intView = intAppState.intView
 }

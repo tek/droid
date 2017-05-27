@@ -38,7 +38,9 @@ with MainViewCell
 class IntAppState
 extends ExtMVAppState
 {
-  def loopCtor = Loop.cells(androidCells :: (IntView.aux :: HNil) :: HNil, Nil)
+  val intView = IntView.aux
+
+  def loopCtor = Loop.fast(intView :: androidCells, Nil)
 }
 
 class IntApplication
