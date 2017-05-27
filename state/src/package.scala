@@ -15,10 +15,11 @@ extends Types
 with Vals
 
 trait All
+extends view.FragmentManagement.ToFragmentManagementOps
 
 @integrate(view, tryp.state.core, tryp.state, droid.state.core)
 object `package`
-extends view.FragmentManagement.ToFragmentManagementOps
+extends All
 {
   type AnyTree = iota.ViewTree[_ <: ViewGroup]
 }

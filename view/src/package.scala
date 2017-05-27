@@ -17,8 +17,7 @@ with Types
 }
 
 trait All
-extends view.core.All
-with RootView.ToRootViewOps
+extends RootView.ToRootViewOps
 with ToSearchable
 with ToSearchView
 with HasContextF.ToHasContextFOps

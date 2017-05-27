@@ -16,6 +16,7 @@ with Names
 
 trait All
 extends ToIOStateOps
+with IOParcel
 
 @integrate(view, tryp.state.core, tryp.state)
 object `package`
