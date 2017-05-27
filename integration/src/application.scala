@@ -27,11 +27,14 @@ extends Message
 object IntView
 extends StringRV
 with MainViewCell
+with state.core.ToIOStateOps
 {
   def trans: Transitions = {
     case UpdateInt(strings) => {
       Update(strings).local :: HNil
     }
+    case CreateAdapter =>
+      adapter.map(SetAdapter(_)).runner :: HNil
   }
 }
 

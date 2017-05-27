@@ -8,16 +8,13 @@ import shapeless.{Typeable, ::}
 
 import tryp.state.annotation.cell
 
-import view.io.recycler._
+import view.io.recycler.{nopK, linear, recyclerAdapter}
 import state.MainViewMessages.{CreateMainView, SetMainTree}
 
 trait RVTree
 {
   def recycler: RecyclerView
 }
-
-case class SetAdapter[A](adapter: A)
-extends Message
 
 trait RVCellBase[A <: RecyclerViewHolder, B, RVA <: RecyclerAdapter[A, B]]
 extends ViewCellBase
@@ -33,6 +30,9 @@ extends ViewCellBase
 
   case class RecyclerData(adapter: RVA)
   extends CState
+
+  case class SetAdapter(adapter: RVA)
+  extends Message
 
   object AdapterExtractor
   {
@@ -68,7 +68,7 @@ with RVCellBase[A, B, RVA]
   case class Update(items: Seq[B])
   extends Message
 
-  def adapter: IO[RVA, Context]
+  // def adapter: IO[RVA, Context]
 
   def recyclerConf: CK[RecyclerView] = nopK
 
@@ -85,14 +85,11 @@ with RVCellBase[A, B, RVA]
   def trans: Transitions = {
     case SetAdapter(adapter) => { case s => setAdapter(s, adapter) }
     case InsertAdapter => {
-      case ViewData(tree, RecyclerData(a: RVA)) =>
+      case ViewData(tree, RecyclerData(a)) =>
         val io = tree.recycler >>- recyclerAdapter(a) >>- recyclerConf >>- recyclerLayout
-        ContextIO(io.map(_ => AdapterInstalled)).main :: HNil
+        io.map(_ => AdapterInstalled).main :: HNil
     }
-    case TreeInserted => {
-      case ViewData(tree, _) =>
-        ContextIO(adapter.map(SetAdapter(_))) :: HNil
-    }
+    case TreeInserted => CreateAdapter.local :: HNil
     case Update(items) => {
       case AdapterExtractor(a) =>
         a.updateItems(items).unitMain :: HNil
