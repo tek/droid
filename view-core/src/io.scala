@@ -73,8 +73,9 @@ trait IOI[A, C]
 
 case class IO[A, C](run: C => A, desc: String)
 extends IOI[A, C]
+with (C => A)
 {
-  def apply(implicit c: C): A = run(c)
+  def apply(c: C): A = run(c)
 
   override def toString = s"IO($desc)"
 }

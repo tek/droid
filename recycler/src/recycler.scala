@@ -98,8 +98,8 @@ with RVTree
 }
 
 @cell
-trait SimpleRV[A <: RecyclerViewHolder, B, C <: RecyclerAdapter[A, B]]
-extends RVCell[A, B, C]
+trait SimpleRV[Model, Element <: AnyTree, Adapter <: SimpleRecyclerAdapter[Element, Model]]
+extends RVCell[Holder[Element], Model, Adapter]
 {
   type CellTree = RVMain
 
@@ -113,7 +113,7 @@ extends RVCell[A, B, C]
 
 @cell
 trait StringRV
-extends SimpleRV[StringHolder, String, StringRA]
+extends SimpleRV[String, StringElement, StringRA]
 {
   lazy val adapter = conIO(StringRA(_))
 }

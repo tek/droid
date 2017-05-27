@@ -64,7 +64,7 @@ extends ListAdapter
 
 trait RecyclerAdapterI
 
-abstract class RecyclerAdapter[A <: RecyclerViewHolder, B: ClassTag]
+trait RecyclerAdapter[A <: RecyclerViewHolder, B]
 extends RecyclerViewAdapter[A]
 with RecyclerAdapterI
 // with Filterable
@@ -124,21 +124,28 @@ with Logging
   def filterItem(item: B, constraint: CharSequence) = true
 }
 
-abstract class SimpleRecyclerAdapter[A <: RecyclerViewHolder, B: ClassTag]
-extends RecyclerAdapter[A, B]
+case class Holder[A <: AnyTree](tree: A)
+extends RecyclerViewHolder(tree.container)
+
+trait SimpleRecyclerAdapter[Tree <: AnyTree, Model]
+extends RecyclerAdapter[Holder[Tree], Model]
 with AnnotatedIO
 {
-  var simpleItems = Vector[B]()
+  def tree: IO[Tree, Context]
+
+  var simpleItems = Vector[Model]()
 
   def items = simpleItems
 
-  def updateItems(newItems: Seq[B]) = {
+  def updateItems(newItems: Seq[Model]) = {
     conIO { _ =>
       simpleItems = newItems.toVector
       // applyFilter
       updateVisibleData(simpleItems)
     }
   }
+
+  def onCreateViewHolder(parent: ViewGroup, viewType: Int) = Holder(tree(context))
 }
 
 case class StringElement(container: FrameLayout, label: TextView)
@@ -149,19 +156,13 @@ extends ViewTree[FrameLayout]
   override def toString = this.className
 }
 
-case class StringHolder(tree: StringElement)
-extends RecyclerViewHolder(tree.container)
-
 trait StringRecyclerAdapter
-extends SimpleRecyclerAdapter[StringHolder, String]
-with Views[Context, IO]
+extends SimpleRecyclerAdapter[StringElement, String]
+with AnnotatedTIO
 {
-  def onCreateViewHolder(parent: ViewGroup, viewType: Int) = {
-    val tree = ViewTree.inflate(context, StringElement)
-    StringHolder(tree)
-  }
+  def tree = inflate[StringElement]
 
-  def onBindViewHolder(holder: StringHolder, position: Int) {
+  def onBindViewHolder(holder: Holder[StringElement], position: Int) {
     items.lift(position) foreach { s =>
       holder.tree.label.setText(s)
     }
