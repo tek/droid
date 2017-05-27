@@ -49,17 +49,10 @@ extends ViewCellBase
   }
 
   def stateWithAdapter(adapter: RVA) = stateWithRecyclerData(RecyclerData(adapter))
-
-  def setAdapter(s: CState, adapter: Any)(implicit ct: ClassTag[RVA]) = {
-    adapter match {
-      case a: RVA => Some(stateWithAdapter(a)(s) :: InsertAdapter :: HNil)
-      case _ => None
-    }
-  }
 }
 
 @cell
-abstract class RVCell[A <: RecyclerViewHolder, B: ClassTag, RVA <: RecyclerAdapter[A, B]: ClassTag]
+trait RVCell[A <: RecyclerViewHolder, B, RVA <: RecyclerAdapter[A, B]]
 extends ViewCell
 with RVCellBase[A, B, RVA]
 {
@@ -83,7 +76,7 @@ with RVCellBase[A, B, RVA]
   }
 
   def trans: Transitions = {
-    case SetAdapter(adapter) => { case s => setAdapter(s, adapter) }
+    case SetAdapter(adapter) => { case s => stateWithAdapter(adapter)(s) :: InsertAdapter :: HNil }
     case InsertAdapter => {
       case ViewData(tree, RecyclerData(a)) =>
         val io = tree.recycler >>- recyclerAdapter(a) >>- recyclerConf >>- recyclerLayout
@@ -105,7 +98,7 @@ with RVTree
 }
 
 @cell
-abstract class SimpleRV[A <: RecyclerViewHolder, B: ClassTag, C <: RecyclerAdapter[A, B]: ClassTag]
+trait SimpleRV[A <: RecyclerViewHolder, B, C <: RecyclerAdapter[A, B]]
 extends RVCell[A, B, C]
 {
   type CellTree = RVMain
