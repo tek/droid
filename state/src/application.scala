@@ -73,7 +73,7 @@ extends Logging
     case a => log.info(s"finished with $a")
   }
 
-  def send(msg: Message) = in.publish1(msg).unsafeRun()
+  def send(msg: Message) = in.enqueue1(msg).unsafeRun()
 
   // FIXME doesn't work, but doing the same from within the activity does
   def setActivity = SetActivity.apply _ andThen send _
