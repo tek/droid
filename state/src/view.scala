@@ -45,13 +45,31 @@ with view.ViewToIO
   case class VData(tree: CellTree, sub: CState)
   extends ViewData
 
+  object Extra
+  {
+    def unapply(state: CState): Option[CState] =
+      state match {
+        case ViewCellData(_, e) => Some(e)
+        case ViewData(_, _) => None
+        case e => Some(e)
+      }
+  }
+
   def infMain: IO[CellTree, Context]
 
-  def stateWithTree(state: CState, tree: CellTree, sub: Option[CState], extra: Option[CState]): CState = state match {
-    case ViewCellData(ViewData(_, s), e) => ViewCellData(VData(tree, sub | s), extra | e)
-    case ViewData(_, s) => ViewCellData(VData(tree, sub | s), extra | Pristine)
-    case _ => ViewCellData(VData(tree, sub | Pristine), extra | Pristine)
-  }
+  def stateWithExtra(state: CState, extra: CState): CState =
+    state match {
+      case ViewCellData(ViewData(t, s), _) => ViewCellData(VData(t, s), extra)
+      case ViewData(t, s) => ViewCellData(VData(t, s), extra)
+      case _ => ViewCellData(Pristine, extra)
+    }
+
+  def stateWithTree(state: CState, tree: CellTree, sub: Option[CState], extra: Option[CState]): CState =
+    state match {
+      case ViewCellData(ViewData(_, s), e) => ViewCellData(VData(tree, sub | s), extra | e)
+      case ViewData(_, s) => ViewCellData(VData(tree, sub | s), extra | Pristine)
+      case s => ViewCellData(VData(tree, sub | Pristine), extra | s)
+    }
 
   def narrowTree(tree: AnyTree): Option[CellTree]
 
