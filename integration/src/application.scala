@@ -4,8 +4,10 @@ package integration
 
 import android.support.v7.app.AppCompatActivity
 
+import iota._
+
 import tryp.state.annotation.cell
-import recycler.StringRV
+import recycler.{RV, StringElement, RA, DefaultRV}
 import state.StatePool._
 
 case object Msg
@@ -23,18 +25,32 @@ extends StateActivity
 case class UpdateInt(strings: List[String])
 extends Message
 
+case class Clicked(model: String)
+extends Message
+
 @cell
 object IntView
-extends StringRV
+extends RV
+with DefaultRV
 with MainViewCell
 with state.core.ToIOStateOps
 {
+  type Model = String
+  type Element = StringElement
+
+  def infElem = inflate[StringElement]
+
+  def bind(comm: Comm)(tree: StringElement, model: String) = {
+    tree.label.setText(model)
+    tree.container.onClick(comm.send(Clicked(model)))
+  }
+
+  def adapter = { case Extra(comm: Comm) => conIO(RA(infElem, bind(comm))) }
+
   def trans: Transitions = {
     case UpdateInt(strings) => {
       Update(strings).local :: HNil
     }
-    case CreateAdapter =>
-      adapter.map(SetAdapter(_)).runner :: HNil
   }
 }
 

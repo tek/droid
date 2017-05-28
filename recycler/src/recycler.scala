@@ -6,6 +6,11 @@ import iota.ViewTree
 
 import shapeless.{Typeable, ::}
 
+import cats.data.Kleisli
+
+import emm.{Emm, |:, Base}
+import emm.compat.cats._
+
 import tryp.state.annotation.cell
 
 import view.io.recycler.{nopK, linear, recyclerAdapter}
@@ -16,9 +21,13 @@ trait RVTree
   def recycler: RecyclerView
 }
 
-trait RVCellBase[A <: RecyclerViewHolder, B, RVA <: RecyclerAdapter[A, B]]
+trait RVCellBase
 extends ViewCellBase
 {
+  type Model
+  type Holder <: RecyclerViewHolder
+  type Adapter <: RecyclerAdapter[Holder, Model]
+
   case object CreateAdapter
   extends Message
 
@@ -28,10 +37,10 @@ extends ViewCellBase
   case object InsertAdapter
   extends Message
 
-  case class RecyclerData(adapter: RVA)
+  case class RecyclerData(adapter: Adapter)
   extends CState
 
-  case class SetAdapter(adapter: RVA)
+  case class SetAdapter(adapter: Adapter)
   extends Message
 
   object AdapterExtractor
@@ -48,20 +57,18 @@ extends ViewCellBase
     case _ => data
   }
 
-  def stateWithAdapter(adapter: RVA) = stateWithRecyclerData(RecyclerData(adapter))
+  def stateWithAdapter(adapter: Adapter) = stateWithRecyclerData(RecyclerData(adapter))
 }
 
 @cell
-trait RVCell[A <: RecyclerViewHolder, B, RVA <: RecyclerAdapter[A, B]]
+trait RVCell
 extends ViewCell
-with RVCellBase[A, B, RVA]
+with RVCellBase
 {
   type CellTree <: AnyTree with RVTree
 
-  case class Update(items: Seq[B])
+  case class Update(items: Seq[Model])
   extends Message
-
-  // def adapter: IO[RVA, Context]
 
   def recyclerConf: CK[RecyclerView] = nopK
 
@@ -76,6 +83,7 @@ with RVCellBase[A, B, RVA]
   }
 
   def trans: Transitions = {
+    case InitCell(comm) => { case Pristine => comm :: HNil }
     case SetAdapter(adapter) => { case s => stateWithAdapter(adapter)(s) :: InsertAdapter :: HNil }
     case InsertAdapter => {
       case ViewData(tree, RecyclerData(a)) =>
@@ -97,9 +105,8 @@ with RVTree
   override def toString = "RVMain"
 }
 
-@cell
-trait SimpleRV[Model, Element <: AnyTree, Adapter <: SimpleRecyclerAdapter[Element, Model]]
-extends RVCell[Holder[Element], Model, Adapter]
+trait DefaultRV
+extends RVCell
 {
   type CellTree = RVMain
 
@@ -112,8 +119,58 @@ extends RVCell[Holder[Element], Model, Adapter]
 }
 
 @cell
-trait StringRV
-extends SimpleRV[String, StringElement, StringRA]
+trait SimpleRVAdapterCell
+extends RVCellBase
 {
-  lazy val adapter = conIO(StringRA(_))
+  type Element <: AnyTree
+
+  type Holder = RVHolder[Element]
+  type Adapter = SimpleRecyclerAdapter[Element, Model]
+
+  def adapter: PartialFunction[CState, CIO[Adapter]]
+
+  def trans: Transitions = {
+    case CreateAdapter => {
+      case s =>
+        Emm[Option |: CIO |: Base, Adapter](adapter.lift(s))
+          .map((a: Adapter) => SetAdapter(a))
+          .run
+          .map(a => a.runner :: HNil)
+    }
+  }
+}
+
+trait SimpleRV
+extends SimpleRVAdapterCell
+{
+  def infElem: IO[Element, Context]
+
+  val bind: (Element, Model) => Unit
+
+  def adapter = { case _ => conIO(RA(infElem, bind)) }
+}
+
+trait RV
+extends RVCell
+with SimpleRV
+
+trait CommRV
+extends RVCell
+with SimpleRVAdapterCell
+{
+  def infElem: IO[Element, Context]
+
+  def bind(comm: Comm)(tree: Element, model: Model): Unit
+
+  def adapter = { case Extra(comm: Comm) => conIO(RA(infElem, bind(comm))) }
+}
+
+trait StringRV
+extends SimpleRVAdapterCell
+with DefaultRV
+{
+  type Model = String
+  type Element = StringElement
+
+  def adapter = { case _ => conIO(StringRA(_)) }
 }

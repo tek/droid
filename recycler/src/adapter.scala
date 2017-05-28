@@ -66,7 +66,6 @@ trait RecyclerAdapterI
 
 trait RecyclerAdapter[A <: RecyclerViewHolder, B]
 extends RecyclerViewAdapter[A]
-with RecyclerAdapterI
 // with Filterable
 with Logging
 {
@@ -124,14 +123,17 @@ with Logging
   def filterItem(item: B, constraint: CharSequence) = true
 }
 
-case class Holder[A <: AnyTree](tree: A)
+case class RVHolder[A <: AnyTree](tree: A)
 extends RecyclerViewHolder(tree.container)
 
 trait SimpleRecyclerAdapter[Tree <: AnyTree, Model]
-extends RecyclerAdapter[Holder[Tree], Model]
+extends RecyclerAdapter[RVHolder[Tree], Model]
 with AnnotatedIO
+with AnnotatedTIO
 {
   def tree: IO[Tree, Context]
+
+  def bindTree(tree: Tree, position: Int): Unit
 
   var simpleItems = Vector[Model]()
 
@@ -140,12 +142,31 @@ with AnnotatedIO
   def updateItems(newItems: Seq[Model]) = {
     conIO { _ =>
       simpleItems = newItems.toVector
-      // applyFilter
       updateVisibleData(simpleItems)
     }
   }
 
-  def onCreateViewHolder(parent: ViewGroup, viewType: Int) = Holder(tree(context))
+  def onCreateViewHolder(parent: ViewGroup, viewType: Int) = RVHolder(tree(context))
+
+  def onBindViewHolder(holder: RVHolder[Tree], position: Int) = bindTree(holder.tree, position)
+}
+
+trait RA[Tree <: AnyTree, Model]
+extends SimpleRecyclerAdapter[Tree, Model]
+{
+  val bind: (Tree, Model) => Unit
+
+  def bindTree(tree: Tree, position: Int): Unit = items.lift(position).foreach(bind(tree, _))
+}
+
+case class SimpleRA[Tree <: AnyTree, Model](tree: IO[Tree, Context], bind: (Tree, Model) => Unit, context: Context)
+extends RA[Tree, Model]
+
+object RA
+{
+  def apply[Tree <: AnyTree, Model](tree: IO[Tree, Context], bind: (Tree, Model) => Unit)(context: Context)
+  : RA[Tree, Model] =
+    SimpleRA(tree, bind, context)
 }
 
 case class StringElement(container: FrameLayout, label: TextView)
@@ -157,16 +178,11 @@ extends ViewTree[FrameLayout]
 }
 
 trait StringRecyclerAdapter
-extends SimpleRecyclerAdapter[StringElement, String]
-with AnnotatedTIO
+extends RA[StringElement, String]
 {
   def tree = inflate[StringElement]
 
-  def onBindViewHolder(holder: Holder[StringElement], position: Int) {
-    items.lift(position) foreach { s =>
-      holder.tree.label.setText(s)
-    }
-  }
+  val bind = (tree: StringElement, model: String) => tree.label.setText(model)
 }
 
 case class StringRA(context: Context)

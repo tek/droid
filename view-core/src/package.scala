@@ -5,6 +5,9 @@ package core
 
 @exportTypes(IOI, Kestrel, Views, Combinators, ViewCombinators, DescribeIO)
 trait Types
+{
+  type CIO[A] = IO[A, Context]
+}
 
 @exportNames(IO, DescribedKestrel, PerformIO)
 trait Names
