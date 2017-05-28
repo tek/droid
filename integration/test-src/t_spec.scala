@@ -10,6 +10,7 @@ extends Spec
   """
 
   def basic = {
+    sleep(1)
     val strings = List("first", "second")
     send(UpdateInt(strings))
     sleep(1)

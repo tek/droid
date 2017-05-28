@@ -39,7 +39,6 @@ extends tryp.AndroidDeps
   }
 
   def core = ids(
-    // "codes.reactive" %% "scala-time" % "0.4.1",
     pulsar("main")
   )
 
