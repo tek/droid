@@ -50,22 +50,20 @@ with Logging
     }
   }
 
-  def viewsOfType[B <: View: ClassTag]: List[B] = {
+  def viewsOfType[B <: View: ClassTag]: Vector[B] = {
     a.root match {
-      case v: B => List(v)
+      case v: B => Vector(v)
       case layout: ViewGroup =>
         layout.children.map {
-          case v: B => List(v)
+          case v: B => Vector(v)
           case sub: ViewGroup => sub.viewsOfType[B]
-          case _ => Nil
+          case _ => Vector.empty
         }.flatten
-      case _ => Nil
+      case _ => Vector.empty
     }
   }
 
-  def viewOfType[B <: View: ClassTag] = {
-    viewsOfType[B].headOption
-  }
+  def viewOfType[B <: View: ClassTag] = viewsOfType[B].headOption
 
   def viewTree: Tree[View] = {
     a.root match {

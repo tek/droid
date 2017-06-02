@@ -93,9 +93,17 @@ extends ToViewOps
 
 final class ViewGroupOps(vg: ViewGroup)
 {
-  def children: List[View] = {
-    (0 until vg.getChildCount).map { i => vg.getChildAt(i) }.toList
-  }
+  def children: Vector[View] = 0.until(vg.getChildCount).map(vg.getChildAt).toVector
+
+  def head = children.headOption
+
+  def headAs[A: ClassTag] = head.collect { case a: A => a }
+
+  def tail = children.tails.drop(1).collectFirst { case a => a }
+
+  def lift(i: Int) = children.lift(i)
+
+  def liftAs[A: ClassTag](i: Int) = children.lift(i).collect { case a: A => a }
 }
 
 trait ToViewGroupOps
