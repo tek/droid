@@ -6,7 +6,7 @@ package state
   DrawerViewCell)
 trait Types
 
-@exportVals(MVFrame, ExtMVFrame, DefaultScheduler, ViewCellData, AndroidCell)
+@exportVals(MVFrame, ExtMVFrame, DefaultScheduler, AndroidCell)
 trait Vals
 
 @export
@@ -17,7 +17,7 @@ with Vals
 trait All
 extends view.FragmentManagement.ToFragmentManagementOps
 
-@integrate(view, tryp.state.core, tryp.state, droid.state.core)
+@integrate(view, tryp.state.core, tryp.state, tryp.state.ext, droid.state.core)
 object `package`
 extends All
 {

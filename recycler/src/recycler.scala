@@ -53,6 +53,7 @@ extends ViewCellBase
   }
 
   def stateWithRecyclerData(data: RecyclerData): CState => CState = {
+    case S(ViewData(main, _), c, e) => S(ViewData(main, data), c, e)
     case ViewData(main, _) => ViewData(main, data)
     case _ => data
   }
@@ -83,7 +84,6 @@ with RVCellBase
   }
 
   def trans: Transitions = {
-    case InitCell(comm) => { case Pristine => comm :: HNil }
     case SetAdapter(adapter) => { case s => stateWithAdapter(adapter)(s) :: InsertAdapter :: HNil }
     case InsertAdapter => {
       case ViewData(tree, RecyclerData(a)) =>
@@ -162,7 +162,7 @@ with SimpleRVAdapterCell
 
   def bind(comm: Comm)(tree: Element, model: Model): Unit
 
-  def adapter = { case Extra(comm: Comm) => conIO(RA(infElem, bind(comm))) }
+  def adapter = { case C(comm) => conIO(RA(infElem, bind(comm))) }
 }
 
 trait StringRV

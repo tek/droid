@@ -15,16 +15,14 @@ extends CState
 {
   def tree: A
 
-  def sub: CState
+  def extra: CState
 }
-
-case class ViewCellData(view: CState, extra: CState)
-extends CState
 
 trait ViewCellBase
 extends AnnotatedTIO
 with AnnotatedIO
 with view.ViewToIO
+with DCell
 {
   type CellTree <: AnyTree
 
@@ -33,42 +31,26 @@ with view.ViewToIO
 
   object ViewData
   {
-    def apply(tree: CellTree, sub: CState): ViewData = VData(tree, sub)
+    def apply(tree: CellTree, extra: CState): ViewData = VData(tree, extra)
 
     def unapply(a: CState) = a match {
-      case a: ViewData @unchecked => Some((a.tree, a.sub))
-      case ViewCellData(a: ViewData @unchecked, _) => Some((a.tree, a.sub))
+      case a: ViewData @unchecked => Some((a.tree, a.extra))
+      case S(a: ViewData @unchecked, _, _) => Some((a.tree, a.extra))
       case _ => None
     }
   }
 
-  case class VData(tree: CellTree, sub: CState)
+  case class VData(tree: CellTree, extra: CState)
   extends ViewData
-
-  object Extra
-  {
-    def unapply(state: CState): Option[CState] =
-      state match {
-        case ViewCellData(_, e) => Some(e)
-        case ViewData(_, _) => None
-        case e => Some(e)
-      }
-  }
 
   def infMain: IO[CellTree, Context]
 
-  def stateWithExtra(state: CState, extra: CState): CState =
+  def stateWithTree(state: CState, tree: CellTree, vExtra: Option[CState], extra: Option[CState]): CState =
     state match {
-      case ViewCellData(ViewData(t, s), _) => ViewCellData(VData(t, s), extra)
-      case ViewData(t, s) => ViewCellData(VData(t, s), extra)
-      case _ => ViewCellData(Pristine, extra)
-    }
-
-  def stateWithTree(state: CState, tree: CellTree, sub: Option[CState], extra: Option[CState]): CState =
-    state match {
-      case ViewCellData(ViewData(_, s), e) => ViewCellData(VData(tree, sub | s), extra | e)
-      case ViewData(_, s) => ViewCellData(VData(tree, sub | s), extra | Pristine)
-      case s => ViewCellData(VData(tree, sub | Pristine), extra | s)
+      case S(ViewData(_, s), c, e) => S(VData(tree, vExtra | s), c, extra | e)
+      case S(d, c, e) => S(VData(tree, vExtra | Pristine), c, extra | e)
+      case ViewData(_, s) => S(VData(tree, vExtra | s), Pristine, extra | Pristine)
+      case s => S(VData(tree, vExtra | Pristine), Pristine, extra | s)
     }
 
   def narrowTree(tree: AnyTree): Option[CellTree]

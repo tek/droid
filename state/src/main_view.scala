@@ -122,7 +122,7 @@ extends ViewCell
     case InsertTree(tree) => insertTree(setContentView(tree))
     case TreeInserted => MVCReady :: HNil
     case SetMainTree(tree) => {
-      case ViewData(main, sub) => setMainView(main, tree.container) :: HNil
+      case ViewData(main, extra) => setMainView(main, tree.container) :: HNil
     }
     case Back => actU(_.onBackPressed()) :: HNil
   }
@@ -251,11 +251,11 @@ extends MVContainer
     def toggle: Toggle
   }
 
-  case class ExtMVData(tree: CellTree, sub: CState, toggle: Toggle, open: Boolean)
+  case class ExtMVData(tree: CellTree, extra: CState, toggle: Toggle, open: Boolean)
   extends ExtMVDataBase
 
-  def dataWithToggle(main: CellTree, sub: CState, toggle: Toggle): CState =
-    ExtMVData(main, sub, toggle, false)
+  def dataWithToggle(main: CellTree, extra: CState, toggle: Toggle): CState =
+    ExtMVData(main, extra, toggle, false)
 
   def createToggle(a: Activity, main: CellTree) =
     new Toggle(a, main.drawer.container, main.toolbar, R.string.drawer_open, R.string.drawer_close)
@@ -289,8 +289,8 @@ extends MVContainer
     //     act(a => StoreDrawerToggle(createToggle(a, main))) :: HNil
     // }
     // case StoreDrawerToggle(toggle) => {
-    //   case ViewData(main, sub) =>
-    //     dataWithToggle(main, sub, toggle) :: SyncToggle :: HNil
+    //   case ViewData(main, extra) =>
+    //     dataWithToggle(main, extra, toggle) :: SyncToggle :: HNil
     // }
     // case SetDrawerTree(v) => {
     //   case ViewData(main, _) =>
