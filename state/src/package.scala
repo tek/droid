@@ -6,7 +6,7 @@ package state
   DrawerViewCell)
 trait Types
 
-@exportVals(MVFrame, ExtMVFrame, DefaultScheduler, AndroidCell)
+@exportVals(MVFrame, ExtMVFrame, DefaultScheduler, AndroidCell, StatePool)
 trait Vals
 
 @export

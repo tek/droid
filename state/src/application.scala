@@ -54,7 +54,7 @@ extends Logging
 {
   def loopCtor: Task[(LoopData.MQueue, Signal[Boolean], LoopData.OStream)]
 
-  val mainView: MVContainer
+  def mainView: MVContainer
 
   def ctor = {
     for {
