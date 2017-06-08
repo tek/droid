@@ -60,17 +60,21 @@ extends Logging
     for {
       ito <- loopCtor
       (in, term, out) = ito
-      loop <- Task.start(out.runLog)
-    } yield (in, term, loop)
+      state <- async.signalOf[Task, List[CState]](Nil)
+      sink: fs2.Sink[Task, LoopData.Data] = _.collect{case Left(a) => a}.evalMap(state.set).drain
+      loop <- Task.start(out.observe(sink).runLog)
+    } yield (in, term, loop, state)
   }
 
-  lazy val (in, term, loop) = ctor.unsafeRun()
+  lazy val (in, term, loop, currentStates) = ctor.unsafeRun()
+
+  def currentState = currentStates.get.unsafeRun()
 
   def run() = loop.unsafeRunAsync {
     case Left(a: Throwable) =>
       val trace = a.getStackTrace.toList.mkString("\n")
-      log.info(s"finished with $a:\n$trace")
-    case a => log.info(s"finished with $a")
+      log.info(s"state loop failed with $a:\n$trace")
+    case a => log.info(s"state loop finished with $a")
   }
 
   def send(msg: Message) = in.enqueue1(msg).unsafeRun()
@@ -113,6 +117,8 @@ extends AppCompatActivity
     case a: StateApplication => a
     case _ => sys.error("application is not a StateApplication")
   }
+
+  def appState = stateApp.state
 
   def initialMessages: List[Message]
 
