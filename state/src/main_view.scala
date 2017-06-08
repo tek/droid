@@ -225,9 +225,6 @@ object ExtMVContainerData
   case object DrawerLoaded
   extends Message
 
-  case object SetupActionBar
-  extends Message
-
   case object CreateToggle
   extends Message
 
@@ -245,65 +242,43 @@ extends MVContainer
 {
   type CellTree <: AnyTree with HasDrawer
 
-  trait ExtMVDataBase
-  extends ViewData
-  {
-    def toggle: Toggle
-  }
-
-  case class ExtMVData(tree: CellTree, extra: CState, toggle: Toggle, open: Boolean)
-  extends ExtMVDataBase
-
-  def dataWithToggle(main: CellTree, extra: CState, toggle: Toggle): CState =
-    ExtMVData(main, extra, toggle, false)
+  case class ExtMVData(toggle: Toggle, open: Boolean)
+  extends CState
 
   def createToggle(a: Activity, main: CellTree) =
     new Toggle(a, main.drawer.container, main.toolbar, R.string.drawer_open, R.string.drawer_close)
 
   def setupActionBar(main: CellTree) =
-    acact { a =>
+    acactU { a =>
       a.setSupportActionBar(main.toolbar)
       a.getSupportActionBar.setHomeButtonEnabled(true)
       a.getSupportActionBar.setDisplayHomeAsUpEnabled(true)
-      val toggle = createToggle(a, main)
-      toggle.syncState()
-      NopMessage
     }
 
   def toggleTrans: Transitions = {
     case LoadDrawerLayout => {
       case ViewData(main, _) =>
-        setupActionBar(main).main :: CreateExtMainView :: CreateDrawerView :: HNil
-        // DrawerReady :: CreateDrawerView :: SetupActionBar :: CreateToggle :: HNil
+        setupActionBar(main).main :: CreateToggle :: CreateExtMainView :: CreateDrawerView :: HNil
     }
-    // case SetupActionBar => {
-    //   case ViewData(main, _) =>
-    //     acact { a =>
-    //       a.setSupportActionBar(main.toolbar)
-    //       a.getSupportActionBar.setHomeButtonEnabled(true)
-    //       a.getSupportActionBar.setDisplayHomeAsUpEnabled(true)
-    //     }.main :: HNil
-    // }
-    // case CreateToggle => {
-    //   case ViewData(main, _) =>
-    //     act(a => StoreDrawerToggle(createToggle(a, main))) :: HNil
-    // }
-    // case StoreDrawerToggle(toggle) => {
-    //   case ViewData(main, extra) =>
-    //     dataWithToggle(main, extra, toggle) :: SyncToggle :: HNil
-    // }
-    // case SetDrawerTree(v) => {
-    //   case ViewData(main, _) =>
-    //     (main.drawer.drawer >>- MainFrame.load(v)).map(_ => DrawerLoaded) :: HNil
-    // }
-    // case SyncToggle => {
-    //   case ExtMVData(_, _, toggle, _) =>
-    //     con(_ => toggle.syncState()).main :: HNil
-    // }
-    // case CloseDrawer => {
-    //   case ExtMVData(main, _, _, _) =>
-    //     con(_ => main.drawer.container.closeDrawer(Gravity.LEFT)).main :: HNil
-    // }
+    case CreateToggle => {
+      case ViewData(main, _) =>
+        act(a => StoreDrawerToggle(createToggle(a, main))) :: HNil
+    }
+    case StoreDrawerToggle(toggle) => {
+      case s => insertExtra(s, ExtMVData(toggle, false)).map(_ :: SyncToggle.local :: HNil)
+    }
+    case SetDrawerTree(v) => {
+      case ViewData(main, _) =>
+        (main.drawer.drawer >>- MainFrame.load(v.container)).map(_ => DrawerLoaded).main :: HNil
+    }
+    case SyncToggle => {
+      case Extra(ExtMVData(toggle, _)) =>
+        conIO(_ => toggle.syncState()).unitMain :: HNil
+    }
+    case CloseDrawer => {
+      case ViewData(main, _) =>
+        conIO(_ => main.drawer.container.closeDrawer(Gravity.LEFT)).unitMain :: HNil
+    }
   }
 }
 
