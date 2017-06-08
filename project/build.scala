@@ -48,7 +48,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val recycler = "recycler" / "recycler view machine" << state
 
-  lazy val api = "api" / "android api helpers" << core
+  lazy val api = "api" / "android api helpers" << view
 
   // lazy val service = "service" / "machines providing services" << state << viewCore
 

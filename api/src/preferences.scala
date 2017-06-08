@@ -250,3 +250,9 @@ trait HasSettings
 {
   implicit def settings: Settings
 }
+
+trait SettingsIO
+{
+  def settingsIO[A](f: Settings => A): IO[A, Settings] =
+    macro view.AnnotatedIOM.inst[A, Settings]
+}

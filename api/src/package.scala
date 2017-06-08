@@ -9,5 +9,5 @@ trait Vals
 trait Exports
 extends Vals
 
-@integrate(droid.core)
+@integrate(droid.core, view.core)
 object `package`
