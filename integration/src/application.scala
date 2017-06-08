@@ -9,6 +9,8 @@ import iota._
 import tryp.state.annotation.cell
 import recycler.{CommRV, StringElement, RA, DefaultRV}
 import state.StatePool._
+import state.annotation.{viewCell, cellModel}
+import recycler.annotation.rvCell
 
 case object Msg
 extends Message
@@ -28,18 +30,24 @@ extends Message
 case class Clicked(model: String)
 extends Message
 
-@cell
+case class SomeMain(container: FrameLayout)
+extends ViewTree[FrameLayout]
+
+case class SomeModel(a: Int)
+
+@viewCell[SomeMain]
+@cellModel[SomeModel]
+object SomeView
+{
+}
+
+@rvCell[String, StringElement]
 object IntView
 extends CommRV
 with DefaultRV
 with MainViewCell
 with state.core.ToIOStateOps
 {
-  type Model = String
-  type Element = StringElement
-
-  def infElem = inflate[StringElement]
-
   def bind(comm: Comm)(tree: StringElement, model: String): Unit = {
     tree.label.setText(model)
     tree.container.onClick(comm.send(Clicked(model)))
