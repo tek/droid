@@ -15,8 +15,6 @@ import android.widget._
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
 
-import view.io.text._
-import view.io.misc._
 import droid.res.R
 
 case class MainFragment(view: View)
@@ -111,20 +109,66 @@ object MainViewMessages
 }
 import MainViewMessages._
 
+case class LoadView(io: Option[CState] => Restart, previousState: Option[CState])
+extends Message
+
 @cell
 trait MVContainer
 extends ViewCell
+with StateActIO
 {
   type CellTree <: AnyTree with HasMainFrame
 
-  def mvcTrans: Transitions = {
+  case class MVC(stack: Stack)
+  extends CState
+
+  /* Entries consist of the view cell being loaded and the state of the view cell being replaced.
+   * When a stack element is popped, its state is used to load the second element's view cell.
+   */
+  type Stack = List[(Option[CState] => Restart, Option[CState])]
+
+  object Stack
+  {
+    def unapply(s: CState): Option[Stack] =
+      s match {
+        case S(ViewData(_, MVC(s)), _, _) => Some(s)
+        case _ => None
+      }
+  }
+
+  def insertStack(stack: Stack)(state: CState) = {
+    state match {
+      case S(ViewData(m, MVC(_)), c, e) => S(ViewData(m, MVC(stack)), c, e)
+      case S(ViewData(m, Pristine), c, e) => S(ViewData(m, MVC(stack)), c, e)
+      case a => a
+    }
+  }
+
+  def pushView(entry: (Option[CState] => Restart, Option[CState]))(state: CState) = {
+    val stack = state match {
+      case Stack(stack) => entry :: stack
+      case _ => entry :: Nil
+    }
+    insertStack(stack)(state)
+  }
+
+  def trans: Transitions = {
+    case LoadView(io, previousState) => { case s => pushView(io -> previousState)(s).dbg :: io(None) :: HNil }
     case CreateContentView => CreateTree :: HNil
     case InsertTree(tree) => insertTree(setContentView(tree))
     case TreeInserted => MVCReady :: HNil
     case SetMainTree(tree) => {
-      case ViewData(main, extra) => setMainView(main, tree.container) :: HNil
+      case ViewData(main, _) => setMainView(main, tree.container) :: HNil
     }
-    case Back => actU(_.onBackPressed()) :: HNil
+    case Back => {
+      case s =>
+        val ((newState, io), escalate) = s match {
+          case Stack(List((_, savedState0), (h, savedState1), t @ _*)) =>
+            insertStack((h, savedState1) :: t.toList)(s) -> h(savedState0) -> false
+          case _ => s -> NopIO -> true
+        }
+        newState :: io :: stateActIO(a => if(escalate) a.onBackPressedNative() else ()).unit :: HNil
+    }
   }
 
   def setMainView(main: CellTree, view: View) = {
@@ -140,7 +184,7 @@ extends ViewCell
 
   def setContentView(tree: CellTree) = actU(_.setContentView(tree.container)).main
 
-  def createView = ContextIO(infMain.map(ContentTree(_))) :: HNil
+  def createView = infMain.map(ContentTree(_)).runner :: HNil
 }
 
 trait MVContainerMain
@@ -265,7 +309,7 @@ extends MVContainer
         act(a => StoreDrawerToggle(createToggle(a, main))) :: HNil
     }
     case StoreDrawerToggle(toggle) => {
-      case s => insertExtra(s, ExtMVData(toggle, false)).map(_ :: SyncToggle.local :: HNil)
+      case s => insertExtra(s, ExtMVData(toggle, false)) :: SyncToggle.local :: HNil
     }
     case SetDrawerTree(v) => {
       case ViewData(main, _) =>
