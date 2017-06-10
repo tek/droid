@@ -9,6 +9,8 @@ import shapeless._, ops.hlist._
 import fs2.async
 
 import tryp.state.annotation._
+import core.{IORunner, ToIORunner}
+import MainViewMessages.Back
 
 object DefaultScheduler
 {
@@ -26,7 +28,7 @@ with Logging
 }
 import StatePool._
 
-case class IOMState(act: Activity)
+case class AndroidState(act: Activity)
 extends CState
 
 @cell
@@ -35,15 +37,18 @@ extends AnnotatedTIO
 {
   def trans: Transitions = {
     case SetActivity(act) =>
-      IOMState(act) :: HNil
+      AndroidState(act) :: HNil
     case m: ContextIO => {
-      case IOMState(act) => (strat: Strategy) => TaskIO(m.task(act), m.desc) :: HNil
+      case AndroidState(act) => (strat: Strategy) => TaskIO(m.task(act), m.desc) :: HNil
     }
     case m: ActivityIO => {
-      case IOMState(act) => (strat: Strategy) => TaskIO(m.task(act), m.desc) :: HNil
+      case AndroidState(act) => (strat: Strategy) => TaskIO(m.task(act), m.desc) :: HNil
     }
     case m: AppCompatActivityIO => {
-      case IOMState(act: AppCompatActivity) => (strat: Strategy) => TaskIO(m.task(act), m.desc) :: HNil
+      case AndroidState(act: AppCompatActivity) => (strat: Strategy) => TaskIO(m.task(act), m.desc) :: HNil
+    }
+    case m: StateActivityIO => {
+      case AndroidState(act: StateActivity) => (strat: Strategy) => TaskIO(m.task(act), m.desc) :: HNil
     }
     case SetContentTree(t) => actU(_.setContentView(t.container)) :: HNil
   }
@@ -115,18 +120,45 @@ extends AppCompatActivity
 {
   lazy val stateApp = getApplication match {
     case a: StateApplication => a
-    case _ => sys.error("application is not a StateApplication")
+    case _ => sys.error(s"application is not a StateApplication: $getApplication")
   }
 
   def appState = stateApp.state
 
   def initialMessages: List[Message]
 
+  def send = appState.send _
+
   override def onCreate(state: Bundle) = {
     Thread.sleep(500)
-    stateApp.send(SetActivity(this))
+    send(SetActivity(this))
     super.onCreate(state)
-    stateApp.send(CreateContentView)
+    send(CreateContentView)
     initialMessages foreach stateApp.send
   }
+
+  override def onBackPressed(): Unit = send(Back)
+
+  def onBackPressedNative(): Unit = super.onBackPressed()
+}
+
+object StateActivity
+{
+  implicit def ToIORunner_StateActivity: ToIORunner[StateActivity] =
+    new ToIORunner[StateActivity] {
+      type R = StateActivityIO
+      def pure(io: IO[Message, StateActivity]) = StateActivityIO(io)
+    }
+}
+
+case class StateActivityIO(io: IO[Message, StateActivity])
+extends IORunner[StateActivity, StateActivityIO]
+{
+  def main = new StateActivityIO(io) { override def runOnMain = true }
+}
+
+trait StateActIO
+{
+  def stateActIO[A](f: StateActivity => A): IO[A, StateActivity] =
+    macro view.AnnotatedIOM.inst[A, StateActivity]
 }
