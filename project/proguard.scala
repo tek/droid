@@ -185,7 +185,8 @@ extends Proguard
   override lazy val excludes = List(
     "LICENSE.txt",
     "META-INF/NOTICE.txt",
-    "META-INF/LICENSE.txt"
+    "META-INF/LICENSE.txt",
+    "rootdoc.txt"
   )
 
   override lazy val merges = List(
