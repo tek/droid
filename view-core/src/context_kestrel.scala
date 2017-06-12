@@ -41,7 +41,7 @@ with AndroidMacros
     val m = ann.method
     val tpe = kestrelType(m)
     val rhsTpe =
-      if (wrap) tq"Kestrel[$tpe, Context, IO]"
+      if (wrap) tq"Kestrel[$tpe, Context, AIO]"
       else tq"$tpe => Unit"
     MethodAnnottee {
       val impl =
@@ -53,9 +53,9 @@ with AndroidMacros
       val content = asString | ann.rhs.toString
       q"""
       def ${m.name}[..${m.tparams}](...${m.vparamss})
-      : Kestrel[$tpe, Context, IO] =
+      : Kestrel[$tpe, Context, AIO] =
         DescribedKestrel(${m.name.toString}, $content, {
-          a => IO(
+          a => AIO(
             implicit ctx => {
               val kst: $rhsTpe = { ..$impl }
               $invoke
@@ -120,7 +120,7 @@ object annotation
   @anno(CKAnnResources) class resources()
 }
 
-final class CKIotaKestrelOps[A, F[_, _]: ConsIO](fa: iota.effect.Kestrel[A])
+final class CKIotaKestrelOps[A, F[_, _]: ConsAIO](fa: iota.effect.Kestrel[A])
 extends ToIotaKestrelOps
 {
   def ck = fa.liftAs[A, Context, F]
@@ -129,7 +129,7 @@ extends ToIotaKestrelOps
 trait ToCKIotaKestrelOps
 {
   protected implicit def ToCKIotaKestrelOps[A](fa: iota.effect.Kestrel[A]) =
-    new CKIotaKestrelOps[A, IO](fa)
+    new CKIotaKestrelOps[A, AIO](fa)
 }
 
 trait CKCombinators
@@ -139,7 +139,7 @@ with Logging
 with ToCKIotaKestrelOps
 {
   def kraw[A, B](f: Context => A => B): CK[A] =
-    CK(a => IO(ctx => { f(ctx)(a); a }, "from CKCombinators.kraw"))
+    CK(a => AIO(ctx => { f(ctx)(a); a }, "from CKCombinators.kraw"))
 }
 
 trait Combinators[P]
@@ -153,14 +153,14 @@ with cats.instances.FunctionInstances
     fa.ck
 
   protected def kkpsub[A <: P, B](f: Principal => B): CK[A] =
-    CK.lift[A, B, IO](f)
+    CK.lift[A, B, AIO](f)
 
   protected def k[B](f: Principal => B) = {
     kkpsub[P, B](f)
   }
 
   protected def ksub[A <: P, B](f: A => B): CK[A] =
-    CK.lift[A, B, IO](f)
+    CK.lift[A, B, AIO](f)
 
   def nopK: CK[P] = k(_ => ())
 

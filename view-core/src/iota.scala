@@ -16,24 +16,24 @@ import iota.effect._
 
 trait IotaOrphans
 {
-  import iota.effect.IO
+  type IIO[A] = iota.effect.IO[A]
 
-  implicit val ioInstance = new Bimonad[IO] {
-    def pure[A](x: A): IO[A] = IO(x)
+  implicit val ioInstance = new Bimonad[IIO] {
+    def pure[A](x: A): IIO[A] = iota.effect.IO(x)
 
-    def extract[A](x: IO[A]): A = {
+    def extract[A](x: IIO[A]): A = {
       x.perform()
     }
 
-    def coflatMap[A, B](fa: IO[A])(f: IO[A] => B): IO[B] = {
+    def coflatMap[A, B](fa: IIO[A])(f: IIO[A] => B): IIO[B] = {
       pure(f(fa))
     }
 
-    def flatMap[A, B](fa: IO[A])(f: A => IO[B]): IO[B] = {
+    def flatMap[A, B](fa: IIO[A])(f: A => IIO[B]): IIO[B] = {
       fa.flatMap(f)
     }
 
-    def tailRecM[A, B](a: A)(f: A => IO[Either[A, B]]): IO[B] =
+    def tailRecM[A, B](a: A)(f: A => IIO[Either[A, B]]): IIO[B] =
       f(a).flatMap {
         case Left(a1) => tailRecM(a1)(f)
         case Right(b) => pure(b)
@@ -69,7 +69,7 @@ trait IotaOrphans
 //         else List(q"${m.rhs}")
 //       q"""
 //       def ${m.name}[..${m.tparams}](...${m.vparamss}): CK[$name] =
-//         a => IO(implicit ctx => {
+//         a => AIO(implicit ctx => {
 //           implicit val res = tryp.droid.core.Resources.fromContext
 //             val kst = {
 //               ..$impl
@@ -123,33 +123,33 @@ final class IotaKestrelOps[A](fa: iota.effect.Kestrel[A])
     a => c => fa(a).perform()
   }
 
-  def lift[C, F[_, _]: ConsIO]: Kestrel[A, C, F] = {
+  def lift[C, F[_, _]: ConsAIO]: Kestrel[A, C, F] = {
     K[A, C, F] { b =>
-      ConsIO[F].pure[A, C] { c =>
+      ConsAIO[F].pure[A, C] { c =>
         strip[C](b)(c)
         b
       }
     }
   }
 
-  def liftAs[B, C, F[_, _]: ConsIO]
+  def liftAs[B, C, F[_, _]: ConsAIO]
   (implicit lis: B <~< A): Kestrel[B, C, F] = {
     K[B, C, F] { b =>
-      ConsIO[F].pure[B, C] { c =>
+      ConsAIO[F].pure[B, C] { c =>
         strip[C](lis(b))(c)
         b
       }
     }
   }
 
-  def ok[B <: A, F[_, _]: ConsIO] = liftAs[B, Context, F]
+  def ok[B <: A, F[_, _]: ConsAIO] = liftAs[B, Context, F]
 
   def unit[B <: A]: B => Unit = a => { fa(a); () }
 }
 
 trait ToIotaKestrelOps
 {
-  implicit def ToIotaKestrelOps[A](fa: iota.effect.Kestrel[A]) = 
+  implicit def ToIotaKestrelOps[A](fa: iota.effect.Kestrel[A]) =
     new IotaKestrelOps(fa)
 }
 
@@ -166,7 +166,7 @@ trait ToIotaKestrelOps
 //   protected type Principal = P
 
 //   protected def k[A <: P, B](f: Principal => B): CK[A] = {
-//     CK(a => ConsIO[F].pure(ctx => { f(a: P); a }))
+//     CK(a => ConsAIO[F].pure(ctx => { f(a: P); a }))
 //   }
 
 //   protected def kp[B](f: Principal => B) = {

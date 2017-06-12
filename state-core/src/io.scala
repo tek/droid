@@ -9,10 +9,10 @@ import android.support.v7.app.AppCompatActivity
 
 import view.core._
 
-trait IORunner[A, B]
+trait AIORunner[A, B]
 extends Message
 {
-  def io: IO[Message, A]
+  def io: AIO[Message, A]
 
   def desc = io.desc
 
@@ -20,139 +20,139 @@ extends Message
 
   def main: B
 
-  def task(a: A)(implicit sched: Scheduler): Task[Message] =
-    if (runOnMain) io.mainTimed(3.seconds)(a, sched)
+  def task(a: A): IO[Message] =
+    if (runOnMain) io.performMain(a)
     else io.perform(a)
 }
 
-case class ContextIO(io: IO[Message, Context])
-extends IORunner[Context, ContextIO]
+case class ContextAIO(io: AIO[Message, Context])
+extends AIORunner[Context, ContextAIO]
 {
-  def main = new ContextIO(io) { override def runOnMain = true }
+  def main = new ContextAIO(io) { override def runOnMain = true }
 }
 
-case class ActivityIO(io: IO[Message, Activity])
-extends IORunner[Activity, ActivityIO]
+case class ActivityAIO(io: AIO[Message, Activity])
+extends AIORunner[Activity, ActivityAIO]
 {
-  def main = new ActivityIO(io) { override def runOnMain = true }
+  def main = new ActivityAIO(io) { override def runOnMain = true }
 }
 
-case class AppCompatActivityIO(io: IO[Message, AppCompatActivity])
-extends IORunner[AppCompatActivity, AppCompatActivityIO]
+case class AppCompatActivityAIO(io: AIO[Message, AppCompatActivity])
+extends AIORunner[AppCompatActivity, AppCompatActivityAIO]
 {
-  def main = new AppCompatActivityIO(io) { override def runOnMain = true }
+  def main = new AppCompatActivityAIO(io) { override def runOnMain = true }
 }
 
-trait ToIORunner[C]
+trait ToAIORunner[C]
 {
-  type R <: IORunner[C, R]
+  type R <: AIORunner[C, R]
 
-  def pure(io: IO[Message, C]): R
+  def pure(io: AIO[Message, C]): R
 }
 
-object ToIORunner
+object ToAIORunner
 {
-  implicit def ToIORunner_Context: ToIORunner[Context] =
-    new ToIORunner[Context] {
-      type R = ContextIO
-      def pure(io: IO[Message, Context]) = ContextIO(io)
+  implicit def ToAIORunner_Context: ToAIORunner[Context] =
+    new ToAIORunner[Context] {
+      type R = ContextAIO
+      def pure(io: AIO[Message, Context]) = ContextAIO(io)
     }
 }
 
-final class IOStateOps[A <: Message, C](val io: IO[A, C])
+final class AIOStateOps[A <: Message, C](val io: AIO[A, C])
 {
-  def runner(implicit toRunner: ToIORunner[C]) = toRunner.pure(io.widen[Message])
+  def runner(implicit toRunner: ToAIORunner[C]) = toRunner.pure(io.widen[Message])
 
-  def main(implicit toRunner: ToIORunner[C]) = runner.main
+  def main(implicit toRunner: ToAIORunner[C]) = runner.main
 }
 
-final class IOStateAnyOps[A, C](val io: IO[A, C])
+final class AIOStateAnyOps[A, C](val io: AIO[A, C])
 {
-  def unit(implicit toRunner: ToIORunner[C]) = toRunner.pure(io.map(_ => NopMessage))
+  def unit(implicit toRunner: ToAIORunner[C]) = toRunner.pure(io.map(_ => NopMessage))
 
-  def unitMain(implicit toRunner: ToIORunner[C]) = unit.main
+  def unitMain(implicit toRunner: ToAIORunner[C]) = unit.main
 }
 
-trait ToIOStateOps
+trait ToAIOStateOps
 {
-  implicit def ToIOStateOps[A <: Message, C](io: IO[A, C]): IOStateOps[A, C] =
-    new IOStateOps[A, C](io)
+  implicit def ToAIOStateOps[A <: Message, C](io: AIO[A, C]): AIOStateOps[A, C] =
+    new AIOStateOps[A, C](io)
 
-  implicit def ToIOStateAnyOps[A, C](io: IO[A, C]): IOStateAnyOps[A, C] =
-    new IOStateAnyOps[A, C](io)
+  implicit def ToAIOStateAnyOps[A, C](io: AIO[A, C]): AIOStateAnyOps[A, C] =
+    new AIOStateAnyOps[A, C](io)
 }
 
-trait AnnotatedTIO
+trait AnnotatedTAIO
 {
-  def con[A](f: Context => A): ContextIO =
-    macro AnnotatedTIOM.inst[A, Context, ContextIO]
+  def con[A](f: Context => A): ContextAIO =
+    macro AnnotatedTAIOM.inst[A, Context, ContextAIO]
 
-  def act[A](f: Activity => A): ActivityIO =
-    macro AnnotatedTIOM.inst[A, Activity, ActivityIO]
+  def act[A](f: Activity => A): ActivityAIO =
+    macro AnnotatedTAIOM.inst[A, Activity, ActivityAIO]
 
-  def acact[A](f: AppCompatActivity => A): AppCompatActivityIO =
-    macro AnnotatedTIOM.inst[A, AppCompatActivity, AppCompatActivityIO]
+  def acact[A](f: AppCompatActivity => A): AppCompatActivityAIO =
+    macro AnnotatedTAIOM.inst[A, AppCompatActivity, AppCompatActivityAIO]
 
-  def conU(f: Context => Unit): ContextIO =
-    macro AnnotatedTIOM.instU[Context, ContextIO]
+  def conU(f: Context => Unit): ContextAIO =
+    macro AnnotatedTAIOM.instU[Context, ContextAIO]
 
-  def actU(f: Activity => Unit): ActivityIO =
-    macro AnnotatedTIOM.instU[Activity, ActivityIO]
+  def actU(f: Activity => Unit): ActivityAIO =
+    macro AnnotatedTAIOM.instU[Activity, ActivityAIO]
 
-  def acactU(f: AppCompatActivity => Unit): AppCompatActivityIO =
-    macro AnnotatedTIOM.instU[AppCompatActivity, AppCompatActivityIO]
+  def acactU(f: AppCompatActivity => Unit): AppCompatActivityAIO =
+    macro AnnotatedTAIOM.instU[AppCompatActivity, AppCompatActivityAIO]
 
-  def inflate[A]: IO[A, Context] =
-    macro AnnotatedTIOM.inflate[A]
+  def inflate[A]: AIO[A, Context] =
+    macro AnnotatedTAIOM.inflate[A]
 }
 
-class AnnotatedTIOM(val c: blackbox.Context)
+class AnnotatedTAIOM(val c: blackbox.Context)
 extends AndroidMacros
 {
   import c.universe._
   import c.Expr
 
-  def ioWithRepr[A: WeakTypeTag, C: WeakTypeTag](f: Expr[C => A]): Expr[IO[A, C]] = {
+  def ioWithRepr[A: WeakTypeTag, C: WeakTypeTag](f: Expr[C => A]): Expr[AIO[A, C]] = {
     val aType = weakTypeOf[A]
     val cType = weakTypeOf[C]
     val repr = showCode(f.tree)
-    Expr(q"IO[$aType, $cType]($f, $repr)")
+    Expr(q"AIO[$aType, $cType]($f, $repr)")
   }
 
-  def inst[A: WeakTypeTag, C: WeakTypeTag, IO: WeakTypeTag](f: Expr[C => A]): Expr[IO] = {
+  def inst[A: WeakTypeTag, C: WeakTypeTag, AIO: WeakTypeTag](f: Expr[C => A]): Expr[AIO] = {
     val aType = weakTypeOf[A]
-    val ctor = weakTypeOf[IO].typeSymbol
+    val ctor = weakTypeOf[AIO].typeSymbol
     val io = ioWithRepr[A, C](f)
     Expr(q"new $ctor($io.map(a => implicitly[Parcel[$aType]].msg(a): tryp.state.core.Message))")
   }
 
-  def instU[C: WeakTypeTag, IO: WeakTypeTag](f: Expr[C => Unit]): Expr[IO] = {
-    val ctor = weakTypeOf[IO].typeSymbol
+  def instU[C: WeakTypeTag, AIO: WeakTypeTag](f: Expr[C => Unit]): Expr[AIO] = {
+    val ctor = weakTypeOf[AIO].typeSymbol
     val io = ioWithRepr[Unit, C](f)
     Expr(q"new $ctor($io.map(_ => NopMessage))")
   }
 
-  def inflate[A: WeakTypeTag]: Expr[IO[A, Context]] = {
+  def inflate[A: WeakTypeTag]: Expr[AIO[A, Context]] = {
     val aType = weakTypeOf[A]
     val vtree = aType.typeSymbol.companion
     ioWithRepr[A, Context](Expr[Context => A](q"(ctx: Context) => iota.ViewTree.inflate(ctx, $vtree)"))
   }
 }
 
-trait IOParcel
+trait AIOParcel
 {
-  implicit def instance_Parcel_IO_Message_Context[A, M <: Message]
+  implicit def instance_Parcel_AIO_Message_Context[A, M <: Message]
   (implicit P: Parcel.Aux[A, M])
-  : Parcel.Aux[IO[A, Context], ContextIO] =
-    new Parcel[IO[A, Context]] {
-      type M = ContextIO
-      def msg(a: IO[A, Context]) = ContextIO(a.map(P.msg))
+  : Parcel.Aux[AIO[A, Context], ContextAIO] =
+    new Parcel[AIO[A, Context]] {
+      type M = ContextAIO
+      def msg(a: AIO[A, Context]) = ContextAIO(a.map(P.msg))
     }
 
-  implicit def instance_Parcel_IO_Message_Message[A <: Message]
-  : Parcel.Aux[IO[A, Context], ContextIO] =
-    new Parcel[IO[A, Context]] {
-      type M = ContextIO
-      def msg(a: IO[A, Context]) = ContextIO(a.widen[Message])
+  implicit def instance_Parcel_AIO_Message_Message[A <: Message]
+  : Parcel.Aux[AIO[A, Context], ContextAIO] =
+    new Parcel[AIO[A, Context]] {
+      type M = ContextAIO
+      def msg(a: AIO[A, Context]) = ContextAIO(a.widen[Message])
     }
 }

@@ -3,10 +3,10 @@ package droid
 package state
 package core
 
-@exportTypes(AnnotatedTIO)
+@exportTypes(AnnotatedTAIO)
 trait Types
 
-@exportNames(ContextIO, ActivityIO, AppCompatActivityIO)
+@exportNames(ContextAIO, ActivityAIO, AppCompatActivityAIO)
 trait Names
 
 @export
@@ -15,8 +15,8 @@ extends Types
 with Names
 
 trait All
-extends ToIOStateOps
-with IOParcel
+extends ToAIOStateOps
+with AIOParcel
 
 @integrate(view, tryp.state.core, tryp.state)
 object `package`

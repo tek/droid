@@ -9,7 +9,7 @@ import shapeless._, ops.hlist._
 import fs2.async
 
 import tryp.state.annotation._
-import core.{IORunner, ToIORunner}
+import core.{AIORunner, ToAIORunner}
 import MainViewMessages.Back
 
 object DefaultScheduler
@@ -33,22 +33,22 @@ extends CState
 
 @cell
 object AndroidCell
-extends AnnotatedTIO
+extends AnnotatedTAIO
 {
   def trans: Transitions = {
     case SetActivity(act) =>
       AndroidState(act) :: HNil
-    case m: ContextIO => {
-      case AndroidState(act) => (strat: Strategy) => TaskIO(m.task(act), m.desc) :: HNil
+    case m: ContextAIO => {
+      case AndroidState(act) => (ec: ExecutionContext) => IOStateIO(m.task(act), m.desc) :: HNil
     }
-    case m: ActivityIO => {
-      case AndroidState(act) => (strat: Strategy) => TaskIO(m.task(act), m.desc) :: HNil
+    case m: ActivityAIO => {
+      case AndroidState(act) => (ec: ExecutionContext) => IOStateIO(m.task(act), m.desc) :: HNil
     }
-    case m: AppCompatActivityIO => {
-      case AndroidState(act: AppCompatActivity) => (strat: Strategy) => TaskIO(m.task(act), m.desc) :: HNil
+    case m: AppCompatActivityAIO => {
+      case AndroidState(act: AppCompatActivity) => (ec: ExecutionContext) => IOStateIO(m.task(act), m.desc) :: HNil
     }
-    case m: StateActivityIO => {
-      case AndroidState(act: StateActivity) => (strat: Strategy) => TaskIO(m.task(act), m.desc) :: HNil
+    case m: StateActivityAIO => {
+      case AndroidState(act: StateActivity) => (ec: ExecutionContext) => IOStateIO(m.task(act), m.desc) :: HNil
     }
     case SetContentTree(t) => actU(_.setContentView(t.container)) :: HNil
   }
@@ -57,7 +57,7 @@ extends AnnotatedTIO
 trait AppState
 extends Logging
 {
-  def loopCtor: Task[(LoopData.MQueue, Signal[Boolean], LoopData.OStream)]
+  def loopCtor: IO[(LoopData.MQueue, Signal[Boolean], LoopData.OStream)]
 
   def mainView: MVContainer
 
@@ -65,15 +65,16 @@ extends Logging
     for {
       ito <- loopCtor
       (in, term, out) = ito
-      state <- async.signalOf[Task, List[CState]](Nil)
-      sink: fs2.Sink[Task, LoopData.Data] = _.collect{case Left(a) => a}.evalMap(state.set).drain
-      loop <- Task.start(out.observe(sink).runLog)
+      state <- async.signalOf[IO, List[CState]](Nil)
+      sink: fs2.Sink[IO, LoopData.Data] = _.collect{case Left(a) => a}.evalMap(state.set).drain
+      // loop <- IO.start(out.observe(sink).runLog)
+      loop <- IO(out.observe(sink).runLog)
     } yield (in, term, loop, state)
   }
 
-  lazy val (in, term, loop, currentStates) = ctor.unsafeRun()
+  lazy val (in, term, loop, currentStates) = ctor.unsafeRunSync()
 
-  def currentState = currentStates.get.unsafeRun()
+  def currentState = currentStates.get.unsafeRunSync()
 
   def run() = loop.unsafeRunAsync {
     case Left(a: Throwable) =>
@@ -82,7 +83,7 @@ extends Logging
     case a => log.info(s"state loop finished with $a")
   }
 
-  def send(msg: Message) = in.enqueue1(msg).unsafeRun()
+  def send(msg: Message) = in.enqueue1(msg).unsafeRunSync()
 
   // FIXME doesn't work, but doing the same from within the activity does
   def setActivity = SetActivity.apply _ andThen send _
@@ -144,21 +145,21 @@ extends AppCompatActivity
 
 object StateActivity
 {
-  implicit def ToIORunner_StateActivity: ToIORunner[StateActivity] =
-    new ToIORunner[StateActivity] {
-      type R = StateActivityIO
-      def pure(io: IO[Message, StateActivity]) = StateActivityIO(io)
+  implicit def ToAIORunner_StateActivity: ToAIORunner[StateActivity] =
+    new ToAIORunner[StateActivity] {
+      type R = StateActivityAIO
+      def pure(io: AIO[Message, StateActivity]) = StateActivityAIO(io)
     }
 }
 
-case class StateActivityIO(io: IO[Message, StateActivity])
-extends IORunner[StateActivity, StateActivityIO]
+case class StateActivityAIO(io: AIO[Message, StateActivity])
+extends AIORunner[StateActivity, StateActivityAIO]
 {
-  def main = new StateActivityIO(io) { override def runOnMain = true }
+  def main = new StateActivityAIO(io) { override def runOnMain = true }
 }
 
-trait StateActIO
+trait StateActAIO
 {
-  def stateActIO[A](f: StateActivity => A): IO[A, StateActivity] =
-    macro view.AnnotatedIOM.inst[A, StateActivity]
+  def stateActAIO[A](f: StateActivity => A): AIO[A, StateActivity] =
+    macro view.AnnotatedAIOM.inst[A, StateActivity]
 }

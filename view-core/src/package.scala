@@ -3,13 +3,13 @@ package droid
 package view
 package core
 
-@exportTypes(IOI, Kestrel, Views, Combinators, ViewCombinators, DescribeIO)
+@exportTypes(AIOI, Kestrel, Views, Combinators, ViewCombinators, DescribeAIO)
 trait Types
 {
-  type CIO[A] = IO[A, Context]
+  type CAIO[A] = AIO[A, Context]
 }
 
-@exportNames(IO, DescribedKestrel, PerformIO)
+@exportNames(AIO, DescribedKestrel, PerformAIO)
 trait Names
 
 @export
@@ -18,7 +18,7 @@ extends droid.core.Exports
 with Names
 with Types
 {
-  type CK[A] = Kestrel[A, Context, IO]
+  type CK[A] = Kestrel[A, Context, AIO]
 }
 
 trait All
@@ -26,15 +26,15 @@ extends droid.core.All
 with ChainKestrelInstances
 with ChainKestrel.ToChainKestrelOps
 with ApplyKestrel.ToApplyKestrelOps
-with ConsIO.ToConsIOOps
-with IOOrphans
-with PerformIO.ToPerformIOOps
-with DescribeIO.ToDescribeIOOps
+with ConsAIO.ToConsAIOOps
+with AIOOrphans
+with PerformAIO.ToPerformAIOOps
+with DescribeAIO.ToDescribeAIOOps
 with ToCKIotaKestrelOps
 
 @integrate(droid.core)
 object `package`
 extends IotaOrphans
 {
-  type CK[A] = Kestrel[A, Context, IO]
+  type CK[A] = Kestrel[A, Context, AIO]
 }

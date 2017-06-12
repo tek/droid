@@ -13,7 +13,7 @@ trait Names
 
   type SlickEffect = _root_.slick.dbio.Effect
   type SlickAction[A, E <: SlickEffect] =
-    _root_.slick.dbio.DBIOAction[A, _root_.slick.dbio.NoStream, E]
+    _root_.slick.dbio.DBAIOAction[A, _root_.slick.dbio.NoStream, E]
 }
 
 @integrate(droid.core, droid.state, tryp.slick, tryp.state, tryp.app)

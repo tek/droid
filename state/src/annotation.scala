@@ -19,10 +19,10 @@ extends SimpleAnnotation
       if (a.map(parseAnnotation).exists(_.name == "cell")) Nil
       else List(q"new tryp.state.annotation.cell")
     }
-    val tio = symbolOf[AnnotatedTIO]
+    val tio = symbolOf[AnnotatedTAIO]
     val parentTrans = parentsL.appendMap { p =>
       val present = p.exists { t => c.typecheck(t, mode = c.TYPEmode).tpe == tio.toType }
-      if (present) Nil else List(symbolOf[AnnotatedTIO].tree)
+      if (present) Nil else List(symbolOf[AnnotatedTAIO].tree)
     }
     annoTrans andThen parentTrans
   }

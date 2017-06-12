@@ -3,7 +3,7 @@ package droid
 package view
 package core
 
-object FixedIOPool
+object FixedAIOPool
 extends FixedPool
 {
   def name = "io"
@@ -11,13 +11,13 @@ extends FixedPool
   val threads = 20
 }
 
-trait FixedIOStrategy
+trait FixedAIOStrategy
 extends ExecutionStrategy
 {
-  def pool = FixedIOPool
+  def pool = FixedAIOPool
 }
 
-object BoundedCachedIOPool
+object BoundedCachedAIOPool
 extends BoundedCachedPool
 {
   def name = "io"
@@ -25,11 +25,11 @@ extends BoundedCachedPool
   override def maxThreads = 3
 }
 
-trait BoundedCachedIOStrategy
+trait BoundedCachedAIOStrategy
 extends ExecutionStrategy
 {
-  def pool = BoundedCachedIOPool
+  def pool = BoundedCachedAIOPool
 }
 
-trait IOStrategy
-extends BoundedCachedIOStrategy
+trait AIOStrategy
+extends BoundedCachedAIOStrategy

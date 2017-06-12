@@ -20,7 +20,7 @@ extends UnitSpecs2Spec[Activity]
     val v1 = 9
     val v2 = 47
     val kest = { (a: Muto) => a.state = v2; Muto(v1 + v2) }
-    val s = IO.lift[Int](v => Muto(v)) >>- kest
+    val s = AIO.lift[Int](v => Muto(v)) >>- kest
     s.main()(v1) will_== Muto(v2)
   }
 }
@@ -43,7 +43,7 @@ extends ViewCombinators
 
 class CKSpec
 extends ActivitySpec[Activity]
-with Views[Context, IO]
+with Views[Context, AIO]
 {
   import kest._
 
@@ -60,7 +60,7 @@ with Views[Context, IO]
 
   val id = 23
 
-  def check(f: Int => Kestrel[View, Context, IO]) = {
-    (w[TextView] >>- f(id)).unsafePerformIO.map(_.getId) computes_== id
+  def check(f: Int => Kestrel[View, Context, AIO]) = {
+    (w[TextView] >>- f(id)).unsafePerformAIO.map(_.getId) computes_== id
   }
 }

@@ -2,7 +2,7 @@ package tryp
 package droid
 package view
 
-@exportTypes(RootView, android.support.v7.widget.RecyclerView, android.support.v7.widget.Toolbar, AnnotatedIO)
+@exportTypes(RootView, android.support.v7.widget.RecyclerView, android.support.v7.widget.Toolbar, AnnotatedAIO)
 trait Types
 
 @export
@@ -28,7 +28,7 @@ with ToViewGroupOps
 with StartActivity.ToStartActivityOps
 with StartActivityForResult.ToStartActivityForResultOps
 with Auth.ToAuthOps
-// with TOIOProcess
+// with TOAIOProcess
 with BuilderOps
 
 @integrate(view.core)

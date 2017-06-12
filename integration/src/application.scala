@@ -46,7 +46,7 @@ object IntView
 extends CommRV
 with DefaultRV
 with MainViewCell
-with state.core.ToIOStateOps
+with state.core.ToAIOStateOps
 {
   def bind(comm: Comm)(tree: StringElement, model: String): Unit = {
     tree.label.setText(model)

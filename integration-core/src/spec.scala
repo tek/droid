@@ -23,7 +23,7 @@ with Logging
 
 trait IntegrationSpec[A <: Activity]
 extends IntegrationBase
-with AnnotatedIO
+with AnnotatedAIO
 {
   implicit def activity: A
 
@@ -48,9 +48,7 @@ with AnnotatedIO
     instr.waitForIdleSync()
   }
 
-  def ui[A](f: => A) = {
-    conIO(_ => f).performMain.unsafeRun()
-  }
+  def ui[A](f: => A) = conIO(_ => f).performMain.unsafeRunSync()
 
   def sleep(secs: Double) = Thread.sleep((secs * 1000).toInt)
 }

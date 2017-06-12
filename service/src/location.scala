@@ -63,7 +63,7 @@ extends LocationListener
   def requestLocationUpdates(intent: PendingIntent) {
     val request = LocationRequest.create
       .setInterval(5 * 60 * 1000)
-      .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+      .setPriority(LocationRequest.PRAIORITY_HIGH_ACCURACY)
     LocApi.requestLocationUpdates(apiClient, request, intent)
   }
 
@@ -102,7 +102,7 @@ extends LocationsConcern
     val request = LocationRequest.create
       .setNumUpdates(1)
       .setExpirationDuration(10000)
-      .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+      .setPriority(LocationRequest.PRAIORITY_HIGH_ACCURACY)
     LocApi.requestLocationUpdates(apiClient, request, this)
   }
 

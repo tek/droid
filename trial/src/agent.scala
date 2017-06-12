@@ -14,7 +14,7 @@ import view.io.misc._
 import view.io.text._
 import MainViewMessages.LoadUi
 import AppState.{ActivityAgentStarted, StartActivity, ContentViewReady}
-import IOOperation._
+import AIOOperation._
 
 
 class TMainViewAgent
@@ -46,7 +46,7 @@ extends ViewAgent
         lpK(WRAP_CONTENT, WRAP_CONTENT) { p: LinearLayout.LayoutParams =>
           p.gravity = Gravity.CENTER
         } >>= hook.onClick { (v: View) =>
-          iota.effect.IO {
+          iota.effect.AIO {
             broadcast(StartActivity(new TAgent1))
           }
         },
@@ -54,7 +54,7 @@ extends ViewAgent
         lpK(WRAP_CONTENT, WRAP_CONTENT) { p: LinearLayout.LayoutParams =>
           p.gravity = Gravity.CENTER
         } >>= hook.onClick { (v: View) =>
-          iota.effect.IO {
+          iota.effect.AIO {
             broadcast(LoadUi(new ViewAgent2))
           }
         }
@@ -81,7 +81,7 @@ extends ViewAgent
         lpK(WRAP_CONTENT, WRAP_CONTENT) { p: LinearLayout.LayoutParams =>
           p.gravity = Gravity.CENTER
         } >>= hook.onClick { (v: View) =>
-          iota.effect.IO {
+          iota.effect.AIO {
             broadcast(StartActivity(new TAgent1))
           }
         },
@@ -89,7 +89,7 @@ extends ViewAgent
         lpK(WRAP_CONTENT, WRAP_CONTENT) { p: LinearLayout.LayoutParams =>
           p.gravity = Gravity.CENTER
         } >>= hook.onClick { (v: View) =>
-          iota.effect.IO {
+          iota.effect.AIO {
             broadcast(LoadUi(new ViewAgent1))
           }
         }
@@ -105,7 +105,7 @@ extends ActivityAgent
 
     lazy val but = w[Button] >>- large >>- text("agent 2") >>=
       hook.onClick { (v: View) =>
-        iota.effect.IO {
+        iota.effect.AIO {
           broadcast(StartActivity(new TAgent2))
         }
       }
@@ -124,7 +124,7 @@ extends ActivityAgent
 
     lazy val but = w[Button] >>- large >>- text("agent 1") >>=
       hook.onClick { (v: View) =>
-        iota.effect.IO {
+        iota.effect.AIO {
           broadcast(StartActivity(new TAgent1))
         }
       }

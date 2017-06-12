@@ -9,7 +9,7 @@ object RecyclerSpec
 {
   def items = List("first", "second")
 
-  import IOOperation.exports._
+  import AIOOperation.exports._
 
   class SpecAgent
   extends ActivityAgent

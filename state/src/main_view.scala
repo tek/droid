@@ -115,7 +115,7 @@ extends Message
 @cell
 trait MVContainer
 extends ViewCell
-with StateActIO
+with StateActAIO
 {
   type CellTree <: AnyTree with HasMainFrame
 
@@ -167,7 +167,7 @@ with StateActIO
             insertStack((h, savedState1) :: t.toList)(s) -> h(savedState0) -> false
           case _ => s -> NopIO -> true
         }
-        newState :: io :: stateActIO(a => if(escalate) a.onBackPressedNative() else ()).unit :: HNil
+        newState :: io :: stateActAIO(a => if(escalate) a.onBackPressedNative() else ()).unit :: HNil
     }
   }
 
@@ -188,7 +188,7 @@ with StateActIO
 }
 
 trait MVContainerMain
-extends AnnotatedTIO
+extends AnnotatedTAIO
 {
   def infMain = inflate[MainViewLayout]
 }
@@ -329,7 +329,7 @@ extends MVContainer
 @cell
 object ExtMVFrame
 extends ExtMVContainer
-with AnnotatedTIO
+with AnnotatedTAIO
 {
   type CellTree = ExtMVLayout
 

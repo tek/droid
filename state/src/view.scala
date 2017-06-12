@@ -19,9 +19,9 @@ extends CState
 }
 
 trait ViewCellBase
-extends AnnotatedTIO
-with AnnotatedIO
-with view.ViewToIO
+extends AnnotatedTAIO
+with AnnotatedAIO
+with view.ViewToAIO
 with DCell
 {
   type CellTree <: AnyTree
@@ -43,7 +43,7 @@ with DCell
   case class VData(tree: CellTree, extra: CState)
   extends ViewData
 
-  def infMain: IO[CellTree, Context]
+  def infMain: AIO[CellTree, Context]
 
   def stateWithTree(state: CState, tree: CellTree, vExtra: Option[CState], extra: Option[CState]): CState =
     state match {
@@ -78,7 +78,7 @@ with DCell
   case class TreeCreated(tree: CellTree)
   extends Message
 
-  def createTree: ContextIO = ContextIO(infMain.map(TreeCreated(_)))
+  def createTree: ContextAIO = ContextAIO(infMain.map(TreeCreated(_)))
 }
 
 @cell

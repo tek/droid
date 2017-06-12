@@ -4,7 +4,7 @@ package db
 
 import scala.concurrent.Await
 
-import droid.state.FromContextIO
+import droid.state.FromContextAIO
 import FromContextDb._
 
 trait DbStateEffectInstances
@@ -20,13 +20,13 @@ case class DbTask[A: Operation, E <: SlickEffect](action: SlickAction[A, E])
 extends Message
 {
   def task(dbi: DbInfo): Effect = {
-    Task.delay(Await.result(dbi.db() run(action), 5.seconds)).stateEffect
+    IO.delay(Await.result(dbi.db() run(action), 5.seconds)).stateEffect
   }
 
   def effect(dbi: Option[DbInfo]): Effect = {
     dbi.map(task) | {
-      val io = IO((dbi: DbInfo) => task(dbi))
-      val fc = FromContextIO[IO, Effect, DbInfo](io)
+      val io = AIO((dbi: DbInfo) => task(dbi))
+      val fc = FromContextAIO[AIO, Effect, DbInfo](io)
       fc.effect
     }
   }

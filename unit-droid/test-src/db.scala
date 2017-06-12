@@ -15,7 +15,7 @@ trait DbSpecData
   import AppState._
   import MainViewMessages._
   import Db._
-  import IOOperation.exports._
+  import AIOOperation.exports._
 
   implicit def dbi: DbInfo
 

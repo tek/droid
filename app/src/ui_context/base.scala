@@ -7,7 +7,7 @@
 
 // import scalaz._, syntax.show._, syntax.nel._, syntax.traverse._
 
-// abstract class HasActivityAndroid[F[_, _]: ConsIO]
+// abstract class HasActivityAndroid[F[_, _]: ConsAIO]
 // extends ContextAndroid[F]
 // with ResourcesAccess
 // with Snackbars
@@ -17,7 +17,7 @@
 // with Input
 // {
 //   override def loadFragment(fragment: FragmentBuilder) = {
-//     IO {
+//     AIO {
 //       // activity.replaceFragment(
 //       //   fragment.id, fragment(), false, fragment.tag, false)
 //       "fragment loaded successfully"
@@ -27,7 +27,7 @@
 //   override def transitionFragment(fragment: FragmentBuilder) = {
 //     settings.app.bool("view_transitions", true)().fold(trypActivity, None)
 //       .map { a =>
-//         IO[String] {
+//         AIO[String] {
 //           implicit val fm = FragmentManagement.activityFragmentManagement[Activity]
 //           val ui = Macroid.frag(
 //             activity, fragment(), fragment.id, fragment.tag)
@@ -43,7 +43,7 @@
 //     snackbarLiteral(e.map(_.show).toList.mkString("\n"))
 //   }
 
-//   // override def notify(id: String) = mkToast(id).getOrElse(IO.nop)
+//   // override def notify(id: String) = mkToast(id).getOrElse(AIO.nop)
 
 //   override def hideKeyboard() = {
 //     super[Input].hideKeyboard()
@@ -55,22 +55,22 @@
 //   }
 // }
 
-// abstract class ActivityAndroid[F[_, _]: ConsIO]
+// abstract class ActivityAndroid[F[_, _]: ConsAIO]
 // extends HasActivityAndroid[F]
 // {
 //   def getFragmentManager = activity.getFragmentManager
 // }
 
-// class DefaultActivityAndroid[F[_, _]: ConsIO](implicit val activity: Activity)
+// class DefaultActivityAndroid[F[_, _]: ConsAIO](implicit val activity: Activity)
 // extends ActivityAndroid[F]
 
 // object ActivityAndroid
 // {
-//   def default[F[_, _]: ConsIO](implicit a: Activity) = 
+//   def default[F[_, _]: ConsAIO](implicit a: Activity) =
 //     new DefaultActivityAndroid[F]
 // }
 
-// abstract class FragmentAndroid[F[_, _]: ConsIO]
+// abstract class FragmentAndroid[F[_, _]: ConsAIO]
 // extends HasActivityAndroid[F]
 // {
 //   val fragment: Fragment
@@ -78,7 +78,7 @@
 //   def getFragmentManager = fragment.getChildFragmentManager
 // }
 
-// class DefaultFragmentAndroid[F[_, _]: ConsIO](implicit val fragment: Fragment)
+// class DefaultFragmentAndroid[F[_, _]: ConsAIO](implicit val fragment: Fragment)
 // extends FragmentAndroid[F]
 // {
 //   val activity = fragment.activity
@@ -86,47 +86,47 @@
 
 // object FragmentAndroid
 // {
-//   def default[F[_, _]: ConsIO](implicit f: Fragment) = 
+//   def default[F[_, _]: ConsAIO](implicit f: Fragment) =
 //     new DefaultFragmentAndroid[F]
 // }
 
-// // class IOOps[A](ui: IO[A])
+// // class AIOOps[A](ui: AIO[A])
 // // (implicit ctx: AndroidUiContext, ec: EC)
 // // {
-// //   def attemptIO = {
-// //     Log.d(s"running the IO")
-// //     IO.run(ui)
-// //       .flatMap(handleIOResult)
+// //   def attemptAIO = {
+// //     Log.d(s"running the AIO")
+// //     AIO.run(ui)
+// //       .flatMap(handleAIOResult)
 // //       .andThen { case Failure(e) => uiError(e) }
 // //   }
 
-// //   def handleIOResult(a: A) = {
-// //     Log.d(s"handling IO result $a")
+// //   def handleAIOResult(a: A) = {
+// //     Log.d(s"handling AIO result $a")
 // //     Future.successful(a)
 // //   }
 
 // //   def uiError(e: Throwable) = {
-// //     Log.d(s"logging IO error")
+// //     Log.d(s"logging AIO error")
 // //     ctx.uiError(e)
 // //   }
 // // }
 
-// // trait ToIOOps
+// // trait ToAIOOps
 // // {
-// //   implicit def ToIOOps[A](a: IO[A])
+// //   implicit def ToAIOOps[A](a: AIO[A])
 // //   (implicit ctx: AndroidUiContext, ec: EC, info: DbInfo) = {
-// //     new IOOps(a)
+// //     new AIOOps(a)
 // //   }
 // // }
 
 // // TODO replace Log with Writer
 // // at the end of the universe, send written items to generic log, may be
 // // snackbars, stdout or android etc.
-// // class IOValidationNelActionOps[E: Show, A](a: IOAction[E, A])
+// // class AIOValidationNelActionOps[E: Show, A](a: AIOAction[E, A])
 // // (implicit ctx: AndroidUiContext, ec: EC, info: DbInfo)
-// // extends ToIOOps
+// // extends ToAIOOps
 // // {
-// //   def attemptIO: Unit = {
+// //   def attemptAIO: Unit = {
 // //     Log.d(s"running action")
 // //     a.!.task unsafePerformAsync {
 // //       case \/-(r) => handleActionResult(r)
@@ -134,9 +134,9 @@
 // //     }
 // //   }
 
-// //   def handleActionResult(result: IOActionResult[E, A]) = {
+// //   def handleActionResult(result: AIOActionResult[E, A]) = {
 // //     Log.d(s"handling action result: $result")
-// //     result fold(ctx.failure(_), _.attemptIO)
+// //     result fold(ctx.failure(_), _.attemptAIO)
 // //   }
 
 // //   def dbError(e: Throwable) = {
@@ -145,12 +145,12 @@
 // //   }
 // // }
 
-// // trait ToIOValidationNelActionOps
+// // trait ToAIOValidationNelActionOps
 // // {
-// //   implicit def ToIOValidationNelActionOps[E: Show, A]
-// //   (a: IOAction[E, A])
+// //   implicit def ToAIOValidationNelActionOps[E: Show, A]
+// //   (a: AIOAction[E, A])
 // //   (implicit ec: EC, info: DbInfo, ctx: AndroidUiContext) = {
-// //     new IOValidationNelActionOps(a)
+// //     new AIOValidationNelActionOps(a)
 // //   }
 // // }
 

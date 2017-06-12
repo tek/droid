@@ -6,7 +6,7 @@ import tryp.state._
 import view.core._
 import view._
 
-import IOOperation._
+import AIOOperation._
 
 import cats._
 import cats.syntax.all._

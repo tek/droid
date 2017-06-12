@@ -10,7 +10,7 @@ import com.google.android.gms.common.Scopes
 import tryp.state._
 import state._
 import ZS._
-import IOOperation._
+import AIOOperation._
 
 object AuthStateData
 {
@@ -39,7 +39,7 @@ import AuthStateData._
 
 @Publish(AuthorizeToken)
 abstract class AuthState
-extends IOMachine
+extends AIOMachine
 {
   override def handle = "gplus"
 
@@ -109,7 +109,7 @@ extends IOMachine
     Try(plusToken(email)) match {
       case util.Success(tkn) =>
         val next = tkn.map(AuthorizeToken(email, _).toResult)
-        IOTask(next, next.toString).internal.success
+        AIOTask(next, next.toString).internal.success
       // case util.Failure(t: UserRecoverableAuthException) =>
       //   Nel(
       //     FetchTokenFailed("insufficient permissions").toParcel,
@@ -140,7 +140,7 @@ extends IOMachine
   //   settings.app.bool("auto_fetch_auth_token", true)
 
   def authorizePlusToken(account: String, plusToken: String) = {
-    Task {
+    IO {
       backend.authorizePlusToken(account, plusToken) map(BackendAuthorized(_))
     }
   }

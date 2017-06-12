@@ -8,14 +8,14 @@
 // import state._
 // import state._
 
-// abstract class WithContext[F[_, _]: ConsIO]
+// abstract class WithContext[F[_, _]: ConsAIO]
 // extends Android[F]
 // {
 //   def context[A](cb: Context => A): Option[A]
 //   def contextO: Option[Context]
 // }
 
-// abstract class DefaultWithContext[F[_, _]: ConsIO]
+// abstract class DefaultWithContext[F[_, _]: ConsAIO]
 // extends ContextAndroid[F]
 // with WithContext[F]
 // {
@@ -25,13 +25,13 @@
 
 // object WithContext
 // {
-//   implicit def default[F[_, _]: ConsIO](implicit c: Context) =
+//   implicit def default[F[_, _]: ConsAIO](implicit c: Context) =
 //     new DefaultWithContexttrait {
 //       def context = c
 //     }
 // }
 
-// abstract class StartActivity[F[_, _]: ConsIO]
+// abstract class StartActivity[F[_, _]: ConsAIO]
 // extends Android[F]
 // with WithContext[F]
 // {
@@ -39,7 +39,7 @@
 //   def resolveResult(result: ConnectionResult, code: Int): Unit
 // }
 
-// abstract class DefaultStartActivity[F[_, _]: ConsIO]
+// abstract class DefaultStartActivity[F[_, _]: ConsAIO]
 // extends HasActivity[F]
 // with StartActivity[F]
 // with DefaultWithContext[F]
@@ -55,13 +55,13 @@
 
 // object StartActivity
 // {
-//   implicit def default[F[_, _]: ConsIO](implicit a: Activity) =
+//   implicit def default[F[_, _]: ConsAIO](implicit a: Activity) =
 //     new AndroidActivityUiContext[F] with DefaultStartActivity[F] {
 //       def activity = a
 //     }
 // }
 
-// abstract class AuthStateUiI[F[_, _]: ConsIO]
+// abstract class AuthStateUiI[F[_, _]: ConsAIO]
 // extends StartActivity[F]
 // with Android[F]
 // {
@@ -69,7 +69,7 @@
 //   def clearPlusToken(token: String): Unit
 // }
 
-// abstract class AuthStateUiContext[F[_, _]: ConsIO]
+// abstract class AuthStateUiContext[F[_, _]: ConsAIO]
 // extends DefaultStartActivity[F]
 // with AndroidActivityUiContext[F]
 // with AuthStateUiI[F]
@@ -82,7 +82,7 @@
 
 // object AuthStateUiI
 // {
-//   implicit def default[F[_, _]: ConsIO](implicit a: Activity) =
+//   implicit def default[F[_, _]: ConsAIO](implicit a: Activity) =
 //     new AuthStateUiContext[F] {
 //       def activity = a
 //     }

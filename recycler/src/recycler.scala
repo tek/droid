@@ -127,12 +127,12 @@ extends RVCellBase
   type Holder = RVHolder[Element]
   type Adapter = SimpleRecyclerAdapter[Element, Model]
 
-  def adapter: PartialFunction[CState, CIO[Adapter]]
+  def adapter: PartialFunction[CState, CAIO[Adapter]]
 
   def trans: Transitions = {
     case CreateAdapter => {
       case s =>
-        Emm[Option |: CIO |: Base, Adapter](adapter.lift(s))
+        Emm[Option |: CAIO |: Base, Adapter](adapter.lift(s))
           .map((a: Adapter) => SetAdapter(a))
           .run
           .map(a => a.runner :: HNil)
@@ -143,7 +143,7 @@ extends RVCellBase
 trait SimpleRV
 extends SimpleRVAdapterCell
 {
-  def infElem: IO[Element, Context]
+  def infElem: AIO[Element, Context]
 
   val bind: (Element, Model) => Unit
 
@@ -158,7 +158,7 @@ trait CommRV
 extends RVCell
 with SimpleRVAdapterCell
 {
-  def infElem: IO[Element, Context]
+  def infElem: AIO[Element, Context]
 
   def bind(comm: Comm)(tree: Element, model: Model): Unit
 

@@ -10,7 +10,7 @@ object DrawerSpec
 {
   def items = List("first", "second")
 
-  import IOOperation.exports._
+  import AIOOperation.exports._
 
   class SpecAgent
   extends DrawerAgent

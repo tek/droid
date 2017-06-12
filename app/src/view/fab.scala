@@ -48,7 +48,7 @@
 
 //   def fabAsync[A, B]
 //   (success: => Option[String] = None, failure: => Option[String] = None)
-//   (task: Task[B]) = {
+//   (task: IO[B]) = {
 //     send(AsyncTask(task, success, failure))
 //   }
 

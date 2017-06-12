@@ -11,7 +11,7 @@ import gms.common.{api => gapi}
 import gms.plus
 import gapi.GoogleApiClient
 
-import IOOperation._
+import AIOOperation._
 
 object PlusInterface
 {

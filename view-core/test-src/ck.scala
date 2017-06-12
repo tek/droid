@@ -28,7 +28,7 @@ import annotation._
 
 // class CKSpec
 // extends Spec
-// with Views[Context, IO]
+// with Views[Context, AIO]
 // {
 //   def is = s2"""
 //   test $test

@@ -18,12 +18,12 @@
 //   def request(locations: Seq[GeofenceData]) = {
 //     val builder = new GeofencingRequest.Builder
 //     locations foreach { loc => builder.addGeofence(geofence(loc)) }
-//     Task.delay(GeofencingApi.addGeofences(apiClient, builder.build, intent))
+//     IO.delay(GeofencingApi.addGeofences(apiClient, builder.build, intent))
 //       .map(attachResultCallback("installed", locations))
 //   }
 
 //   def clear = {
-//     Task.delay(GeofencingApi.removeGeofences(apiClient, intent))
+//     IO.delay(GeofencingApi.removeGeofences(apiClient, intent))
 //       .map(attachResultCallback("removed", Nil))
 //   }
 
@@ -59,7 +59,7 @@
 //   def geofence(fence: GeofenceData) = {
 //     new Geofence.Builder()
 //       .setRequestId(fence.id.toString)
-//       .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+//       .setTransitionTypes(Geofence.GEOFENCE_TRANSITAION_ENTER)
 //       .setCircularRegion(fence.lat, fence.long, alarmDistance())
 //       .setExpirationDuration(expirationDuration)
 //       .build

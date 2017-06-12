@@ -8,29 +8,29 @@ import android.support.v7.app.AppCompatActivity
 
 import view.core._
 
-trait AnnotatedIO
+trait AnnotatedAIO
 {
-  def conIO[A](f: Context => A): IO[A, Context] =
-    macro AnnotatedIOM.inst[A, Context]
-  def actIO[A](f: Activity => A): IO[A, Activity] =
-    macro AnnotatedIOM.inst[A, Activity]
-  def acactIO[A](f: AppCompatActivity => A): IO[A, AppCompatActivity] =
-    macro AnnotatedIOM.inst[A, AppCompatActivity]
-  def resIO[A](f: Resources => A): IO[A, Resources] =
-    macro AnnotatedIOM.inst[A, Resources]
+  def conIO[A](f: Context => A): AIO[A, Context] =
+    macro AnnotatedAIOM.inst[A, Context]
+  def actIO[A](f: Activity => A): AIO[A, Activity] =
+    macro AnnotatedAIOM.inst[A, Activity]
+  def acactIO[A](f: AppCompatActivity => A): AIO[A, AppCompatActivity] =
+    macro AnnotatedAIOM.inst[A, AppCompatActivity]
+  def resIO[A](f: Resources => A): AIO[A, Resources] =
+    macro AnnotatedAIOM.inst[A, Resources]
 }
 
-trait ViewToIO
+trait ViewToAIO
 {
-  implicit def viewToIOX[A <: View](a: A): IO[A, Context] =
-    macro AnnotatedIOM.now[A, Context]
+  implicit def viewToAIO[A <: View](a: A): AIO[A, Context] =
+    macro AnnotatedAIOM.now[A, Context]
 
-  implicit def viewToApplyKestrelX[A <: View](a: A)
-  : ApplyKestrel.Ops[IO, A, Context] =
-    macro AnnotatedIOM.nowAK[A, Context]
+  implicit def viewToApplyKestrel[A <: View](a: A)
+  : ApplyKestrel.Ops[AIO, A, Context] =
+    macro AnnotatedAIOM.nowAK[A, Context]
 }
 
-class AnnotatedIOM(val c: blackbox.Context)
+class AnnotatedAIOM(val c: blackbox.Context)
 extends AndroidMacros
 {
   import c.universe._
@@ -51,17 +51,17 @@ extends AndroidMacros
     }
   }
 
-  def inst[A: WeakTypeTag, C: WeakTypeTag](f: Expr[C => A]): Expr[IO[A, C]] =
-    withRepr[A, C, IO](f, showCode(f.tree))
+  def inst[A: WeakTypeTag, C: WeakTypeTag](f: Expr[C => A]): Expr[AIO[A, C]] =
+    withRepr[A, C, AIO](f, showCode(f.tree))
 
-  def now[A: WeakTypeTag, C: WeakTypeTag](a: Expr[A]): Expr[IO[A, C]] =
-    withRepr[A, C, IO](Expr(q"(_: Context) => $a"), showCode(a.tree))
+  def now[A: WeakTypeTag, C: WeakTypeTag](a: Expr[A]): Expr[AIO[A, C]] =
+    withRepr[A, C, AIO](Expr(q"(_: Context) => $a"), showCode(a.tree))
 
   def nowAK[A: WeakTypeTag, C: WeakTypeTag](a: Expr[A])
-  : Expr[ApplyKestrel.Ops[IO, A, C]] = {
+  : Expr[ApplyKestrel.Ops[AIO, A, C]] = {
     val aType = weakTypeOf[A]
     val cType = weakTypeOf[C]
-    val iType = weakTypeOf[IO[_, _]]
+    val iType = weakTypeOf[AIO[_, _]]
     val io = now[A, C](a)
     val akt = typeOf[ApplyKestrel.ops.type]
     val ak = akt.termSymbol

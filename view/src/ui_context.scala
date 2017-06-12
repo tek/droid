@@ -5,7 +5,7 @@ package view
 import core._
 import droid.core._
 
-abstract class ContextAndroid[F[_, _]: ConsIO]
+abstract class ContextAndroid[F[_, _]: ConsAIO]
 extends Android[F, Context]
 with Logging
 with ViewInstances
@@ -16,31 +16,31 @@ with ViewInstances
     view.viewTree.drawTree
   }
 
-  override def notify(id: String): F[Unit, Context] = 
-    ConsIO[F].pure(_ => log.info(id))
+  override def notify(id: String): F[Unit, Context] =
+    ConsAIO[F].pure(_ => log.info(id))
 
   def loadFragment(fragment: FragmentBuilder) = {
-    ConsIO[F].pure(_ => "ContextAndroid cannot handle fragments")
+    ConsAIO[F].pure(_ => "ContextAndroid cannot handle fragments")
   }
 
   def transitionFragment(fragment: FragmentBuilder) = {
     loadFragment(fragment)
   }
 
-  def hideKeyboard() = 
-    ConsIO[F].pure(_ => "Cannot hide keyboard without activity")
+  def hideKeyboard() =
+    ConsAIO[F].pure(_ => "Cannot hide keyboard without activity")
 
   def startActivity(cls: Class[_ <: Activity]): F[Int, Context] = {
-    ConsIO[F].pure(_ => 1)
+    ConsAIO[F].pure(_ => 1)
   }
 }
 
-class DefaultContextAndroid[F[_, _]: ConsIO]
+class DefaultContextAndroid[F[_, _]: ConsAIO]
 (implicit val context: Context)
 extends ContextAndroid[F]
 
 object ContextAndroid
 {
-  def default[F[_, _]: ConsIO](implicit c: Context) = 
+  def default[F[_, _]: ConsAIO](implicit c: Context) =
     new DefaultContextAndroid[F]
 }

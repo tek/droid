@@ -73,7 +73,7 @@ with Logging
 
   def items: Seq[B]
 
-  def updateItems(newItems: Seq[B]): IO[Unit, Context]
+  def updateItems(newItems: Seq[B]): AIO[Unit, Context]
 
   var visibleItems: Seq[B] = Seq()
 
@@ -88,7 +88,7 @@ with Logging
   //   applyFilter
   // }
 
-  // def applyFilter = IO((c: Context) => getFilter.filter(currentFilter))
+  // def applyFilter = AIO((c: Context) => getFilter.filter(currentFilter))
 
   def updateVisibleData(newItems: Seq[B]) {
     visibleItems = sort(newItems)
@@ -102,7 +102,7 @@ with Logging
   //     def publishResults(q: CharSequence, results: Filter.FilterResults) {
   //       results.values match {
   //         case v: Seq[B] =>
-  //           IO((c: Context) => updateVisibleData(v))
+  //           AIO((c: Context) => updateVisibleData(v))
   //             .main !? "update visible data"
   //         case v => {
   //           Log.e(s"Error casting filtering results in ${this.className}")
@@ -128,10 +128,10 @@ extends RecyclerViewHolder(tree.container)
 
 trait SimpleRecyclerAdapter[Tree <: AnyTree, Model]
 extends RecyclerAdapter[RVHolder[Tree], Model]
-with AnnotatedIO
-with AnnotatedTIO
+with AnnotatedAIO
+with AnnotatedTAIO
 {
-  def tree: IO[Tree, Context]
+  def tree: AIO[Tree, Context]
 
   def bindTree(tree: Tree, position: Int): Unit
 
@@ -159,12 +159,12 @@ extends SimpleRecyclerAdapter[Tree, Model]
   def bindTree(tree: Tree, position: Int): Unit = items.lift(position).foreach(bind(tree, _))
 }
 
-case class SimpleRA[Tree <: AnyTree, Model](tree: IO[Tree, Context], bind: (Tree, Model) => Unit, context: Context)
+case class SimpleRA[Tree <: AnyTree, Model](tree: AIO[Tree, Context], bind: (Tree, Model) => Unit, context: Context)
 extends RA[Tree, Model]
 
 object RA
 {
-  def apply[Tree <: AnyTree, Model](tree: IO[Tree, Context], bind: (Tree, Model) => Unit)(context: Context)
+  def apply[Tree <: AnyTree, Model](tree: AIO[Tree, Context], bind: (Tree, Model) => Unit)(context: Context)
   : RA[Tree, Model] =
     SimpleRA(tree, bind, context)
 }

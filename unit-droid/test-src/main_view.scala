@@ -3,7 +3,7 @@ package droid
 package unit
 
 object MainViewSpec
-extends Views[Context, IO]
+extends Views[Context, AIO]
 {
   import MainViewMessages._
 

@@ -24,7 +24,7 @@ class WidgetBase[A <: View](transName: String)
   // def <~[B <: Tweak[A]](t: B) = ui <~ t
 }
 
-case class Widget[A <: View](view: IO[A, Context], transName: String,
+case class Widget[A <: View](view: AIO[A, Context], transName: String,
   transition: Transition, duration: Long = 300)
 (implicit a: Activity)
 extends WidgetBase[A](transName)
@@ -38,12 +38,12 @@ extends WidgetBase[A](transName)
   // def <~~[B <: Snail[A]](t: B)(implicit ec: ExecutionContext) = ui <~~ t
 }
 
-case class Layout[A <: ViewGroup](view: (IO[View, Context]*) => IO[A, Context],
+case class Layout[A <: ViewGroup](view: (AIO[View, Context]*) => AIO[A, Context],
   transName: String, transition: Transition, duration: Long = 300)
 (implicit a: Activity)
 extends WidgetBase[A](transName)
 {
-  def apply(children: IO[View, Context]*) = view(children: _*)
+  def apply(children: AIO[View, Context]*) = view(children: _*)
   // <~ ui
 }
 
@@ -79,13 +79,13 @@ case class FragmentTransition()
 }
 
 trait Transitions
-extends Views[Context, IO]
+extends Views[Context, AIO]
 {
-  // def attachRoot(root: IO[ViewGroup, Context]) = {
+  // def attachRoot(root: AIO[ViewGroup, Context]) = {
   //   root <~ uiRoot
   // }
 
-  // def transition(newView: IO[View, Context]) {
+  // def transition(newView: AIO[View, Context]) {
   //   uiRoot transitionTo(transitions, newView)
   // }
 
@@ -93,7 +93,7 @@ extends Views[Context, IO]
 
   // implicit class `Slot transition helper`[A <: ViewGroup](root: Slot[A])
   // {
-  //   def transitionTo(trans: FragmentTransition, view: IO[View, Context]) {
+  //   def transitionTo(trans: FragmentTransition, view: AIO[View, Context]) {
   //     root some { r =>
   //       trans.go(r, view.get)
   //     } none(sys.error("no ui root set for transition!"))
@@ -130,7 +130,7 @@ extends Views[Context, IO]
   object CommonWidgets
   extends Widgets
   {
-    // private def pxCtor(c: IO[View, Context]*) = l[ParallaxHeader](c: _*)
+    // private def pxCtor(c: AIO[View, Context]*) = l[ParallaxHeader](c: _*)
 
     // val header = layout(pxCtor _, "header", slideTop)
 
@@ -142,7 +142,7 @@ extends Views[Context, IO]
 }
 
 class Widgets(implicit a: Activity)
-extends Views[Context, IO]
+extends Views[Context, AIO]
 {
   val transitionSet = MSet[Transition]()
 
@@ -154,14 +154,14 @@ extends Views[Context, IO]
     transition.addTarget(transName)
   }
 
-  def widget[A <: View](view: IO[A, Context], transName: String = "widget",
+  def widget[A <: View](view: AIO[A, Context], transName: String = "widget",
     transition: Transition = new TransitionSet, duration: Long = 300) =
   {
     addTransitionSet(transName, transition, duration)
     Widget(view, transName, transition)
   }
 
-  def layout[A <: ViewGroup](view: (IO[View, Context]*) => IO[A, Context],
+  def layout[A <: ViewGroup](view: (AIO[View, Context]*) => AIO[A, Context],
     transName: String, transition: Transition, duration: Long = 300) =
   {
     addTransitionSet(transName, transition, duration)

@@ -4,12 +4,12 @@ package core
 
 import reflect.macros.whitebox
 
-class IOBaseAnnotation(val c: whitebox.Context)
+class AIOBaseAnnotation(val c: whitebox.Context)
 extends Annotation
 {
   import c.universe._
 
-  object IOBaseTransformer
+  object AIOBaseTransformer
   extends Transformer
   {
     def apply(annottees: Annottees) = {
@@ -17,11 +17,11 @@ extends Annotation
     }
   }
 
-  def transformers = IOBaseTransformer :: Nil
+  def transformers = AIOBaseTransformer :: Nil
 }
 
-class IOBase
+class AIOBase
 extends scala.annotation.StaticAnnotation
 {
-  def macroTransform(annottees: Any*) = macro IOBaseAnnotation.process
+  def macroTransform(annottees: Any*) = macro AIOBaseAnnotation.process
 }

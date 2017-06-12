@@ -42,7 +42,7 @@ class PlusAccount(apiClient: GoogleApiClient)
   lazy val coverUrl = cover map { c => new URL(c.getUrl) }
 
   def drawable(url: Maybe[URL]) = {
-    Task {
+    IO {
       url map { u =>
         val stream = u.openConnection().getInputStream
         Drawable.createFromStream(stream, "")

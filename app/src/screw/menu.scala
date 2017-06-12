@@ -9,11 +9,11 @@
 //   protected case class Menu(implicit c: Context, ns: ResourceNamespace)
 //   extends tryp.droid.ResourcesAccess
 //   {
-//     val always = MenuItem.SHOW_AS_ACTION_ALWAYS
-//     val collapse = MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW
-//     val ifRoom = MenuItem.SHOW_AS_ACTION_IF_ROOM
-//     val never = MenuItem.SHOW_AS_ACTION_NEVER
-//     val withText = MenuItem.SHOW_AS_ACTION_WITH_TEXT
+//     val always = MenuItem.SHOW_AS_ACTAION_ALWAYS
+//     val collapse = MenuItem.SHOW_AS_ACTAION_COLLAPSE_ACTAION_VIEW
+//     val ifRoom = MenuItem.SHOW_AS_ACTAION_IF_ROOM
+//     val never = MenuItem.SHOW_AS_ACTAION_NEVER
+//     val withText = MenuItem.SHOW_AS_ACTAION_WITH_TEXT
 
 //     def icon(name: String) = {
 //       theme.drawable(name)

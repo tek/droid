@@ -12,7 +12,7 @@ import scalaz.syntax.foldable._
 
 import cats.data.Either._
 
-import _root_.slick.dbio.DBIO
+import _root_.slick.dbio.DBAIO
 
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -158,7 +158,7 @@ class Backend(implicit prefs: Settings, res: Resources)
 //       .recoverWith {
 //         case AuthError(error) =>
 //           val errmsg = s"not authed with backend: $error"
-//           val next = DBIO.from(comm.core ? message)
+//           val next = DBAIO.from(comm.core ? message)
 //           messages.toList match {
 //             case head :: tail =>
 //               tryBackend(next andThen(callback))(head, tail)

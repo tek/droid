@@ -8,7 +8,6 @@ import scala.annotation.tailrec
 import android.os.{Looper, Handler}
 
 import cats.Monoid
-import fs2.interop.cats._
 
 import concurrent.Await
 
@@ -21,7 +20,7 @@ import shapeless.ops.hlist._
 
 import scalaz.Liskov._
 
-trait ConsIO[F[_, _]]
+trait ConsAIO[F[_, _]]
 {
   def cons[A, C](fa: F[A, C])(c: C): A
   def init[A, C](fa: F[A, C])(c: C): A = cons[A, C](fa)(c)
@@ -32,13 +31,13 @@ trait ConsIO[F[_, _]]
     pure[A, D](d => cons[A, C](fa)(d))
 }
 
-object ConsIO
+object ConsAIO
 {
-  def apply[F[_, _]](implicit instance: ConsIO[F]): ConsIO[F] = instance
+  def apply[F[_, _]](implicit instance: ConsAIO[F]): ConsAIO[F] = instance
 
   abstract class Ops[F[_, _], A, C]
   {
-    def typeClassInstance: ConsIO[F]
+    def typeClassInstance: ConsAIO[F]
     def self: F[A, C]
 
     def cons(c: C): A = typeClassInstance.cons(self)(c)
@@ -46,10 +45,10 @@ object ConsIO
     def withContext[D <: C]: F[A, D] = typeClassInstance.withContext(self)
   }
 
-  trait ToConsIOOps
+  trait ToConsAIOOps
   {
-    implicit def toConsIOOps[F[_, _]: ConsIO, A, C](fa: F[A, C])
-    (implicit tc: ConsIO[F]): Ops[F, A, C] =
+    implicit def toConsAIOOps[F[_, _]: ConsAIO, A, C](fa: F[A, C])
+    (implicit tc: ConsAIO[F]): Ops[F, A, C] =
       new Ops[F, A, C] {
         val self = fa
         val typeClassInstance = tc
@@ -57,27 +56,27 @@ object ConsIO
     }
 
   object ops
-  extends ToConsIOOps
+  extends ToConsAIOOps
 }
 
-@tc trait DescribeIO[F[_, _]]
+@tc trait DescribeAIO[F[_, _]]
 {
   def desc[A, C](fa: F[A, C]): String
 }
 
-trait IOI[A, C]
+trait AIOI[A, C]
 {
   def run: C => A
   def desc: String
 }
 
-case class IO[A, C](run: C => A, desc: String)
-extends IOI[A, C]
+case class AIO[A, C](run: C => A, desc: String)
+extends AIOI[A, C]
 with (C => A)
 {
   def apply(c: C): A = run(c)
 
-  override def toString = s"IO($desc)"
+  override def toString = s"AIO($desc)"
 }
 
 trait Kestrel[A, C, F[_, _]]
@@ -94,7 +93,7 @@ trait KestrelInstances
   import ChainKestrel.ops._
 
   implicit def kMonoid[A, C, F[_, _]]
-  (implicit F: ConsIO[F], k: ChainKestrel[Kestrel[?, C, F]])
+  (implicit F: ConsAIO[F], k: ChainKestrel[Kestrel[?, C, F]])
   : Monoid[Kestrel[A, C, F]] = {
     type This = Kestrel[A, C, F]
     new Monoid[This] {
@@ -108,16 +107,16 @@ trait KestrelInstances
 
 trait KestrelFunctions1
 {
-  implicit def liftDefault[A, B, C](f: A => B): Kestrel[A, C, IO] = {
-    K[A, C, IO](a => IO(ctx => { f(a); a }, f.toString))
+  implicit def liftDefault[A, B, C](f: A => B): Kestrel[A, C, AIO] = {
+    K[A, C, AIO](a => AIO(ctx => { f(a); a }, f.toString))
   }
 }
 
 trait KestrelFunctions
 extends KestrelFunctions1
 {
-  implicit def lift[A, B, C, F[_, _]: ConsIO](f: A => B): Kestrel[A, C, F] = {
-    K[A, C, F](a => ConsIO[F].pure(ctx => { f(a); a }))
+  implicit def lift[A, B, C, F[_, _]: ConsAIO](f: A => B): Kestrel[A, C, F] = {
+    K[A, C, F](a => ConsAIO[F].pure(ctx => { f(a); a }))
   }
 }
 
@@ -155,7 +154,7 @@ trait ChainKestrelInstances
 extends ToIotaKestrelOps
 {
   implicit def instance_ChainKestrel_Kestrel[C, F[_, _]]
-  (implicit F: ConsIO[F]): ChainKestrel[Kestrel[?, C, F]] = {
+  (implicit F: ConsAIO[F]): ChainKestrel[Kestrel[?, C, F]] = {
     type KS[A] = Kestrel[A, C, F]
     new ChainKestrel[KS] {
       def chain[A, B, G[_]](fa: KS[A])(fb: KS[B])
@@ -218,72 +217,73 @@ extends ChainKestrelInstances
     }
 }
 
-trait IOInstances
+trait AIOInstances
 {
-  implicit def instance_Monad_IO[C]: Monad[IO[?, C]] = new Monad[IO[?, C]]
+  implicit def instance_Monad_AIO[C]: Monad[AIO[?, C]] = new Monad[AIO[?, C]]
   {
-    def pure[A](a: A) = IO(c => a, a.toString)
+    def pure[A](a: A) = AIO(c => a, a.toString)
 
-    def flatMap[A, B](fa: IO[A, C])(f: A => IO[B, C]) = {
-      IO(c => f(fa.run(c)).run(c), s"${fa.desc}.flatMap($f)")
+    def flatMap[A, B](fa: AIO[A, C])(f: A => AIO[B, C]) = {
+      AIO(c => f(fa.run(c)).run(c), s"${fa.desc}.flatMap($f)")
     }
 
-    override def map[A, B](fa: IO[A, C])(f: A => B) = {
-      IO(c => f(fa.run(c)), s"${fa.desc}.map($f)")
+    override def map[A, B](fa: AIO[A, C])(f: A => B) = {
+      AIO(c => f(fa.run(c)), s"${fa.desc}.map($f)")
     }
 
-    def tailRecM[A, B](a: A)(f: A => IO[Either[A, B], C]): IO[B, C] =
+    def tailRecM[A, B](a: A)(f: A => AIO[Either[A, B], C]): AIO[B, C] =
       f(a).flatMap {
         case Right(b) => pure(b)
         case Left(a1) => tailRecM(a1)(f)
       }
   }
 
-  implicit lazy val instance_ConsIO_IO: ConsIO[IO] = new ConsIO[IO] {
-    def cons[A, C](fa: IO[A, C])(c: C): A = fa(c)
-    def pure[A, C](run: C => A): IO[A, C] = IO(run, run.toString)
-    def pureDesc[A, C](run: C => A, desc: String): IO[A, C] = IO(run, desc)
+  implicit lazy val instance_ConsAIO_AIO: ConsAIO[AIO] = new ConsAIO[AIO] {
+    def cons[A, C](fa: AIO[A, C])(c: C): A = fa(c)
+    def pure[A, C](run: C => A): AIO[A, C] = AIO(run, run.toString)
+    def pureDesc[A, C](run: C => A, desc: String): AIO[A, C] = AIO(run, desc)
   }
 
-  implicit def instance_PerformIO_IO: PerformIO[IO] =
-    new PerformIO[IO] {
-      def perform[A, C](fa: IO[A, C])(implicit c: C) =
-        Task.delay(fa(c))
+  implicit def instance_PerformAIO_AAIO: PerformAIO[AIO] =
+    new PerformAIO[AIO] {
+      def perform[A, C](fa: AIO[A, C])(implicit c: C) =
+        IO(fa(c))
 
-      def performMain[A, C](fa: IO[A, C])(timeout: Duration = 5.seconds)
-      (implicit c: C, sched: Scheduler) = {
-        PerformIO.mainTask(fa(c), timeout)
+      def performMain[A, C](fa: AIO[A, C])(implicit c: C) = PerformAIO.mainIO(fa(c))
+
+      def performMainTimed[A, C](fa: AIO[A, C])(timeout: Duration = 5.seconds)(implicit c: C) = {
+        PerformAIO.performMainTimed(IO(fa(c)), timeout)
       }
     }
 
-  implicit def instance_DescribeIO_IO: DescribeIO[IO] =
-    new DescribeIO[IO] {
-      def desc[A, C](fa: IO[A, C]) = fa.desc
+  implicit def instance_DescribeAIO_AIO: DescribeAIO[AIO] =
+    new DescribeAIO[AIO] {
+      def desc[A, C](fa: AIO[A, C]) = fa.desc
     }
 }
 
-object IO
-extends IOInstances
+object AIO
+extends AIOInstances
 
-class ApplyKestrel[F[_, _]: ConsIO: DescribeIO]
+class ApplyKestrel[F[_, _]: ConsAIO: DescribeAIO]
 {
-  import PerformIO.ops._
-  import DescribeIO.ops._
+  import PerformAIO.ops._
+  import DescribeAIO.ops._
 
-  def applyKestrel[A, B >: A, C, G[_, _]: ConsIO]
+  def applyKestrel[A, B >: A, C, G[_, _]: ConsAIO]
   (fa: F[A, C])
   (k: Kestrel[B, C, G])
   : F[A, C] = {
-    ConsIO[F].pureDesc[A, C](combineRun[A, B, C, G](fa)(k),
+    ConsAIO[F].pureDesc[A, C](combineRun[A, B, C, G](fa)(k),
       s"${fa.desc} >>- ${k.impl}")
   }
 
-  def combineRun[A, B >: A, C, G[_, _]: ConsIO]
+  def combineRun[A, B >: A, C, G[_, _]: ConsAIO]
   (fa: F[A, C])(k: Kestrel[B, C, G]): C => A = {
     c =>
-      val a = ConsIO[F].cons(fa)(c)
+      val a = ConsAIO[F].cons(fa)(c)
       val b = k.run(a)
-      ConsIO[G].cons(b)(c)
+      ConsAIO[G].cons(b)(c)
       a
   }
 
@@ -293,33 +293,33 @@ class ApplyKestrel[F[_, _]: ConsIO: DescribeIO]
 object ApplyKestrel
 extends ToIotaKestrelOps
 {
-  implicit def instance_ApplyKestrel[F[_, _]: ConsIO: DescribeIO]
+  implicit def instance_ApplyKestrel[F[_, _]: ConsAIO: DescribeAIO]
   : ApplyKestrel[F] = new ApplyKestrel
 
   def apply[F[_, _]](implicit instance: ApplyKestrel[F]): ApplyKestrel[F] =
     instance
 
-  abstract class Ops[F[_, _]: ConsIO, A, C]
+  abstract class Ops[F[_, _]: ConsAIO, A, C]
   {
     def typeClassInstance: ApplyKestrel[F]
     def self: F[A, C]
 
-    def applyKestrel[B >: A, G[_, _]: ConsIO](ka: Kestrel[B, C, G]): F[A, C] =
+    def applyKestrel[B >: A, G[_, _]: ConsAIO](ka: Kestrel[B, C, G]): F[A, C] =
       typeClassInstance.applyKestrel[A, B, C, G](self)(ka)
 
-    def >>-[B >: A](ka: Kestrel[B, C, IO]): F[A, C] =
-      applyKestrel[B, IO](ka)
+    def >>-[B >: A](ka: Kestrel[B, C, AIO]): F[A, C] =
+      applyKestrel[B, AIO](ka)
 
-    def >-[B >: A, G[_, _]: ConsIO](ka: Kestrel[B, C, G]): F[A, C] =
+    def >-[B >: A, G[_, _]: ConsAIO](ka: Kestrel[B, C, G]): F[A, C] =
       applyKestrel[B, G](ka)
 
     def >>=[B >: A](ka: iota.effect.Kestrel[B]): F[A, C] =
-      applyKestrel(ka.liftAs[A, C, IO])
+      applyKestrel(ka.liftAs[A, C, AIO])
   }
 
   trait ToApplyKestrelOps
   {
-    implicit def toApplyKestrelOps[F[_, _]: ConsIO, A, C](fa: F[A, C])
+    implicit def toApplyKestrelOps[F[_, _]: ConsAIO, A, C](fa: F[A, C])
     (implicit tc: ApplyKestrel[F]): Ops[F, A, C] =
       new Ops[F, A, C] {
         val self = fa
@@ -331,15 +331,16 @@ extends ToIotaKestrelOps
   extends ToApplyKestrelOps
 }
 
-trait PerformIO[F[_, _]]
+trait PerformAIO[F[_, _]]
 {
-  def perform[A, C](fa: F[A, C])(implicit c: C): Task[A]
+  def perform[A, C](fa: F[A, C])(implicit c: C): IO[A]
 
-  def performMain[A, C](fa: F[A, C])(timeout: Duration)
-  (implicit c: C, scheduler: Scheduler): Task[A]
+  def performMain[A, C](fa: F[A, C])(implicit c: C): IO[A]
+
+  def performMainTimed[A, C](fa: F[A, C])(timeout: Duration)(implicit c: C): IO[Option[A]]
 }
 
-trait PerformIOExecution
+trait PerformAIOExecution
 {
   import java.util.concurrent._
 
@@ -361,21 +362,16 @@ trait PerformIOExecution
     }
   }
 
-  def performMain[A](task: Task[A], timeout: Duration)
-  (implicit sched: Scheduler): Task[A] = {
-    implicit val strat = Strategy.fromExecutor(AndroidMainExecutorService)
-    val timed = timeout match {
-      case concurrent.duration.Duration.Inf => task
-      case f: FiniteDuration => task.unsafeTimed(f)
-      case _ => task
-    }
-    timed.async(strat)
+  val androidEC = ExecutionContext.fromExecutor(AndroidMainExecutorService)
+
+  def performMain[A](io: IO[A]): IO[A] = IO.shift(androidEC) >> io
+
+  def performMainTimed[A](io: IO[A], timeout: Duration): IO[Option[A]] = {
+    IO.shift(androidEC) >> IO(io.unsafeRunTimed(timeout))
   }
 
-  // use `Task.delay` here because `performMain` wraps the task into an `Async` with strategy
-  def mainTask[A](f: => A, timeout: Duration)
-  (implicit sched: Scheduler): Task[A] = {
-    performMain(Task.delay(f), timeout)
+  def mainIO[A](f: => A): IO[A] = {
+    performMain(IO(f))
   }
 
   object AndroidMainExecutionContext
@@ -386,50 +382,41 @@ trait PerformIOExecution
     override def execute(runnable: Runnable) = handler.post(runnable)
     override def reportFailure(t: Throwable) = Log.e(t)
   }
-
-  def mainFuture[A](f: => A, timeout: Duration): Task[A] = {
-    implicit val strat = Strategy.fromExecutor(AndroidMainExecutorService)
-    Task.fromFuture(
-      ScalaFuture(f)(AndroidMainExecutionContext))(
-        strat, AndroidMainExecutionContext)
-  }
 }
 
-object PerformIO
-extends PerformIOExecution
+object PerformAIO
+extends PerformAIOExecution
 {
-  def apply[F[_, _], A, C](implicit instance: PerformIO[F]) =
+  def apply[F[_, _], A, C](implicit instance: PerformAIO[F]) =
     instance
 
   abstract class Ops[F[_, _], A, C]
   {
-    def typeClassInstance: PerformIO[F]
+    def typeClassInstance: PerformAIO[F]
     def self: F[A, C]
 
-    def perform(implicit c: C): Task[A] = {
+    def perform(implicit c: C): IO[A] = {
       typeClassInstance.perform[A, C](self)
     }
 
-    def performMain(implicit c: C, sched: Scheduler): Task[A] = {
-      typeClassInstance.performMain[A, C](self)(5.seconds)
+    def performMain(implicit c: C): IO[A] = {
+      typeClassInstance.performMain[A, C](self)
     }
 
-    def mainTimed(timeout: Duration)
-    (implicit c: C, sched: Scheduler): Task[A] = {
-      typeClassInstance.performMain[A, C](self)(timeout)
+    def performMainTimed(timeout: Duration)(implicit c: C): IO[Option[A]] = {
+      typeClassInstance.performMainTimed[A, C](self)(timeout)
     }
 
-    def mainUnit(implicit c: C, sched: Scheduler): Task[Unit] = performMain.void
+    def mainUnit(implicit c: C): IO[Unit] = performMain.void
 
-    def mainUnit(timeout: Duration)
-    (implicit c: C, sched: Scheduler): Task[Unit] =
-      mainTimed(timeout).void
+    def mainUnitTimed(timeout: Duration)(implicit c: C): IO[Unit] =
+      performMainTimed(timeout).void
   }
 
-  trait ToPerformIOOps
+  trait ToPerformAIOOps
   {
-    implicit def toPerformIOOps[F[_, _], A, C](fa: F[A, C])
-    (implicit tc: PerformIO[F]): Ops[F, A, C] =
+    implicit def toPerformAIOOps[F[_, _], A, C](fa: F[A, C])
+    (implicit tc: PerformAIO[F]): Ops[F, A, C] =
       new Ops[F, A, C] {
         val self = fa
         val typeClassInstance = tc
@@ -437,21 +424,21 @@ extends PerformIOExecution
     }
 
   object ops
-  extends ToPerformIOOps
+  extends ToPerformAIOOps
 }
 
 trait CKFunctions
 {
-  implicit def liftF[A](f: A => IO[A, Context]) =
+  implicit def liftF[A](f: A => AIO[A, Context]) =
     CK[A](f)
 
-  def apply[A](run: A => IO[A, Context]) = K(run)
+  def apply[A](run: A => AIO[A, Context]) = K(run)
 
-  def lift[A, B, F[_, _]: ConsIO](f: A => B): CK[A] = {
-    liftF(a => IO(ctx => { f(a); a }, "from CKFunctions.lift"))
+  def lift[A, B, F[_, _]: ConsAIO](f: A => B): CK[A] = {
+    liftF(a => AIO(ctx => { f(a); a }, "from CKFunctions.lift"))
   }
 
-  def nopK[A, F[_, _]: ConsIO]: CK[A] = lift[A, Unit, F](_ => ())
+  def nopK[A, F[_, _]: ConsAIO]: CK[A] = lift[A, Unit, F](_ => ())
 }
 
 object CK
@@ -460,12 +447,12 @@ extends CKFunctions
 object consChildren
 extends Poly1
 {
-  implicit def caseConsIO[A, C, F[_, _]]
-  (implicit ac: ConsIO[F]) =
+  implicit def caseConsAIO[A, C, F[_, _]]
+  (implicit ac: ConsAIO[F]) =
     at[F[A, C]](fa => (c: C) => ac.init(fa)(c))
 }
 
-case class LayoutBuilder[A, C, F[_, _]: ConsIO]
+case class LayoutBuilder[A, C, F[_, _]: ConsAIO]
 (layout: C => List[iota.effect.IO[View]] => A)
 {
   def apply[In <: HList, Out <: HList](vs: In)
@@ -481,7 +468,7 @@ case class LayoutBuilder[A, C, F[_, _]: ConsIO]
           .map(iota.effect.IO(_))
         layout(ctx)(children)
       }
-      ConsIO[F].pure(f)
+      ConsAIO[F].pure(f)
   }
 }
 
@@ -506,7 +493,7 @@ extends AndroidMacros
     val aType = weakTypeOf[A]
     val cType = weakTypeOf[C]
     val TypeRef(_, fSym, _) = wtf.tpe
-    val cons = symbolOf[ConsIO[F]].companion
+    val cons = symbolOf[ConsAIO[F]].companion
     Expr[F[A, C]] {
       q"""
       $cons[$fSym].pure[$aType, $cType]((ctx: $cType) => new $aType(ctx))
@@ -543,7 +530,7 @@ extends AndroidMacros
     val cType = weakTypeOf[C]
     val vg = typeOf[ViewGroup]
     val TypeRef(_, fSym, _) = wtf.tpe
-    val cons = symbolOf[ConsIO[F]].companion
+    val cons = symbolOf[ConsAIO[F]].companion
     Expr[F[A, C]] {
       q"""
       $cons[$fSym].pure[$aType, $cType]((ctx: $cType) =>
@@ -553,31 +540,31 @@ extends AndroidMacros
   }
 }
 
-trait IOOrphans
+trait AIOOrphans
 {
-  implicit def instance_Contravariant_IO[F[_, _]: ConsIO, A]
+  implicit def instance_Contravariant_AIO[F[_, _]: ConsAIO, A]
   : Contravariant[F[A, ?]] =
     new Contravariant[F[A, ?]] {
       def contramap[C, D](fa: F[A, C])(f: D => C): F[A, D] =
-        ConsIO[F].pure(d => ConsIO[F].cons(fa)(f(d)))
+        ConsAIO[F].pure(d => ConsAIO[F].cons(fa)(f(d)))
     }
 }
 
-trait IOViews
-extends Views[Context, IO]
+trait AIOViews
+extends Views[Context, AIO]
 
-object IOViews
-extends IOViews
+object AIOViews
+extends AIOViews
 
-trait ToIO
+trait ToAIO
 {
-  implicit def viewToIO[A <: View](a: A): IO[A, Context] = {
-    ConsIO[IO].pure[A, Context](_ => a)
+  implicit def viewToAIO[A <: View](a: A): AIO[A, Context] = {
+    ConsAIO[AIO].pure[A, Context](_ => a)
   }
 
   implicit def viewToApplyKestrel[A <: View](a: A)
-  : ApplyKestrel.Ops[IO, A, Context] = {
+  : ApplyKestrel.Ops[AIO, A, Context] = {
     import ApplyKestrel.ops._
-    viewToIO(a)
+    viewToAIO(a)
   }
 }
