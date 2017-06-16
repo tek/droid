@@ -4,6 +4,8 @@ package integration
 
 import org.specs2.matcher.{Matcher, MatchResult, Expectable, TrypExpectable}
 
+import tryp.unit.Match
+
 trait BiMatch[A, B]
 {
   def result(expectable: Expectable[A], target: B): MatchResult[A]
@@ -60,4 +62,30 @@ trait ViewMatchers
         Matcher.result(false, "", "", e)
       }
     }
+}
+
+object ViewMatch
+{
+  case class ContainsAView[A]()
+
+  object ContainsAView
+  {
+    implicit def Match_ContainsAView_mono[A: RootView, B <: View: ClassTag]: Match[A, ContainsAView, B, B] =
+      new Match[A, ContainsAView, B, B] {
+        def apply(a: A, fb: ContainsAView[B]): Either[String, B] = {
+          val name = className[B]
+          a.viewOfType[B] match {
+            case Some(a) => Right(a)
+            case None => Left(s"$a does not contain a $name")
+          }
+        }
+      }
+  }
+}
+
+trait ViewMatchCons
+{
+  import ViewMatch.ContainsAView
+
+  def containA[A] = ContainsAView[A]()
 }

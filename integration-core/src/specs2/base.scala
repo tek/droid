@@ -2,15 +2,13 @@ package tryp
 package droid
 package integration
 
-import org.specs2._
-
 import scalaz.Scalaz, Scalaz.{ToTraverseOps, ToFoldableOps}, scalaz.std.list._
 
-import main.Arguments
-import reporter.LineLogger.consoleLogger
-import runner.{Runner, ClassRunner}
-import specification.core.{Env, SpecificationStructure}
-import specification.process.StatisticsRepository
+import org.specs2.main.Arguments
+import org.specs2.reporter.LineLogger.consoleLogger
+import org.specs2.runner.{Runner, ClassRunner}
+import org.specs2.specification.core.{Env, SpecificationStructure, ImmutableSpecificationStructure}
+import org.specs2.specification.process.StatisticsRepository
 
 object runSpec
 extends ClassRunner
@@ -33,7 +31,7 @@ extends ClassRunner
 }
 
 trait SpecsBase
-extends SpecificationLike
+extends ImmutableSpecificationStructure
 { _: IntegrationSpec[_ <: Activity] =>
   def androidInstrumentationTest() = {
     activity

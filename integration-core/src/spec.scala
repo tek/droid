@@ -6,6 +6,10 @@ import android.app.Instrumentation
 import android.test.ActivityInstrumentationTestCase2
 import android.widget._
 
+import org.specs2.SpecificationLike
+
+import tryp.unit.IOSpec
+
 trait IntegrationBase
 extends FixedPool
 with Logging
@@ -73,6 +77,8 @@ extends IntegrationSpec[A]
   def showWindow = showTree(activity.showViewTree)
 
   def send = appState.send _
+
+  def unsafeSend = appState.unsafeSend _
 }
 
 class InstrumentationSpec[A <: Activity](cls: Class[A])
@@ -102,5 +108,11 @@ with StateSpec[A]
 abstract class SpecsSpec[A <: StateActivity](cls: Class[A])
 extends StateInstrumentationSpec[A](cls)
 with SpecsBase
+with SpecificationLike
 with ViewMatchers
 with BiMustExpectations
+
+abstract class SpecsIOSpec[A <: StateActivity](cls: Class[A])
+extends StateInstrumentationSpec[A](cls)
+with SpecsBase
+with IOSpec
