@@ -4,6 +4,8 @@ package view
 
 import android.widget._
 
+import cats.Eq
+
 import scalaz.Show
 
 trait ViewMetadata
@@ -109,4 +111,9 @@ final class ViewGroupOps(vg: ViewGroup)
 trait ToViewGroupOps
 {
   implicit def ToViewGroupOps(v: ViewGroup) = new ViewGroupOps(v)
+}
+
+trait ViewEq
+{
+  implicit def Eq_View[A <: View]: Eq[A] = Eq.fromUniversalEquals
 }

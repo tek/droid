@@ -7,7 +7,7 @@ import scala.annotation.tailrec
 
 import android.os.{Looper, Handler}
 
-import cats.Monoid
+import cats.{Monoid, Monad}
 
 import concurrent.Await
 

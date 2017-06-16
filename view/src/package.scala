@@ -28,8 +28,8 @@ with ToViewGroupOps
 with StartActivity.ToStartActivityOps
 with StartActivityForResult.ToStartActivityForResultOps
 with Auth.ToAuthOps
-// with TOAIOProcess
 with BuilderOps
+with ViewEq
 
 @integrate(view.core)
 object `package`
