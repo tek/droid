@@ -83,10 +83,12 @@ extends Logging
     case a => log.info(s"state loop finished with $a")
   }
 
-  def send(msg: Message) = in.enqueue1(msg).unsafeRunSync()
+  def send(msg: Message): IO[Unit] = in.enqueue1(msg)
+
+  def unsafeSend(msg: Message): Unit = send(msg).unsafeRunSync()
 
   // FIXME doesn't work, but doing the same from within the activity does
-  def setActivity = SetActivity.apply _ andThen send _
+  def setActivity = SetActivity.apply _ andThen unsafeSend _
 }
 
 trait ExtMVAppState
@@ -113,6 +115,8 @@ extends android.app.Application
 
   def send = state.send _
 
+  def unsafeSend = state.unsafeSend _
+
   def setActivity = state.setActivity _
 }
 
@@ -130,15 +134,17 @@ extends AppCompatActivity
 
   def send = appState.send _
 
+  def unsafeSend = appState.unsafeSend _
+
   override def onCreate(state: Bundle) = {
     Thread.sleep(500)
-    send(SetActivity(this))
+    unsafeSend(SetActivity(this))
     super.onCreate(state)
-    send(CreateContentView)
-    initialMessages foreach stateApp.send
+    unsafeSend(CreateContentView)
+    initialMessages foreach stateApp.unsafeSend
   }
 
-  override def onBackPressed(): Unit = send(Back)
+  override def onBackPressed(): Unit = unsafeSend(Back)
 
   def onBackPressedNative(): Unit = super.onBackPressed()
 }

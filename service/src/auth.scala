@@ -149,7 +149,7 @@ extends AIOMachine
     con(_.clearPlusToken(token))
 
   def plusTokenResolved(success: Boolean) {
-    if (success) send(Fetch)
+    if (success) unsafeSend(Fetch)
   }
 
   def backendTokenValid = {

@@ -12,7 +12,7 @@ extends Spec
   def basic = {
     sleep(1)
     val strings = List("first", "second")
-    send(UpdateInt(strings))
+    unsafeSend(UpdateInt(strings))
     sleep(1)
     val tv = for {
       fl <- mainFrame.viewTree.subForest.headOption
