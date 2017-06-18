@@ -12,7 +12,7 @@ import iota.effect._
 
 trait CKAnnBase
 extends SimpleMethodAnnotation
-with AndroidMacros
+with MacroMetadata
 {
   val c: blackbox.Context
 

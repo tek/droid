@@ -74,7 +74,9 @@ extends Logging
 
   lazy val (in, term, loop, currentStates) = ctor.unsafeRunSync()
 
-  def currentState = currentStates.get.unsafeRunSync()
+  def currentState = currentStates.get
+
+  def unsafeCurrentState = currentState.unsafeRunSync()
 
   def run() = loop.unsafeRunAsync {
     case Left(a: Throwable) =>

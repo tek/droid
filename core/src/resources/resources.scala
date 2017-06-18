@@ -6,9 +6,7 @@ import reflect.macros.blackbox
 
 import android.content.res.{Resources => AResources}
 
-import simulacrum._
-
-@typeclass trait ResId[A]
+@tc trait ResId[A]
 {
   def id(a: A)(implicit res: ResourcesInternal) = typed(a, "id")
 
@@ -62,7 +60,7 @@ object ResourcesInternal
 }
 
 class ResourcesInternalMacros(val c: blackbox.Context)
-extends AndroidMacros
+extends MacroMetadata
 {
   import c.universe._
 
@@ -72,6 +70,7 @@ extends AndroidMacros
 
 class AndroidResourcesInternal(implicit val context: Context)
 extends ResourcesInternal
+with Logging
 {
   def resources = context.getResources
 
@@ -89,14 +88,13 @@ extends ResourcesInternal
     Either.catchNonFatal(callback(resources)(id)) recoverWith {
       case e: AResources.NotFoundException =>
         val msg = s"no resource found for $defType id '$id'"
-        Log.e(msg)
+        log.error(msg)
         Either.left(new Throwable(msg))
     }
   }
 }
 
-class Resources(implicit internal: ResourcesInternal,
-  val theme: Theme, ns: ResourceNamespace = GlobalResourceNamespace)
+class Resources(implicit internal: ResourcesInternal, val theme: Theme, ns: ResourceNamespace = GlobalResourceNamespace)
 {
   import ResId.ops._
 

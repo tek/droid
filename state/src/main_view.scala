@@ -167,14 +167,14 @@ with StateActAIO
             insertStack((h, savedState1) :: t.toList)(s) -> h(savedState0) -> false
           case _ => s -> NopIO -> true
         }
-        newState :: io :: stateActAIO(a => if(escalate) a.onBackPressedNative() else ()).unit :: HNil
+        newState :: io :: stateActAIO(a => if(escalate) a.onBackPressedNative() else ()).unitMain :: HNil
     }
   }
 
   def setMainView(main: CellTree, view: View) = {
     mainView = Some(main)
     def replaceFragment(v: View)(a: Activity) = {
-      a.replaceFragment(main.mainFrame.getId, MainFragment(v), true, "mainframe", false)
+      a.replaceFragment(main.mainFrame.getId, MainFragment(v), true, "mainframe")
       MainViewLoaded
     }
     act(replaceFragment(view)).main
@@ -365,3 +365,14 @@ extends ViewCell
     case InsertTree(tree) => insertTree(SetDrawerTree(tree))
   }
 }
+
+//   abstract override def onCreate(state: Bundle) {
+//     super.onCreate(state)
+//     toolbar foreach setSupportActionBar
+//     Ui.run(toolbar <~ T.navButtonListener(navButtonClick()))
+//   }
+
+//   def navButtonClick() = {
+//     canGoBack tapIf { onBackPressed() }
+//   }
+// }

@@ -1,4 +1,6 @@
-package tryp.droid
+package tryp
+package droid
+package view
 
 import android.util.AttributeSet
 import android.content.res.TypedArray
@@ -35,9 +37,4 @@ extends android.widget.TextView(context, attrs, defStyle)
     shadowDx = x
     shadowDy = y
   }
-}
-
-object TrypTextView
-{
-  val TAG = "TrypTextView"
 }

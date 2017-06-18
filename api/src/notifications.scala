@@ -1,14 +1,13 @@
 package tryp
 package droid
+package view
 
 import android.support.v4.app.NotificationCompat
 import android.support.v4.app.NotificationManagerCompat
 import android.support.v4.app.TaskStackBuilder
 import android.app.PendingIntent
 
-class Notification(
-  context: Context, target: Class[_], icon: Int, title: String, id: Int
-)
+class Notification(context: Context, target: Class[_], icon: Int, title: String, id: Int)
 {
   var text = ""
 

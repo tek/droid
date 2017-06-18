@@ -2,11 +2,10 @@ package tryp
 package droid
 package view
 
-import simulacrum._
+import tryp.core.RoseTree
 
-import scalaz._, Scalaz._
-
-@typeclass trait RootView[A]
+@tc
+trait RootView[A]
 {
   def root(a: A): View
 }
@@ -32,55 +31,35 @@ with Logging
 {
   def searcher: SearchView.CanFindView = a.root
 
-  protected def invalidId(id: String)(implicit res: Resources) = {
-    if (TrypEnv.release)
-      Either.left[Throwable, View](new Exception(s"invalid view id: $id"))
-    else {
-      val msg = s"Couldn't find a view with id '$id'! " +
-      s"Current views: ${RId.ids}\n" +
-      s"tree:\n" + viewTree.drawTree
-      throw new ClassCastException(msg)
-    }
-  }
-
-  def findId(id: Int)(implicit res: Resources): Either[Throwable, View] = {
-    Option(searcher.findViewById(id)) match {
-      case Some(v) => Either.right[Throwable, View](v)
-      case _ => invalidId(id.toString)
-    }
-  }
-
   def viewsOfType[B <: View: ClassTag]: Vector[B] = {
     a.root match {
       case v: B => Vector(v)
       case layout: ViewGroup =>
-        layout.children.map {
+        layout.children.flatMap {
           case v: B => Vector(v)
           case sub: ViewGroup => sub.viewsOfType[B]
           case _ => Vector.empty
-        }.flatten
+        }
       case _ => Vector.empty
     }
   }
 
   def viewOfType[B <: View: ClassTag] = viewsOfType[B].headOption
 
-  def viewTree: Tree[View] = {
+  def viewTree: RoseTree[View] = {
     a.root match {
       case vg: ViewGroup =>
-        (vg: View).node(vg.children map(_.viewTree): _*)
+        RoseTree.Node(vg, vg.children.map(_.viewTree))
       case v =>
-        v.leaf
+        RoseTree.Leaf(v)
     }
   }
 
-  def showViewTree = viewTree.drawTree
+  def showViewTree = viewTree.draw
 
   def treeLines = showViewTree.lines
 
-  def showTree() = treeLines.dbgLines
-
-  def printViewTree() = Log.i(showViewTree)
+  def showTree = treeLines.dbgLines
 }
 
 trait ToSearchView

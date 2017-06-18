@@ -107,7 +107,7 @@ trait AnnotatedTAIO
 }
 
 class AnnotatedTAIOM(val c: blackbox.Context)
-extends AndroidMacros
+extends MacroMetadata
 {
   import c.universe._
   import c.Expr

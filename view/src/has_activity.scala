@@ -2,25 +2,20 @@ package tryp
 package droid
 package view
 
-import simulacrum._
-
-@typeclass abstract class HasActivityF[A]
-extends HasContextF[A]
+@tc trait HasActivity[A]
 {
   implicit def activity(a: A): Activity
-
-  override def context(a: A): Context = activity(a)
 }
 
-object HasActivityF
+object HasActivity
 {
   implicit def activityHasActivity[A <: Activity] =
-    new HasActivityF[A] {
+    new HasActivity[A] {
       def activity(a: A) = a
     }
 
   implicit def fragmentHasActivity[A <: Fragment] =
-    new HasActivityF[A] {
+    new HasActivity[A] {
       def activity(a: A) = a.getActivity
     }
 }

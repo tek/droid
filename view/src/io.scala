@@ -31,7 +31,7 @@ trait ViewToAIO
 }
 
 class AnnotatedAIOM(val c: blackbox.Context)
-extends AndroidMacros
+extends MacroMetadata
 {
   import c.universe._
   import c.Expr

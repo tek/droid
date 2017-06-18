@@ -4,9 +4,7 @@ package view
 
 import android.widget._
 
-import cats.Eq
-
-import scalaz.Show
+import cats.{Eq, Show}
 
 trait ViewMetadata
 {
@@ -29,7 +27,7 @@ extends ViewMetadata
 case class NamedVMD(cls: String, desc: String)
 extends NamedVMDI
 
-case class ExtVMD(cls: String, desc: String, extra: Params)
+case class ExtVMD(cls: String, desc: String, extra: Map[String, String])
 extends NamedVMDI
 {
   override def printable = s"${super.printable} $extra"
@@ -61,6 +59,11 @@ extends Logging
 
   def desc(desc: String) =
     storeMeta(NamedVMD(v.className, desc))
+
+  def pad(left: Int = 0, right: Int = 0, top: Int = 0, bottom: Int = 0, all: Int = -1): Unit = {
+    if (all != -1) v.setPadding(all, all, all, all)
+    else v.setPadding(left, top, right, bottom)
+  }
 }
 
 trait ToViewOps
@@ -83,9 +86,8 @@ extends ToViewOps
   }
 
   implicit def detailedViewShow =
-    new Show[View]
-    {
-      override def show(v: View) = {
+    new Show[View] {
+      def show(v: View) = {
         val meta = v.meta
         val extra = extraInfo(v) | ""
         s"${meta.printable} ${extra.yellow}"

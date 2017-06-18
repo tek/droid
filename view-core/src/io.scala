@@ -13,12 +13,10 @@ import concurrent.Await
 
 import reflect.macros._
 
-import simulacrum._
+import simulacrum.op
 
 import shapeless._
 import shapeless.ops.hlist._
-
-import scalaz.Liskov._
 
 trait ConsAIO[F[_, _]]
 {
@@ -137,17 +135,17 @@ extends Kestrel[A, C, F]
   override def toString = s"${this.className}($name: $impl)"
 }
 
-@typeclass trait ChainKestrel[F[_]]
+@tc trait ChainKestrel[F[_]]
 {
   /** Keeps the original value, only for side effects
    */
   @op(">-", alias = true)
   def chain[A, B, G[_]](fa: F[A])(gb: F[B])
-  (implicit lis: A <~< B): F[A]
+  (implicit ev: A <:< B): F[A]
 
   @op(">=", alias = true)
   def chainIota[A, B, G[_]](fa: F[A])(gb: iota.effect.Kestrel[B])
-  (implicit lis: A <~< B): F[A]
+  (implicit ev: A <:< B): F[A]
 }
 
 trait ChainKestrelInstances
@@ -158,13 +156,13 @@ extends ToIotaKestrelOps
     type KS[A] = Kestrel[A, C, F]
     new ChainKestrel[KS] {
       def chain[A, B, G[_]](fa: KS[A])(fb: KS[B])
-      (implicit lis: A <~< B): KS[A] =
+      (implicit ev: A <:< B): KS[A] =
       {
         K { a =>
           F.pure[A, C] { c =>
             val o1 = fa.run(a)
             val r1 = F.cons(o1)(c)
-            val o2 = fb.run(lis(r1))
+            val o2 = fb.run(ev(r1))
             F.cons(o2)(c)
             a
           }
@@ -172,7 +170,7 @@ extends ToIotaKestrelOps
       }
 
       def chainIota[A, B, G[_]](fa: KS[A])(gb: iota.effect.Kestrel[B])
-      (implicit lis: A <~< B): KS[A] = {
+      (implicit ev: A <:< B): KS[A] = {
         chain(fa)(gb.liftAs[A, C, F])
       }
     }
@@ -181,15 +179,15 @@ extends ToIotaKestrelOps
   implicit lazy val instance_ChainKestrel_iotaKestrel =
     new ChainKestrel[iota.effect.Kestrel] {
       def chain[A, B, G[_]](fa: iota.effect.Kestrel[A])(fb: iota.effect.Kestrel[B])
-      (implicit lis: A <~< B): iota.effect.Kestrel[A] = {
+      (implicit ev: A <:< B): iota.effect.Kestrel[A] = {
         a => {
-          fb(lis(fa(a).perform())).perform()
+          fb(ev(fa(a).perform())).perform()
           iota.effect.IO(a)
         }
       }
 
       def chainIota[A, B, G[_]](fa: iota.effect.Kestrel[A])(gb: iota.effect.Kestrel[B])
-      (implicit lis: A <~< B): iota.effect.Kestrel[A] = {
+      (implicit ev: A <:< B): iota.effect.Kestrel[A] = {
         chain(fa)(gb)
       }
     }
@@ -377,10 +375,11 @@ trait PerformAIOExecution
   object AndroidMainExecutionContext
   extends java.util.concurrent.ForkJoinPool
   with concurrent.ExecutionContextExecutorService
+  with Logging
   {
     val handler = new Handler(Looper.getMainLooper)
     override def execute(runnable: Runnable) = handler.post(runnable)
-    override def reportFailure(t: Throwable) = Log.e(t)
+    override def reportFailure(t: Throwable) = log.error(t)("handling Runnable for android")
   }
 }
 
@@ -482,7 +481,7 @@ trait Views[C, F[_, _]]
 }
 
 class ViewM(val c: whitebox.Context)
-extends AndroidMacros
+extends MacroMetadata
 {
   import c.universe._
   import c.Expr

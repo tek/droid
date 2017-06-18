@@ -1,5 +1,6 @@
 package tryp
 package droid
+package api
 
 import android.graphics.{Canvas, Rect}
 
@@ -13,10 +14,11 @@ with ResourcesAccess
   def context = c
   val scrollFactor = appPrefs.float("parallax_scroll_factor", 0.2f)
   var scroll = 0.0f
-  def offset = scroll * scrollFactor()
-  def clip = (scroll * (1.0f - scrollFactor())).toInt
-  lazy val headerHeight: Float = res(c)
-    .dimen("header_height").getOrElse(200.dp(c))
+  def offset = scroll * scrollFactor
+  def clip = (scroll * (1.0f - scrollFactor)).toInt
+
+  lazy val headerHeight: Float =
+    res(c).dimen("header_height").getOrElse(200.dp(c))
 
   def set(y: Int) {
     scroll = y.toFloat

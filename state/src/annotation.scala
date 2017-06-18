@@ -65,6 +65,7 @@ extends CellHelperAnnotation
       case _ => abort("@cellModel needs one type argument, the cell model class")
     }
     val cmodel = symbolOf[tryp.state.ext.CModel[_]].companion
+    val s = symbolOf[tryp.state.ext.S].companion
     val modelEx =
       q"""
       object Model
@@ -81,6 +82,7 @@ extends CellHelperAnnotation
       {
         def unapply(s: CState): Option[$model] = s match {
           case $cmodel(Model(model)) => Some(model)
+          case $s(_, _, CM(model)) => Some(model)
           case _ => None
         }
       }

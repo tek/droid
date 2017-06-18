@@ -41,7 +41,7 @@ extends Combinators[RecyclerView]
     layoutManager(new GridLayoutManager(ctx, count.toInt))
 
   // FIXME DividerItemDecoration seems to be in android now
-  @context def divider = 
+  @context def divider =
     _.addItemDecoration(new view.DividerItemDecoration(ctx, null.asInstanceOf[AttributeSet]))
 
   def dataChanged = k(_.getAdapter.notifyDataSetChanged)
@@ -61,7 +61,7 @@ extends Combinators[RecyclerView]
   @context def reverseLayout =
     _.getLayoutManager match {
       case m: LinearLayoutManager => m.setReverseLayout(true)
-      case m => Log.e(s"Used reverseLayout on incompatible type ${m.className}")
+      case m => log.error(s"Used reverseLayout on incompatible type ${m.className}")
     }
 
   // def onScrollActor(actor: ActorSelection) =

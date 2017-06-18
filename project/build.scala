@@ -6,12 +6,23 @@ import sbt.Keys._
 import android.Keys._
 import android.protify.AndroidProtify
 
+import org.ensime.EnsimeKeys._
+
 import TrypAndroid.autoImport._
 import TrypBuildKeys._
 import Templates.autoImport._
 
+object EnsimeFix
+extends AutoPlugin
+{
+  def projectettings = List(
+    ensimeJavacOptions in ThisBuild ++= (javacOptions in (DroidBuild.core, Compile)).value,
+    ensimeScalacOptions in ThisBuild ++= (scalacOptions in (DroidBuild.core, Compile)).value
+  )
+}
+
 object DroidBuild
-extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
+extends tryp.AarsBuild("droid", deps = DroidDeps)
 {
   val sdkVersion = 23
 
@@ -50,17 +61,7 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
 
   lazy val api = "api" / "android api helpers" << view
 
-  // lazy val service = "service" / "machines providing services" << state << viewCore
-
-  // lazy val app = "app" / "android commons" << view
-
-  // lazy val db = "db" / "slick/sqldroid" << state
-
   lazy val logback = "logback" / "logback deps" << view
-
-  // lazy val test = "test" << app
-
-  // lazy val debug = "debug" << app
 
   lazy val integrationCore = "integration-core" / "integration basics" << state
 
@@ -70,7 +71,6 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
         aarModule := name,
         dexMaxHeap := "4G"
       )
-      // .logback("tag" -> "tryp") << app << logback
       .logback("tag" -> "tryp") << logback
 
   def mkInt(name: String) =
@@ -97,11 +97,4 @@ extends tryp.AarsBuild("droid", deps = DroidDeps, proguard = DroidProguard)
   lazy val public = mpb("public")
     .settingsV(publish := (), publishLocal := ())
     .aggregate(core, viewCore, view, stateCore, state, recycler, api, logback, integrationCore)
-
-  override def consoleImports = """
-  import cats._, data._, syntax.all._, instances.all._
-  import fs2._
-  import shapeless._
-  import tryp._
-  """
 }

@@ -7,8 +7,6 @@ package core
   android.widget.LinearLayout, android.widget.RelativeLayout, android.widget.TextView, android.widget.EditText)
 trait Types
 {
-  def TrypKeys = droid.core.Keys
-
   val WRAP_CONTENT = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
   val MATCH_PARENT = android.view.ViewGroup.LayoutParams.MATCH_PARENT
 }

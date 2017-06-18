@@ -2,30 +2,23 @@ package tryp
 package droid
 package view
 
-import simulacrum._
-
-@typeclass trait HasContextF[A]
+@tc trait HasContext[A]
 {
   implicit def context(a: A): Context
 
-  implicit def res(a: A): Resources = 
+  implicit def res(a: A): Resources =
     droid.core.Resources.fromContext(context(a))
 }
 
-object HasContextF
+object HasContext
 {
   implicit def contextHasContext[A <: Context] =
-    new HasContextF[A] {
+    new HasContext[A] {
       def context(c: A) = c
     }
 
   implicit def fragmentHasContext[A <: Fragment] =
-    new HasContextF[A] {
+    new HasContext[A] {
       def context(f: A) = f.getActivity
     }
-}
-
-class ContextOps[A: HasContextF](a: A)
-{
-  def res = a.res
 }

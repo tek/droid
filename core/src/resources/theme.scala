@@ -7,7 +7,6 @@ import reflect.macros.blackbox
 import android.content.res.{TypedArray, ColorStateList}
 import android.graphics.drawable.Drawable
 
-import cats._
 import cats.data.{NonEmptyList, OneAnd, Validated, ValidatedNel}
 import cats.instances.list._
 import cats.syntax.traverse._
@@ -63,7 +62,7 @@ object ThemeInternal
 }
 
 class ThemeInternalMacros(val c: blackbox.Context)
-extends AndroidMacros
+extends MacroMetadata
 {
   import c.universe._
 

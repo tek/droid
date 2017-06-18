@@ -22,48 +22,6 @@ with Logging
   override def getItemId(position: Int): Long = position
 }
 
-abstract class XMLListAdapter(implicit activity: Activity)
-extends ListAdapter
-{
-  override def getView(pos: Int, oldView: View, parent: ViewGroup): View = {
-    val view = if (oldView != null) oldView else newView
-    setupView(view, pos, parent)
-    view
-  }
-
-  protected def setupView(view: View, position: Int, parent: ViewGroup)
-
-  protected def label(view: View, name: String) = {
-    activity.textView(s"${prefix}_$name")
-  }
-
-  protected def setAttrs(view: View, item: Map[String, String]) {
-    attrs.foreach(attr => {
-      label(view, attr) foreach { _.setText(item(attr)) }
-    })
-  }
-
-  protected def newView: View = {
-    res.layoutId(layoutName)
-      .map(name => activity.getLayoutInflater.inflate(name, null))
-      .getOrElse(new View(activity))
-  }
-
-  protected def layoutName: String
-
-  protected def prefix: String
-
-  protected def attrs: List[String]
-
-  import android.view.View
-
-  protected def visible(state: Boolean): Int = {
-    if (state) View.VISIBLE else View.GONE
-  }
-}
-
-trait RecyclerAdapterI
-
 trait RecyclerAdapter[A <: RecyclerViewHolder, B]
 extends RecyclerViewAdapter[A]
 // with Filterable
